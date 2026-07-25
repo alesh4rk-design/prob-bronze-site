@@ -1,0 +1,902 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pro'Bronze — Painel</title>
+<link rel="stylesheet" href="css/theme.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); font-family: var(--font); }
+
+  #tela-login {
+    min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 1.5rem;
+    background: radial-gradient(circle at 20% 20%, rgba(var(--accent-rgb),.20), transparent 55%), var(--bg);
+  }
+  .login-card {
+    width: 100%; max-width: 380px; background: rgba(36,28,22,.72); backdrop-filter: blur(18px);
+    border: 1.5px solid var(--card-border); border-radius: 20px; padding: 2.3rem 1.9rem; text-align: center;
+  }
+  .login-card h1 { font-size: 1.5rem; margin: 0 0 .3rem; color: var(--accent-light); }
+  .login-card p { color: var(--muted); font-size: .85rem; margin: 0 0 1.5rem; }
+  .input-group { margin-bottom: 1rem; text-align: left; }
+  .input-group label { display: block; font-size: .78rem; color: var(--muted); margin-bottom: .35rem; font-weight: 600; }
+  .input-group input, .input-group select {
+    width: 100%; background: var(--card-inp-bg); border: 1.5px solid var(--card-inp-border); border-radius: 10px;
+    padding: .7rem .9rem; color: var(--text); font-size: .9rem; font-family: var(--font); outline: none;
+  }
+  .btn-primario {
+    width: 100%; background: linear-gradient(135deg, var(--accent), var(--accent-light)); color: var(--card-btn-text);
+    border: none; border-radius: 10px; padding: .8rem; font-size: .9rem; font-weight: 800; cursor: pointer;
+  }
+  .btn-secundario {
+    background: transparent; border: 1.5px solid var(--card-border); color: var(--muted);
+    border-radius: 8px; padding: .5rem .9rem; font-size: .78rem; cursor: pointer;
+  }
+  #login-erro { color: var(--red); font-size: .8rem; margin-top: .75rem; min-height: 1em; }
+
+  #painel { display: none; min-height: 100vh; }
+  header.topo {
+    display: flex; align-items: center; justify-content: space-between; padding: 1rem 1.25rem;
+    border-bottom: 1.5px solid var(--card-border); position: sticky; top: 0; background: var(--bg); z-index: 10;
+  }
+  header.topo .marca { font-weight: 800; font-size: 1.1rem; color: var(--accent-light); }
+
+  main { padding: 1.25rem; max-width: 1000px; margin: 0 auto; }
+  .abas { display: flex; gap: .5rem; margin-bottom: 1.25rem; flex-wrap: wrap; }
+  .aba-btn {
+    background: var(--card); border: 1.5px solid var(--card-border); color: var(--muted);
+    border-radius: 10px; padding: .55rem 1rem; font-size: .82rem; font-weight: 700; cursor: pointer;
+  }
+  .aba-btn.ativa { border-color: var(--accent); color: var(--accent-light); }
+  .aba-conteudo { display: none; }
+  .aba-conteudo.ativa { display: block; }
+
+  .card {
+    background: var(--card); border: 1.5px solid var(--card-border); border-radius: 14px;
+    padding: 1.1rem; margin-bottom: .8rem;
+  }
+  .card-titulo { font-weight: 800; font-size: .95rem; margin-bottom: .6rem; color: var(--accent-light); }
+
+  .cabines-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: .8rem; }
+  .cabine-card {
+    border: 1.5px solid var(--card-border); border-radius: 12px; padding: 1rem; text-align: center; cursor: pointer;
+  }
+  .cabine-card.livre { border-color: var(--green); }
+  .cabine-card.ocupada { border-color: var(--red); background: rgba(193,85,74,.08); }
+  .cabine-card.manutencao { border-color: var(--yellow); background: rgba(217,164,65,.08); }
+  .cabine-nome { font-weight: 800; font-size: 1rem; }
+  .cabine-status { font-size: .72rem; color: var(--muted); margin-top: .3rem; text-transform: uppercase; }
+
+  .timer-wrap { text-align: center; padding: .5rem 0; }
+  .timer-num { font-size: 2.2rem; font-weight: 800; color: var(--accent-light); font-variant-numeric: tabular-nums; }
+  .timer-barra { height: 8px; background: rgba(245,230,211,.08); border-radius: 4px; overflow: hidden; margin: .6rem 0; }
+  .timer-barra-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent-light)); transition: width 1s linear; }
+
+  .agendamento-item {
+    display: flex; justify-content: space-between; align-items: center; padding: .8rem;
+    border: 1.5px solid var(--card-border); border-radius: 10px; margin-bottom: .6rem; flex-wrap: wrap; gap: .5rem;
+  }
+  .agendamento-info .nome { font-weight: 700; font-size: .88rem; }
+  .agendamento-info .detalhe { font-size: .74rem; color: var(--muted); margin-top: .15rem; }
+  .badge { font-size: .68rem; font-weight: 700; padding: .25rem .6rem; border-radius: 20px; white-space: nowrap; }
+  .badge.agendado { background: rgba(217,164,65,.15); color: var(--yellow); }
+  .badge.em_andamento { background: rgba(var(--accent-rgb),.15); color: var(--accent-light); }
+  .badge.concluido { background: rgba(123,160,91,.15); color: var(--green); }
+  .badge.cancelado, .badge.faltou { background: rgba(193,85,74,.15); color: var(--red); }
+
+  .aviso-bloqueio { background: rgba(193,85,74,.1); border: 1.5px solid var(--red); color: var(--red); border-radius: 10px; padding: .7rem; font-size: .8rem; margin-bottom: .8rem; }
+  .aviso-atencao { background: rgba(217,164,65,.1); border: 1.5px solid var(--yellow); color: var(--yellow); border-radius: 10px; padding: .7rem; font-size: .8rem; margin-bottom: .8rem; }
+
+  .empty-state { text-align: center; color: var(--muted); padding: 2rem 1rem; font-size: .85rem; }
+  button { font-family: var(--font); }
+</style>
+</head>
+<body>
+
+<div id="tela-login">
+  <div class="login-card">
+    <h1>Pro'Bronze</h1>
+    <p>Acesso da equipe</p>
+    <div class="input-group"><label>E-mail</label><input type="email" id="login-email" autocomplete="username"></div>
+    <div class="input-group"><label>Senha</label><input type="password" id="login-senha" autocomplete="current-password"></div>
+    <button class="btn-primario" id="btn-login">Entrar</button>
+    <div id="login-erro"></div>
+  </div>
+</div>
+
+<div id="painel">
+  <header class="topo">
+    <div class="marca">Pro'Bronze</div>
+    <div style="display:flex;align-items:center;gap:.7rem">
+      <span id="usuario-nome" style="font-size:.8rem;color:var(--muted)"></span>
+      <button class="btn-secundario" id="btn-sair">Sair</button>
+    </div>
+  </header>
+
+  <main>
+    <div class="abas">
+      <button class="aba-btn ativa" data-aba="cabines">Cabines</button>
+      <button class="aba-btn" data-aba="agenda">Agenda do Dia</button>
+      <button class="aba-btn" data-aba="novo">Novo Agendamento</button>
+      <button class="aba-btn" data-aba="clientes">Clientes</button>
+      <button class="aba-btn" data-aba="servicos">Serviços</button>
+      <button class="aba-btn" data-aba="financeiro">Financeiro</button>
+      <button class="aba-btn" data-aba="pacotes">Pacotes</button>
+      <button class="aba-btn" data-aba="produtos">Produtos</button>
+      <button class="aba-btn" data-aba="cupons">Cupons</button>
+      <button class="aba-btn" data-aba="relatorios">Relatórios</button>
+    </div>
+
+    <!-- ABA CABINES -->
+    <div class="aba-conteudo ativa" id="aba-cabines">
+      <div class="card">
+        <div class="card-titulo">Cabines / Camas</div>
+        <div class="cabines-grid" id="grid-cabines">
+          <div class="empty-state">Carregando...</div>
+        </div>
+      </div>
+
+      <!-- Timer de sessão ativa -->
+      <div class="card" id="card-timer" style="display:none">
+        <div class="card-titulo">Sessão em andamento — <span id="timer-cabine-nome"></span></div>
+        <div class="timer-wrap">
+          <div class="timer-num" id="timer-num">00:00</div>
+          <div class="timer-barra"><div class="timer-barra-fill" id="timer-fill" style="width:100%"></div></div>
+          <button class="btn-primario" id="btn-finalizar-sessao">Finalizar Sessão</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ABA AGENDA -->
+    <div class="aba-conteudo" id="aba-agenda">
+      <div class="card">
+        <div class="card-titulo">Hoje</div>
+        <div id="lista-agenda-dia"><div class="empty-state">Carregando...</div></div>
+      </div>
+    </div>
+
+    <!-- ABA NOVO AGENDAMENTO -->
+    <div class="aba-conteudo" id="aba-novo">
+      <div class="card">
+        <div class="card-titulo">Novo Agendamento (presencial)</div>
+        <div id="novo-avisos"></div>
+        <div class="input-group">
+          <label>Cliente</label>
+          <select id="novo-cliente"><option value="">Selecione...</option></select>
+        </div>
+        <div class="input-group">
+          <label>Cabine</label>
+          <select id="novo-cabine"><option value="">Selecione...</option></select>
+        </div>
+        <div class="input-group">
+          <label>Serviços (combo — selecione um ou mais)</label>
+          <div id="novo-combo-servicos" class="empty-state">Carregando...</div>
+        </div>
+        <div class="input-group">
+          <label>Tempo de cabine <span id="novo-tempo-sugestao" style="color:var(--muted);font-weight:400"></span></label>
+          <select id="novo-tempo">
+            <option value="10">10 min</option>
+            <option value="15" selected>15 min</option>
+            <option value="20">20 min</option>
+          </select>
+        </div>
+        <div class="input-group">
+          <label>Data e hora</label>
+          <input type="datetime-local" id="novo-datahora">
+        </div>
+        <button class="btn-primario" id="btn-criar-agendamento">Confirmar Agendamento</button>
+      </div>
+    </div>
+
+    <!-- ABA CLIENTES -->
+    <div class="aba-conteudo" id="aba-clientes">
+      <div class="card">
+        <div class="card-titulo">Link para a cliente criar a própria conta</div>
+        <div class="input-group"><input type="text" id="link-cadastro-cliente" readonly></div>
+        <button class="btn-secundario" style="width:100%" id="btn-copiar-link">Copiar link</button>
+      </div>
+      <div class="card">
+        <div class="card-titulo">Nova Cliente (cadastro presencial, sem login)</div>
+        <div class="input-group"><label>Nome</label><input type="text" id="cli-nome"></div>
+        <div class="input-group"><label>WhatsApp</label><input type="text" id="cli-wpp" placeholder="21999999999"></div>
+        <div class="input-group">
+          <label>Tipo de pele (Fitzpatrick)</label>
+          <select id="cli-fitzpatrick">
+            <option value="">Não informado</option>
+            <option value="I">I — muito clara, sempre queima</option>
+            <option value="II">II — clara</option>
+            <option value="III">III — morena clara</option>
+            <option value="IV">IV — morena moderada</option>
+            <option value="V">V — morena escura</option>
+            <option value="VI">VI — negra</option>
+          </select>
+        </div>
+        <div class="input-group"><label>Observações de pele</label><input type="text" id="cli-obs-pele"></div>
+        <button class="btn-primario" id="btn-criar-cliente">Cadastrar Cliente</button>
+      </div>
+      <div class="card">
+        <div class="card-titulo">Clientes Cadastradas</div>
+        <div id="lista-clientes"><div class="empty-state">Carregando...</div></div>
+      </div>
+    </div>
+
+    <!-- ABA SERVIÇOS -->
+    <div class="aba-conteudo" id="aba-servicos">
+      <div class="card">
+        <div class="card-titulo">Novo Serviço</div>
+        <div class="input-group"><label>Nome</label><input type="text" id="serv-nome" placeholder="Ex: Bronzeamento"></div>
+        <div class="input-group"><label>Preço (R$)</label><input type="number" id="serv-preco" step="0.01"></div>
+        <div class="input-group"><label>Duração (min)</label><input type="number" id="serv-duracao"></div>
+        <button class="btn-primario" id="btn-criar-servico">Adicionar Serviço</button>
+      </div>
+      <div class="card">
+        <div class="card-titulo">Serviços Cadastrados</div>
+        <div id="lista-servicos"><div class="empty-state">Carregando...</div></div>
+      </div>
+    </div>
+
+    <!-- ABA FINANCEIRO -->
+    <div class="aba-conteudo" id="aba-financeiro">
+      <div class="card">
+        <div class="card-titulo">Resumo</div>
+        <div class="cabines-grid">
+          <div class="cabine-card livre"><div class="cabine-nome" id="fin-bruto">R$0</div><div class="cabine-status">Bruto</div></div>
+          <div class="cabine-card livre"><div class="cabine-nome" id="fin-liquido">R$0</div><div class="cabine-status">Líquido</div></div>
+          <div class="cabine-card manutencao"><div class="cabine-nome" id="fin-comissao">R$0</div><div class="cabine-status">Comissão</div></div>
+          <div class="cabine-card ocupada"><div class="cabine-nome" id="fin-pendente">R$0</div><div class="cabine-status">Pendente</div></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-titulo">Pendências</div>
+        <div id="lista-pendencias"><div class="empty-state">Carregando...</div></div>
+      </div>
+    </div>
+
+    <!-- ABA PACOTES -->
+    <div class="aba-conteudo" id="aba-pacotes">
+      <div class="card">
+        <div class="card-titulo">Novo Pacote de Sessões</div>
+        <div class="input-group">
+          <label>Cliente</label>
+          <select id="pac-cliente"><option value="">Selecione...</option></select>
+        </div>
+        <div class="input-group"><label>Total de sessões</label><input type="number" id="pac-total" placeholder="Ex: 10"></div>
+        <div class="input-group"><label>Valor total (R$)</label><input type="number" id="pac-valor" step="0.01"></div>
+        <button class="btn-primario" id="btn-criar-pacote">Criar Pacote</button>
+      </div>
+      <div class="card">
+        <div class="card-titulo">Pacotes Ativos</div>
+        <div id="lista-pacotes"><div class="empty-state">Carregando...</div></div>
+      </div>
+    </div>
+    <!-- ABA PRODUTOS -->
+    <div class="aba-conteudo" id="aba-produtos">
+      <div class="card">
+        <div class="card-titulo">Novo Produto de Cabine</div>
+        <div class="input-group"><label>Nome</label><input type="text" id="prod-nome" placeholder="Ex: Bronzeador"></div>
+        <div class="input-group"><label>Quantidade</label><input type="number" id="prod-qtd"></div>
+        <div class="input-group"><label>Unidade</label><input type="text" id="prod-unidade" value="ml"></div>
+        <div class="input-group"><label>Estoque mínimo (alerta)</label><input type="number" id="prod-minimo" value="0"></div>
+        <button class="btn-primario" id="btn-criar-produto">Adicionar Produto</button>
+      </div>
+      <div class="card">
+        <div class="card-titulo">Estoque</div>
+        <div id="lista-produtos"><div class="empty-state">Carregando...</div></div>
+      </div>
+    </div>
+
+    <!-- ABA CUPONS -->
+    <div class="aba-conteudo" id="aba-cupons">
+      <div class="card">
+        <div class="card-titulo">Novo Cupom</div>
+        <div class="input-group"><label>Código</label><input type="text" id="cup-codigo" placeholder="Ex: VERAO10"></div>
+        <div class="input-group">
+          <label>Tipo de desconto</label>
+          <select id="cup-tipo"><option value="percentual">Percentual (%)</option><option value="fixo">Valor fixo (R$)</option></select>
+        </div>
+        <div class="input-group"><label>Valor</label><input type="number" id="cup-valor" step="0.01"></div>
+        <button class="btn-primario" id="btn-criar-cupom">Criar Cupom</button>
+      </div>
+      <div class="card">
+        <div class="card-titulo">Cupons Ativos</div>
+        <div id="lista-cupons"><div class="empty-state">Carregando...</div></div>
+      </div>
+    </div>
+
+    <!-- ABA RELATÓRIOS -->
+    <div class="aba-conteudo" id="aba-relatorios">
+      <div class="card">
+        <div class="card-titulo">Relatório Financeiro</div>
+        <div class="input-group"><label>De</label><input type="date" id="rel-de"></div>
+        <div class="input-group"><label>Até</label><input type="date" id="rel-ate"></div>
+        <button class="btn-primario" id="btn-exportar-excel">Exportar Excel</button>
+        <button class="btn-secundario" style="width:100%;margin-top:.5rem" id="btn-exportar-pdf">Exportar PDF</button>
+      </div>
+    </div>
+  </main>
+
+  <!-- Modal de pagamento ao finalizar sessão -->
+  <div id="modal-pagamento" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:50;align-items:center;justify-content:center;padding:1rem">
+    <div class="card" style="max-width:380px;width:100%">
+      <div class="card-titulo">Registrar Pagamento</div>
+      <div class="input-group"><label>Valor do combo</label><input type="text" id="pag-valor-bruto" readonly></div>
+      <div class="input-group">
+        <label>Pacote de sessões (opcional)</label>
+        <select id="pag-pacote"><option value="">Nenhum — cobrar avulso</option></select>
+      </div>
+      <div class="input-group"><label>Cupom (opcional)</label><input type="text" id="pag-cupom" placeholder="Código do cupom"></div>
+      <div class="input-group"><label>Desconto (R$)</label><input type="number" id="pag-desconto" value="0" step="0.01"></div>
+      <div class="input-group">
+        <label>Forma de pagamento</label>
+        <select id="pag-forma"><option value="dinheiro">Dinheiro</option><option value="pix">PIX</option><option value="cartao">Cartão</option></select>
+      </div>
+      <div class="input-group">
+        <label>Status</label>
+        <select id="pag-status"><option value="pago">Pago agora</option><option value="pendente">Pendente</option></select>
+      </div>
+      <button class="btn-primario" id="btn-confirmar-pagamento">Confirmar</button>
+      <button class="btn-secundario" style="width:100%;margin-top:.5rem" id="btn-cancelar-pagamento">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+import { onAuthChange, login, logout } from './js/auth.js';
+import { escutarCabines, atualizarStatusCabine } from './js/cabines.js';
+import {
+  escutarAgendamentosDoDia, criarAgendamento, concluirAgendamento
+} from './js/agenda.js';
+import { checarElegibilidade } from './js/agenda.js';
+import { escutarServicos, criarServico, calcularCombo } from './js/servicos.js';
+import { escutarClientes, criarCliente } from './js/clientes.js';
+import { tempoMaxRecomendado } from './js/ficha-pele.js';
+import { registrarPagamento, escutarPendencias, quitarPendencia, resumoFinanceiro, escutarFinanceiroPeriodo } from './js/financeiro.js';
+import { criarPacote, escutarPacotesDoNegocio, consumirSessaoDoPacote } from './js/pacotes-sessoes.js';
+import { criarProdutoCabine, escutarProdutosCabine, produtosEmAlerta } from './js/produtos-cabine.js';
+import { criarCupom, escutarCupons, desativarCupom, calcularDescontoCupom } from './js/cupons.js';
+import { exportarExcel, exportarPDF, montarRelatorioFinanceiro, COLUNAS_FINANCEIRO } from './js/relatorios.js';
+import { linkConfirmacaoAgendamento, linkCobrancaPendente } from './js/whatsapp.js';
+import { tutorialJaVisto, iniciarTutorial } from './js/tutorial.js';
+import { db } from './js/firebase-config.js';
+import { collection, query, where, getDocs, Timestamp } from 'https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js';
+let pacotesCache = [];
+let cuponsCache = [];
+
+const $ = (id) => document.getElementById(id);
+let usuarioAtual = null;
+let cabinesCache = [];
+let servicosCache = [];
+let clientesCache = [];
+let combosSelecionados = new Set();
+let sessaoAtiva = null; // { cabineId, agendamentoId, clienteId, tempoMin, iniciadoEm, valorBruto }
+let timerInterval = null;
+let pendenciasCache = [];
+
+// ── Login ──────────────────────────────────────────────
+$('btn-login').addEventListener('click', async () => {
+  const email = $('login-email').value.trim();
+  const senha = $('login-senha').value;
+  $('login-erro').textContent = '';
+  if (!email || !senha) { $('login-erro').textContent = 'Preencha e-mail e senha.'; return; }
+  try {
+    await login(email, senha);
+  } catch (err) {
+    $('login-erro').textContent = 'E-mail ou senha incorretos.';
+  }
+});
+$('login-senha').addEventListener('keydown', (e) => { if (e.key === 'Enter') $('btn-login').click(); });
+$('btn-sair').addEventListener('click', () => logout());
+
+onAuthChange((usuario) => {
+  if (!usuario) {
+    $('tela-login').style.display = 'flex';
+    $('painel').style.display = 'none';
+    return;
+  }
+  usuarioAtual = usuario;
+  $('usuario-nome').textContent = `${usuario.nome} · ${usuario.papel}`;
+  $('tela-login').style.display = 'none';
+  $('painel').style.display = 'block';
+  iniciarPainel();
+
+  if (!tutorialJaVisto(usuario.uid)) {
+    iniciarTutorial(usuario.uid, (abaId) => {
+      document.querySelector(`[data-aba="${abaId}"]`)?.click();
+    });
+  }
+});
+
+// ── Abas ──────────────────────────────────────────────
+document.querySelectorAll('.aba-btn').forEach((btn) => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.aba-btn').forEach((b) => b.classList.remove('ativa'));
+    document.querySelectorAll('.aba-conteudo').forEach((c) => c.classList.remove('ativa'));
+    btn.classList.add('ativa');
+    $('aba-' + btn.dataset.aba).classList.add('ativa');
+  });
+});
+
+// ── Painel ──────────────────────────────────────────────
+function iniciarPainel() {
+  const negocioId = usuarioAtual.negocioId;
+
+  $('link-cadastro-cliente').value = `${window.location.origin}${window.location.pathname.replace('esteticista.html', '')}cadastro-cliente.html?negocio=${negocioId}`;
+  $('btn-copiar-link').addEventListener('click', () => {
+    $('link-cadastro-cliente').select();
+    document.execCommand('copy');
+  });
+
+  escutarCabines(negocioId, (cabines) => {
+    cabinesCache = cabines;
+    renderCabines(cabines);
+    preencherSelectCabines(cabines);
+  });
+
+  escutarAgendamentosDoDia(negocioId, new Date(), renderAgendaDia);
+
+  escutarServicos(negocioId, (servicos) => {
+    servicosCache = servicos;
+    renderServicos(servicos);
+    renderComboServicos(servicos);
+  });
+
+  escutarClientes(negocioId, (clientes) => {
+    clientesCache = clientes;
+    renderClientes(clientes);
+    preencherSelectClientes(clientes);
+    preencherSelectPacoteCliente(clientes);
+  });
+
+  escutarPendencias(negocioId, (pendencias) => {
+    pendenciasCache = pendencias;
+    renderPendencias(pendencias);
+    $('fin-pendente').textContent = 'R$' + pendencias.reduce((s, p) => s + p.valorLiquido, 0).toFixed(2);
+  });
+
+  escutarPacotesDoNegocio(negocioId, (pacotes) => {
+    pacotesCache = pacotes;
+    renderPacotes(pacotes);
+  });
+
+  const inicioMes = new Date(); inicioMes.setDate(1); inicioMes.setHours(0, 0, 0, 0);
+  const fimMes = new Date();
+  escutarFinanceiroPeriodo(negocioId, inicioMes, fimMes, (registros) => {
+    const resumo = resumoFinanceiro(registros);
+    $('fin-bruto').textContent = 'R$' + resumo.totalBruto.toFixed(2);
+    $('fin-liquido').textContent = 'R$' + resumo.totalLiquido.toFixed(2);
+    $('fin-comissao').textContent = 'R$' + resumo.totalComissao.toFixed(2);
+  });
+
+  escutarProdutosCabine(negocioId, renderProdutos);
+  escutarCupons(negocioId, (cupons) => {
+    cuponsCache = cupons;
+    renderCupons(cupons);
+  });
+}
+
+function renderProdutos(produtos) {
+  const wrap = $('lista-produtos');
+  if (produtos.length === 0) { wrap.innerHTML = '<div class="empty-state">Nenhum produto cadastrado.</div>'; return; }
+  const emAlerta = new Set(produtosEmAlerta(produtos).map((p) => p.id));
+  wrap.innerHTML = produtos.map((p) => `
+    <div class="agendamento-item">
+      <div class="agendamento-info">
+        <div class="nome">${p.nome} ${emAlerta.has(p.id) ? '<span class="badge cancelado">estoque baixo</span>' : ''}</div>
+        <div class="detalhe">${p.quantidade}${p.unidade} · mínimo ${p.estoqueMinimo}${p.unidade}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+$('btn-criar-produto').addEventListener('click', async () => {
+  const nome = $('prod-nome').value.trim();
+  const quantidade = Number($('prod-qtd').value);
+  const unidade = $('prod-unidade').value.trim() || 'ml';
+  const estoqueMinimo = Number($('prod-minimo').value) || 0;
+  if (!nome || !quantidade) { alert('Preencha nome e quantidade.'); return; }
+  await criarProdutoCabine(usuarioAtual.negocioId, { nome, quantidade, unidade, estoqueMinimo });
+  $('prod-nome').value = ''; $('prod-qtd').value = ''; $('prod-minimo').value = '0';
+});
+
+function renderCupons(cupons) {
+  const wrap = $('lista-cupons');
+  const ativos = cupons.filter((c) => c.ativo);
+  if (ativos.length === 0) { wrap.innerHTML = '<div class="empty-state">Nenhum cupom ativo.</div>'; return; }
+  wrap.innerHTML = ativos.map((c) => `
+    <div class="agendamento-item">
+      <div class="agendamento-info">
+        <div class="nome">${c.codigo}</div>
+        <div class="detalhe">${c.tipoDesconto === 'percentual' ? c.valor + '%' : 'R$' + c.valor} de desconto · ${c.usos} usos</div>
+      </div>
+      <button class="btn-secundario" data-desativar="${c.id}">Desativar</button>
+    </div>
+  `).join('');
+  wrap.querySelectorAll('[data-desativar]').forEach((btn) => {
+    btn.addEventListener('click', () => desativarCupom(btn.dataset.desativar));
+  });
+}
+
+$('btn-criar-cupom').addEventListener('click', async () => {
+  const codigo = $('cup-codigo').value.trim();
+  const tipoDesconto = $('cup-tipo').value;
+  const valor = Number($('cup-valor').value);
+  if (!codigo || !valor) { alert('Preencha código e valor.'); return; }
+  await criarCupom(usuarioAtual.negocioId, { codigo, tipoDesconto, valor });
+  $('cup-codigo').value = ''; $('cup-valor').value = '';
+});
+
+// ── Relatórios ──────────────────────────────────────────
+async function buscarFinanceiroPeriodo() {
+  const de = $('rel-de').value;
+  const ate = $('rel-ate').value;
+  if (!de || !ate) { alert('Selecione o período (de/até).'); return null; }
+  const inicio = Timestamp.fromDate(new Date(de + 'T00:00:00'));
+  const fim = Timestamp.fromDate(new Date(ate + 'T23:59:59'));
+  const q = query(
+    collection(db, 'financeiro'),
+    where('negocioId', '==', usuarioAtual.negocioId),
+    where('dataHora', '>=', inicio),
+    where('dataHora', '<=', fim)
+  );
+  const snap = await getDocs(q);
+  const registros = [];
+  snap.forEach((d) => registros.push(d.data()));
+  return registros;
+}
+
+$('btn-exportar-excel').addEventListener('click', async () => {
+  const registros = await buscarFinanceiroPeriodo();
+  if (!registros) return;
+  if (registros.length === 0) { alert('Nenhum registro no período selecionado.'); return; }
+  exportarExcel(montarRelatorioFinanceiro(registros), COLUNAS_FINANCEIRO, `probronze-financeiro-${$('rel-de').value}-a-${$('rel-ate').value}`);
+});
+
+$('btn-exportar-pdf').addEventListener('click', async () => {
+  const registros = await buscarFinanceiroPeriodo();
+  if (!registros) return;
+  if (registros.length === 0) { alert('Nenhum registro no período selecionado.'); return; }
+  exportarPDF(
+    montarRelatorioFinanceiro(registros), COLUNAS_FINANCEIRO,
+    `Relatório Financeiro — ${$('rel-de').value} a ${$('rel-ate').value}`,
+    `probronze-financeiro-${$('rel-de').value}-a-${$('rel-ate').value}`
+  );
+});
+
+function preencherSelectPacoteCliente(clientes) {
+  const sel = $('pac-cliente');
+  const atual = sel.value;
+  sel.innerHTML = '<option value="">Selecione...</option>' +
+    clientes.map((c) => `<option value="${c.id}">${c.nome}</option>`).join('');
+  sel.value = atual;
+}
+
+function renderPendencias(pendencias) {
+  const wrap = $('lista-pendencias');
+  if (pendencias.length === 0) { wrap.innerHTML = '<div class="empty-state">Nenhuma pendência.</div>'; return; }
+  wrap.innerHTML = pendencias.map((p) => {
+    const cliente = clientesCache.find((c) => c.id === p.clienteId);
+    const linkWpp = cliente?.whatsapp ? linkCobrancaPendente({
+      whatsapp: cliente.whatsapp, clienteNome: p.clienteNome, valor: p.valorLiquido, nomeNegocio: "Pro'Bronze"
+    }) : null;
+    return `
+    <div class="agendamento-item">
+      <div class="agendamento-info">
+        <div class="nome">${p.clienteNome}</div>
+        <div class="detalhe">R$${Number(p.valorLiquido).toFixed(2)} · ${p.formaPagamento}</div>
+      </div>
+      <div style="display:flex;gap:.4rem">
+        ${linkWpp ? `<a class="btn-secundario" href="${linkWpp}" target="_blank" style="text-decoration:none">WhatsApp</a>` : ''}
+        <button class="btn-secundario" data-quitar="${p.id}">Quitar</button>
+      </div>
+    </div>
+  `;
+  }).join('');
+  wrap.querySelectorAll('[data-quitar]').forEach((btn) => {
+    btn.addEventListener('click', () => quitarPendencia(btn.dataset.quitar));
+  });
+}
+
+function renderPacotes(pacotes) {
+  const wrap = $('lista-pacotes');
+  const ativos = pacotes.filter((p) => p.status === 'ativo');
+  if (ativos.length === 0) { wrap.innerHTML = '<div class="empty-state">Nenhum pacote ativo.</div>'; return; }
+  wrap.innerHTML = ativos.map((p) => `
+    <div class="agendamento-item">
+      <div class="agendamento-info">
+        <div class="nome">${p.clienteNome}</div>
+        <div class="detalhe">${p.sessoesUsadas}/${p.totalSessoes} sessões usadas · R$${Number(p.valorTotal).toFixed(2)}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+$('btn-criar-pacote').addEventListener('click', async () => {
+  const clienteId = $('pac-cliente').value;
+  const clienteNome = $('pac-cliente').selectedOptions[0]?.textContent;
+  const totalSessoes = Number($('pac-total').value);
+  const valorTotal = Number($('pac-valor').value);
+  if (!clienteId || !totalSessoes || !valorTotal) { alert('Preencha cliente, total de sessões e valor.'); return; }
+  await criarPacote(usuarioAtual.negocioId, { clienteId, clienteNome, totalSessoes, valorTotal });
+  $('pac-cliente').value = ''; $('pac-total').value = ''; $('pac-valor').value = '';
+});
+
+function preencherSelectClientes(clientes) {
+  const sel = $('novo-cliente');
+  const atual = sel.value;
+  sel.innerHTML = '<option value="">Selecione...</option>' +
+    clientes.map((c) => `<option value="${c.id}">${c.nome}</option>`).join('');
+  sel.value = atual;
+}
+
+function renderClientes(clientes) {
+  const wrap = $('lista-clientes');
+  if (clientes.length === 0) { wrap.innerHTML = '<div class="empty-state">Nenhuma cliente cadastrada.</div>'; return; }
+  wrap.innerHTML = clientes.map((c) => `
+    <div class="agendamento-item">
+      <div class="agendamento-info">
+        <div class="nome">${c.nome}</div>
+        <div class="detalhe">${c.whatsapp || 'sem WhatsApp'}${c.fichaPele ? ' · Fitzpatrick ' + c.fichaPele.tipoFitzpatrick : ' · sem ficha de pele'}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function renderServicos(servicos) {
+  const wrap = $('lista-servicos');
+  if (servicos.length === 0) { wrap.innerHTML = '<div class="empty-state">Nenhum serviço cadastrado.</div>'; return; }
+  wrap.innerHTML = servicos.map((s) => `
+    <div class="agendamento-item">
+      <div class="agendamento-info">
+        <div class="nome">${s.nome}</div>
+        <div class="detalhe">R$${Number(s.preco).toFixed(2)} · ${s.duracaoMin}min</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function renderComboServicos(servicos) {
+  const wrap = $('novo-combo-servicos');
+  if (servicos.length === 0) { wrap.innerHTML = '<div class="empty-state">Cadastre serviços na aba Serviços.</div>'; return; }
+  wrap.innerHTML = servicos.map((s) => `
+    <label style="display:flex;align-items:center;gap:.5rem;padding:.5rem 0;font-size:.85rem">
+      <input type="checkbox" data-combo="${s.id}"> ${s.nome} — R$${Number(s.preco).toFixed(2)} (${s.duracaoMin}min)
+    </label>
+  `).join('');
+  wrap.querySelectorAll('[data-combo]').forEach((chk) => {
+    chk.addEventListener('change', () => {
+      if (chk.checked) combosSelecionados.add(chk.dataset.combo);
+      else combosSelecionados.delete(chk.dataset.combo);
+    });
+  });
+}
+
+function renderCabines(cabines) {
+  const grid = $('grid-cabines');
+  if (cabines.length === 0) {
+    grid.innerHTML = '<div class="empty-state">Nenhuma cabine cadastrada.</div>';
+    return;
+  }
+  grid.innerHTML = cabines.map((c) => `
+    <div class="cabine-card ${c.status}" data-id="${c.id}">
+      <div class="cabine-nome">${c.nome}</div>
+      <div class="cabine-status">${rotuloStatus(c.status)}</div>
+    </div>
+  `).join('');
+
+  grid.querySelectorAll('.cabine-card').forEach((el) => {
+    el.addEventListener('click', () => cicloStatusCabine(el.dataset.id));
+  });
+}
+
+function rotuloStatus(status) {
+  return { livre: 'Livre', ocupada: 'Ocupada', manutencao: 'Manutenção' }[status] || status;
+}
+
+async function cicloStatusCabine(cabineId) {
+  const cabine = cabinesCache.find((c) => c.id === cabineId);
+  if (!cabine) return;
+  if (cabine.status === 'livre') {
+    await atualizarStatusCabine(cabineId, 'manutencao');
+  } else if (cabine.status === 'manutencao') {
+    await atualizarStatusCabine(cabineId, 'livre');
+  }
+  // "ocupada" só libera finalizando a sessão pelo timer
+}
+
+function preencherSelectCabines(cabines) {
+  const sel = $('novo-cabine');
+  const atual = sel.value;
+  sel.innerHTML = '<option value="">Selecione...</option>' +
+    cabines.filter((c) => c.status === 'livre').map((c) => `<option value="${c.id}">${c.nome}</option>`).join('');
+  sel.value = atual;
+}
+
+$('btn-criar-cliente').addEventListener('click', async () => {
+  const nome = $('cli-nome').value.trim();
+  if (!nome) { alert('Informe o nome da cliente.'); return; }
+  await criarCliente(usuarioAtual.negocioId, {
+    nome,
+    whatsapp: $('cli-wpp').value.trim(),
+    tipoFitzpatrick: $('cli-fitzpatrick').value || null,
+    observacoesPele: $('cli-obs-pele').value.trim()
+  });
+  $('cli-nome').value = ''; $('cli-wpp').value = ''; $('cli-fitzpatrick').value = ''; $('cli-obs-pele').value = '';
+});
+
+$('btn-criar-servico').addEventListener('click', async () => {
+  const nome = $('serv-nome').value.trim();
+  const preco = Number($('serv-preco').value);
+  const duracaoMin = Number($('serv-duracao').value);
+  if (!nome || !preco || !duracaoMin) { alert('Preencha nome, preço e duração.'); return; }
+  await criarServico(usuarioAtual.negocioId, { nome, preco, duracaoMin });
+  $('serv-nome').value = ''; $('serv-preco').value = ''; $('serv-duracao').value = '';
+});
+
+// Sugere tempo de cabine com base na ficha de pele da cliente selecionada
+$('novo-cliente').addEventListener('change', () => {
+  const cliente = clientesCache.find((c) => c.id === $('novo-cliente').value);
+  const tipo = cliente?.fichaPele?.tipoFitzpatrick;
+  const sugestao = tipo ? tempoMaxRecomendado(tipo) : null;
+  $('novo-tempo-sugestao').textContent = sugestao ? `(sugerido: até ${sugestao}min p/ este tipo de pele)` : '';
+});
+
+function renderAgendaDia(lista) {
+  const wrap = $('lista-agenda-dia');
+  if (lista.length === 0) {
+    wrap.innerHTML = '<div class="empty-state">Nenhum agendamento hoje.</div>';
+    return;
+  }
+  wrap.innerHTML = lista.map((ag) => {
+    const hora = ag.dataHora?.toDate ? ag.dataHora.toDate().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : '';
+    const servicos = (ag.servicos || []).map((s) => s.nome).join(' + ');
+    const cliente = clientesCache.find((c) => c.id === ag.clienteId);
+    const dataHoraTexto = ag.dataHora?.toDate ? ag.dataHora.toDate().toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' }) : '';
+    const linkWpp = (cliente?.whatsapp && ag.status === 'agendado') ? linkConfirmacaoAgendamento({
+      whatsapp: cliente.whatsapp, clienteNome: ag.clienteNome, servicos: servicos || 'sessão', dataHoraTexto, nomeNegocio: "Pro'Bronze"
+    }) : null;
+    return `
+      <div class="agendamento-item">
+        <div class="agendamento-info">
+          <div class="nome">${hora} · ${ag.clienteNome}</div>
+          <div class="detalhe">${servicos} · ${ag.tempoMin}min · ${ag.origem}</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:.5rem">
+          <span class="badge ${ag.status}">${ag.status.replace('_', ' ')}</span>
+          ${linkWpp ? `<a class="btn-secundario" href="${linkWpp}" target="_blank" style="text-decoration:none">WhatsApp</a>` : ''}
+          ${ag.status === 'agendado' ? `<button class="btn-secundario" data-iniciar="${ag.id}" data-cabine="${ag.cabineId}" data-tempo="${ag.tempoMin}" data-cliente="${ag.clienteId}" data-valor="${(ag.servicos || []).reduce((s, x) => s + (x.preco || 0), 0)}">Iniciar</button>` : ''}
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  wrap.querySelectorAll('[data-iniciar]').forEach((btn) => {
+    btn.addEventListener('click', () => iniciarSessao(
+      btn.dataset.iniciar, btn.dataset.cabine, Number(btn.dataset.tempo), btn.dataset.cliente, Number(btn.dataset.valor)
+    ));
+  });
+}
+
+// ── Timer visual de sessão ──────────────────────────────
+async function iniciarSessao(agendamentoId, cabineId, tempoMin, clienteId, valorBruto) {
+  if (sessaoAtiva) { alert('Já existe uma sessão em andamento. Finalize antes de iniciar outra.'); return; }
+  await atualizarStatusCabine(cabineId, 'ocupada');
+  const cabine = cabinesCache.find((c) => c.id === cabineId);
+  sessaoAtiva = { agendamentoId, cabineId, clienteId, tempoMin, valorBruto: valorBruto || 0, iniciadoEm: Date.now() };
+  $('timer-cabine-nome').textContent = cabine ? cabine.nome : '';
+  $('card-timer').style.display = 'block';
+  document.querySelector('[data-aba="cabines"]').click();
+  atualizarTimer();
+  timerInterval = setInterval(atualizarTimer, 1000);
+}
+
+function atualizarTimer() {
+  const totalSeg = sessaoAtiva.tempoMin * 60;
+  const decorrido = Math.floor((Date.now() - sessaoAtiva.iniciadoEm) / 1000);
+  const restante = Math.max(totalSeg - decorrido, 0);
+  const min = String(Math.floor(restante / 60)).padStart(2, '0');
+  const seg = String(restante % 60).padStart(2, '0');
+  $('timer-num').textContent = `${min}:${seg}`;
+  $('timer-fill').style.width = `${(restante / totalSeg) * 100}%`;
+  $('timer-num').style.color = restante === 0 ? 'var(--red)' : 'var(--accent-light)';
+}
+
+$('btn-finalizar-sessao').addEventListener('click', () => {
+  if (!sessaoAtiva) return;
+  clearInterval(timerInterval);
+  $('pag-valor-bruto').value = 'R$' + sessaoAtiva.valorBruto.toFixed(2);
+  $('pag-desconto').value = 0;
+  $('pag-cupom').value = '';
+  const pacotesDaCliente = pacotesCache.filter((p) => p.clienteId === sessaoAtiva.clienteId && p.status === 'ativo');
+  $('pag-pacote').innerHTML = '<option value="">Nenhum — cobrar avulso</option>' +
+    pacotesDaCliente.map((p) => `<option value="${p.id}">${p.totalSessoes - p.sessoesUsadas} sessões restantes</option>`).join('');
+  $('modal-pagamento').style.display = 'flex';
+});
+
+$('btn-cancelar-pagamento').addEventListener('click', () => {
+  // Retoma o timer se a esteticista desistir de finalizar agora
+  $('modal-pagamento').style.display = 'none';
+  timerInterval = setInterval(atualizarTimer, 1000);
+});
+
+$('btn-confirmar-pagamento').addEventListener('click', async () => {
+  if (!sessaoAtiva) return;
+  const pacoteId = $('pag-pacote').value;
+  const codigoCupom = $('pag-cupom').value.trim().toUpperCase();
+  const formaPagamento = $('pag-forma').value;
+  const statusPagamento = $('pag-status').value;
+
+  await atualizarStatusCabine(sessaoAtiva.cabineId, 'livre');
+  await concluirAgendamento(sessaoAtiva.agendamentoId, sessaoAtiva.clienteId);
+
+  if (pacoteId) {
+    // Sessão consumida do pacote — não gera cobrança avulsa
+    await consumirSessaoDoPacote(pacoteId);
+  } else {
+    let desconto = Number($('pag-desconto').value) || 0;
+    if (codigoCupom) {
+      const cupom = cuponsCache.find((c) => c.codigo === codigoCupom);
+      if (cupom) desconto += calcularDescontoCupom(cupom, sessaoAtiva.valorBruto);
+      else alert('Cupom não encontrado ou inválido — desconto manual aplicado normalmente.');
+    }
+    await registrarPagamento(usuarioAtual.negocioId, {
+      agendamentoId: sessaoAtiva.agendamentoId,
+      clienteId: sessaoAtiva.clienteId,
+      clienteNome: (clientesCache.find((c) => c.id === sessaoAtiva.clienteId) || {}).nome || '',
+      valorBruto: sessaoAtiva.valorBruto,
+      desconto,
+      formaPagamento,
+      statusPagamento
+    });
+  }
+
+  sessaoAtiva = null;
+  $('card-timer').style.display = 'none';
+  $('modal-pagamento').style.display = 'none';
+});
+
+// ── Novo agendamento ──────────────────────────────────────
+$('btn-criar-agendamento').addEventListener('click', async () => {
+  const clienteId = $('novo-cliente').value;
+  const clienteNome = $('novo-cliente').selectedOptions[0]?.textContent;
+  const cabineId = $('novo-cabine').value;
+  const tempoMin = Number($('novo-tempo').value);
+  const dataHora = $('novo-datahora').value;
+  const avisosWrap = $('novo-avisos');
+  avisosWrap.innerHTML = '';
+
+  if (!clienteId || !cabineId || !dataHora) {
+    avisosWrap.innerHTML = '<div class="aviso-bloqueio">Preencha cliente, cabine e data/hora.</div>';
+    return;
+  }
+
+  const elegibilidade = await checarElegibilidade(clienteId);
+  if (!elegibilidade.podeAgendar) {
+    avisosWrap.innerHTML = elegibilidade.avisos.map((a) => `<div class="aviso-bloqueio">${a}</div>`).join('');
+    return;
+  }
+  if (elegibilidade.avisos.length > 0) {
+    avisosWrap.innerHTML = elegibilidade.avisos.map((a) => `<div class="aviso-atencao">${a}</div>`).join('');
+  }
+
+  const servicosDoCombo = servicosCache.filter((s) => combosSelecionados.has(s.id));
+
+  await criarAgendamento(usuarioAtual.negocioId, {
+    clienteId, clienteNome, cabineId,
+    servicos: servicosDoCombo,
+    dataHora, origem: 'presencial', tempoMin
+  });
+
+  $('novo-cliente').value = '';
+  $('novo-cabine').value = '';
+  $('novo-datahora').value = '';
+  $('novo-tempo-sugestao').textContent = '';
+  combosSelecionados.clear();
+  document.querySelectorAll('[data-combo]').forEach((chk) => { chk.checked = false; });
+});
+</script>
+</body>
+</html>

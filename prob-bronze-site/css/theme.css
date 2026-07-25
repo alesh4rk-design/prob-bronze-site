@@ -1,0 +1,17 @@
+:root {
+  --bg: #1a1410;
+  --accent: #C68642;
+  --accent-light: #E8B87D;
+  --text: #F5E6D3;
+  --muted: #B8A48C;
+  --card: #241c16;
+  --card-border: rgba(245,230,211,.10);
+  --card-inp-bg: rgba(245,230,211,.05);
+  --card-inp-border: rgba(245,230,211,.18);
+  --card-btn-text: #1a1410;
+  --green: #7BA05B;
+  --yellow: #D9A441;
+  --red: #C1554A;
+  --accent-rgb: 198,134,66;
+  --font: 'Segoe UI', system-ui, -apple-system, sans-serif;
+}
