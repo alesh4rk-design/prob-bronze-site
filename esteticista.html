@@ -361,6 +361,7 @@ import { criarCupom, escutarCupons, desativarCupom, calcularDescontoCupom } from
 import { exportarExcel, exportarPDF, montarRelatorioFinanceiro, COLUNAS_FINANCEIRO } from './js/relatorios.js';
 import { linkConfirmacaoAgendamento, linkCobrancaPendente } from './js/whatsapp.js';
 import { tutorialJaVisto, iniciarTutorial } from './js/tutorial.js';
+import { toast, confirmar } from './js/ui-feedback.js';
 import { db } from './js/firebase-config.js';
 import { collection, query, where, getDocs, Timestamp } from 'https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js';
 let pacotesCache = [];
@@ -497,7 +498,7 @@ $('btn-criar-produto').addEventListener('click', async () => {
   const quantidade = Number($('prod-qtd').value);
   const unidade = $('prod-unidade').value.trim() || 'ml';
   const estoqueMinimo = Number($('prod-minimo').value) || 0;
-  if (!nome || !quantidade) { alert('Preencha nome e quantidade.'); return; }
+  if (!nome || !quantidade) { toast('Preencha nome e quantidade.', 'aviso'); return; }
   await criarProdutoCabine(usuarioAtual.negocioId, { nome, quantidade, unidade, estoqueMinimo });
   $('prod-nome').value = ''; $('prod-qtd').value = ''; $('prod-minimo').value = '0';
 });
@@ -524,7 +525,7 @@ $('btn-criar-cupom').addEventListener('click', async () => {
   const codigo = $('cup-codigo').value.trim();
   const tipoDesconto = $('cup-tipo').value;
   const valor = Number($('cup-valor').value);
-  if (!codigo || !valor) { alert('Preencha código e valor.'); return; }
+  if (!codigo || !valor) { toast('Preencha código e valor.', 'aviso'); return; }
   await criarCupom(usuarioAtual.negocioId, { codigo, tipoDesconto, valor });
   $('cup-codigo').value = ''; $('cup-valor').value = '';
 });
@@ -533,7 +534,7 @@ $('btn-criar-cupom').addEventListener('click', async () => {
 async function buscarFinanceiroPeriodo() {
   const de = $('rel-de').value;
   const ate = $('rel-ate').value;
-  if (!de || !ate) { alert('Selecione o período (de/até).'); return null; }
+  if (!de || !ate) { toast('Selecione o período (de/até).', 'aviso'); return null; }
   const inicio = Timestamp.fromDate(new Date(de + 'T00:00:00'));
   const fim = Timestamp.fromDate(new Date(ate + 'T23:59:59'));
   const q = query(
@@ -551,14 +552,14 @@ async function buscarFinanceiroPeriodo() {
 $('btn-exportar-excel').addEventListener('click', async () => {
   const registros = await buscarFinanceiroPeriodo();
   if (!registros) return;
-  if (registros.length === 0) { alert('Nenhum registro no período selecionado.'); return; }
+  if (registros.length === 0) { toast('Nenhum registro no período selecionado.', 'aviso'); return; }
   exportarExcel(montarRelatorioFinanceiro(registros), COLUNAS_FINANCEIRO, `probronze-financeiro-${$('rel-de').value}-a-${$('rel-ate').value}`);
 });
 
 $('btn-exportar-pdf').addEventListener('click', async () => {
   const registros = await buscarFinanceiroPeriodo();
   if (!registros) return;
-  if (registros.length === 0) { alert('Nenhum registro no período selecionado.'); return; }
+  if (registros.length === 0) { toast('Nenhum registro no período selecionado.', 'aviso'); return; }
   exportarPDF(
     montarRelatorioFinanceiro(registros), COLUNAS_FINANCEIRO,
     `Relatório Financeiro — ${$('rel-de').value} a ${$('rel-ate').value}`,
@@ -619,7 +620,7 @@ $('btn-criar-pacote').addEventListener('click', async () => {
   const clienteNome = $('pac-cliente').selectedOptions[0]?.textContent;
   const totalSessoes = Number($('pac-total').value);
   const valorTotal = Number($('pac-valor').value);
-  if (!clienteId || !totalSessoes || !valorTotal) { alert('Preencha cliente, total de sessões e valor.'); return; }
+  if (!clienteId || !totalSessoes || !valorTotal) { toast('Preencha cliente, total de sessões e valor.', 'aviso'); return; }
   await criarPacote(usuarioAtual.negocioId, { clienteId, clienteNome, totalSessoes, valorTotal });
   $('pac-cliente').value = ''; $('pac-total').value = ''; $('pac-valor').value = '';
 });
@@ -717,7 +718,7 @@ function preencherSelectCabines(cabines) {
 
 $('btn-criar-cliente').addEventListener('click', async () => {
   const nome = $('cli-nome').value.trim();
-  if (!nome) { alert('Informe o nome da cliente.'); return; }
+  if (!nome) { toast('Informe o nome da cliente.', 'aviso'); return; }
   await criarCliente(usuarioAtual.negocioId, {
     nome,
     whatsapp: $('cli-wpp').value.trim(),
@@ -731,7 +732,7 @@ $('btn-criar-servico').addEventListener('click', async () => {
   const nome = $('serv-nome').value.trim();
   const preco = Number($('serv-preco').value);
   const duracaoMin = Number($('serv-duracao').value);
-  if (!nome || !preco || !duracaoMin) { alert('Preencha nome, preço e duração.'); return; }
+  if (!nome || !preco || !duracaoMin) { toast('Preencha nome, preço e duração.', 'aviso'); return; }
   await criarServico(usuarioAtual.negocioId, { nome, preco, duracaoMin });
   $('serv-nome').value = ''; $('serv-preco').value = ''; $('serv-duracao').value = '';
 });
@@ -782,7 +783,7 @@ function renderAgendaDia(lista) {
 
 // ── Timer visual de sessão ──────────────────────────────
 async function iniciarSessao(agendamentoId, cabineId, tempoMin, clienteId, valorBruto) {
-  if (sessaoAtiva) { alert('Já existe uma sessão em andamento. Finalize antes de iniciar outra.'); return; }
+  if (sessaoAtiva) { toast('Já existe uma sessão em andamento. Finalize antes de iniciar outra.', 'aviso'); return; }
   await atualizarStatusCabine(cabineId, 'ocupada');
   const cabine = cabinesCache.find((c) => c.id === cabineId);
   sessaoAtiva = { agendamentoId, cabineId, clienteId, tempoMin, valorBruto: valorBruto || 0, iniciadoEm: Date.now() };
@@ -840,7 +841,7 @@ $('btn-confirmar-pagamento').addEventListener('click', async () => {
     if (codigoCupom) {
       const cupom = cuponsCache.find((c) => c.codigo === codigoCupom);
       if (cupom) desconto += calcularDescontoCupom(cupom, sessaoAtiva.valorBruto);
-      else alert('Cupom não encontrado ou inválido — desconto manual aplicado normalmente.');
+      else toast('Cupom não encontrado ou inválido — desconto manual aplicado normalmente.', 'aviso');
     }
     await registrarPagamento(usuarioAtual.negocioId, {
       agendamentoId: sessaoAtiva.agendamentoId,

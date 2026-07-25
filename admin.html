@@ -99,6 +99,7 @@ import { auth, db } from './js/firebase-config.js';
 import { ADMIN_UID } from './js/admin-config.js';
 import { signInWithEmailAndPassword, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js';
 import { collection, onSnapshot, doc, updateDoc } from 'https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js';
+import { toast, confirmar } from './js/ui-feedback.js';
 
 const $ = (id) => document.getElementById(id);
 
@@ -203,12 +204,15 @@ function renderNegocios(negocios) {
 async function executarAcao(id, acao) {
   if (acao === 'ativar') {
     await updateDoc(doc(db, 'negocios', id), { status: 'ativo' });
+    toast('Negócio ativado.', 'sucesso');
   } else if (acao === 'expirar') {
-    if (!confirm('Expirar o acesso desse negócio agora?')) return;
+    if (!(await confirmar('Expirar o acesso desse negócio agora?'))) return;
     await updateDoc(doc(db, 'negocios', id), { status: 'expirado' });
+    toast('Acesso expirado.', 'sucesso');
   } else if (acao === 'estender') {
     const novaData = new Date(); novaData.setDate(novaData.getDate() + 7);
     await updateDoc(doc(db, 'negocios', id), { status: 'trial', trialFim: novaData.toISOString() });
+    toast('Trial estendido por 7 dias.', 'sucesso');
   }
 }
 </script>
