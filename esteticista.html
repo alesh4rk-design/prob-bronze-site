@@ -44,16 +44,50 @@
     border-bottom: 1.5px solid var(--card-border); position: sticky; top: 0; background: var(--bg); z-index: 10;
   }
   header.topo .marca { font-weight: 800; font-size: 1.1rem; color: var(--accent-light); }
-
-  main { padding: 1.25rem; max-width: 1000px; margin: 0 auto; }
-  .abas { display: flex; gap: .5rem; margin-bottom: 1.25rem; flex-wrap: wrap; }
-  .aba-btn {
-    background: var(--card); border: 1.5px solid var(--card-border); color: var(--muted);
-    border-radius: 10px; padding: .55rem 1rem; font-size: .82rem; font-weight: 700; cursor: pointer;
+  .btn-menu {
+    display: none; background: transparent; border: none; color: var(--text); font-size: 1.3rem;
+    cursor: pointer; padding: .2rem .4rem; line-height: 1;
   }
-  .aba-btn.ativa { border-color: var(--accent); color: var(--accent-light); }
+
+  .layout { display: flex; align-items: flex-start; }
+
+  .sidebar {
+    width: 230px; flex-shrink: 0; background: var(--card); border-right: 1.5px solid var(--card-border);
+    min-height: calc(100vh - 58px); padding: 1.1rem .8rem; position: sticky; top: 58px;
+    display: flex; flex-direction: column; gap: 1.1rem; overflow-y: auto;
+  }
+  .nav-secao { display: flex; flex-direction: column; gap: .25rem; }
+  .nav-titulo {
+    font-size: .68rem; font-weight: 800; text-transform: uppercase; letter-spacing: .04em;
+    color: var(--muted); padding: 0 .5rem; margin-bottom: .15rem;
+  }
+  .sidebar-overlay { display: none; }
+
+  main { flex: 1; min-width: 0; padding: 1.25rem; max-width: 1000px; margin: 0 auto; }
+  .abas { display: none; }
+  .aba-btn {
+    display: flex; align-items: center; gap: .6rem; width: 100%; text-align: left;
+    background: transparent; border: 1.5px solid transparent; color: var(--muted);
+    border-radius: 10px; padding: .55rem .7rem; font-size: .84rem; font-weight: 700; cursor: pointer;
+  }
+  .aba-btn:hover { background: rgba(245,230,211,.05); }
+  .aba-btn.ativa { background: rgba(var(--accent-rgb),.14); border-color: var(--accent); color: var(--accent-light); }
+  .nav-icone { font-size: 1rem; }
   .aba-conteudo { display: none; }
   .aba-conteudo.ativa { display: block; }
+
+  @media (max-width: 860px) {
+    .btn-menu { display: inline-block; }
+    .sidebar {
+      position: fixed; top: 0; left: 0; height: 100vh; z-index: 30; min-height: 100vh;
+      transform: translateX(-105%); transition: transform .25s ease; box-shadow: 0 0 30px rgba(0,0,0,.4);
+    }
+    .sidebar.aberta { transform: translateX(0); }
+    .sidebar-overlay.ativa {
+      display: block; position: fixed; inset: 0; background: rgba(0,0,0,.55); z-index: 25;
+    }
+    main { padding: 1rem; }
+  }
 
   .card {
     background: var(--card); border: 1.5px solid var(--card-border); border-radius: 14px;
@@ -110,27 +144,44 @@
 
 <div id="painel">
   <header class="topo">
-    <div class="marca">Pro'Bronze</div>
+    <div style="display:flex;align-items:center;gap:.6rem">
+      <button class="btn-menu" id="btn-abrir-menu" aria-label="Abrir menu">☰</button>
+      <div class="marca">Pro'Bronze</div>
+    </div>
     <div style="display:flex;align-items:center;gap:.7rem">
       <span id="usuario-nome" style="font-size:.8rem;color:var(--muted)"></span>
       <button class="btn-secundario" id="btn-sair">Sair</button>
     </div>
   </header>
 
-  <main>
-    <div class="abas">
-      <button class="aba-btn ativa" data-aba="cabines">Cabines</button>
-      <button class="aba-btn" data-aba="agenda">Agenda do Dia</button>
-      <button class="aba-btn" data-aba="novo">Novo Agendamento</button>
-      <button class="aba-btn" data-aba="clientes">Clientes</button>
-      <button class="aba-btn" data-aba="servicos">Serviços</button>
-      <button class="aba-btn" data-aba="financeiro">Financeiro</button>
-      <button class="aba-btn" data-aba="pacotes">Pacotes</button>
-      <button class="aba-btn" data-aba="produtos">Produtos</button>
-      <button class="aba-btn" data-aba="cupons">Cupons</button>
-      <button class="aba-btn" data-aba="relatorios">Relatórios</button>
-    </div>
+  <div class="layout">
+    <div class="sidebar-overlay" id="sidebar-overlay"></div>
+    <nav class="sidebar" id="sidebar">
+      <div class="nav-secao">
+        <div class="nav-titulo">Operação do dia</div>
+        <button class="aba-btn ativa" data-aba="cabines"><span class="nav-icone">🛏️</span>Cabines</button>
+        <button class="aba-btn" data-aba="agenda"><span class="nav-icone">📅</span>Agenda do Dia</button>
+        <button class="aba-btn" data-aba="novo"><span class="nav-icone">➕</span>Novo Agendamento</button>
+      </div>
+      <div class="nav-secao">
+        <div class="nav-titulo">Catálogo</div>
+        <button class="aba-btn" data-aba="servicos"><span class="nav-icone">✂️</span>Serviços</button>
+        <button class="aba-btn" data-aba="cupons"><span class="nav-icone">🏷️</span>Cupons</button>
+      </div>
+      <div class="nav-secao">
+        <div class="nav-titulo">Pessoas</div>
+        <button class="aba-btn" data-aba="clientes"><span class="nav-icone">👥</span>Clientes</button>
+      </div>
+      <div class="nav-secao">
+        <div class="nav-titulo">Negócio</div>
+        <button class="aba-btn" data-aba="financeiro"><span class="nav-icone">💰</span>Financeiro</button>
+        <button class="aba-btn" data-aba="pacotes"><span class="nav-icone">📦</span>Pacotes</button>
+        <button class="aba-btn" data-aba="produtos"><span class="nav-icone">🧴</span>Produtos</button>
+        <button class="aba-btn" data-aba="relatorios"><span class="nav-icone">📊</span>Relatórios</button>
+      </div>
+    </nav>
 
+    <main>
     <!-- ABA CABINES -->
     <div class="aba-conteudo ativa" id="aba-cabines">
       <div class="card">
@@ -317,7 +368,8 @@
         <button class="btn-secundario" style="width:100%;margin-top:.5rem" id="btn-exportar-pdf">Exportar PDF</button>
       </div>
     </div>
-  </main>
+    </main>
+  </div>
 
   <!-- Modal de pagamento ao finalizar sessão -->
   <div id="modal-pagamento" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:50;align-items:center;justify-content:center;padding:1rem">
@@ -416,6 +468,18 @@ onAuthChange((usuario) => {
   }
 });
 
+// ── Menu lateral (mobile) ───────────────────────────────
+function abrirMenu() {
+  $('sidebar').classList.add('aberta');
+  $('sidebar-overlay').classList.add('ativa');
+}
+function fecharMenu() {
+  $('sidebar').classList.remove('aberta');
+  $('sidebar-overlay').classList.remove('ativa');
+}
+$('btn-abrir-menu').addEventListener('click', abrirMenu);
+$('sidebar-overlay').addEventListener('click', fecharMenu);
+
 // ── Abas ──────────────────────────────────────────────
 document.querySelectorAll('.aba-btn').forEach((btn) => {
   btn.addEventListener('click', () => {
@@ -423,6 +487,7 @@ document.querySelectorAll('.aba-btn').forEach((btn) => {
     document.querySelectorAll('.aba-conteudo').forEach((c) => c.classList.remove('ativa'));
     btn.classList.add('ativa');
     $('aba-' + btn.dataset.aba).classList.add('ativa');
+    fecharMenu();
   });
 });
 
