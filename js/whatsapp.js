@@ -24,3 +24,20 @@ export function linkCobrancaPendente({ whatsapp, clienteNome, valor, nomeNegocio
   const texto = `Olá, ${clienteNome}! Notamos um pagamento pendente de R$${Number(valor).toFixed(2)} na ${nomeNegocio}. Quando puder, regularize por aqui. Obrigada! 🙏`;
   return `https://wa.me/55${numero}?text=${encodeURIComponent(texto)}`;
 }
+
+export function linkAtrasoAgendamento({ whatsapp, clienteNome, minutosAtraso, nomeNegocio }) {
+  const numero = limparNumero(whatsapp);
+  const texto = `Olá, ${clienteNome}! Seu horário na ${nomeNegocio} já começou há ${minutosAtraso} minutos. Você ainda vem? Nos avise, por favor! 🙏`;
+  return `https://wa.me/55${numero}?text=${encodeURIComponent(texto)}`;
+}
+
+export function linkClienteSumido({ whatsapp, clienteNome, dias, nomeNegocio }) {
+  const numero = limparNumero(whatsapp);
+  const texto = `Olá, ${clienteNome}! Notamos que faz ${dias} dias que você não vem na ${nomeNegocio}. Sentimos sua falta! Bora agendar sua próxima sessão? ☀️`;
+  return `https://wa.me/55${numero}?text=${encodeURIComponent(texto)}`;
+}
+
+export function linkMensagemLivre({ whatsapp }) {
+  const numero = limparNumero(whatsapp);
+  return `https://wa.me/55${numero}`;
+}

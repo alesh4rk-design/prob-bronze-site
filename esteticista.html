@@ -126,6 +126,8 @@
     border: 1.5px solid var(--card-border); border-radius: 10px; margin-bottom: .6rem; flex-wrap: wrap; gap: .5rem;
   }
   .agendamento-info .nome { font-weight: 700; font-size: .88rem; }
+  .nome-clicavel { cursor: pointer; color: var(--accent-light); }
+  .nome-clicavel:hover { text-decoration: underline; }
   .agendamento-info .detalhe { font-size: .74rem; color: var(--muted); margin-top: .15rem; }
   .badge { font-size: .68rem; font-weight: 700; padding: .25rem .6rem; border-radius: 20px; white-space: nowrap; }
   .badge.agendado { background: rgba(217,164,65,.15); color: var(--yellow); }
@@ -440,6 +442,15 @@
       <button class="btn-secundario" style="width:100%;margin-top:.5rem" id="btn-cancelar-pagamento">Cancelar</button>
     </div>
   </div>
+
+  <!-- Modal de mensagens rápidas de WhatsApp -->
+  <div id="modal-whatsapp" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:50;align-items:center;justify-content:center;padding:1rem">
+    <div class="card" style="max-width:380px;width:100%">
+      <div class="card-titulo">WhatsApp — <span id="wpp-cliente-nome"></span></div>
+      <div id="wpp-opcoes" style="display:flex;flex-direction:column;gap:.5rem"></div>
+      <button class="btn-secundario" style="width:100%;margin-top:.8rem" id="btn-fechar-whatsapp">Fechar</button>
+    </div>
+  </div>
 </div>
 
 <script type="module">
@@ -457,7 +468,11 @@ import { criarPacote, escutarPacotesDoNegocio, consumirSessaoDoPacote } from './
 import { criarProdutoCabine, escutarProdutosCabine, produtosEmAlerta } from './js/produtos-cabine.js';
 import { criarCupom, escutarCupons, desativarCupom, calcularDescontoCupom } from './js/cupons.js';
 import { exportarExcel, exportarPDF, montarRelatorioFinanceiro, COLUNAS_FINANCEIRO } from './js/relatorios.js';
-import { linkConfirmacaoAgendamento, linkCobrancaPendente } from './js/whatsapp.js';
+import {
+  linkConfirmacaoAgendamento, linkCobrancaPendente, linkAtrasoAgendamento,
+  linkClienteSumido, linkMensagemLivre, linkLembreteIntervalo
+} from './js/whatsapp.js';
+import { verificarIntervaloMinimo } from './js/ficha-pele.js';
 import { tutorialJaVisto, iniciarTutorial } from './js/tutorial.js';
 import { DIAS_SEMANA, escutarHorarios, salvarHorarios } from './js/horarios.js';
 import { toast, confirmar, confirmarForte, executar } from './js/ui-feedback.js';
@@ -822,12 +837,69 @@ function renderClientes(clientes) {
   wrap.innerHTML = clientes.map((c) => `
     <div class="agendamento-item">
       <div class="agendamento-info">
-        <div class="nome">${c.nome}</div>
+        <div class="nome nome-clicavel" data-abrir-whatsapp="${c.id}">${c.nome} 💬</div>
         <div class="detalhe">${c.whatsapp || 'sem WhatsApp'}${c.fichaPele ? ' · Fitzpatrick ' + c.fichaPele.tipoFitzpatrick : ' · sem ficha de pele'}</div>
       </div>
     </div>
   `).join('');
+  wrap.querySelectorAll('[data-abrir-whatsapp]').forEach((el) => {
+    el.addEventListener('click', () => abrirMenuWhatsapp(el.dataset.abrirWhatsapp));
+  });
 }
+
+// ── Menu de mensagens rápidas de WhatsApp ────────────────
+function abrirMenuWhatsapp(clienteId) {
+  const cliente = clientesCache.find((c) => c.id === clienteId);
+  if (!cliente) return;
+  if (!cliente.whatsapp) { toast('Esta cliente não tem WhatsApp cadastrado.', 'aviso'); return; }
+
+  const nomeNegocio = "Pro'Bronze";
+  const opcoes = [];
+
+  const pendencia = pendenciasCache.find((p) => p.clienteId === clienteId);
+  if (pendencia) {
+    opcoes.push({
+      texto: `💰 Cobrar pagamento pendente (R$${Number(pendencia.valorLiquido).toFixed(2)})`,
+      link: linkCobrancaPendente({ whatsapp: cliente.whatsapp, clienteNome: cliente.nome, valor: pendencia.valorLiquido, nomeNegocio })
+    });
+  }
+
+  const intervalo = verificarIntervaloMinimo(cliente.ultimaSessaoEm);
+  if (cliente.ultimaSessaoEm) {
+    const dias = Math.floor((new Date() - new Date(cliente.ultimaSessaoEm)) / (1000 * 60 * 60 * 24));
+    if (dias >= 20) {
+      opcoes.push({
+        texto: `☀️ Cliente sumida (${dias} dias sem vir)`,
+        link: linkClienteSumido({ whatsapp: cliente.whatsapp, clienteNome: cliente.nome, dias, nomeNegocio })
+      });
+    }
+  }
+  if (!intervalo.permitido) {
+    opcoes.push({
+      texto: `⏳ Lembrete de intervalo mínimo (faltam ${intervalo.horasFaltando}h)`,
+      link: linkLembreteIntervalo({ whatsapp: cliente.whatsapp, clienteNome: cliente.nome, horasFaltando: intervalo.horasFaltando, nomeNegocio })
+    });
+  }
+
+  opcoes.push({
+    texto: `⏰ Avisar atraso (não chegou no horário)`,
+    link: linkAtrasoAgendamento({ whatsapp: cliente.whatsapp, clienteNome: cliente.nome, minutosAtraso: 15, nomeNegocio })
+  });
+  opcoes.push({
+    texto: `💬 Abrir conversa (mensagem livre)`,
+    link: linkMensagemLivre({ whatsapp: cliente.whatsapp })
+  });
+
+  $('wpp-cliente-nome').textContent = cliente.nome;
+  $('wpp-opcoes').innerHTML = opcoes.map((o) => `
+    <a class="btn-secundario" href="${o.link}" target="_blank" style="text-decoration:none;text-align:left;display:block">${o.texto}</a>
+  `).join('');
+  $('modal-whatsapp').style.display = 'flex';
+}
+
+$('btn-fechar-whatsapp').addEventListener('click', () => {
+  $('modal-whatsapp').style.display = 'none';
+});
 
 function renderServicos(servicos) {
   const wrap = $('lista-servicos');
