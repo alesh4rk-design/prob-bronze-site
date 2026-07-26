@@ -15,7 +15,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Pro'Bronze">
-<link rel="stylesheet" href="css/theme.css?v=20260727t">
+<link rel="stylesheet" href="css/theme.css?v=20260727u">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -735,6 +735,14 @@
         <div id="venda-rapida-nao-encontrado" style="display:none;color:var(--red);font-size:.82rem">Nenhum produto com esse código.</div>
       </div>
       <div class="card">
+        <div class="card-titulo com-ajuda">📦 Repor Estoque por Código de Barras</div>
+        <div class="ajuda-inline">Chegou mercadoria nova? Leia o código de um produto já cadastrado pra somar direto no estoque, sem precisar abrir o cadastro. Se o código ainda não existir, abre o cadastro de produto novo com o código já preenchido.</div>
+        <div style="display:flex;gap:.5rem">
+          <input type="text" id="repor-estoque-codigo" placeholder="Código de barras" style="flex:1">
+          <button type="button" class="btn-secundario" id="btn-scan-camera-repor" style="width:auto;white-space:nowrap">📷 Câmera</button>
+        </div>
+      </div>
+      <div class="card">
         <div class="card-titulo">Estoque</div>
         <div id="lista-produtos"><div class="empty-state">Carregando...</div></div>
       </div>
@@ -1072,25 +1080,25 @@
 </div>
 
 <script type="module">
-import { onAuthChange, login, logout, iniciarLoginComGoogle, resetSenha } from './js/auth.js?v=20260727t';
-import { VALOR_MENSALIDADE, PIX_PLATAFORMA, WHATSAPP_SUPORTE } from './js/admin-config.js?v=20260727t';
-import { escutarCabines, atualizarStatusCabine, criarCabine, excluirCabine } from './js/cabines.js?v=20260727t';
+import { onAuthChange, login, logout, iniciarLoginComGoogle, resetSenha } from './js/auth.js?v=20260727u';
+import { VALOR_MENSALIDADE, PIX_PLATAFORMA, WHATSAPP_SUPORTE } from './js/admin-config.js?v=20260727u';
+import { escutarCabines, atualizarStatusCabine, criarCabine, excluirCabine } from './js/cabines.js?v=20260727u';
 import {
   escutarAgendamentosDoDia, criarAgendamento, concluirAgendamento,
   cancelarAgendamento, marcarFalta, atribuirCabine, contarConflitosHorario, marcarEmAndamento,
   salvarAvaliacaoSessao, estenderTempoSessao
-} from './js/agenda.js?v=20260727t';
-import { checarElegibilidade } from './js/agenda.js?v=20260727t';
-import { escutarServicos, criarServico, excluirServico, calcularCombo } from './js/servicos.js?v=20260727t';
-import { escutarClientes, criarCliente, ehAniversarioHoje } from './js/clientes.js?v=20260727t';
-import { criarMembroEquipe, escutarEquipe, excluirMembroEquipe, editarMembroEquipe } from './js/equipe.js?v=20260727t';
-import { tempoMaxRecomendado } from './js/ficha-pele.js?v=20260727t';
-import { registrarPagamento, escutarPendencias, quitarPendencia, resumoFinanceiro, escutarFinanceiroPeriodo } from './js/financeiro.js?v=20260727t';
-import { criarPacote, escutarPacotesDoNegocio, consumirSessaoDoPacote, excluirPacote, pacoteVencido, diasParado, DIAS_PARADO_ALERTA } from './js/pacotes-sessoes.js?v=20260727t';
-import { criarProdutoCabine, escutarProdutosCabine, produtosEmAlerta, baixarEstoque, somarEstoque, buscarPorCodigoBarras, excluirProdutoCabine } from './js/produtos-cabine.js?v=20260727t';
-import { criarInsumo, escutarInsumos, reporInsumo, darBaixaInsumo, excluirInsumo, insumosEmAlerta, buscarInsumoPorCodigoBarras } from './js/insumos.js?v=20260727t';
-import { criarCupom, escutarCupons, desativarCupom, calcularDescontoCupom } from './js/cupons.js?v=20260727t';
-import { exportarExcel, exportarPDF, montarRelatorioFinanceiro, COLUNAS_FINANCEIRO } from './js/relatorios.js?v=20260727t';
+} from './js/agenda.js?v=20260727u';
+import { checarElegibilidade } from './js/agenda.js?v=20260727u';
+import { escutarServicos, criarServico, excluirServico, calcularCombo } from './js/servicos.js?v=20260727u';
+import { escutarClientes, criarCliente, ehAniversarioHoje } from './js/clientes.js?v=20260727u';
+import { criarMembroEquipe, escutarEquipe, excluirMembroEquipe, editarMembroEquipe } from './js/equipe.js?v=20260727u';
+import { tempoMaxRecomendado } from './js/ficha-pele.js?v=20260727u';
+import { registrarPagamento, escutarPendencias, quitarPendencia, resumoFinanceiro, escutarFinanceiroPeriodo } from './js/financeiro.js?v=20260727u';
+import { criarPacote, escutarPacotesDoNegocio, consumirSessaoDoPacote, excluirPacote, pacoteVencido, diasParado, DIAS_PARADO_ALERTA } from './js/pacotes-sessoes.js?v=20260727u';
+import { criarProdutoCabine, escutarProdutosCabine, produtosEmAlerta, baixarEstoque, somarEstoque, buscarPorCodigoBarras, excluirProdutoCabine } from './js/produtos-cabine.js?v=20260727u';
+import { criarInsumo, escutarInsumos, reporInsumo, darBaixaInsumo, excluirInsumo, insumosEmAlerta, buscarInsumoPorCodigoBarras } from './js/insumos.js?v=20260727u';
+import { criarCupom, escutarCupons, desativarCupom, calcularDescontoCupom } from './js/cupons.js?v=20260727u';
+import { exportarExcel, exportarPDF, montarRelatorioFinanceiro, COLUNAS_FINANCEIRO } from './js/relatorios.js?v=20260727u';
 import {
   linkConfirmacaoAgendamento, linkCobrancaPendente, linkAtrasoAgendamento,
   linkClienteSumido, linkMensagemLivre, linkLembreteIntervalo,
@@ -1098,14 +1106,14 @@ import {
   linkPacoteAcabando,
   linkSessaoPacoteAtendida,
   linkPacoteParado
-} from './js/whatsapp.js?v=20260727t';
-import { verificarIntervaloMinimo } from './js/ficha-pele.js?v=20260727t';
-import { tutorialJaVisto, iniciarTutorial } from './js/tutorial.js?v=20260727t';
-import { DIAS_SEMANA, escutarHorarios, salvarHorarios, validarHorarioFuncionamento } from './js/horarios.js?v=20260727t';
-import { escutarConfigNegocio, salvarConfigNegocio } from './js/config-negocio.js?v=20260727t';
-import { CATEGORIAS_DESPESA, criarDespesa, excluirDespesa, escutarDespesas } from './js/despesas.js?v=20260727t';
-import { toast, confirmar, confirmarForte, executar } from './js/ui-feedback.js?v=20260727t';
-import { db } from './js/firebase-config.js?v=20260727t';
+} from './js/whatsapp.js?v=20260727u';
+import { verificarIntervaloMinimo } from './js/ficha-pele.js?v=20260727u';
+import { tutorialJaVisto, iniciarTutorial } from './js/tutorial.js?v=20260727u';
+import { DIAS_SEMANA, escutarHorarios, salvarHorarios, validarHorarioFuncionamento } from './js/horarios.js?v=20260727u';
+import { escutarConfigNegocio, salvarConfigNegocio } from './js/config-negocio.js?v=20260727u';
+import { CATEGORIAS_DESPESA, criarDespesa, excluirDespesa, escutarDespesas } from './js/despesas.js?v=20260727u';
+import { toast, confirmar, confirmarForte, executar } from './js/ui-feedback.js?v=20260727u';
+import { db } from './js/firebase-config.js?v=20260727u';
 
 // Luzinhas douradas ao redor do card de login
 // Mostra o nome da loja usada da última vez que alguém logou neste aparelho
@@ -2729,6 +2737,41 @@ $('btn-scan-camera-cadastro').addEventListener('click', () => abrirScannerCamera
   $('prod-codigo').value = codigo;
   $('prod-codigo').dispatchEvent(new Event('input'));
 }));
+
+// ── Repor estoque por código de barras (leitor USB/Bluetooth ou câmera) ──
+// Diferente da venda rápida (que abre a tela de vender), aqui o código
+// já cadastrado soma direto no estoque, sem passos extras — é só pra
+// registrar mercadoria nova que chegou.
+async function reporEstoquePorCodigoBarras(codigo) {
+  if (!codigo) return;
+  const produto = buscarPorCodigoBarras(produtosCabineCache, codigo);
+  $('repor-estoque-codigo').value = '';
+  if (!produto) {
+    toast('Código não encontrado — abrindo cadastro de produto novo.', 'aviso');
+    $('modal-cadastro-produto').style.display = 'flex';
+    $('prod-codigo').value = codigo;
+    $('prod-codigo').dispatchEvent(new Event('input'));
+    return;
+  }
+  const qtd = prompt(`Quanto de "${produto.nome}${produto.tamanhoEmbalagem ? ` (${produto.tamanhoEmbalagem})` : ''}" chegou?`, '1');
+  const n = parseFloat(qtd);
+  if (!qtd || isNaN(n) || n <= 0) return;
+  await somarEstoque(produto.id, n);
+  if (produto.custo != null && produto.custo > 0) {
+    await criarDespesa(usuarioAtual.negocioId, {
+      categoria: 'Produtos/Insumos',
+      descricao: `Reposição de estoque: ${produto.nome} (${n}${produto.unidade})`,
+      valor: produto.custo * n,
+      data: new Date().toISOString().slice(0, 10),
+      recorrente: false
+    });
+  }
+  toast(`+${n}${produto.unidade} adicionado a "${produto.nome}".`, 'sucesso');
+}
+$('repor-estoque-codigo').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') { e.preventDefault(); reporEstoquePorCodigoBarras($('repor-estoque-codigo').value.trim()); }
+});
+$('btn-scan-camera-repor').addEventListener('click', () => abrirScannerCamera((codigo) => reporEstoquePorCodigoBarras(codigo)));
 
 // Leitor de código de barras pela câmera do celular (a maioria usa leitor
 // USB/Bluetooth físico, que digita sozinho — a câmera é o plano B)
