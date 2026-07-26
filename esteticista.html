@@ -15,7 +15,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Pro'Bronze">
-<link rel="stylesheet" href="css/theme.css?v=20260727p">
+<link rel="stylesheet" href="css/theme.css?v=20260727q">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -380,7 +380,7 @@
       </div>
       <div class="nav-secao">
         <div class="nav-titulo">Catálogo</div>
-        <button class="aba-btn" data-aba="servicos" data-titulo="✂️ Serviços"><span class="nav-icone">✂️</span>Serviços</button>
+        <button class="aba-btn" data-aba="servicos" data-titulo="🎀 Meus Serviços"><span class="nav-icone">🎀</span>Meus Serviços</button>
         <button class="aba-btn" data-aba="produtos" data-titulo="🧴 Venda de Produtos"><span class="nav-icone">🧴</span>Venda de Produtos</button>
         <button class="aba-btn" data-aba="insumos" data-titulo="🧪 Insumos"><span class="nav-icone">🧪</span>Insumos</button>
         <button class="aba-btn" data-aba="pacotes" data-titulo="📦 Pacotes"><span class="nav-icone">📦</span>Pacotes</button>
@@ -574,7 +574,8 @@
     <!-- ABA SERVIÇOS -->
     <div class="aba-conteudo" id="aba-servicos">
       <div class="card">
-        <div class="card-titulo">Novo Serviço</div>
+        <div class="card-titulo com-ajuda">Novo Serviço</div>
+        <div class="ajuda-inline">Cadastre aqui os serviços que você oferece (bronzeamento, com óleo essencial, etc.) — eles aparecem como opções de combo no agendamento e na venda avulsa.</div>
         <div class="input-group"><label>Nome</label><input type="text" id="serv-nome" placeholder="Ex: Bronzeamento"></div>
         <div class="input-group"><label>Preço (R$)</label><input type="number" id="serv-preco" step="0.01"></div>
         <div class="input-group"><label>Duração (min)</label><input type="number" id="serv-duracao"></div>
@@ -1053,25 +1054,25 @@
 </div>
 
 <script type="module">
-import { onAuthChange, login, logout, iniciarLoginComGoogle, resetSenha } from './js/auth.js?v=20260727p';
-import { VALOR_MENSALIDADE, PIX_PLATAFORMA, WHATSAPP_SUPORTE } from './js/admin-config.js?v=20260727p';
-import { escutarCabines, atualizarStatusCabine, criarCabine, excluirCabine } from './js/cabines.js?v=20260727p';
+import { onAuthChange, login, logout, iniciarLoginComGoogle, resetSenha } from './js/auth.js?v=20260727q';
+import { VALOR_MENSALIDADE, PIX_PLATAFORMA, WHATSAPP_SUPORTE } from './js/admin-config.js?v=20260727q';
+import { escutarCabines, atualizarStatusCabine, criarCabine, excluirCabine } from './js/cabines.js?v=20260727q';
 import {
   escutarAgendamentosDoDia, criarAgendamento, concluirAgendamento,
   cancelarAgendamento, marcarFalta, atribuirCabine, contarConflitosHorario, marcarEmAndamento,
   salvarAvaliacaoSessao, estenderTempoSessao
-} from './js/agenda.js?v=20260727p';
-import { checarElegibilidade } from './js/agenda.js?v=20260727p';
-import { escutarServicos, criarServico, calcularCombo } from './js/servicos.js?v=20260727p';
-import { escutarClientes, criarCliente, ehAniversarioHoje } from './js/clientes.js?v=20260727p';
-import { criarMembroEquipe, escutarEquipe, excluirMembroEquipe, editarMembroEquipe } from './js/equipe.js?v=20260727p';
-import { tempoMaxRecomendado } from './js/ficha-pele.js?v=20260727p';
-import { registrarPagamento, escutarPendencias, quitarPendencia, resumoFinanceiro, escutarFinanceiroPeriodo } from './js/financeiro.js?v=20260727p';
-import { criarPacote, escutarPacotesDoNegocio, consumirSessaoDoPacote, pacoteVencido, diasParado, DIAS_PARADO_ALERTA } from './js/pacotes-sessoes.js?v=20260727p';
-import { criarProdutoCabine, escutarProdutosCabine, produtosEmAlerta, baixarEstoque, somarEstoque, buscarPorCodigoBarras, excluirProdutoCabine } from './js/produtos-cabine.js?v=20260727p';
-import { criarInsumo, escutarInsumos, reporInsumo, darBaixaInsumo, excluirInsumo, insumosEmAlerta, buscarInsumoPorCodigoBarras } from './js/insumos.js?v=20260727p';
-import { criarCupom, escutarCupons, desativarCupom, calcularDescontoCupom } from './js/cupons.js?v=20260727p';
-import { exportarExcel, exportarPDF, montarRelatorioFinanceiro, COLUNAS_FINANCEIRO } from './js/relatorios.js?v=20260727p';
+} from './js/agenda.js?v=20260727q';
+import { checarElegibilidade } from './js/agenda.js?v=20260727q';
+import { escutarServicos, criarServico, excluirServico, calcularCombo } from './js/servicos.js?v=20260727q';
+import { escutarClientes, criarCliente, ehAniversarioHoje } from './js/clientes.js?v=20260727q';
+import { criarMembroEquipe, escutarEquipe, excluirMembroEquipe, editarMembroEquipe } from './js/equipe.js?v=20260727q';
+import { tempoMaxRecomendado } from './js/ficha-pele.js?v=20260727q';
+import { registrarPagamento, escutarPendencias, quitarPendencia, resumoFinanceiro, escutarFinanceiroPeriodo } from './js/financeiro.js?v=20260727q';
+import { criarPacote, escutarPacotesDoNegocio, consumirSessaoDoPacote, pacoteVencido, diasParado, DIAS_PARADO_ALERTA } from './js/pacotes-sessoes.js?v=20260727q';
+import { criarProdutoCabine, escutarProdutosCabine, produtosEmAlerta, baixarEstoque, somarEstoque, buscarPorCodigoBarras, excluirProdutoCabine } from './js/produtos-cabine.js?v=20260727q';
+import { criarInsumo, escutarInsumos, reporInsumo, darBaixaInsumo, excluirInsumo, insumosEmAlerta, buscarInsumoPorCodigoBarras } from './js/insumos.js?v=20260727q';
+import { criarCupom, escutarCupons, desativarCupom, calcularDescontoCupom } from './js/cupons.js?v=20260727q';
+import { exportarExcel, exportarPDF, montarRelatorioFinanceiro, COLUNAS_FINANCEIRO } from './js/relatorios.js?v=20260727q';
 import {
   linkConfirmacaoAgendamento, linkCobrancaPendente, linkAtrasoAgendamento,
   linkClienteSumido, linkMensagemLivre, linkLembreteIntervalo,
@@ -1079,14 +1080,14 @@ import {
   linkPacoteAcabando,
   linkSessaoPacoteAtendida,
   linkPacoteParado
-} from './js/whatsapp.js?v=20260727p';
-import { verificarIntervaloMinimo } from './js/ficha-pele.js?v=20260727p';
-import { tutorialJaVisto, iniciarTutorial } from './js/tutorial.js?v=20260727p';
-import { DIAS_SEMANA, escutarHorarios, salvarHorarios, validarHorarioFuncionamento } from './js/horarios.js?v=20260727p';
-import { escutarConfigNegocio, salvarConfigNegocio } from './js/config-negocio.js?v=20260727p';
-import { CATEGORIAS_DESPESA, criarDespesa, excluirDespesa, escutarDespesas } from './js/despesas.js?v=20260727p';
-import { toast, confirmar, confirmarForte, executar } from './js/ui-feedback.js?v=20260727p';
-import { db } from './js/firebase-config.js?v=20260727p';
+} from './js/whatsapp.js?v=20260727q';
+import { verificarIntervaloMinimo } from './js/ficha-pele.js?v=20260727q';
+import { tutorialJaVisto, iniciarTutorial } from './js/tutorial.js?v=20260727q';
+import { DIAS_SEMANA, escutarHorarios, salvarHorarios, validarHorarioFuncionamento } from './js/horarios.js?v=20260727q';
+import { escutarConfigNegocio, salvarConfigNegocio } from './js/config-negocio.js?v=20260727q';
+import { CATEGORIAS_DESPESA, criarDespesa, excluirDespesa, escutarDespesas } from './js/despesas.js?v=20260727q';
+import { toast, confirmar, confirmarForte, executar } from './js/ui-feedback.js?v=20260727q';
+import { db } from './js/firebase-config.js?v=20260727q';
 
 // Luzinhas douradas ao redor do card de login
 // Mostra o nome da loja usada da última vez que alguém logou neste aparelho
@@ -2871,8 +2872,18 @@ function renderServicos(servicos) {
         <div class="nome">${s.nome}</div>
         <div class="detalhe">R$${Number(s.preco).toFixed(2)} · ${s.duracaoMin}min</div>
       </div>
+      <button class="btn-secundario" data-excluir-servico="${s.id}">Excluir</button>
     </div>
   `).join('');
+
+  wrap.querySelectorAll('[data-excluir-servico]').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      const servico = servicosCache.find((s) => s.id === btn.dataset.excluirServico);
+      if (!(await confirmar(`Excluir o serviço "${servico?.nome || ''}"? Agendamentos já feitos com ele não são afetados.`))) return;
+      await excluirServico(btn.dataset.excluirServico);
+      toast('Serviço excluído.', 'sucesso');
+    });
+  });
 }
 
 function renderComboServicos(servicos) {
