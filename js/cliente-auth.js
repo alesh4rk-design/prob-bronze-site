@@ -1,5 +1,5 @@
 // Pro'Bronze — Autocadastro da cliente (cria login próprio vinculado ao negócio)
-import { auth, db } from "./firebase-config.js?v=20260726n";
+import { auth, db } from "./firebase-config.js?v=20260726o";
 import {
   createUserWithEmailAndPassword
 } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
