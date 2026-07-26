@@ -15,7 +15,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Pro'Bronze">
-<link rel="stylesheet" href="css/theme.css?v=20260727n">
+<link rel="stylesheet" href="css/theme.css?v=20260727o">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -1044,25 +1044,25 @@
 </div>
 
 <script type="module">
-import { onAuthChange, login, logout, iniciarLoginComGoogle, resetSenha } from './js/auth.js?v=20260727n';
-import { VALOR_MENSALIDADE, PIX_PLATAFORMA, WHATSAPP_SUPORTE } from './js/admin-config.js?v=20260727n';
-import { escutarCabines, atualizarStatusCabine, criarCabine, excluirCabine } from './js/cabines.js?v=20260727n';
+import { onAuthChange, login, logout, iniciarLoginComGoogle, resetSenha } from './js/auth.js?v=20260727o';
+import { VALOR_MENSALIDADE, PIX_PLATAFORMA, WHATSAPP_SUPORTE } from './js/admin-config.js?v=20260727o';
+import { escutarCabines, atualizarStatusCabine, criarCabine, excluirCabine } from './js/cabines.js?v=20260727o';
 import {
   escutarAgendamentosDoDia, criarAgendamento, concluirAgendamento,
   cancelarAgendamento, marcarFalta, atribuirCabine, contarConflitosHorario, marcarEmAndamento,
   salvarAvaliacaoSessao, estenderTempoSessao
-} from './js/agenda.js?v=20260727n';
-import { checarElegibilidade } from './js/agenda.js?v=20260727n';
-import { escutarServicos, criarServico, calcularCombo } from './js/servicos.js?v=20260727n';
-import { escutarClientes, criarCliente, ehAniversarioHoje } from './js/clientes.js?v=20260727n';
-import { criarMembroEquipe, escutarEquipe, excluirMembroEquipe, editarMembroEquipe } from './js/equipe.js?v=20260727n';
-import { tempoMaxRecomendado } from './js/ficha-pele.js?v=20260727n';
-import { registrarPagamento, escutarPendencias, quitarPendencia, resumoFinanceiro, escutarFinanceiroPeriodo } from './js/financeiro.js?v=20260727n';
-import { criarPacote, escutarPacotesDoNegocio, consumirSessaoDoPacote, pacoteVencido, diasParado, DIAS_PARADO_ALERTA } from './js/pacotes-sessoes.js?v=20260727n';
-import { criarProdutoCabine, escutarProdutosCabine, produtosEmAlerta, baixarEstoque, somarEstoque, buscarPorCodigoBarras, excluirProdutoCabine } from './js/produtos-cabine.js?v=20260727n';
-import { criarInsumo, escutarInsumos, reporInsumo, darBaixaInsumo, excluirInsumo, insumosEmAlerta, buscarInsumoPorCodigoBarras } from './js/insumos.js?v=20260727n';
-import { criarCupom, escutarCupons, desativarCupom, calcularDescontoCupom } from './js/cupons.js?v=20260727n';
-import { exportarExcel, exportarPDF, montarRelatorioFinanceiro, COLUNAS_FINANCEIRO } from './js/relatorios.js?v=20260727n';
+} from './js/agenda.js?v=20260727o';
+import { checarElegibilidade } from './js/agenda.js?v=20260727o';
+import { escutarServicos, criarServico, calcularCombo } from './js/servicos.js?v=20260727o';
+import { escutarClientes, criarCliente, ehAniversarioHoje } from './js/clientes.js?v=20260727o';
+import { criarMembroEquipe, escutarEquipe, excluirMembroEquipe, editarMembroEquipe } from './js/equipe.js?v=20260727o';
+import { tempoMaxRecomendado } from './js/ficha-pele.js?v=20260727o';
+import { registrarPagamento, escutarPendencias, quitarPendencia, resumoFinanceiro, escutarFinanceiroPeriodo } from './js/financeiro.js?v=20260727o';
+import { criarPacote, escutarPacotesDoNegocio, consumirSessaoDoPacote, pacoteVencido, diasParado, DIAS_PARADO_ALERTA } from './js/pacotes-sessoes.js?v=20260727o';
+import { criarProdutoCabine, escutarProdutosCabine, produtosEmAlerta, baixarEstoque, somarEstoque, buscarPorCodigoBarras, excluirProdutoCabine } from './js/produtos-cabine.js?v=20260727o';
+import { criarInsumo, escutarInsumos, reporInsumo, darBaixaInsumo, excluirInsumo, insumosEmAlerta, buscarInsumoPorCodigoBarras } from './js/insumos.js?v=20260727o';
+import { criarCupom, escutarCupons, desativarCupom, calcularDescontoCupom } from './js/cupons.js?v=20260727o';
+import { exportarExcel, exportarPDF, montarRelatorioFinanceiro, COLUNAS_FINANCEIRO } from './js/relatorios.js?v=20260727o';
 import {
   linkConfirmacaoAgendamento, linkCobrancaPendente, linkAtrasoAgendamento,
   linkClienteSumido, linkMensagemLivre, linkLembreteIntervalo,
@@ -1070,14 +1070,14 @@ import {
   linkPacoteAcabando,
   linkSessaoPacoteAtendida,
   linkPacoteParado
-} from './js/whatsapp.js?v=20260727n';
-import { verificarIntervaloMinimo } from './js/ficha-pele.js?v=20260727n';
-import { tutorialJaVisto, iniciarTutorial } from './js/tutorial.js?v=20260727n';
-import { DIAS_SEMANA, escutarHorarios, salvarHorarios, validarHorarioFuncionamento } from './js/horarios.js?v=20260727n';
-import { escutarConfigNegocio, salvarConfigNegocio } from './js/config-negocio.js?v=20260727n';
-import { CATEGORIAS_DESPESA, criarDespesa, excluirDespesa, escutarDespesas } from './js/despesas.js?v=20260727n';
-import { toast, confirmar, confirmarForte, executar } from './js/ui-feedback.js?v=20260727n';
-import { db } from './js/firebase-config.js?v=20260727n';
+} from './js/whatsapp.js?v=20260727o';
+import { verificarIntervaloMinimo } from './js/ficha-pele.js?v=20260727o';
+import { tutorialJaVisto, iniciarTutorial } from './js/tutorial.js?v=20260727o';
+import { DIAS_SEMANA, escutarHorarios, salvarHorarios, validarHorarioFuncionamento } from './js/horarios.js?v=20260727o';
+import { escutarConfigNegocio, salvarConfigNegocio } from './js/config-negocio.js?v=20260727o';
+import { CATEGORIAS_DESPESA, criarDespesa, excluirDespesa, escutarDespesas } from './js/despesas.js?v=20260727o';
+import { toast, confirmar, confirmarForte, executar } from './js/ui-feedback.js?v=20260727o';
+import { db } from './js/firebase-config.js?v=20260727o';
 
 // Luzinhas douradas ao redor do card de login
 // Mostra o nome da loja usada da última vez que alguém logou neste aparelho
@@ -2675,9 +2675,12 @@ function abrirScannerCamera(aoLer) {
     const overlay = document.createElement('div');
     overlay.style.cssText = 'position:fixed;inset:0;z-index:9997;background:#000;display:flex;flex-direction:column;';
     overlay.innerHTML = `
-      <div style="padding:1rem;display:flex;justify-content:space-between;align-items:center;background:var(--card2)">
+      <div style="padding:1rem;display:flex;justify-content:space-between;align-items:center;background:var(--card2);gap:.5rem;flex-wrap:wrap">
         <span style="color:#fff;font-weight:700;font-size:.9rem">📷 Aponte para o código de barras</span>
-        <button id="btn-fechar-scanner" style="background:transparent;border:1.5px solid var(--card-border);color:#fff;border-radius:8px;padding:.4rem .8rem;cursor:pointer">Fechar</button>
+        <div style="display:flex;gap:.5rem">
+          <button id="btn-forcar-foco" style="background:transparent;border:1.5px solid var(--accent);color:var(--accent-light);border-radius:8px;padding:.4rem .8rem;cursor:pointer;white-space:nowrap">🔍 Forçar foco</button>
+          <button id="btn-fechar-scanner" style="background:transparent;border:1.5px solid var(--card-border);color:#fff;border-radius:8px;padding:.4rem .8rem;cursor:pointer">Fechar</button>
+        </div>
       </div>
       <div id="scanner-camera-view" style="flex:1"></div>`;
     document.body.appendChild(overlay);
@@ -2693,6 +2696,33 @@ function abrirScannerCamera(aoLer) {
     });
     const parar = () => { scanner.stop().catch(() => {}); overlay.remove(); };
     overlay.querySelector('#btn-fechar-scanner').addEventListener('click', parar);
+    overlay.querySelector('#btn-forcar-foco').addEventListener('click', () => forcarFocoCamera());
+
+    // Tenta focar de novo — em muitos celulares o foco automático só
+    // "acorda" quando os constraints da câmera mudam, então alterna o
+    // modo de foco (manual num ponto e volta pro contínuo) pra forçar
+    // o recálculo. Se o aparelho não expuser esses controles, avisa.
+    async function forcarFocoCamera() {
+      try {
+        const videoEl = document.querySelector('#scanner-camera-view video');
+        const track = videoEl?.srcObject?.getVideoTracks?.()[0];
+        if (!track || !track.getCapabilities) { toast('Esse navegador não permite controlar o foco da câmera.', 'aviso'); return; }
+        const cap = track.getCapabilities();
+        if (cap.focusDistance) {
+          const meio = (cap.focusDistance.min + cap.focusDistance.max) / 2;
+          await track.applyConstraints({ advanced: [{ focusMode: 'manual', focusDistance: cap.focusDistance.max }] });
+          await new Promise((r) => setTimeout(r, 200));
+          await track.applyConstraints({ advanced: [{ focusMode: 'manual', focusDistance: meio }] });
+          await new Promise((r) => setTimeout(r, 200));
+        }
+        if (cap.focusMode && cap.focusMode.includes('continuous')) {
+          await track.applyConstraints({ advanced: [{ focusMode: 'continuous' }] });
+        }
+        toast('Foco ajustado.', 'sucesso');
+      } catch (e) {
+        toast('Não deu pra forçar o foco nesse aparelho.', 'aviso');
+      }
+    }
 
     scanner.start(
       { facingMode: 'environment' },
