@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Pro'Bronze — Painel</title>
-<link rel="stylesheet" href="css/theme.css?v=20260726b">
+<link rel="stylesheet" href="css/theme.css?v=20260726c">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -771,34 +771,34 @@
 </div>
 
 <script type="module">
-import { onAuthChange, login, logout, loginComGoogle, resetSenha } from './js/auth.js?v=20260726b';
-import { escutarCabines, atualizarStatusCabine, criarCabine, excluirCabine } from './js/cabines.js?v=20260726b';
+import { onAuthChange, login, logout, iniciarLoginComGoogle, processarRetornoGoogleLogin, resetSenha } from './js/auth.js?v=20260726c';
+import { escutarCabines, atualizarStatusCabine, criarCabine, excluirCabine } from './js/cabines.js?v=20260726c';
 import {
   escutarAgendamentosDoDia, criarAgendamento, concluirAgendamento, escutarFilaEspera,
   cancelarAgendamento, marcarFalta, atribuirCabine, contarConflitosHorario, marcarEmAndamento
-} from './js/agenda.js?v=20260726b';
-import { checarElegibilidade } from './js/agenda.js?v=20260726b';
-import { escutarServicos, criarServico, calcularCombo } from './js/servicos.js?v=20260726b';
-import { escutarClientes, criarCliente } from './js/clientes.js?v=20260726b';
-import { criarMembroEquipe, escutarEquipe, excluirMembroEquipe } from './js/equipe.js?v=20260726b';
-import { tempoMaxRecomendado } from './js/ficha-pele.js?v=20260726b';
-import { registrarPagamento, escutarPendencias, quitarPendencia, resumoFinanceiro, escutarFinanceiroPeriodo } from './js/financeiro.js?v=20260726b';
-import { criarPacote, escutarPacotesDoNegocio, consumirSessaoDoPacote } from './js/pacotes-sessoes.js?v=20260726b';
-import { criarProdutoCabine, escutarProdutosCabine, produtosEmAlerta, baixarEstoque } from './js/produtos-cabine.js?v=20260726b';
-import { criarCupom, escutarCupons, desativarCupom, calcularDescontoCupom } from './js/cupons.js?v=20260726b';
-import { exportarExcel, exportarPDF, montarRelatorioFinanceiro, COLUNAS_FINANCEIRO } from './js/relatorios.js?v=20260726b';
+} from './js/agenda.js?v=20260726c';
+import { checarElegibilidade } from './js/agenda.js?v=20260726c';
+import { escutarServicos, criarServico, calcularCombo } from './js/servicos.js?v=20260726c';
+import { escutarClientes, criarCliente } from './js/clientes.js?v=20260726c';
+import { criarMembroEquipe, escutarEquipe, excluirMembroEquipe } from './js/equipe.js?v=20260726c';
+import { tempoMaxRecomendado } from './js/ficha-pele.js?v=20260726c';
+import { registrarPagamento, escutarPendencias, quitarPendencia, resumoFinanceiro, escutarFinanceiroPeriodo } from './js/financeiro.js?v=20260726c';
+import { criarPacote, escutarPacotesDoNegocio, consumirSessaoDoPacote } from './js/pacotes-sessoes.js?v=20260726c';
+import { criarProdutoCabine, escutarProdutosCabine, produtosEmAlerta, baixarEstoque } from './js/produtos-cabine.js?v=20260726c';
+import { criarCupom, escutarCupons, desativarCupom, calcularDescontoCupom } from './js/cupons.js?v=20260726c';
+import { exportarExcel, exportarPDF, montarRelatorioFinanceiro, COLUNAS_FINANCEIRO } from './js/relatorios.js?v=20260726c';
 import {
   linkConfirmacaoAgendamento, linkCobrancaPendente, linkAtrasoAgendamento,
   linkClienteSumido, linkMensagemLivre, linkLembreteIntervalo,
   linkSuaVezChegando, linkPromocao, linkAniversario, linkAgradecimento
-} from './js/whatsapp.js?v=20260726b';
-import { verificarIntervaloMinimo } from './js/ficha-pele.js?v=20260726b';
-import { tutorialJaVisto, iniciarTutorial } from './js/tutorial.js?v=20260726b';
-import { DIAS_SEMANA, escutarHorarios, salvarHorarios } from './js/horarios.js?v=20260726b';
-import { escutarConfigNegocio, salvarConfigNegocio } from './js/config-negocio.js?v=20260726b';
-import { CATEGORIAS_DESPESA, criarDespesa, excluirDespesa, escutarDespesas } from './js/despesas.js?v=20260726b';
-import { toast, confirmar, confirmarForte, executar } from './js/ui-feedback.js?v=20260726b';
-import { db } from './js/firebase-config.js?v=20260726b';
+} from './js/whatsapp.js?v=20260726c';
+import { verificarIntervaloMinimo } from './js/ficha-pele.js?v=20260726c';
+import { tutorialJaVisto, iniciarTutorial } from './js/tutorial.js?v=20260726c';
+import { DIAS_SEMANA, escutarHorarios, salvarHorarios } from './js/horarios.js?v=20260726c';
+import { escutarConfigNegocio, salvarConfigNegocio } from './js/config-negocio.js?v=20260726c';
+import { CATEGORIAS_DESPESA, criarDespesa, excluirDespesa, escutarDespesas } from './js/despesas.js?v=20260726c';
+import { toast, confirmar, confirmarForte, executar } from './js/ui-feedback.js?v=20260726c';
+import { db } from './js/firebase-config.js?v=20260726c';
 
 // Luzinhas douradas ao redor do card de login
 // Mostra o nome da loja usada da última vez que alguém logou neste aparelho
@@ -907,11 +907,14 @@ $('btn-sair').addEventListener('click', () => logout());
 
 $('btn-login-google').addEventListener('click', async () => {
   $('login-erro').textContent = '';
-  try {
-    await loginComGoogle();
-  } catch (err) {
-    $('login-erro').textContent = err.message || 'Não foi possível entrar com Google.';
-  }
+  await iniciarLoginComGoogle();
+});
+
+// Ao voltar do redirecionamento do Google, onAuthChange já cuida do login
+// normal — isso aqui só existe pra mostrar uma mensagem clara quando a
+// conta do Google não tem cadastro ainda.
+processarRetornoGoogleLogin().catch((err) => {
+  $('login-erro').textContent = err.message || 'Não foi possível entrar com Google.';
 });
 
 $('link-esqueci-senha').addEventListener('click', async (e) => {
