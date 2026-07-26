@@ -75,6 +75,25 @@
   }
   #login-erro { color: var(--red); font-size: .8rem; margin-top: .75rem; min-height: 1em; }
 
+  /* Botão de entrar com neon pulsante */
+  #tela-login .btn-primario {
+    letter-spacing: .03em; text-shadow: 0 0 10px rgba(255,255,255,.35);
+    animation: btn-neon-pulsar 2.2s ease-in-out infinite;
+    transition: transform .12s ease;
+  }
+  #tela-login .btn-primario:hover { transform: translateY(-1px); filter: brightness(1.1); }
+  #tela-login .btn-primario:active { transform: translateY(0) scale(.98); }
+  @keyframes btn-neon-pulsar {
+    0%, 100% { box-shadow: 0 0 10px 1px rgba(var(--accent-rgb),.5), 0 4px 14px rgba(var(--accent-rgb),.28); }
+    50% { box-shadow: 0 0 20px 4px rgba(var(--accent-rgb),.85), 0 4px 20px rgba(var(--accent-rgb),.5); }
+  }
+  #tela-login .btn-secundario {
+    transition: box-shadow .2s ease, border-color .2s ease, transform .12s ease;
+  }
+  #tela-login .btn-secundario:hover {
+    border-color: var(--accent-light); box-shadow: 0 0 12px 2px rgba(var(--accent-rgb),.35); transform: translateY(-1px);
+  }
+
   #painel { display: none; min-height: 100vh; }
   header.topo {
     display: flex; align-items: center; justify-content: space-between; padding: 1rem 1.25rem;
