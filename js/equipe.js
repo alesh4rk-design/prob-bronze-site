@@ -1,11 +1,11 @@
 // Pro'Bronze — Equipe (dono cria contas de recepcionista, define comissão)
-import { db } from "./firebase-config.js?v=20260726z";
+import { auth, db } from "./firebase-config.js?v=20260727a";
 import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
 import { getAuth, createUserWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
 import {
   collection, doc, setDoc, updateDoc, deleteDoc, onSnapshot, query, where, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
-import { notificarErroFirestore } from "./firestore-erro.js?v=20260726z";
+import { notificarErroFirestore } from "./firestore-erro.js?v=20260727a";
 
 const firebaseConfig = {
   apiKey: "AIzaSyCd43MswTK67CbddpLLyWNou8uTv9W3Chc",
@@ -31,6 +31,19 @@ export async function criarMembroEquipe(negocioId, { nome, email, senha, papel =
     criadoEm: serverTimestamp()
   });
   await signOut(authSecundario);
+  return cred.user.uid;
+}
+
+// Auto-cadastro do funcionário(a) pelo link enviado no WhatsApp — usa a
+// auth principal porque, diferente do dono cadastrando alguém, aqui é a
+// própria pessoa se cadastrando (não precisa preservar sessão de ninguém).
+// Papel sempre "recepcionista", sem depender de nenhum valor vindo da URL.
+export async function cadastrarFuncionarioComLogin(negocioId, { nome, email, senha }) {
+  const cred = await createUserWithEmailAndPassword(auth, email, senha);
+  await setDoc(doc(db, "usuarios", cred.user.uid), {
+    nome, email, papel: "recepcionista", negocioId, percentualComissao: 0,
+    criadoEm: serverTimestamp()
+  });
   return cred.user.uid;
 }
 

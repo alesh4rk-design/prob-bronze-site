@@ -6,7 +6,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Pro'Bronze — Criar Minha Conta</title>
+<title>Pro'Bronze — Criar Acesso de Funcionário(a)</title>
 <link rel="stylesheet" href="css/theme.css?v=20260727a">
 <style>
   * { box-sizing: border-box; }
@@ -22,7 +22,7 @@
   p.sub { color: var(--muted); font-size: .85rem; margin: 0 0 1.5rem; text-align: center; }
   .input-group { margin-bottom: 1rem; text-align: left; }
   .input-group label { display: block; font-size: .78rem; color: var(--muted); margin-bottom: .35rem; font-weight: 600; }
-  .input-group input, .input-group select {
+  .input-group input {
     width: 100%; background: var(--card-inp-bg); border: 1.5px solid var(--card-inp-border); border-radius: 10px;
     padding: .7rem .9rem; color: var(--text); font-size: .9rem; font-family: var(--font); outline: none;
   }
@@ -39,35 +39,22 @@
 
 <div class="card" id="tela-form">
   <h1><span class="marca-pro">Pro</span><span class="marca-apo">'</span>Bronze</h1>
-  <p class="sub">Crie sua conta para acompanhar suas sessões</p>
+  <p class="sub">Criar acesso de funcionário(a)</p>
 
-  <div class="input-group"><label>Nome</label><input type="text" id="c-nome"></div>
-  <div class="input-group"><label>WhatsApp</label><input type="text" id="c-wpp" placeholder="21999999999"></div>
-  <div class="input-group">
-    <label>Tipo de pele (Fitzpatrick) — opcional</label>
-    <select id="c-fitzpatrick">
-      <option value="">Prefiro informar na loja</option>
-      <option value="I">I — muito clara, sempre queima</option>
-      <option value="II">II — clara</option>
-      <option value="III">III — morena clara</option>
-      <option value="IV">IV — morena moderada</option>
-      <option value="V">V — morena escura</option>
-      <option value="VI">VI — negra</option>
-    </select>
-  </div>
-  <div class="input-group"><label>E-mail</label><input type="email" id="c-email"></div>
-  <div class="input-group"><label>Senha</label><input type="password" id="c-senha"></div>
+  <div class="input-group"><label>Nome</label><input type="text" id="f-nome"></div>
+  <div class="input-group"><label>E-mail</label><input type="email" id="f-email"></div>
+  <div class="input-group"><label>Senha</label><input type="password" id="f-senha" placeholder="mínimo 6 caracteres"></div>
 
-  <button class="btn-primario" id="btn-criar-conta">Criar minha conta</button>
+  <button class="btn-primario" id="btn-criar-conta">Criar meu acesso</button>
   <div id="erro"></div>
 </div>
 
 <div class="card" id="tela-sem-negocio" style="display:none">
-  <div class="erro-link">Link inválido — peça à recepção o link correto de cadastro.</div>
+  <div class="erro-link">Link inválido — peça ao dono da loja o link correto de cadastro.</div>
 </div>
 
 <script type="module">
-import { cadastrarClienteComLogin } from './js/cliente-auth.js?v=20260727a';
+import { cadastrarFuncionarioComLogin } from './js/equipe.js?v=20260727a';
 
 const $ = (id) => document.getElementById(id);
 const params = new URLSearchParams(window.location.search);
@@ -78,11 +65,9 @@ if (!negocioId) {
   $('tela-sem-negocio').style.display = 'block';
 } else {
   $('btn-criar-conta').addEventListener('click', async () => {
-    const nome = $('c-nome').value.trim();
-    const whatsapp = $('c-wpp').value.trim();
-    const tipoFitzpatrick = $('c-fitzpatrick').value || null;
-    const email = $('c-email').value.trim();
-    const senha = $('c-senha').value;
+    const nome = $('f-nome').value.trim();
+    const email = $('f-email').value.trim();
+    const senha = $('f-senha').value;
     $('erro').textContent = '';
 
     if (!nome || !email || !senha) {
@@ -96,12 +81,12 @@ if (!negocioId) {
 
     $('btn-criar-conta').disabled = true;
     try {
-      await cadastrarClienteComLogin(negocioId, { nome, whatsapp, email, senha, tipoFitzpatrick });
-      window.location.href = 'cliente.html';
+      await cadastrarFuncionarioComLogin(negocioId, { nome, email, senha });
+      window.location.href = 'esteticista.html';
     } catch (err) {
       $('btn-criar-conta').disabled = false;
       if (err.code === 'auth/email-already-in-use') {
-        $('erro').textContent = 'Este e-mail já tem uma conta — faça login na área da cliente.';
+        $('erro').textContent = 'Este e-mail já tem uma conta — faça login normalmente.';
       } else {
         $('erro').textContent = 'Não foi possível criar a conta. Tente novamente.';
       }

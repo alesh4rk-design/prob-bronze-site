@@ -7,7 +7,7 @@
 <meta http-equiv="Expires" content="0">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Pro'Bronze — Painel</title>
-<link rel="stylesheet" href="css/theme.css?v=20260726z">
+<link rel="stylesheet" href="css/theme.css?v=20260727a">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -364,13 +364,13 @@
       </div>
       <div class="nav-secao">
         <div class="nav-titulo">Financeiro</div>
-        <button class="aba-btn" data-aba="financeiro" data-titulo="💰 Financeiro"><span class="nav-icone">💰</span>Financeiro</button>
+        <button class="aba-btn aba-estrategica" data-aba="financeiro" data-titulo="💰 Financeiro"><span class="nav-icone">💰</span>Financeiro</button>
         <button class="aba-btn" data-aba="pacotes" data-titulo="📦 Pacotes"><span class="nav-icone">📦</span>Pacotes</button>
         <button class="aba-btn" data-aba="relatorios" data-titulo="📊 Relatórios"><span class="nav-icone">📊</span>Relatórios</button>
       </div>
       <div class="nav-secao">
         <div class="nav-titulo">Negócio</div>
-        <button class="aba-btn" data-aba="horarios" data-titulo="🕐 Horários de Funcionamento"><span class="nav-icone">🕐</span>Horários</button>
+        <button class="aba-btn aba-estrategica" data-aba="horarios" data-titulo="🕐 Horários de Funcionamento"><span class="nav-icone">🕐</span>Horários</button>
         <button class="aba-btn" data-aba="configuracoes" data-titulo="⚙️ Configurações"><span class="nav-icone">⚙️</span>Configurações</button>
       </div>
     </nav>
@@ -452,16 +452,23 @@
 
     <!-- ABA EQUIPE -->
     <div class="aba-conteudo" id="aba-equipe">
+      <div class="card" id="card-link-equipe">
+        <div class="card-titulo com-ajuda">Link de cadastro para funcionário(a)</div>
+        <div class="ajuda-inline">Gere o link e envie por WhatsApp — a pessoa cria a própria conta de funcionário(a), sem você precisar digitar e-mail/senha dela.</div>
+        <div class="input-group"><input type="text" id="link-cadastro-equipe" readonly></div>
+        <button class="btn-secundario" style="width:100%" id="btn-copiar-link-equipe">Copiar link</button>
+        <a class="btn-primario" id="btn-enviar-link-equipe-whatsapp" href="#" target="_blank" style="display:block;text-align:center;text-decoration:none;margin-top:.5rem">📱 Enviar link por WhatsApp</a>
+      </div>
       <div class="card" id="card-nova-equipe">
-        <div class="card-titulo com-ajuda">Adicionar Membro da Equipe</div>
-        <div class="ajuda-inline">Cadastre quem trabalha com você (recepcionista, outro dono). Cada pessoa ganha seu próprio login e uma % de comissão sobre o que atender.</div>
+        <div class="card-titulo com-ajuda">Adicionar Funcionário(a) manualmente</div>
+        <div class="ajuda-inline">Cadastre você mesmo o login da pessoa (funcionário ou outro dono). Cada pessoa ganha seu próprio login e uma % de comissão sobre o que atender.</div>
         <div class="input-group"><label>Nome</label><input type="text" id="eq-nome"></div>
         <div class="input-group"><label>E-mail</label><input type="email" id="eq-email"></div>
         <div class="input-group"><label>Senha</label><input type="password" id="eq-senha" placeholder="mínimo 6 caracteres"></div>
         <div class="input-group">
           <label>Papel</label>
           <select id="eq-papel">
-            <option value="recepcionista">Recepcionista</option>
+            <option value="recepcionista">Funcionário(a)</option>
             <option value="dono">Dono</option>
           </select>
         </div>
@@ -967,38 +974,38 @@
 </div>
 
 <script type="module">
-import { onAuthChange, login, logout, iniciarLoginComGoogle, resetSenha } from './js/auth.js?v=20260726z';
-import { VALOR_MENSALIDADE, PIX_PLATAFORMA, WHATSAPP_SUPORTE } from './js/admin-config.js?v=20260726z';
-import { escutarCabines, atualizarStatusCabine, criarCabine, excluirCabine } from './js/cabines.js?v=20260726z';
+import { onAuthChange, login, logout, iniciarLoginComGoogle, resetSenha } from './js/auth.js?v=20260727a';
+import { VALOR_MENSALIDADE, PIX_PLATAFORMA, WHATSAPP_SUPORTE } from './js/admin-config.js?v=20260727a';
+import { escutarCabines, atualizarStatusCabine, criarCabine, excluirCabine } from './js/cabines.js?v=20260727a';
 import {
   escutarAgendamentosDoDia, criarAgendamento, concluirAgendamento,
   cancelarAgendamento, marcarFalta, atribuirCabine, contarConflitosHorario, marcarEmAndamento,
   salvarAvaliacaoSessao, estenderTempoSessao
-} from './js/agenda.js?v=20260726z';
-import { checarElegibilidade } from './js/agenda.js?v=20260726z';
-import { escutarServicos, criarServico, calcularCombo } from './js/servicos.js?v=20260726z';
-import { escutarClientes, criarCliente, ehAniversarioHoje } from './js/clientes.js?v=20260726z';
-import { criarMembroEquipe, escutarEquipe, excluirMembroEquipe } from './js/equipe.js?v=20260726z';
-import { tempoMaxRecomendado } from './js/ficha-pele.js?v=20260726z';
-import { registrarPagamento, escutarPendencias, quitarPendencia, resumoFinanceiro, escutarFinanceiroPeriodo } from './js/financeiro.js?v=20260726z';
-import { criarPacote, escutarPacotesDoNegocio, consumirSessaoDoPacote } from './js/pacotes-sessoes.js?v=20260726z';
-import { criarProdutoCabine, escutarProdutosCabine, produtosEmAlerta, baixarEstoque, somarEstoque, buscarPorCodigoBarras, excluirProdutoCabine } from './js/produtos-cabine.js?v=20260726z';
-import { criarInsumo, escutarInsumos, reporInsumo, darBaixaInsumo, excluirInsumo, insumosEmAlerta } from './js/insumos.js?v=20260726z';
-import { criarCupom, escutarCupons, desativarCupom, calcularDescontoCupom } from './js/cupons.js?v=20260726z';
-import { exportarExcel, exportarPDF, montarRelatorioFinanceiro, COLUNAS_FINANCEIRO } from './js/relatorios.js?v=20260726z';
+} from './js/agenda.js?v=20260727a';
+import { checarElegibilidade } from './js/agenda.js?v=20260727a';
+import { escutarServicos, criarServico, calcularCombo } from './js/servicos.js?v=20260727a';
+import { escutarClientes, criarCliente, ehAniversarioHoje } from './js/clientes.js?v=20260727a';
+import { criarMembroEquipe, escutarEquipe, excluirMembroEquipe } from './js/equipe.js?v=20260727a';
+import { tempoMaxRecomendado } from './js/ficha-pele.js?v=20260727a';
+import { registrarPagamento, escutarPendencias, quitarPendencia, resumoFinanceiro, escutarFinanceiroPeriodo } from './js/financeiro.js?v=20260727a';
+import { criarPacote, escutarPacotesDoNegocio, consumirSessaoDoPacote } from './js/pacotes-sessoes.js?v=20260727a';
+import { criarProdutoCabine, escutarProdutosCabine, produtosEmAlerta, baixarEstoque, somarEstoque, buscarPorCodigoBarras, excluirProdutoCabine } from './js/produtos-cabine.js?v=20260727a';
+import { criarInsumo, escutarInsumos, reporInsumo, darBaixaInsumo, excluirInsumo, insumosEmAlerta } from './js/insumos.js?v=20260727a';
+import { criarCupom, escutarCupons, desativarCupom, calcularDescontoCupom } from './js/cupons.js?v=20260727a';
+import { exportarExcel, exportarPDF, montarRelatorioFinanceiro, COLUNAS_FINANCEIRO } from './js/relatorios.js?v=20260727a';
 import {
   linkConfirmacaoAgendamento, linkCobrancaPendente, linkAtrasoAgendamento,
   linkClienteSumido, linkMensagemLivre, linkLembreteIntervalo,
   linkSuaVezChegando, linkPromocao, linkAniversario, linkAgradecimento,
   linkPacoteAcabando
-} from './js/whatsapp.js?v=20260726z';
-import { verificarIntervaloMinimo } from './js/ficha-pele.js?v=20260726z';
-import { tutorialJaVisto, iniciarTutorial } from './js/tutorial.js?v=20260726z';
-import { DIAS_SEMANA, escutarHorarios, salvarHorarios, validarHorarioFuncionamento } from './js/horarios.js?v=20260726z';
-import { escutarConfigNegocio, salvarConfigNegocio } from './js/config-negocio.js?v=20260726z';
-import { CATEGORIAS_DESPESA, criarDespesa, excluirDespesa, escutarDespesas } from './js/despesas.js?v=20260726z';
-import { toast, confirmar, confirmarForte, executar } from './js/ui-feedback.js?v=20260726z';
-import { db } from './js/firebase-config.js?v=20260726z';
+} from './js/whatsapp.js?v=20260727a';
+import { verificarIntervaloMinimo } from './js/ficha-pele.js?v=20260727a';
+import { tutorialJaVisto, iniciarTutorial } from './js/tutorial.js?v=20260727a';
+import { DIAS_SEMANA, escutarHorarios, salvarHorarios, validarHorarioFuncionamento } from './js/horarios.js?v=20260727a';
+import { escutarConfigNegocio, salvarConfigNegocio } from './js/config-negocio.js?v=20260727a';
+import { CATEGORIAS_DESPESA, criarDespesa, excluirDespesa, escutarDespesas } from './js/despesas.js?v=20260727a';
+import { toast, confirmar, confirmarForte, executar } from './js/ui-feedback.js?v=20260727a';
+import { db } from './js/firebase-config.js?v=20260727a';
 
 // Luzinhas douradas ao redor do card de login
 // Mostra o nome da loja usada da última vez que alguém logou neste aparelho
@@ -1273,10 +1280,23 @@ $('btn-vencida-sair').addEventListener('click', () => logout());
 function iniciarPainel() {
   const negocioId = usuarioAtual.negocioId;
 
+  // Abas estratégicas (Financeiro, Horários) só pro dono — funcionário(a) não vê
+  if (usuarioAtual.papel !== 'dono') {
+    document.querySelectorAll('.aba-estrategica').forEach((btn) => btn.remove());
+  }
+
   $('link-cadastro-cliente').value = `${window.location.origin}${window.location.pathname.replace('esteticista.html', '')}cadastro-cliente.html?negocio=${negocioId}`;
   $('btn-copiar-link').addEventListener('click', () => {
     $('link-cadastro-cliente').select();
     document.execCommand('copy');
+  });
+
+  const linkCadastroEquipe = `${window.location.origin}${window.location.pathname.replace('esteticista.html', '')}cadastro-equipe.html?negocio=${negocioId}`;
+  $('link-cadastro-equipe').value = linkCadastroEquipe;
+  $('btn-copiar-link-equipe').addEventListener('click', () => {
+    $('link-cadastro-equipe').select();
+    document.execCommand('copy');
+    toast('Link copiado.', 'sucesso');
   });
 
   listenersAtivos.push(escutarCabines(negocioId, (cabines) => {
@@ -1301,6 +1321,8 @@ function iniciarPainel() {
     renderConfiguracoes(config);
     localStorage.setItem('probronze_nome_loja', config.nome);
     verificarAssinatura(config);
+    const textoWppEquipe = `Oi! Segue o link pra você criar seu acesso de funcionário(a) no Pro'Bronze da loja "${config.nome || ''}":\n${linkCadastroEquipe}`;
+    $('btn-enviar-link-equipe-whatsapp').href = `https://wa.me/?text=${encodeURIComponent(textoWppEquipe)}`;
   }));
 
   listenersAtivos.push(escutarEquipe(negocioId, (equipe) => {
@@ -2173,15 +2195,18 @@ function preencherSelectClientes(clientes) {
 }
 
 // ── Equipe ────────────────────────────────────────────
+const ROTULO_PAPEL = { dono: 'Dono', recepcionista: 'Funcionário(a)' };
+
 function renderEquipe(equipe) {
   const wrap = $('lista-equipe');
   $('card-nova-equipe').style.display = usuarioAtual.papel === 'dono' ? 'block' : 'none';
+  $('card-link-equipe').style.display = usuarioAtual.papel === 'dono' ? 'block' : 'none';
   if (equipe.length === 0) { wrap.innerHTML = '<div class="empty-state">Nenhum membro cadastrado.</div>'; return; }
   wrap.innerHTML = equipe.map((m) => `
     <div class="agendamento-item">
       <div class="agendamento-info">
         <div class="nome">${m.nome}</div>
-        <div class="detalhe">${m.papel} · ${m.email}${m.papel !== 'dono' ? ' · comissão ' + (m.percentualComissao || 0) + '%' : ''}</div>
+        <div class="detalhe">${ROTULO_PAPEL[m.papel] || m.papel} · ${m.email}${m.papel !== 'dono' ? ' · comissão ' + (m.percentualComissao || 0) + '%' : ''}</div>
       </div>
       ${(usuarioAtual.papel === 'dono' && m.id !== usuarioAtual.uid) ? `<button class="btn-secundario" data-excluir-membro="${m.id}">Remover</button>` : ''}
     </div>
