@@ -16,6 +16,49 @@
   --font: 'Segoe UI', system-ui, -apple-system, sans-serif;
 }
 
+/* ── Polimento visual global (aplica em todas as páginas) ── */
+
+* { scrollbar-color: rgba(245,230,211,.25) transparent; }
+
+body { -webkit-font-smoothing: antialiased; }
+
+.login-card { box-shadow: 0 20px 60px rgba(0,0,0,.4); }
+
+/* Cartões com leve profundidade e transição suave ao hover */
+.card {
+  box-shadow: 0 2px 10px rgba(0,0,0,.18);
+  transition: box-shadow .2s ease, border-color .2s ease;
+}
+.card:hover { border-color: rgba(245,230,211,.16); }
+
+/* Botões: feedback tátil consistente */
+.btn-primario, .btn-secundario {
+  transition: transform .12s ease, box-shadow .12s ease, opacity .12s ease, filter .12s ease;
+}
+.btn-primario {
+  box-shadow: 0 4px 14px rgba(var(--accent-rgb), .28);
+}
+.btn-primario:hover { filter: brightness(1.08); box-shadow: 0 6px 18px rgba(var(--accent-rgb), .38); }
+.btn-primario:active { transform: scale(.98); box-shadow: 0 2px 8px rgba(var(--accent-rgb), .28); }
+.btn-primario:disabled { filter: none; opacity: .5; cursor: not-allowed; box-shadow: none; transform: none; }
+
+.btn-secundario:hover { border-color: var(--accent); color: var(--accent-light); background: rgba(var(--accent-rgb), .06); }
+.btn-secundario:active { transform: scale(.98); }
+
+/* Campos: anel de foco visível e consistente */
+input, select, textarea {
+  transition: border-color .15s ease, box-shadow .15s ease;
+}
+input:focus, select:focus, textarea:focus {
+  border-color: var(--accent) !important;
+  box-shadow: 0 0 0 3px rgba(var(--accent-rgb), .18);
+}
+
+/* Links dentro de botões secundários (ex.: WhatsApp) herdam o mesmo hover */
+a.btn-secundario:hover { text-decoration: none; }
+
+::selection { background: rgba(var(--accent-rgb), .35); color: var(--text); }
+
 /* O dropdown nativo do <select> abre com fundo claro do sistema;
    sem isso, o texto herdava a cor clara pensada pro fundo escuro
    e ficava ilegível sobre o fundo branco. */
