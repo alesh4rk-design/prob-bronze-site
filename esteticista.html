@@ -964,6 +964,7 @@ function iniciarPainel() {
       .filter((d) => { const dt = new Date(d.data + 'T00:00:00'); return dt >= inicioMes && dt <= fimMes; })
       .reduce((s, d) => s + (d.valor || 0), 0);
     atualizarLucroMes();
+    atualizarAnaliseFinanceira();
   });
 
   $('fin-de').value = inicioMes.toISOString().slice(0, 10);
