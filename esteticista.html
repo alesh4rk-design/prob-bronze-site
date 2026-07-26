@@ -15,7 +15,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Pro'Bronze">
-<link rel="stylesheet" href="css/theme.css?v=20260727w">
+<link rel="stylesheet" href="css/theme.css?v=20260727x">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -27,10 +27,15 @@
   #tela-login {
     min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 1.5rem;
     background: radial-gradient(circle at 20% 20%, rgba(var(--accent-rgb),.20), transparent 55%), var(--bg);
-    position: relative; overflow: hidden;
+    position: relative;
   }
-  /* Raios de luz gigantes girando atrás de toda a tela de login */
-  #tela-login::before {
+  /* Raios de luz gigantes girando atrás de toda a tela de login — fica num
+     elemento fixo próprio (não filho de #tela-login) pra não usar overflow:
+     hidden ali, senão corta o sol quando a tela é mais baixa que o card. */
+  #tela-login-raios {
+    position: fixed; inset: 0; overflow: hidden; z-index: 0; pointer-events: none;
+  }
+  #tela-login-raios::before {
     content: '';
     position: absolute; top: 50%; left: 50%;
     width: 160vmax; height: 160vmax;
@@ -38,9 +43,7 @@
     background: repeating-conic-gradient(from 0deg, rgba(var(--accent-rgb),.16) 0deg 3deg, transparent 3deg 18deg);
     -webkit-mask-image: radial-gradient(circle, transparent 8%, black 18%, black 38%, transparent 58%);
     mask-image: radial-gradient(circle, transparent 8%, black 18%, black 38%, transparent 58%);
-    z-index: 0;
     animation: raios-girar 26s linear infinite;
-    pointer-events: none;
   }
   .login-card-wrap { position: relative; width: 100%; max-width: 380px; z-index: 1; }
   .login-card {
@@ -301,6 +304,7 @@
 <body>
 
 <div id="tela-login">
+  <div id="tela-login-raios"></div>
   <div class="login-card-wrap" id="login-card-wrap">
   <div class="login-card">
     <div class="login-sol">☀️</div>
@@ -1080,25 +1084,25 @@
 </div>
 
 <script type="module">
-import { onAuthChange, login, logout, iniciarLoginComGoogle, resetSenha } from './js/auth.js?v=20260727w';
-import { VALOR_MENSALIDADE, PIX_PLATAFORMA, WHATSAPP_SUPORTE } from './js/admin-config.js?v=20260727w';
-import { escutarCabines, atualizarStatusCabine, criarCabine, excluirCabine } from './js/cabines.js?v=20260727w';
+import { onAuthChange, login, logout, iniciarLoginComGoogle, resetSenha } from './js/auth.js?v=20260727x';
+import { VALOR_MENSALIDADE, PIX_PLATAFORMA, WHATSAPP_SUPORTE } from './js/admin-config.js?v=20260727x';
+import { escutarCabines, atualizarStatusCabine, criarCabine, excluirCabine } from './js/cabines.js?v=20260727x';
 import {
   escutarAgendamentosDoDia, criarAgendamento, concluirAgendamento,
   cancelarAgendamento, marcarFalta, atribuirCabine, contarConflitosHorario, marcarEmAndamento,
   salvarAvaliacaoSessao, estenderTempoSessao
-} from './js/agenda.js?v=20260727w';
-import { checarElegibilidade } from './js/agenda.js?v=20260727w';
-import { escutarServicos, criarServico, excluirServico, calcularCombo } from './js/servicos.js?v=20260727w';
-import { escutarClientes, criarCliente, ehAniversarioHoje } from './js/clientes.js?v=20260727w';
-import { criarMembroEquipe, escutarEquipe, excluirMembroEquipe, editarMembroEquipe } from './js/equipe.js?v=20260727w';
-import { tempoMaxRecomendado } from './js/ficha-pele.js?v=20260727w';
-import { registrarPagamento, escutarPendencias, quitarPendencia, resumoFinanceiro, escutarFinanceiroPeriodo } from './js/financeiro.js?v=20260727w';
-import { criarPacote, escutarPacotesDoNegocio, consumirSessaoDoPacote, excluirPacote, pacoteVencido, diasParado, DIAS_PARADO_ALERTA } from './js/pacotes-sessoes.js?v=20260727w';
-import { criarProdutoCabine, escutarProdutosCabine, produtosEmAlerta, baixarEstoque, somarEstoque, buscarPorCodigoBarras, excluirProdutoCabine } from './js/produtos-cabine.js?v=20260727w';
-import { criarInsumo, escutarInsumos, reporInsumo, darBaixaInsumo, excluirInsumo, insumosEmAlerta, buscarInsumoPorCodigoBarras } from './js/insumos.js?v=20260727w';
-import { criarCupom, escutarCupons, desativarCupom, calcularDescontoCupom } from './js/cupons.js?v=20260727w';
-import { exportarExcel, exportarPDF, montarRelatorioFinanceiro, COLUNAS_FINANCEIRO } from './js/relatorios.js?v=20260727w';
+} from './js/agenda.js?v=20260727x';
+import { checarElegibilidade } from './js/agenda.js?v=20260727x';
+import { escutarServicos, criarServico, excluirServico, calcularCombo } from './js/servicos.js?v=20260727x';
+import { escutarClientes, criarCliente, ehAniversarioHoje } from './js/clientes.js?v=20260727x';
+import { criarMembroEquipe, escutarEquipe, excluirMembroEquipe, editarMembroEquipe } from './js/equipe.js?v=20260727x';
+import { tempoMaxRecomendado } from './js/ficha-pele.js?v=20260727x';
+import { registrarPagamento, escutarPendencias, quitarPendencia, resumoFinanceiro, escutarFinanceiroPeriodo } from './js/financeiro.js?v=20260727x';
+import { criarPacote, escutarPacotesDoNegocio, consumirSessaoDoPacote, excluirPacote, pacoteVencido, diasParado, DIAS_PARADO_ALERTA } from './js/pacotes-sessoes.js?v=20260727x';
+import { criarProdutoCabine, escutarProdutosCabine, produtosEmAlerta, baixarEstoque, somarEstoque, buscarPorCodigoBarras, excluirProdutoCabine } from './js/produtos-cabine.js?v=20260727x';
+import { criarInsumo, escutarInsumos, reporInsumo, darBaixaInsumo, excluirInsumo, insumosEmAlerta, buscarInsumoPorCodigoBarras } from './js/insumos.js?v=20260727x';
+import { criarCupom, escutarCupons, desativarCupom, calcularDescontoCupom } from './js/cupons.js?v=20260727x';
+import { exportarExcel, exportarPDF, montarRelatorioFinanceiro, COLUNAS_FINANCEIRO } from './js/relatorios.js?v=20260727x';
 import {
   linkConfirmacaoAgendamento, linkCobrancaPendente, linkAtrasoAgendamento,
   linkClienteSumido, linkMensagemLivre, linkLembreteIntervalo,
@@ -1106,14 +1110,14 @@ import {
   linkPacoteAcabando,
   linkSessaoPacoteAtendida,
   linkPacoteParado
-} from './js/whatsapp.js?v=20260727w';
-import { verificarIntervaloMinimo } from './js/ficha-pele.js?v=20260727w';
-import { tutorialJaVisto, iniciarTutorial } from './js/tutorial.js?v=20260727w';
-import { DIAS_SEMANA, escutarHorarios, salvarHorarios, validarHorarioFuncionamento } from './js/horarios.js?v=20260727w';
-import { escutarConfigNegocio, salvarConfigNegocio } from './js/config-negocio.js?v=20260727w';
-import { CATEGORIAS_DESPESA, criarDespesa, excluirDespesa, escutarDespesas } from './js/despesas.js?v=20260727w';
-import { toast, confirmar, confirmarForte, executar } from './js/ui-feedback.js?v=20260727w';
-import { db } from './js/firebase-config.js?v=20260727w';
+} from './js/whatsapp.js?v=20260727x';
+import { verificarIntervaloMinimo } from './js/ficha-pele.js?v=20260727x';
+import { tutorialJaVisto, iniciarTutorial } from './js/tutorial.js?v=20260727x';
+import { DIAS_SEMANA, escutarHorarios, salvarHorarios, validarHorarioFuncionamento } from './js/horarios.js?v=20260727x';
+import { escutarConfigNegocio, salvarConfigNegocio } from './js/config-negocio.js?v=20260727x';
+import { CATEGORIAS_DESPESA, criarDespesa, excluirDespesa, escutarDespesas } from './js/despesas.js?v=20260727x';
+import { toast, confirmar, confirmarForte, executar } from './js/ui-feedback.js?v=20260727x';
+import { db } from './js/firebase-config.js?v=20260727x';
 
 // Luzinhas douradas ao redor do card de login
 // Mostra o nome da loja usada da última vez que alguém logou neste aparelho

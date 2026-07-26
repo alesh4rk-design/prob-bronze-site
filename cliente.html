@@ -15,7 +15,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Pro'Bronze">
-<link rel="stylesheet" href="css/theme.css?v=20260727w">
+<link rel="stylesheet" href="css/theme.css?v=20260727x">
 <style>
   * { box-sizing: border-box; }
   body { margin: 0; background: var(--bg); color: var(--text); font-family: var(--font); min-height: 100vh; }
@@ -24,10 +24,15 @@
   #tela-login {
     min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 1.5rem;
     background: radial-gradient(circle at 20% 20%, rgba(var(--accent-rgb),.20), transparent 55%), var(--bg);
-    position: relative; overflow: hidden;
+    position: relative;
   }
-  /* Raios de luz gigantes girando atrás de toda a tela de login */
-  #tela-login::before {
+  /* Raios de luz gigantes girando atrás de toda a tela de login — fica num
+     elemento fixo próprio (não filho de #tela-login) pra não usar overflow:
+     hidden ali, senão corta o sol quando a tela é mais baixa que o card. */
+  #tela-login-raios {
+    position: fixed; inset: 0; overflow: hidden; z-index: 0; pointer-events: none;
+  }
+  #tela-login-raios::before {
     content: '';
     position: absolute; top: 50%; left: 50%;
     width: 160vmax; height: 160vmax;
@@ -35,9 +40,7 @@
     background: repeating-conic-gradient(from 0deg, rgba(var(--accent-rgb),.16) 0deg 3deg, transparent 3deg 18deg);
     -webkit-mask-image: radial-gradient(circle, transparent 8%, black 18%, black 38%, transparent 58%);
     mask-image: radial-gradient(circle, transparent 8%, black 18%, black 38%, transparent 58%);
-    z-index: 0;
     animation: raios-girar 26s linear infinite;
-    pointer-events: none;
   }
   @keyframes raios-girar {
     to { transform: translate(-50%, -50%) rotate(360deg); }
@@ -129,6 +132,7 @@
 <body>
 
 <div id="tela-login">
+  <div id="tela-login-raios"></div>
   <div class="login-card-wrap">
   <div class="login-card">
     <div class="login-sol">☀️</div>
@@ -181,18 +185,18 @@
 </div>
 
 <script type="module">
-import { onAuthChange, login, logout } from './js/auth.js?v=20260727w';
-import { db } from './js/firebase-config.js?v=20260727w';
+import { onAuthChange, login, logout } from './js/auth.js?v=20260727x';
+import { db } from './js/firebase-config.js?v=20260727x';
 import {
   collection, query, where, onSnapshot
 } from 'https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js';
-import { escutarServicos, calcularCombo } from './js/servicos.js?v=20260727w';
-import { criarAgendamento, contarConflitosHorario } from './js/agenda.js?v=20260727w';
-import { checarElegibilidade } from './js/agenda.js?v=20260727w';
-import { escutarCabines } from './js/cabines.js?v=20260727w';
-import { escutarConfigNegocio } from './js/config-negocio.js?v=20260727w';
-import { escutarHorarios, validarHorarioFuncionamento } from './js/horarios.js?v=20260727w';
-import { toast } from './js/ui-feedback.js?v=20260727w';
+import { escutarServicos, calcularCombo } from './js/servicos.js?v=20260727x';
+import { criarAgendamento, contarConflitosHorario } from './js/agenda.js?v=20260727x';
+import { checarElegibilidade } from './js/agenda.js?v=20260727x';
+import { escutarCabines } from './js/cabines.js?v=20260727x';
+import { escutarConfigNegocio } from './js/config-negocio.js?v=20260727x';
+import { escutarHorarios, validarHorarioFuncionamento } from './js/horarios.js?v=20260727x';
+import { toast } from './js/ui-feedback.js?v=20260727x';
 
 window.addEventListener('unhandledrejection', (e) => {
   console.error(e.reason);

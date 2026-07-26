@@ -7,17 +7,22 @@
 <meta http-equiv="Expires" content="0">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Pro'Bronze — Criar Minha Conta</title>
-<link rel="stylesheet" href="css/theme.css?v=20260727w">
+<link rel="stylesheet" href="css/theme.css?v=20260727x">
 <style>
   * { box-sizing: border-box; }
   body {
     margin: 0; background: var(--bg); color: var(--text); font-family: var(--font); min-height: 100vh;
     display: flex; align-items: center; justify-content: center; padding: 1.5rem;
     background: radial-gradient(circle at 20% 20%, rgba(var(--accent-rgb),.20), transparent 55%), var(--bg);
-    position: relative; overflow: hidden;
+    position: relative;
   }
-  /* Raios de luz gigantes girando atrás de toda a tela */
-  body::before {
+  /* Raios de luz gigantes girando atrás de toda a tela — fica num elemento
+     fixo próprio (não filho do body) pra não usar overflow: hidden ali,
+     senão corta o sol quando a tela é mais baixa que o card. */
+  #tela-raios {
+    position: fixed; inset: 0; overflow: hidden; z-index: 0; pointer-events: none;
+  }
+  #tela-raios::before {
     content: '';
     position: absolute; top: 50%; left: 50%;
     width: 160vmax; height: 160vmax;
@@ -25,9 +30,7 @@
     background: repeating-conic-gradient(from 0deg, rgba(var(--accent-rgb),.16) 0deg 3deg, transparent 3deg 18deg);
     -webkit-mask-image: radial-gradient(circle, transparent 8%, black 18%, black 38%, transparent 58%);
     mask-image: radial-gradient(circle, transparent 8%, black 18%, black 38%, transparent 58%);
-    z-index: 0;
     animation: raios-girar 26s linear infinite;
-    pointer-events: none;
   }
   @keyframes raios-girar {
     to { transform: translate(-50%, -50%) rotate(360deg); }
@@ -99,6 +102,7 @@
 </head>
 <body>
 
+<div id="tela-raios"></div>
 <div class="card-wrap">
 <div class="card" id="tela-form">
   <div class="login-sol">☀️</div>
@@ -132,7 +136,7 @@
 </div>
 
 <script type="module">
-import { cadastrarClienteComLogin } from './js/cliente-auth.js?v=20260727w';
+import { cadastrarClienteComLogin } from './js/cliente-auth.js?v=20260727x';
 
 const $ = (id) => document.getElementById(id);
 const params = new URLSearchParams(window.location.search);
