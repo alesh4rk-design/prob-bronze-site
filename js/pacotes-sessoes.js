@@ -1,10 +1,10 @@
 // Pro'Bronze — Pacotes de Sessões (adaptação de "Acordos com Cliente" do Pro'B)
-import { db } from "./firebase-config.js?v=20260726i";
+import { db } from "./firebase-config.js?v=20260726j";
 import {
   collection, doc, addDoc, updateDoc, getDoc,
   onSnapshot, query, where, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
-import { notificarErroFirestore } from "./firestore-erro.js?v=20260726i";
+import { notificarErroFirestore } from "./firestore-erro.js?v=20260726j";
 
 // status: "ativo" | "finalizado" | "expirado"
 export async function criarPacote(negocioId, { clienteId, clienteNome, totalSessoes, valorTotal, validadeDias = 90 }) {

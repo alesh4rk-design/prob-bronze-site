@@ -7,7 +7,7 @@
 <meta http-equiv="Expires" content="0">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Pro'Bronze — Painel</title>
-<link rel="stylesheet" href="css/theme.css?v=20260726i">
+<link rel="stylesheet" href="css/theme.css?v=20260726j">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -624,12 +624,31 @@
       <div class="card">
         <div class="card-titulo com-ajuda">Novo Produto de Cabine</div>
         <div class="ajuda-inline">Cadastre produtos usados nas sessões (bronzeador, protetor, óleo) pra controlar o estoque, ou produtos que você vende direto pra cliente.</div>
-        <div class="input-group"><label>Nome</label><input type="text" id="prod-nome" placeholder="Ex: Bronzeador"></div>
-        <div class="input-group"><label>Quantidade</label><input type="number" id="prod-qtd"></div>
+        <div class="input-group">
+          <label>Código de barras (opcional)</label>
+          <div style="display:flex;gap:.5rem">
+            <input type="text" id="prod-codigo" placeholder="Leia com o leitor ou digite" style="flex:1">
+            <button type="button" class="btn-secundario" id="btn-scan-camera-cadastro" style="width:auto;white-space:nowrap">📷 Câmera</button>
+          </div>
+          <div id="prod-codigo-aviso" style="display:none;font-size:.78rem;color:var(--accent-light);margin-top:.4rem"></div>
+        </div>
+        <div class="input-group"><label id="prod-nome-label">Nome</label><input type="text" id="prod-nome" placeholder="Ex: Bronzeador"></div>
+        <div class="input-group"><label id="prod-estoque-label">Quantidade</label><input type="number" id="prod-qtd"></div>
         <div class="input-group"><label>Unidade</label><input type="text" id="prod-unidade" value="ml"></div>
         <div class="input-group"><label>Estoque mínimo (alerta)</label><input type="number" id="prod-minimo" value="0"></div>
+        <div class="input-group"><label>Custo (R$, opcional — calcula a margem)</label><input type="number" id="prod-custo" step="0.01"></div>
         <div class="input-group"><label>Preço de venda (R$, se vender pra cliente)</label><input type="number" id="prod-preco-venda" step="0.01" value="0"></div>
+        <div id="prod-margem-aviso" style="display:none;font-size:.78rem;border-radius:8px;padding:.5rem .7rem;margin-bottom:1rem"></div>
         <button class="btn-primario" id="btn-criar-produto">Adicionar Produto</button>
+      </div>
+      <div class="card">
+        <div class="card-titulo com-ajuda">Venda rápida por código de barras</div>
+        <div class="ajuda-inline">Leia o código com o leitor (USB/Bluetooth digita e aperta Enter sozinho) ou use a câmera.</div>
+        <div style="display:flex;gap:.5rem;margin-bottom:.6rem">
+          <input type="text" id="venda-rapida-codigo" placeholder="Código de barras" style="flex:1">
+          <button type="button" class="btn-secundario" id="btn-scan-camera-venda" style="width:auto;white-space:nowrap">📷 Câmera</button>
+        </div>
+        <div id="venda-rapida-nao-encontrado" style="display:none;color:var(--red);font-size:.82rem">Nenhum produto com esse código.</div>
       </div>
       <div class="card">
         <div class="card-titulo">Estoque</div>
@@ -827,37 +846,37 @@
 </div>
 
 <script type="module">
-import { onAuthChange, login, logout, iniciarLoginComGoogle, resetSenha } from './js/auth.js?v=20260726i';
-import { VALOR_MENSALIDADE, PIX_PLATAFORMA, WHATSAPP_SUPORTE } from './js/admin-config.js?v=20260726i';
-import { escutarCabines, atualizarStatusCabine, criarCabine, excluirCabine } from './js/cabines.js?v=20260726i';
+import { onAuthChange, login, logout, iniciarLoginComGoogle, resetSenha } from './js/auth.js?v=20260726j';
+import { VALOR_MENSALIDADE, PIX_PLATAFORMA, WHATSAPP_SUPORTE } from './js/admin-config.js?v=20260726j';
+import { escutarCabines, atualizarStatusCabine, criarCabine, excluirCabine } from './js/cabines.js?v=20260726j';
 import {
   escutarAgendamentosDoDia, criarAgendamento, concluirAgendamento, escutarFilaEspera,
   cancelarAgendamento, marcarFalta, atribuirCabine, contarConflitosHorario, marcarEmAndamento,
   salvarAvaliacaoSessao
-} from './js/agenda.js?v=20260726i';
-import { checarElegibilidade } from './js/agenda.js?v=20260726i';
-import { escutarServicos, criarServico, calcularCombo } from './js/servicos.js?v=20260726i';
-import { escutarClientes, criarCliente, ehAniversarioHoje } from './js/clientes.js?v=20260726i';
-import { criarMembroEquipe, escutarEquipe, excluirMembroEquipe } from './js/equipe.js?v=20260726i';
-import { tempoMaxRecomendado } from './js/ficha-pele.js?v=20260726i';
-import { registrarPagamento, escutarPendencias, quitarPendencia, resumoFinanceiro, escutarFinanceiroPeriodo } from './js/financeiro.js?v=20260726i';
-import { criarPacote, escutarPacotesDoNegocio, consumirSessaoDoPacote } from './js/pacotes-sessoes.js?v=20260726i';
-import { criarProdutoCabine, escutarProdutosCabine, produtosEmAlerta, baixarEstoque } from './js/produtos-cabine.js?v=20260726i';
-import { criarCupom, escutarCupons, desativarCupom, calcularDescontoCupom } from './js/cupons.js?v=20260726i';
-import { exportarExcel, exportarPDF, montarRelatorioFinanceiro, COLUNAS_FINANCEIRO } from './js/relatorios.js?v=20260726i';
+} from './js/agenda.js?v=20260726j';
+import { checarElegibilidade } from './js/agenda.js?v=20260726j';
+import { escutarServicos, criarServico, calcularCombo } from './js/servicos.js?v=20260726j';
+import { escutarClientes, criarCliente, ehAniversarioHoje } from './js/clientes.js?v=20260726j';
+import { criarMembroEquipe, escutarEquipe, excluirMembroEquipe } from './js/equipe.js?v=20260726j';
+import { tempoMaxRecomendado } from './js/ficha-pele.js?v=20260726j';
+import { registrarPagamento, escutarPendencias, quitarPendencia, resumoFinanceiro, escutarFinanceiroPeriodo } from './js/financeiro.js?v=20260726j';
+import { criarPacote, escutarPacotesDoNegocio, consumirSessaoDoPacote } from './js/pacotes-sessoes.js?v=20260726j';
+import { criarProdutoCabine, escutarProdutosCabine, produtosEmAlerta, baixarEstoque, somarEstoque, buscarPorCodigoBarras } from './js/produtos-cabine.js?v=20260726j';
+import { criarCupom, escutarCupons, desativarCupom, calcularDescontoCupom } from './js/cupons.js?v=20260726j';
+import { exportarExcel, exportarPDF, montarRelatorioFinanceiro, COLUNAS_FINANCEIRO } from './js/relatorios.js?v=20260726j';
 import {
   linkConfirmacaoAgendamento, linkCobrancaPendente, linkAtrasoAgendamento,
   linkClienteSumido, linkMensagemLivre, linkLembreteIntervalo,
   linkSuaVezChegando, linkPromocao, linkAniversario, linkAgradecimento,
   linkPacoteAcabando
-} from './js/whatsapp.js?v=20260726i';
-import { verificarIntervaloMinimo } from './js/ficha-pele.js?v=20260726i';
-import { tutorialJaVisto, iniciarTutorial } from './js/tutorial.js?v=20260726i';
-import { DIAS_SEMANA, escutarHorarios, salvarHorarios } from './js/horarios.js?v=20260726i';
-import { escutarConfigNegocio, salvarConfigNegocio } from './js/config-negocio.js?v=20260726i';
-import { CATEGORIAS_DESPESA, criarDespesa, excluirDespesa, escutarDespesas } from './js/despesas.js?v=20260726i';
-import { toast, confirmar, confirmarForte, executar } from './js/ui-feedback.js?v=20260726i';
-import { db } from './js/firebase-config.js?v=20260726i';
+} from './js/whatsapp.js?v=20260726j';
+import { verificarIntervaloMinimo } from './js/ficha-pele.js?v=20260726j';
+import { tutorialJaVisto, iniciarTutorial } from './js/tutorial.js?v=20260726j';
+import { DIAS_SEMANA, escutarHorarios, salvarHorarios } from './js/horarios.js?v=20260726j';
+import { escutarConfigNegocio, salvarConfigNegocio } from './js/config-negocio.js?v=20260726j';
+import { CATEGORIAS_DESPESA, criarDespesa, excluirDespesa, escutarDespesas } from './js/despesas.js?v=20260726j';
+import { toast, confirmar, confirmarForte, executar } from './js/ui-feedback.js?v=20260726j';
+import { db } from './js/firebase-config.js?v=20260726j';
 
 // Luzinhas douradas ao redor do card de login
 // Mostra o nome da loja usada da última vez que alguém logou neste aparelho
@@ -1232,14 +1251,22 @@ function renderProdutos(produtos) {
   const wrap = $('lista-produtos');
   if (produtos.length === 0) { wrap.innerHTML = '<div class="empty-state">Nenhum produto cadastrado.</div>'; return; }
   const emAlerta = new Set(produtosEmAlerta(produtos).map((p) => p.id));
-  wrap.innerHTML = produtos.map((p) => `
+  wrap.innerHTML = produtos.map((p) => {
+    let margemTexto = '';
+    if (p.custo != null && p.precoVenda > 0) {
+      const margem = p.precoVenda - p.custo;
+      const margemPct = (margem / p.precoVenda) * 100;
+      margemTexto = ` · margem R$${margem.toFixed(2)} (${margemPct.toFixed(0)}%)`;
+    }
+    return `
     <div class="agendamento-item">
       <div class="agendamento-info">
         <div class="nome">${p.nome} ${emAlerta.has(p.id) ? '<span class="badge cancelado">estoque baixo</span>' : ''}</div>
-        <div class="detalhe">${p.quantidade}${p.unidade} · mínimo ${p.estoqueMinimo}${p.unidade}</div>
+        <div class="detalhe">${p.codigoBarras ? `código ${p.codigoBarras} · ` : ''}${p.quantidade}${p.unidade} · mínimo ${p.estoqueMinimo}${p.unidade}${margemTexto}</div>
       </div>
     </div>
-  `).join('');
+  `;
+  }).join('');
 }
 
 $('btn-criar-cabine').addEventListener('click', async () => {
@@ -1257,11 +1284,69 @@ $('btn-criar-produto').addEventListener('click', async () => {
   const unidade = $('prod-unidade').value.trim() || 'ml';
   const estoqueMinimo = Number($('prod-minimo').value) || 0;
   const precoVenda = Number($('prod-preco-venda').value) || 0;
+  const codigoBarras = $('prod-codigo').value.trim() || null;
+  const custo = $('prod-custo').value ? Number($('prod-custo').value) : null;
   if (!nome || !quantidade) { toast('Preencha nome e quantidade.', 'aviso'); return; }
-  await criarProdutoCabine(usuarioAtual.negocioId, { nome, quantidade, unidade, estoqueMinimo, precoVenda });
+
+  const existente = buscarPorCodigoBarras(produtosCabineCache, codigoBarras);
+  if (existente) {
+    await somarEstoque(existente.id, quantidade);
+    toast(`+${quantidade}${unidade} adicionado ao estoque de "${existente.nome}".`, 'sucesso');
+  } else {
+    await criarProdutoCabine(usuarioAtual.negocioId, { nome, quantidade, unidade, estoqueMinimo, precoVenda, codigoBarras, custo });
+    toast('Produto cadastrado.', 'sucesso');
+  }
   $('prod-nome').value = ''; $('prod-qtd').value = ''; $('prod-minimo').value = '0'; $('prod-preco-venda').value = '0';
-  toast('Produto cadastrado.', 'sucesso');
+  $('prod-codigo').value = ''; $('prod-custo').value = '';
+  $('prod-codigo-aviso').style.display = 'none';
+  $('prod-margem-aviso').style.display = 'none';
+  $('prod-nome-label').textContent = 'Nome';
+  $('prod-estoque-label').textContent = 'Quantidade';
+  $('btn-criar-produto').textContent = 'Adicionar Produto';
 });
+
+// Ao digitar/ler um código já cadastrado, avisa e prepara pra somar estoque
+$('prod-codigo').addEventListener('input', () => {
+  const codigo = $('prod-codigo').value.trim();
+  const aviso = $('prod-codigo-aviso');
+  const existente = buscarPorCodigoBarras(produtosCabineCache, codigo);
+  if (existente) {
+    aviso.style.display = 'block';
+    aviso.textContent = `📦 Esse código já é de "${existente.nome}" (${existente.quantidade}${existente.unidade} em estoque). Vai só somar a quantidade abaixo.`;
+    $('prod-nome').value = existente.nome;
+    $('prod-nome-label').textContent = 'Nome (já cadastrado)';
+    $('prod-estoque-label').textContent = 'Quantas chegaram agora';
+    $('btn-criar-produto').textContent = '+ Somar ao estoque';
+  } else {
+    aviso.style.display = 'none';
+    $('prod-nome-label').textContent = 'Nome';
+    $('prod-estoque-label').textContent = 'Quantidade';
+    $('btn-criar-produto').textContent = 'Adicionar Produto';
+  }
+});
+$('prod-codigo').addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); $('prod-qtd').focus(); } });
+
+function atualizarMargemCadastro() {
+  const el = $('prod-margem-aviso');
+  const custo = parseFloat($('prod-custo').value);
+  const preco = parseFloat($('prod-preco-venda').value);
+  if (isNaN(custo) || isNaN(preco) || preco <= 0) { el.style.display = 'none'; return; }
+  const margem = preco - custo;
+  const margemPct = (margem / preco) * 100;
+  el.style.display = 'block';
+  if (margem < 0) {
+    el.style.background = 'rgba(193,85,74,.1)'; el.style.color = 'var(--red)';
+    el.textContent = `⚠️ Prejuízo de R$${Math.abs(margem).toFixed(2)} por unidade.`;
+  } else if (margemPct < 15) {
+    el.style.background = 'rgba(217,164,65,.1)'; el.style.color = 'var(--yellow)';
+    el.textContent = `😐 Margem apertada: R$${margem.toFixed(2)} por unidade (${margemPct.toFixed(0)}%)`;
+  } else {
+    el.style.background = 'rgba(123,160,91,.1)'; el.style.color = 'var(--green)';
+    el.textContent = `✓ Lucro de R$${margem.toFixed(2)} por unidade (${margemPct.toFixed(0)}%)`;
+  }
+}
+$('prod-custo').addEventListener('input', atualizarMargemCadastro);
+$('prod-preco-venda').addEventListener('input', atualizarMargemCadastro);
 
 function renderCupons(cupons) {
   const wrap = $('lista-cupons');
@@ -2026,16 +2111,80 @@ function preencherSelectVenderProduto(produtos) {
   sel.value = atual;
 }
 
-function abrirModalVenderProduto(clienteId) {
+function abrirModalVenderProduto(clienteId, produtoIdPreSelecionado = null) {
   $('modal-whatsapp').style.display = 'none';
   const cliente = clientesCache.find((c) => c.id === clienteId);
-  $('venda-cliente-nome').textContent = cliente?.nome || '';
-  $('venda-produto').value = '';
+  $('venda-cliente-nome').textContent = cliente?.nome || (produtoIdPreSelecionado ? 'Venda avulsa' : '');
+  $('venda-produto').value = produtoIdPreSelecionado || '';
   $('venda-quantidade').value = '1';
   $('venda-valor').value = '';
   selecionarFormaPagamento('venda-forma', 'dinheiro');
   $('venda-status').value = 'pago';
+  if (produtoIdPreSelecionado) $('venda-produto').dispatchEvent(new Event('change'));
   $('modal-vender-produto').style.display = 'flex';
+}
+
+// ── Venda rápida por código de barras (leitor USB/Bluetooth ou câmera) ──
+function venderPorCodigoBarras(codigo) {
+  $('venda-rapida-nao-encontrado').style.display = 'none';
+  if (!codigo) return;
+  const produto = buscarPorCodigoBarras(produtosCabineCache, codigo);
+  if (!produto) { $('venda-rapida-nao-encontrado').style.display = 'block'; return; }
+  if (produto.quantidade <= 0) { toast('Esse produto está sem estoque.', 'aviso'); return; }
+  clienteMenuAtualId = null;
+  abrirModalVenderProduto(null, produto.id);
+  $('venda-rapida-codigo').value = '';
+}
+$('venda-rapida-codigo').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') { e.preventDefault(); venderPorCodigoBarras($('venda-rapida-codigo').value.trim()); }
+});
+$('btn-scan-camera-venda').addEventListener('click', () => abrirScannerCamera((codigo) => venderPorCodigoBarras(codigo)));
+$('btn-scan-camera-cadastro').addEventListener('click', () => abrirScannerCamera((codigo) => {
+  $('prod-codigo').value = codigo;
+  $('prod-codigo').dispatchEvent(new Event('input'));
+}));
+
+// Leitor de código de barras pela câmera do celular (a maioria usa leitor
+// USB/Bluetooth físico, que digita sozinho — a câmera é o plano B)
+let scannerCameraCarregado = false;
+function abrirScannerCamera(aoLer) {
+  const iniciar = () => {
+    const overlay = document.createElement('div');
+    overlay.style.cssText = 'position:fixed;inset:0;z-index:9997;background:#000;display:flex;flex-direction:column;';
+    overlay.innerHTML = `
+      <div style="padding:1rem;display:flex;justify-content:space-between;align-items:center;background:var(--card2)">
+        <span style="color:#fff;font-weight:700;font-size:.9rem">📷 Aponte para o código de barras</span>
+        <button id="btn-fechar-scanner" style="background:transparent;border:1.5px solid var(--card-border);color:#fff;border-radius:8px;padding:.4rem .8rem;cursor:pointer">Fechar</button>
+      </div>
+      <div id="scanner-camera-view" style="flex:1"></div>`;
+    document.body.appendChild(overlay);
+
+    const scanner = new Html5Qrcode('scanner-camera-view', {
+      formatsToSupport: (typeof Html5QrcodeSupportedFormats !== 'undefined') ? [
+        Html5QrcodeSupportedFormats.EAN_13, Html5QrcodeSupportedFormats.EAN_8,
+        Html5QrcodeSupportedFormats.UPC_A, Html5QrcodeSupportedFormats.UPC_E,
+        Html5QrcodeSupportedFormats.CODE_128, Html5QrcodeSupportedFormats.CODE_39,
+        Html5QrcodeSupportedFormats.CODABAR, Html5QrcodeSupportedFormats.ITF
+      ] : undefined,
+      verbose: false
+    });
+    const parar = () => { scanner.stop().catch(() => {}); overlay.remove(); };
+    overlay.querySelector('#btn-fechar-scanner').addEventListener('click', parar);
+
+    scanner.start(
+      { facingMode: 'environment' },
+      { fps: 15, qrbox: { width: 280, height: 130 }, aspectRatio: 1.6, experimentalFeatures: { useBarCodeDetectorIfSupported: true } },
+      (codigo) => { parar(); aoLer(codigo); },
+      () => {}
+    ).catch((e) => { toast('Não deu para acessar a câmera: ' + e.message, 'erro'); overlay.remove(); });
+  };
+
+  if (scannerCameraCarregado) { iniciar(); return; }
+  const script = document.createElement('script');
+  script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js';
+  script.onload = () => { scannerCameraCarregado = true; iniciar(); };
+  script.onerror = () => toast('Não deu para carregar o leitor de câmera. Confira sua internet.', 'erro');
+  document.head.appendChild(script);
 }
 
 $('venda-produto').addEventListener('change', () => {
