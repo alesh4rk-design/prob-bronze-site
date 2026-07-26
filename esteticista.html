@@ -15,7 +15,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Pro'Bronze">
-<link rel="stylesheet" href="css/theme.css?v=20260727r">
+<link rel="stylesheet" href="css/theme.css?v=20260727s">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -829,6 +829,18 @@
     <!-- ABA CUPONS -->
     <div class="aba-conteudo" id="aba-cupons">
       <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:.6rem;flex-wrap:wrap;margin-bottom:.8rem">
+          <div class="card-titulo com-ajuda" style="margin-bottom:0">Cupons Ativos</div>
+          <button class="btn-primario" style="width:auto" id="btn-abrir-cadastro-cupom">+ Novo Cupom</button>
+        </div>
+        <div class="ajuda-inline">Crie um código que a cliente pode usar pra ganhar desconto na hora de pagar.</div>
+        <div id="lista-cupons"><div class="empty-state">Carregando...</div></div>
+      </div>
+    </div>
+
+    <!-- Modal Novo Cupom -->
+    <div id="modal-cadastro-cupom" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:55;align-items:center;justify-content:center;padding:1rem">
+      <div class="card" style="max-width:420px;width:100%;max-height:90vh;overflow-y:auto">
         <div class="card-titulo com-ajuda">Novo Cupom</div>
         <div class="ajuda-inline">Crie um código que a cliente pode usar pra ganhar desconto na hora de pagar.</div>
         <div class="input-group"><label>Código</label><input type="text" id="cup-codigo" placeholder="Ex: VERAO10"></div>
@@ -838,10 +850,7 @@
         </div>
         <div class="input-group"><label>Valor</label><input type="number" id="cup-valor" step="0.01"></div>
         <button class="btn-primario" id="btn-criar-cupom">Criar Cupom</button>
-      </div>
-      <div class="card">
-        <div class="card-titulo">Cupons Ativos</div>
-        <div id="lista-cupons"><div class="empty-state">Carregando...</div></div>
+        <button class="btn-secundario" style="width:100%;margin-top:.5rem" id="btn-cancelar-cadastro-cupom">Cancelar</button>
       </div>
     </div>
 
@@ -1062,25 +1071,25 @@
 </div>
 
 <script type="module">
-import { onAuthChange, login, logout, iniciarLoginComGoogle, resetSenha } from './js/auth.js?v=20260727r';
-import { VALOR_MENSALIDADE, PIX_PLATAFORMA, WHATSAPP_SUPORTE } from './js/admin-config.js?v=20260727r';
-import { escutarCabines, atualizarStatusCabine, criarCabine, excluirCabine } from './js/cabines.js?v=20260727r';
+import { onAuthChange, login, logout, iniciarLoginComGoogle, resetSenha } from './js/auth.js?v=20260727s';
+import { VALOR_MENSALIDADE, PIX_PLATAFORMA, WHATSAPP_SUPORTE } from './js/admin-config.js?v=20260727s';
+import { escutarCabines, atualizarStatusCabine, criarCabine, excluirCabine } from './js/cabines.js?v=20260727s';
 import {
   escutarAgendamentosDoDia, criarAgendamento, concluirAgendamento,
   cancelarAgendamento, marcarFalta, atribuirCabine, contarConflitosHorario, marcarEmAndamento,
   salvarAvaliacaoSessao, estenderTempoSessao
-} from './js/agenda.js?v=20260727r';
-import { checarElegibilidade } from './js/agenda.js?v=20260727r';
-import { escutarServicos, criarServico, excluirServico, calcularCombo } from './js/servicos.js?v=20260727r';
-import { escutarClientes, criarCliente, ehAniversarioHoje } from './js/clientes.js?v=20260727r';
-import { criarMembroEquipe, escutarEquipe, excluirMembroEquipe, editarMembroEquipe } from './js/equipe.js?v=20260727r';
-import { tempoMaxRecomendado } from './js/ficha-pele.js?v=20260727r';
-import { registrarPagamento, escutarPendencias, quitarPendencia, resumoFinanceiro, escutarFinanceiroPeriodo } from './js/financeiro.js?v=20260727r';
-import { criarPacote, escutarPacotesDoNegocio, consumirSessaoDoPacote, excluirPacote, pacoteVencido, diasParado, DIAS_PARADO_ALERTA } from './js/pacotes-sessoes.js?v=20260727r';
-import { criarProdutoCabine, escutarProdutosCabine, produtosEmAlerta, baixarEstoque, somarEstoque, buscarPorCodigoBarras, excluirProdutoCabine } from './js/produtos-cabine.js?v=20260727r';
-import { criarInsumo, escutarInsumos, reporInsumo, darBaixaInsumo, excluirInsumo, insumosEmAlerta, buscarInsumoPorCodigoBarras } from './js/insumos.js?v=20260727r';
-import { criarCupom, escutarCupons, desativarCupom, calcularDescontoCupom } from './js/cupons.js?v=20260727r';
-import { exportarExcel, exportarPDF, montarRelatorioFinanceiro, COLUNAS_FINANCEIRO } from './js/relatorios.js?v=20260727r';
+} from './js/agenda.js?v=20260727s';
+import { checarElegibilidade } from './js/agenda.js?v=20260727s';
+import { escutarServicos, criarServico, excluirServico, calcularCombo } from './js/servicos.js?v=20260727s';
+import { escutarClientes, criarCliente, ehAniversarioHoje } from './js/clientes.js?v=20260727s';
+import { criarMembroEquipe, escutarEquipe, excluirMembroEquipe, editarMembroEquipe } from './js/equipe.js?v=20260727s';
+import { tempoMaxRecomendado } from './js/ficha-pele.js?v=20260727s';
+import { registrarPagamento, escutarPendencias, quitarPendencia, resumoFinanceiro, escutarFinanceiroPeriodo } from './js/financeiro.js?v=20260727s';
+import { criarPacote, escutarPacotesDoNegocio, consumirSessaoDoPacote, excluirPacote, pacoteVencido, diasParado, DIAS_PARADO_ALERTA } from './js/pacotes-sessoes.js?v=20260727s';
+import { criarProdutoCabine, escutarProdutosCabine, produtosEmAlerta, baixarEstoque, somarEstoque, buscarPorCodigoBarras, excluirProdutoCabine } from './js/produtos-cabine.js?v=20260727s';
+import { criarInsumo, escutarInsumos, reporInsumo, darBaixaInsumo, excluirInsumo, insumosEmAlerta, buscarInsumoPorCodigoBarras } from './js/insumos.js?v=20260727s';
+import { criarCupom, escutarCupons, desativarCupom, calcularDescontoCupom } from './js/cupons.js?v=20260727s';
+import { exportarExcel, exportarPDF, montarRelatorioFinanceiro, COLUNAS_FINANCEIRO } from './js/relatorios.js?v=20260727s';
 import {
   linkConfirmacaoAgendamento, linkCobrancaPendente, linkAtrasoAgendamento,
   linkClienteSumido, linkMensagemLivre, linkLembreteIntervalo,
@@ -1088,14 +1097,14 @@ import {
   linkPacoteAcabando,
   linkSessaoPacoteAtendida,
   linkPacoteParado
-} from './js/whatsapp.js?v=20260727r';
-import { verificarIntervaloMinimo } from './js/ficha-pele.js?v=20260727r';
-import { tutorialJaVisto, iniciarTutorial } from './js/tutorial.js?v=20260727r';
-import { DIAS_SEMANA, escutarHorarios, salvarHorarios, validarHorarioFuncionamento } from './js/horarios.js?v=20260727r';
-import { escutarConfigNegocio, salvarConfigNegocio } from './js/config-negocio.js?v=20260727r';
-import { CATEGORIAS_DESPESA, criarDespesa, excluirDespesa, escutarDespesas } from './js/despesas.js?v=20260727r';
-import { toast, confirmar, confirmarForte, executar } from './js/ui-feedback.js?v=20260727r';
-import { db } from './js/firebase-config.js?v=20260727r';
+} from './js/whatsapp.js?v=20260727s';
+import { verificarIntervaloMinimo } from './js/ficha-pele.js?v=20260727s';
+import { tutorialJaVisto, iniciarTutorial } from './js/tutorial.js?v=20260727s';
+import { DIAS_SEMANA, escutarHorarios, salvarHorarios, validarHorarioFuncionamento } from './js/horarios.js?v=20260727s';
+import { escutarConfigNegocio, salvarConfigNegocio } from './js/config-negocio.js?v=20260727s';
+import { CATEGORIAS_DESPESA, criarDespesa, excluirDespesa, escutarDespesas } from './js/despesas.js?v=20260727s';
+import { toast, confirmar, confirmarForte, executar } from './js/ui-feedback.js?v=20260727s';
+import { db } from './js/firebase-config.js?v=20260727s';
 
 // Luzinhas douradas ao redor do card de login
 // Mostra o nome da loja usada da última vez que alguém logou neste aparelho
@@ -1778,7 +1787,15 @@ $('btn-criar-cupom').addEventListener('click', async () => {
   if (!codigo || !valor) { toast('Preencha código e valor.', 'aviso'); return; }
   await criarCupom(usuarioAtual.negocioId, { codigo, tipoDesconto, valor });
   $('cup-codigo').value = ''; $('cup-valor').value = '';
+  $('modal-cadastro-cupom').style.display = 'none';
   toast('Cupom criado.', 'sucesso');
+});
+
+$('btn-abrir-cadastro-cupom').addEventListener('click', () => {
+  $('modal-cadastro-cupom').style.display = 'flex';
+});
+$('btn-cancelar-cadastro-cupom').addEventListener('click', () => {
+  $('modal-cadastro-cupom').style.display = 'none';
 });
 
 // ── Financeiro: análise do período (gráficos) ────────────
