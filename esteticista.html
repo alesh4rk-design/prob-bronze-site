@@ -251,15 +251,6 @@
         </div>
       </div>
 
-      <!-- Timer de sessão ativa -->
-      <div class="card" id="card-timer" style="display:none">
-        <div class="card-titulo">Sessão em andamento — <span id="timer-cabine-nome"></span></div>
-        <div class="timer-wrap">
-          <div class="timer-num" id="timer-num">00:00</div>
-          <div class="timer-barra"><div class="timer-barra-fill" id="timer-fill" style="width:100%"></div></div>
-          <button class="btn-primario" id="btn-finalizar-sessao">Finalizar Sessão</button>
-        </div>
-      </div>
     </div>
 
     <!-- ABA AGENDA -->
@@ -654,8 +645,9 @@ let cabinesCache = [];
 let servicosCache = [];
 let clientesCache = [];
 let combosSelecionados = new Set();
-let sessaoAtiva = null; // { cabineId, agendamentoId, clienteId, tempoMin, iniciadoEm, valorBruto }
-let timerInterval = null;
+let sessoesAtivas = new Map(); // cabineId -> { agendamentoId, clienteId, tempoMin, iniciadoEm, valorBruto }
+let timerIntervalGlobal = null;
+let sessaoEmFinalizacao = null; // cabineId da sessão que está no modal de pagamento agora
 let pendenciasCache = [];
 let equipeCache = [];
 let produtosCabineCache = [];
@@ -1404,13 +1396,23 @@ function renderCabines(cabines) {
     grid.innerHTML = '<div class="empty-state">Nenhuma cabine cadastrada.</div>';
     return;
   }
-  grid.innerHTML = cabines.map((c) => `
+  grid.innerHTML = cabines.map((c) => {
+    const sessao = sessoesAtivas.get(c.id);
+    return `
     <div class="cabine-card ${c.status}" data-id="${c.id}">
       <div class="cabine-nome">${c.nome}</div>
       <div class="cabine-status">${rotuloStatus(c.status)}</div>
+      ${sessao ? `
+        <div class="timer-wrap">
+          <div class="timer-num" id="timer-num-${c.id}">00:00</div>
+          <div class="timer-barra"><div class="timer-barra-fill" id="timer-fill-${c.id}" style="width:100%"></div></div>
+          <button class="btn-primario" data-finalizar-sessao="${c.id}" style="margin-top:.4rem">Finalizar Sessão</button>
+        </div>
+      ` : ''}
       ${c.status === 'livre' ? `<button class="btn-secundario cabine-excluir" data-excluir="${c.id}" style="margin-top:.5rem;font-size:.68rem;padding:.3rem .5rem">Excluir</button>` : ''}
     </div>
-  `).join('');
+  `;
+  }).join('');
 
   grid.querySelectorAll('.cabine-card').forEach((el) => {
     el.addEventListener('click', () => cicloStatusCabine(el.dataset.id));
@@ -1423,6 +1425,13 @@ function renderCabines(cabines) {
       toast('Cabine excluída.', 'sucesso');
     });
   });
+  grid.querySelectorAll('[data-finalizar-sessao]').forEach((btn) => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      abrirModalFinalizarSessao(btn.dataset.finalizarSessao);
+    });
+  });
+  atualizarTimers();
 }
 
 function rotuloStatus(status) {
@@ -1582,58 +1591,62 @@ function renderFila(lista) {
   });
 }
 
-// ── Timer visual de sessão ──────────────────────────────
+// ── Timer visual de sessão (múltiplas sessões simultâneas, 1 por cabine) ──
 async function iniciarSessao(agendamentoId, cabineId, tempoMin, clienteId, valorBruto) {
-  if (sessaoAtiva) { toast('Já existe uma sessão em andamento. Finalize antes de iniciar outra.', 'aviso'); return; }
+  if (sessoesAtivas.has(cabineId)) { toast('Já existe uma sessão em andamento nessa cabine.', 'aviso'); return; }
   await atualizarStatusCabine(cabineId, 'ocupada');
-  const cabine = cabinesCache.find((c) => c.id === cabineId);
-  sessaoAtiva = { agendamentoId, cabineId, clienteId, tempoMin, valorBruto: valorBruto || 0, iniciadoEm: Date.now() };
-  $('timer-cabine-nome').textContent = cabine ? cabine.nome : '';
-  $('card-timer').style.display = 'block';
+  sessoesAtivas.set(cabineId, { agendamentoId, clienteId, tempoMin, valorBruto: valorBruto || 0, iniciadoEm: Date.now() });
   document.querySelector('[data-aba="cabines"]').click();
-  atualizarTimer();
-  timerInterval = setInterval(atualizarTimer, 1000);
+  renderCabines(cabinesCache);
+  if (!timerIntervalGlobal) timerIntervalGlobal = setInterval(atualizarTimers, 1000);
 }
 
-function atualizarTimer() {
-  const totalSeg = sessaoAtiva.tempoMin * 60;
-  const decorrido = Math.floor((Date.now() - sessaoAtiva.iniciadoEm) / 1000);
-  const restante = Math.max(totalSeg - decorrido, 0);
-  const min = String(Math.floor(restante / 60)).padStart(2, '0');
-  const seg = String(restante % 60).padStart(2, '0');
-  $('timer-num').textContent = `${min}:${seg}`;
-  $('timer-fill').style.width = `${(restante / totalSeg) * 100}%`;
-  $('timer-num').style.color = restante === 0 ? 'var(--red)' : 'var(--accent-light)';
+function atualizarTimers() {
+  sessoesAtivas.forEach((sessao, cabineId) => {
+    const elNum = $(`timer-num-${cabineId}`);
+    const elFill = $(`timer-fill-${cabineId}`);
+    if (!elNum || !elFill) return;
+    const totalSeg = sessao.tempoMin * 60;
+    const decorrido = Math.floor((Date.now() - sessao.iniciadoEm) / 1000);
+    const restante = Math.max(totalSeg - decorrido, 0);
+    const min = String(Math.floor(restante / 60)).padStart(2, '0');
+    const seg = String(restante % 60).padStart(2, '0');
+    elNum.textContent = `${min}:${seg}`;
+    elFill.style.width = `${(restante / totalSeg) * 100}%`;
+    elNum.style.color = restante === 0 ? 'var(--red)' : 'var(--accent-light)';
+  });
 }
 
-$('btn-finalizar-sessao').addEventListener('click', () => {
-  if (!sessaoAtiva) return;
-  clearInterval(timerInterval);
-  $('pag-valor-bruto').value = 'R$' + sessaoAtiva.valorBruto.toFixed(2);
+function abrirModalFinalizarSessao(cabineId) {
+  const sessao = sessoesAtivas.get(cabineId);
+  if (!sessao) return;
+  sessaoEmFinalizacao = cabineId;
+  $('pag-valor-bruto').value = 'R$' + sessao.valorBruto.toFixed(2);
   $('pag-desconto').value = 0;
   $('pag-cupom').value = '';
   selecionarFormaPagamento('pag-forma', 'dinheiro');
-  const pacotesDaCliente = pacotesCache.filter((p) => p.clienteId === sessaoAtiva.clienteId && p.status === 'ativo');
+  const pacotesDaCliente = pacotesCache.filter((p) => p.clienteId === sessao.clienteId && p.status === 'ativo');
   $('pag-pacote').innerHTML = '<option value="">Nenhum — cobrar avulso</option>' +
     pacotesDaCliente.map((p) => `<option value="${p.id}">${p.totalSessoes - p.sessoesUsadas} sessões restantes</option>`).join('');
   $('modal-pagamento').style.display = 'flex';
-});
+}
 
 $('btn-cancelar-pagamento').addEventListener('click', () => {
-  // Retoma o timer se a esteticista desistir de finalizar agora
+  sessaoEmFinalizacao = null;
   $('modal-pagamento').style.display = 'none';
-  timerInterval = setInterval(atualizarTimer, 1000);
 });
 
 $('btn-confirmar-pagamento').addEventListener('click', async () => {
-  if (!sessaoAtiva) return;
+  const sessao = sessoesAtivas.get(sessaoEmFinalizacao);
+  if (!sessao) return;
+  const cabineId = sessaoEmFinalizacao;
   const pacoteId = $('pag-pacote').value;
   const codigoCupom = $('pag-cupom').value.trim().toUpperCase();
   const formaPagamento = $('pag-forma').dataset.valor;
   const statusPagamento = $('pag-status').value;
 
-  await atualizarStatusCabine(sessaoAtiva.cabineId, 'livre');
-  await concluirAgendamento(sessaoAtiva.agendamentoId, sessaoAtiva.clienteId);
+  await atualizarStatusCabine(cabineId, 'livre');
+  await concluirAgendamento(sessao.agendamentoId, sessao.clienteId);
 
   if (pacoteId) {
     // Sessão consumida do pacote — não gera cobrança avulsa
@@ -1642,15 +1655,15 @@ $('btn-confirmar-pagamento').addEventListener('click', async () => {
     let desconto = Number($('pag-desconto').value) || 0;
     if (codigoCupom) {
       const cupom = cuponsCache.find((c) => c.codigo === codigoCupom);
-      if (cupom) desconto += calcularDescontoCupom(cupom, sessaoAtiva.valorBruto);
+      if (cupom) desconto += calcularDescontoCupom(cupom, sessao.valorBruto);
       else toast('Cupom não encontrado ou inválido — desconto manual aplicado normalmente.', 'aviso');
     }
     const membroAtivo = equipeCache.find((m) => m.id === usuarioAtual.uid);
     await registrarPagamento(usuarioAtual.negocioId, {
-      agendamentoId: sessaoAtiva.agendamentoId,
-      clienteId: sessaoAtiva.clienteId,
-      clienteNome: (clientesCache.find((c) => c.id === sessaoAtiva.clienteId) || {}).nome || '',
-      valorBruto: sessaoAtiva.valorBruto,
+      agendamentoId: sessao.agendamentoId,
+      clienteId: sessao.clienteId,
+      clienteNome: (clientesCache.find((c) => c.id === sessao.clienteId) || {}).nome || '',
+      valorBruto: sessao.valorBruto,
       desconto,
       formaPagamento,
       statusPagamento,
@@ -1659,9 +1672,14 @@ $('btn-confirmar-pagamento').addEventListener('click', async () => {
     });
   }
 
-  sessaoAtiva = null;
-  $('card-timer').style.display = 'none';
+  sessoesAtivas.delete(cabineId);
+  if (sessoesAtivas.size === 0 && timerIntervalGlobal) {
+    clearInterval(timerIntervalGlobal);
+    timerIntervalGlobal = null;
+  }
+  sessaoEmFinalizacao = null;
   $('modal-pagamento').style.display = 'none';
+  renderCabines(cabinesCache);
   toast('Sessão finalizada e pagamento registrado.', 'sucesso');
 });
 
