@@ -1,10 +1,10 @@
 // Pro'Bronze — Cupons e Promoções
-import { db } from "./firebase-config.js?v=20260726j";
+import { db } from "./firebase-config.js?v=20260726k";
 import {
   collection, doc, addDoc, updateDoc, deleteDoc,
   onSnapshot, query, where, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
-import { notificarErroFirestore } from "./firestore-erro.js?v=20260726j";
+import { notificarErroFirestore } from "./firestore-erro.js?v=20260726k";
 
 // tipoDesconto: "percentual" | "fixo"
 export async function criarCupom(negocioId, { codigo, tipoDesconto, valor, validade = null, usoUnico = false }) {
