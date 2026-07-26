@@ -15,7 +15,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Pro'Bronze">
-<link rel="stylesheet" href="css/theme.css?v=20260727y">
+<link rel="stylesheet" href="css/theme.css?v=20260727z">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -1084,25 +1084,25 @@
 </div>
 
 <script type="module">
-import { onAuthChange, login, logout, iniciarLoginComGoogle, resetSenha } from './js/auth.js?v=20260727y';
-import { VALOR_MENSALIDADE, PIX_PLATAFORMA, WHATSAPP_SUPORTE } from './js/admin-config.js?v=20260727y';
-import { escutarCabines, atualizarStatusCabine, criarCabine, excluirCabine } from './js/cabines.js?v=20260727y';
+import { onAuthChange, login, logout, iniciarLoginComGoogle, resetSenha } from './js/auth.js?v=20260727z';
+import { VALOR_MENSALIDADE, PIX_PLATAFORMA, WHATSAPP_SUPORTE } from './js/admin-config.js?v=20260727z';
+import { escutarCabines, atualizarStatusCabine, criarCabine, excluirCabine } from './js/cabines.js?v=20260727z';
 import {
   escutarAgendamentosDoDia, criarAgendamento, concluirAgendamento,
   cancelarAgendamento, marcarFalta, atribuirCabine, contarConflitosHorario, marcarEmAndamento,
   salvarAvaliacaoSessao, estenderTempoSessao
-} from './js/agenda.js?v=20260727y';
-import { checarElegibilidade } from './js/agenda.js?v=20260727y';
-import { escutarServicos, criarServico, excluirServico, calcularCombo } from './js/servicos.js?v=20260727y';
-import { escutarClientes, criarCliente, ehAniversarioHoje } from './js/clientes.js?v=20260727y';
-import { criarMembroEquipe, escutarEquipe, excluirMembroEquipe, editarMembroEquipe } from './js/equipe.js?v=20260727y';
-import { tempoMaxRecomendado, descricaoTipoPele } from './js/ficha-pele.js?v=20260727y';
-import { registrarPagamento, escutarPendencias, quitarPendencia, resumoFinanceiro, escutarFinanceiroPeriodo } from './js/financeiro.js?v=20260727y';
-import { criarPacote, escutarPacotesDoNegocio, consumirSessaoDoPacote, excluirPacote, pacoteVencido, diasParado, DIAS_PARADO_ALERTA } from './js/pacotes-sessoes.js?v=20260727y';
-import { criarProdutoCabine, escutarProdutosCabine, produtosEmAlerta, baixarEstoque, somarEstoque, buscarPorCodigoBarras, excluirProdutoCabine } from './js/produtos-cabine.js?v=20260727y';
-import { criarInsumo, escutarInsumos, reporInsumo, darBaixaInsumo, excluirInsumo, insumosEmAlerta, buscarInsumoPorCodigoBarras } from './js/insumos.js?v=20260727y';
-import { criarCupom, escutarCupons, desativarCupom, calcularDescontoCupom } from './js/cupons.js?v=20260727y';
-import { exportarExcel, exportarPDF, montarRelatorioFinanceiro, COLUNAS_FINANCEIRO } from './js/relatorios.js?v=20260727y';
+} from './js/agenda.js?v=20260727z';
+import { checarElegibilidade } from './js/agenda.js?v=20260727z';
+import { escutarServicos, criarServico, excluirServico, calcularCombo } from './js/servicos.js?v=20260727z';
+import { escutarClientes, criarCliente, ehAniversarioHoje } from './js/clientes.js?v=20260727z';
+import { criarMembroEquipe, escutarEquipe, excluirMembroEquipe, editarMembroEquipe } from './js/equipe.js?v=20260727z';
+import { tempoMaxRecomendado, descricaoTipoPele } from './js/ficha-pele.js?v=20260727z';
+import { registrarPagamento, escutarPendencias, quitarPendencia, resumoFinanceiro, escutarFinanceiroPeriodo } from './js/financeiro.js?v=20260727z';
+import { criarPacote, escutarPacotesDoNegocio, consumirSessaoDoPacote, excluirPacote, pacoteVencido, diasParado, DIAS_PARADO_ALERTA } from './js/pacotes-sessoes.js?v=20260727z';
+import { criarProdutoCabine, escutarProdutosCabine, produtosEmAlerta, baixarEstoque, somarEstoque, buscarPorCodigoBarras, excluirProdutoCabine } from './js/produtos-cabine.js?v=20260727z';
+import { criarInsumo, escutarInsumos, reporInsumo, darBaixaInsumo, excluirInsumo, insumosEmAlerta, buscarInsumoPorCodigoBarras } from './js/insumos.js?v=20260727z';
+import { criarCupom, escutarCupons, desativarCupom, calcularDescontoCupom } from './js/cupons.js?v=20260727z';
+import { exportarExcel, exportarPDF, montarRelatorioFinanceiro, COLUNAS_FINANCEIRO } from './js/relatorios.js?v=20260727z';
 import {
   linkConfirmacaoAgendamento, linkCobrancaPendente, linkAtrasoAgendamento,
   linkClienteSumido, linkMensagemLivre, linkLembreteIntervalo,
@@ -1110,14 +1110,14 @@ import {
   linkPacoteAcabando,
   linkSessaoPacoteAtendida,
   linkPacoteParado
-} from './js/whatsapp.js?v=20260727y';
-import { verificarIntervaloMinimo } from './js/ficha-pele.js?v=20260727y';
-import { tutorialJaVisto, iniciarTutorial } from './js/tutorial.js?v=20260727y';
-import { DIAS_SEMANA, escutarHorarios, salvarHorarios, validarHorarioFuncionamento } from './js/horarios.js?v=20260727y';
-import { escutarConfigNegocio, salvarConfigNegocio } from './js/config-negocio.js?v=20260727y';
-import { CATEGORIAS_DESPESA, criarDespesa, excluirDespesa, escutarDespesas } from './js/despesas.js?v=20260727y';
-import { toast, confirmar, confirmarForte, executar } from './js/ui-feedback.js?v=20260727y';
-import { db } from './js/firebase-config.js?v=20260727y';
+} from './js/whatsapp.js?v=20260727z';
+import { verificarIntervaloMinimo } from './js/ficha-pele.js?v=20260727z';
+import { tutorialJaVisto, iniciarTutorial } from './js/tutorial.js?v=20260727z';
+import { DIAS_SEMANA, escutarHorarios, salvarHorarios, validarHorarioFuncionamento } from './js/horarios.js?v=20260727z';
+import { escutarConfigNegocio, salvarConfigNegocio } from './js/config-negocio.js?v=20260727z';
+import { CATEGORIAS_DESPESA, criarDespesa, excluirDespesa, escutarDespesas } from './js/despesas.js?v=20260727z';
+import { toast, confirmar, confirmarForte, executar } from './js/ui-feedback.js?v=20260727z';
+import { db } from './js/firebase-config.js?v=20260727z';
 
 // Luzinhas douradas ao redor do card de login
 // Mostra o nome da loja usada da última vez que alguém logou neste aparelho
@@ -2880,19 +2880,130 @@ function obterQrDataUrl() {
   return img ? img.src : null;
 }
 
+// ── Cartaz do QR Code (uma página, pra imprimir e deixar na recepção) ──
+function montarSolVetor(doc, cx, cy, raioSol, raioRaioIni, raioRaioFim, corSol) {
+  doc.setFillColor(...corSol);
+  doc.circle(cx, cy, raioSol, 'F');
+  doc.setDrawColor(...corSol);
+  for (let i = 0; i < 12; i++) {
+    const ang = (i * Math.PI) / 6;
+    const x1 = cx + Math.cos(ang) * raioRaioIni, y1 = cy + Math.sin(ang) * raioRaioIni;
+    const x2 = cx + Math.cos(ang) * raioRaioFim, y2 = cy + Math.sin(ang) * raioRaioFim;
+    doc.setLineWidth(i % 2 === 0 ? 1.1 : 0.7);
+    doc.line(x1, y1, x2, y2);
+  }
+}
+
 $('btn-baixar-qr-pdf').addEventListener('click', () => {
   const dataUrl = obterQrDataUrl();
   if (!dataUrl) { toast('Gere o QR Code primeiro.', 'aviso'); return; }
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+  const W = 210, H = 297;
   const nomeLoja = configNegocioCache?.nome || "Pro'Bronze";
-  doc.setFontSize(20);
-  doc.text(nomeLoja, 105, 35, { align: 'center' });
-  doc.setFontSize(13);
-  doc.text('Aponte a câmera do celular pra agendar sua sessão', 105, 46, { align: 'center' });
-  doc.addImage(dataUrl, 'PNG', 65, 60, 80, 80);
-  doc.setFontSize(9);
-  doc.text($('link-cadastro-cliente').value, 105, 150, { align: 'center', maxWidth: 170 });
+  const link = $('link-cadastro-cliente').value;
+
+  const bg = [26, 20, 16];
+  const accent = [198, 134, 66];
+  const accentLight = [232, 184, 125];
+  const textoClaro = [245, 230, 211];
+  const cinza = [190, 175, 158];
+
+  // Fundo escuro de ponta a ponta + moldura dourada dupla
+  doc.setFillColor(...bg);
+  doc.rect(0, 0, W, H, 'F');
+  doc.setDrawColor(...accent);
+  doc.setLineWidth(0.8);
+  doc.rect(8, 8, W - 16, H - 16);
+  doc.setLineWidth(0.3);
+  doc.rect(11, 11, W - 22, H - 22);
+
+  // Sol com raios, desenhado em vetor (mesma técnica do comprovante —
+  // fontes de PDF não têm o emoji ☀️)
+  montarSolVetor(doc, W / 2, 42, 9, 12, 19, accentLight);
+
+  // Nome da loja em destaque
+  // Nome da loja sempre numa linha só — encolhe a fonte conforme
+  // necessário em vez de quebrar linha (nome comprido não pode empurrar
+  // o resto do cartaz e sobrepor o subtítulo)
+  doc.setFont('helvetica', 'bold');
+  let fonteTitulo = 30;
+  doc.setFontSize(fonteTitulo);
+  const larguraMaxTitulo = W - 60;
+  while (fonteTitulo > 13 && (doc.getStringUnitWidth(nomeLoja) * fonteTitulo / doc.internal.scaleFactor) > larguraMaxTitulo) {
+    fonteTitulo -= 1;
+    doc.setFontSize(fonteTitulo);
+  }
+  doc.setTextColor(...accentLight);
+  doc.text(nomeLoja, W / 2, 78, { align: 'center' });
+
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(14);
+  doc.setTextColor(...cinza);
+  doc.text('Agende sua sessão de bronzeamento em segundos', W / 2, 88, { align: 'center' });
+
+  doc.setDrawColor(...accent);
+  doc.setLineWidth(0.5);
+  doc.line(55, 95, W - 55, 95);
+
+  // Tudo daqui pra baixo flui de cima pra baixo a partir de um único
+  // cursor "y" — nada é ancorado no rodapé, então não tem como um nome
+  // de loja comprido ou um link comprido fazer um elemento atropelar
+  // o outro, não importa o tamanho de cada um.
+  let y = 108;
+
+  // QR Code num cartão branco arredondado (fundo branco garante boa
+  // leitura da câmera, mesmo com o resto do cartaz escuro)
+  const qrTam = 78;
+  const cartaoTam = qrTam + 14;
+  const cartaoX = (W - cartaoTam) / 2;
+  doc.setFillColor(255, 255, 255);
+  doc.roundedRect(cartaoX, y, cartaoTam, cartaoTam, 4, 4, 'F');
+  doc.setDrawColor(...accent);
+  doc.setLineWidth(0.6);
+  doc.roundedRect(cartaoX, y, cartaoTam, cartaoTam, 4, 4);
+  doc.addImage(dataUrl, 'PNG', cartaoX + 7, y + 7, qrTam, qrTam);
+  y += cartaoTam + 18;
+
+  // Passo a passo
+  const passos = [
+    'Aponte a câmera do celular pro código acima',
+    'Toque no link que aparecer na tela',
+    'Preencha seu nome e WhatsApp — pronto!'
+  ];
+  passos.forEach((texto, i) => {
+    doc.setFillColor(...accent);
+    doc.circle(W / 2 - 62, y - 2, 5, 'F');
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(11);
+    doc.setTextColor(...bg);
+    doc.text(String(i + 1), W / 2 - 62, y + 0.8, { align: 'center' });
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(12.5);
+    doc.setTextColor(...textoClaro);
+    doc.text(texto, W / 2 - 52, y + 1, { align: 'left' });
+    y += 12;
+  });
+  y += 8;
+
+  // Rodapé com o link por extenso (caso a câmera falhe) + marca
+  doc.setDrawColor(...accent);
+  doc.setLineWidth(0.3);
+  doc.line(30, y, W - 30, y);
+  y += 8;
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(8.5);
+  doc.setTextColor(...cinza);
+  doc.text('Ou acesse diretamente:', W / 2, y, { align: 'center' });
+  y += 5;
+  doc.setTextColor(...accentLight);
+  const linkLinhas = doc.splitTextToSize(link, W - 40);
+  doc.text(linkLinhas, W / 2, y, { align: 'center', lineHeightFactor: 1.3 });
+  y += linkLinhas.length * 4.2 + 5;
+  doc.setFontSize(7.5);
+  doc.setTextColor(...cinza);
+  doc.text("Cadastro rápido e gratuito — feito com Pro'Bronze", W / 2, y, { align: 'center' });
+
   doc.save(`qrcode-agendamento-${nomeLoja.replace(/\s+/g, '-')}.pdf`);
 });
 

@@ -15,7 +15,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Pro'Bronze">
-<link rel="stylesheet" href="css/theme.css?v=20260727y">
+<link rel="stylesheet" href="css/theme.css?v=20260727z">
 <style>
   * { box-sizing: border-box; }
   body { margin: 0; background: var(--bg); color: var(--text); font-family: var(--font); min-height: 100vh; }
@@ -185,18 +185,18 @@
 </div>
 
 <script type="module">
-import { onAuthChange, login, logout } from './js/auth.js?v=20260727y';
-import { db } from './js/firebase-config.js?v=20260727y';
+import { onAuthChange, login, logout } from './js/auth.js?v=20260727z';
+import { db } from './js/firebase-config.js?v=20260727z';
 import {
   collection, query, where, onSnapshot
 } from 'https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js';
-import { escutarServicos, calcularCombo } from './js/servicos.js?v=20260727y';
-import { criarAgendamento, contarConflitosHorario } from './js/agenda.js?v=20260727y';
-import { checarElegibilidade } from './js/agenda.js?v=20260727y';
-import { escutarCabines } from './js/cabines.js?v=20260727y';
-import { escutarConfigNegocio } from './js/config-negocio.js?v=20260727y';
-import { escutarHorarios, validarHorarioFuncionamento } from './js/horarios.js?v=20260727y';
-import { toast } from './js/ui-feedback.js?v=20260727y';
+import { escutarServicos, calcularCombo } from './js/servicos.js?v=20260727z';
+import { criarAgendamento, contarConflitosHorario } from './js/agenda.js?v=20260727z';
+import { checarElegibilidade } from './js/agenda.js?v=20260727z';
+import { escutarCabines } from './js/cabines.js?v=20260727z';
+import { escutarConfigNegocio } from './js/config-negocio.js?v=20260727z';
+import { escutarHorarios, validarHorarioFuncionamento } from './js/horarios.js?v=20260727z';
+import { toast } from './js/ui-feedback.js?v=20260727z';
 
 window.addEventListener('unhandledrejection', (e) => {
   console.error(e.reason);
