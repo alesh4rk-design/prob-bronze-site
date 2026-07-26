@@ -1,5 +1,5 @@
 // Pro'Bronze — Autenticação e controle de papéis (dono | recepcionista)
-import { auth, db } from "./firebase-config.js?v=20260727c";
+import { auth, db } from "./firebase-config.js?v=20260727d";
 import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,

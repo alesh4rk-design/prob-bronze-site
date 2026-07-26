@@ -7,7 +7,7 @@
 <meta http-equiv="Expires" content="0">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Pro'Bronze — Painel</title>
-<link rel="stylesheet" href="css/theme.css?v=20260727c">
+<link rel="stylesheet" href="css/theme.css?v=20260727d">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -355,6 +355,7 @@
         <button class="aba-btn" data-aba="servicos" data-titulo="✂️ Serviços"><span class="nav-icone">✂️</span>Serviços</button>
         <button class="aba-btn" data-aba="produtos" data-titulo="🧴 Venda de Produtos"><span class="nav-icone">🧴</span>Venda de Produtos</button>
         <button class="aba-btn" data-aba="insumos" data-titulo="🧪 Insumos"><span class="nav-icone">🧪</span>Insumos</button>
+        <button class="aba-btn" data-aba="pacotes" data-titulo="📦 Pacotes"><span class="nav-icone">📦</span>Pacotes</button>
         <button class="aba-btn" data-aba="cupons" data-titulo="🏷️ Cupons"><span class="nav-icone">🏷️</span>Cupons</button>
       </div>
       <div class="nav-secao">
@@ -365,7 +366,6 @@
       <div class="nav-secao">
         <div class="nav-titulo">Financeiro</div>
         <button class="aba-btn aba-estrategica" data-aba="financeiro" data-titulo="💰 Financeiro"><span class="nav-icone">💰</span>Financeiro</button>
-        <button class="aba-btn" data-aba="pacotes" data-titulo="📦 Pacotes"><span class="nav-icone">📦</span>Pacotes</button>
         <button class="aba-btn" data-aba="relatorios" data-titulo="📊 Relatórios"><span class="nav-icone">📊</span>Relatórios</button>
       </div>
       <div class="nav-secao">
@@ -653,14 +653,19 @@
         <div class="ajuda-inline">Venda várias sessões de uma vez (ex: 10 sessões por um valor fechado). A cada atendimento, uma sessão é descontada automaticamente.</div>
         <div class="input-group">
           <label>Cliente</label>
-          <select id="pac-cliente"><option value="">Selecione...</option></select>
+          <select id="pac-cliente"><option value="">Selecione...</option><option value="__novo__">+ Cadastrar cliente nova agora</option></select>
+        </div>
+        <div id="pac-cliente-form-novo" style="display:none">
+          <div class="input-group"><label>Nome da cliente nova</label><input type="text" id="pac-cliente-novo-nome"></div>
+          <div class="input-group"><label>WhatsApp (opcional)</label><input type="text" id="pac-cliente-novo-wpp" placeholder="21999999999"></div>
         </div>
         <div class="input-group"><label>Total de sessões</label><input type="number" id="pac-total" placeholder="Ex: 10"></div>
         <div class="input-group"><label>Valor total (R$)</label><input type="number" id="pac-valor" step="0.01"></div>
         <button class="btn-primario" id="btn-criar-pacote">Criar Pacote</button>
       </div>
       <div class="card">
-        <div class="card-titulo">Pacotes Ativos</div>
+        <div class="card-titulo com-ajuda">Pacotes Ativos</div>
+        <div class="ajuda-inline">Clique no card pra dar baixa em uma sessão atendida.</div>
         <div id="lista-pacotes"><div class="empty-state">Carregando...</div></div>
       </div>
     </div>
@@ -982,38 +987,39 @@
 </div>
 
 <script type="module">
-import { onAuthChange, login, logout, iniciarLoginComGoogle, resetSenha } from './js/auth.js?v=20260727c';
-import { VALOR_MENSALIDADE, PIX_PLATAFORMA, WHATSAPP_SUPORTE } from './js/admin-config.js?v=20260727c';
-import { escutarCabines, atualizarStatusCabine, criarCabine, excluirCabine } from './js/cabines.js?v=20260727c';
+import { onAuthChange, login, logout, iniciarLoginComGoogle, resetSenha } from './js/auth.js?v=20260727d';
+import { VALOR_MENSALIDADE, PIX_PLATAFORMA, WHATSAPP_SUPORTE } from './js/admin-config.js?v=20260727d';
+import { escutarCabines, atualizarStatusCabine, criarCabine, excluirCabine } from './js/cabines.js?v=20260727d';
 import {
   escutarAgendamentosDoDia, criarAgendamento, concluirAgendamento,
   cancelarAgendamento, marcarFalta, atribuirCabine, contarConflitosHorario, marcarEmAndamento,
   salvarAvaliacaoSessao, estenderTempoSessao
-} from './js/agenda.js?v=20260727c';
-import { checarElegibilidade } from './js/agenda.js?v=20260727c';
-import { escutarServicos, criarServico, calcularCombo } from './js/servicos.js?v=20260727c';
-import { escutarClientes, criarCliente, ehAniversarioHoje } from './js/clientes.js?v=20260727c';
-import { criarMembroEquipe, escutarEquipe, excluirMembroEquipe, editarMembroEquipe } from './js/equipe.js?v=20260727c';
-import { tempoMaxRecomendado } from './js/ficha-pele.js?v=20260727c';
-import { registrarPagamento, escutarPendencias, quitarPendencia, resumoFinanceiro, escutarFinanceiroPeriodo } from './js/financeiro.js?v=20260727c';
-import { criarPacote, escutarPacotesDoNegocio, consumirSessaoDoPacote } from './js/pacotes-sessoes.js?v=20260727c';
-import { criarProdutoCabine, escutarProdutosCabine, produtosEmAlerta, baixarEstoque, somarEstoque, buscarPorCodigoBarras, excluirProdutoCabine } from './js/produtos-cabine.js?v=20260727c';
-import { criarInsumo, escutarInsumos, reporInsumo, darBaixaInsumo, excluirInsumo, insumosEmAlerta } from './js/insumos.js?v=20260727c';
-import { criarCupom, escutarCupons, desativarCupom, calcularDescontoCupom } from './js/cupons.js?v=20260727c';
-import { exportarExcel, exportarPDF, montarRelatorioFinanceiro, COLUNAS_FINANCEIRO } from './js/relatorios.js?v=20260727c';
+} from './js/agenda.js?v=20260727d';
+import { checarElegibilidade } from './js/agenda.js?v=20260727d';
+import { escutarServicos, criarServico, calcularCombo } from './js/servicos.js?v=20260727d';
+import { escutarClientes, criarCliente, ehAniversarioHoje } from './js/clientes.js?v=20260727d';
+import { criarMembroEquipe, escutarEquipe, excluirMembroEquipe, editarMembroEquipe } from './js/equipe.js?v=20260727d';
+import { tempoMaxRecomendado } from './js/ficha-pele.js?v=20260727d';
+import { registrarPagamento, escutarPendencias, quitarPendencia, resumoFinanceiro, escutarFinanceiroPeriodo } from './js/financeiro.js?v=20260727d';
+import { criarPacote, escutarPacotesDoNegocio, consumirSessaoDoPacote } from './js/pacotes-sessoes.js?v=20260727d';
+import { criarProdutoCabine, escutarProdutosCabine, produtosEmAlerta, baixarEstoque, somarEstoque, buscarPorCodigoBarras, excluirProdutoCabine } from './js/produtos-cabine.js?v=20260727d';
+import { criarInsumo, escutarInsumos, reporInsumo, darBaixaInsumo, excluirInsumo, insumosEmAlerta } from './js/insumos.js?v=20260727d';
+import { criarCupom, escutarCupons, desativarCupom, calcularDescontoCupom } from './js/cupons.js?v=20260727d';
+import { exportarExcel, exportarPDF, montarRelatorioFinanceiro, COLUNAS_FINANCEIRO } from './js/relatorios.js?v=20260727d';
 import {
   linkConfirmacaoAgendamento, linkCobrancaPendente, linkAtrasoAgendamento,
   linkClienteSumido, linkMensagemLivre, linkLembreteIntervalo,
   linkSuaVezChegando, linkPromocao, linkAniversario, linkAgradecimento,
-  linkPacoteAcabando
-} from './js/whatsapp.js?v=20260727c';
-import { verificarIntervaloMinimo } from './js/ficha-pele.js?v=20260727c';
-import { tutorialJaVisto, iniciarTutorial } from './js/tutorial.js?v=20260727c';
-import { DIAS_SEMANA, escutarHorarios, salvarHorarios, validarHorarioFuncionamento } from './js/horarios.js?v=20260727c';
-import { escutarConfigNegocio, salvarConfigNegocio } from './js/config-negocio.js?v=20260727c';
-import { CATEGORIAS_DESPESA, criarDespesa, excluirDespesa, escutarDespesas } from './js/despesas.js?v=20260727c';
-import { toast, confirmar, confirmarForte, executar } from './js/ui-feedback.js?v=20260727c';
-import { db } from './js/firebase-config.js?v=20260727c';
+  linkPacoteAcabando,
+  linkSessaoPacoteAtendida
+} from './js/whatsapp.js?v=20260727d';
+import { verificarIntervaloMinimo } from './js/ficha-pele.js?v=20260727d';
+import { tutorialJaVisto, iniciarTutorial } from './js/tutorial.js?v=20260727d';
+import { DIAS_SEMANA, escutarHorarios, salvarHorarios, validarHorarioFuncionamento } from './js/horarios.js?v=20260727d';
+import { escutarConfigNegocio, salvarConfigNegocio } from './js/config-negocio.js?v=20260727d';
+import { CATEGORIAS_DESPESA, criarDespesa, excluirDespesa, escutarDespesas } from './js/despesas.js?v=20260727d';
+import { toast, confirmar, confirmarForte, executar } from './js/ui-feedback.js?v=20260727d';
+import { db } from './js/firebase-config.js?v=20260727d';
 
 // Luzinhas douradas ao redor do card de login
 // Mostra o nome da loja usada da última vez que alguém logou neste aparelho
@@ -2140,10 +2146,13 @@ function atualizarMetaMensal() {
 function preencherSelectPacoteCliente(clientes) {
   const sel = $('pac-cliente');
   const atual = sel.value;
-  sel.innerHTML = '<option value="">Selecione...</option>' +
+  sel.innerHTML = '<option value="">Selecione...</option><option value="__novo__">+ Cadastrar cliente nova agora</option>' +
     clientes.map((c) => `<option value="${c.id}">${c.nome}</option>`).join('');
   sel.value = atual;
 }
+$('pac-cliente').addEventListener('change', () => {
+  $('pac-cliente-form-novo').style.display = $('pac-cliente').value === '__novo__' ? 'block' : 'none';
+});
 
 function renderPendencias(pendencias) {
   const wrap = $('lista-pendencias');
@@ -2181,25 +2190,75 @@ function renderPacotes(pacotes) {
     const acabando = restantes <= 1;
     const cliente = clientesCache.find((c) => c.id === p.clienteId);
     return `
-    <div class="agendamento-item">
+    <div class="agendamento-item nome-clicavel" data-baixa-pacote="${p.id}" data-cliente-pacote="${p.clienteId}">
       <div class="agendamento-info">
         <div class="nome">${p.clienteNome} ${acabando ? '<span class="badge cancelado">acabando</span>' : ''}</div>
         <div class="detalhe">${p.sessoesUsadas}/${p.totalSessoes} sessões usadas · R$${Number(p.valorTotal).toFixed(2)}</div>
       </div>
-      ${acabando && cliente?.whatsapp ? `<a class="btn-secundario" href="${linkPacoteAcabando({ whatsapp: cliente.whatsapp, clienteNome: p.clienteNome, sessoesRestantes: restantes, nomeNegocio })}" target="_blank" style="text-decoration:none">Avisar recompra</a>` : ''}
+      <div style="display:flex;gap:.4rem;flex-wrap:wrap">
+        <button class="btn-secundario" data-baixa-btn="${p.id}">− Dar baixa</button>
+        <button class="btn-secundario" data-vender-pacote="${p.clienteId}">🛍️ Vender Produto</button>
+        ${acabando && cliente?.whatsapp ? `<a class="btn-secundario" href="${linkPacoteAcabando({ whatsapp: cliente.whatsapp, clienteNome: p.clienteNome, sessoesRestantes: restantes, nomeNegocio })}" target="_blank" style="text-decoration:none">Avisar recompra</a>` : ''}
+      </div>
     </div>
   `;
   }).join('');
+
+  const darBaixa = async (pacoteId) => {
+    const pacote = pacotesCache.find((p) => p.id === pacoteId);
+    if (!pacote) return;
+    if (!(await confirmar(`Dar baixa em uma sessão do pacote de "${pacote.clienteNome}"?`))) return;
+    const resultado = await consumirSessaoDoPacote(pacoteId);
+    toast(`Sessão registrada — restam ${resultado.sessoesRestantes} de ${pacote.totalSessoes}.`, 'sucesso');
+    const cliente = clientesCache.find((c) => c.id === pacote.clienteId);
+    if (cliente?.whatsapp) {
+      window.open(linkSessaoPacoteAtendida({
+        whatsapp: cliente.whatsapp, clienteNome: pacote.clienteNome,
+        sessoesRestantes: resultado.sessoesRestantes, totalSessoes: pacote.totalSessoes, nomeNegocio
+      }), '_blank');
+    }
+  };
+
+  wrap.querySelectorAll('[data-baixa-pacote]').forEach((el) => {
+    el.addEventListener('click', (e) => {
+      if (e.target.closest('button, a')) return;
+      darBaixa(el.dataset.baixaPacote);
+    });
+  });
+  wrap.querySelectorAll('[data-baixa-btn]').forEach((btn) => {
+    btn.addEventListener('click', (e) => { e.stopPropagation(); darBaixa(btn.dataset.baixaBtn); });
+  });
+  wrap.querySelectorAll('[data-vender-pacote]').forEach((btn) => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      clienteMenuAtualId = btn.dataset.venderPacote;
+      abrirModalVenderProduto(btn.dataset.venderPacote);
+    });
+  });
 }
 
 $('btn-criar-pacote').addEventListener('click', async () => {
-  const clienteId = $('pac-cliente').value;
-  const clienteNome = $('pac-cliente').selectedOptions[0]?.textContent;
+  let clienteId = $('pac-cliente').value;
+  let clienteNome = $('pac-cliente').selectedOptions[0]?.textContent;
   const totalSessoes = Number($('pac-total').value);
   const valorTotal = Number($('pac-valor').value);
   if (!clienteId || !totalSessoes || !valorTotal) { toast('Preencha cliente, total de sessões e valor.', 'aviso'); return; }
+
+  if (clienteId === '__novo__') {
+    const nomeNovaCliente = $('pac-cliente-novo-nome').value.trim();
+    if (!nomeNovaCliente) { toast('Digite o nome da cliente nova.', 'aviso'); return; }
+    const ref = await criarCliente(usuarioAtual.negocioId, {
+      nome: nomeNovaCliente,
+      whatsapp: $('pac-cliente-novo-wpp').value.trim()
+    });
+    clienteId = ref.id;
+    clienteNome = nomeNovaCliente;
+  }
+
   await criarPacote(usuarioAtual.negocioId, { clienteId, clienteNome, totalSessoes, valorTotal });
   $('pac-cliente').value = ''; $('pac-total').value = ''; $('pac-valor').value = '';
+  $('pac-cliente-form-novo').style.display = 'none';
+  $('pac-cliente-novo-nome').value = ''; $('pac-cliente-novo-wpp').value = '';
   toast('Pacote criado.', 'sucesso');
 });
 

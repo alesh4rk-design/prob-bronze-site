@@ -1,10 +1,10 @@
 // Pro'Bronze — Controle de Cabines/Camas
-import { db } from "./firebase-config.js?v=20260727c";
+import { db } from "./firebase-config.js?v=20260727d";
 import {
   collection, doc, addDoc, updateDoc, deleteDoc,
   onSnapshot, query, where, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
-import { notificarErroFirestore } from "./firestore-erro.js?v=20260727c";
+import { notificarErroFirestore } from "./firestore-erro.js?v=20260727d";
 
 // status: "livre" | "ocupada" | "manutencao"
 
