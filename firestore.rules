@@ -34,7 +34,7 @@ service cloud.firestore {
       allow get: if ehDoMeuNegocio(negocioId) || logado();
       allow list: if ehDoMeuNegocio(negocioId) || ehAdmin();
       allow update: if ehDoMeuNegocio(negocioId) || ehAdmin();
-      allow delete: if false;
+      allow delete: if ehAdmin();
     }
 
     // Usuários: qualquer um do mesmo negócio pode ver a equipe;
@@ -45,7 +45,7 @@ service cloud.firestore {
       );
       allow create: if logado();
       allow update: if request.auth.uid == uid || ehDono();
-      allow delete: if ehDono();
+      allow delete: if ehDono() || ehAdmin();
     }
 
     // Coleções operacionais: isoladas por negocioId, dono e recepcionista têm acesso
