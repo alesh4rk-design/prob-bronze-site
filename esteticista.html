@@ -7,7 +7,7 @@
 <meta http-equiv="Expires" content="0">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Pro'Bronze — Painel</title>
-<link rel="stylesheet" href="css/theme.css?v=20260726w">
+<link rel="stylesheet" href="css/theme.css?v=20260726x">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -870,6 +870,17 @@
     </div>
   </div>
 
+  <!-- Modal de comprovante de pagamento (não é nota fiscal) -->
+  <div id="modal-comprovante" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:50;align-items:center;justify-content:center;padding:1rem">
+    <div class="card" style="max-width:340px;width:100%;text-align:center">
+      <div class="card-titulo">Comprovante de pagamento</div>
+      <p class="ajuda-inline">O envio é opcional. Esse PDF é só um recibo interno — não vale como cupom fiscal nem nota fiscal.</p>
+      <button class="btn-primario" style="width:100%;margin-bottom:.5rem" id="btn-enviar-comprovante-wpp">📱 Enviar por WhatsApp</button>
+      <button class="btn-secundario" style="width:100%;margin-bottom:.5rem" id="btn-baixar-comprovante">⬇️ Baixar PDF</button>
+      <button class="btn-secundario" style="width:100%" id="btn-fechar-comprovante">Fechar sem enviar</button>
+    </div>
+  </div>
+
   <!-- Modal de mensagens rápidas de WhatsApp -->
   <div id="modal-whatsapp" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:50;align-items:center;justify-content:center;padding:1rem">
     <div class="card" style="max-width:380px;width:100%">
@@ -956,38 +967,38 @@
 </div>
 
 <script type="module">
-import { onAuthChange, login, logout, iniciarLoginComGoogle, resetSenha } from './js/auth.js?v=20260726w';
-import { VALOR_MENSALIDADE, PIX_PLATAFORMA, WHATSAPP_SUPORTE } from './js/admin-config.js?v=20260726w';
-import { escutarCabines, atualizarStatusCabine, criarCabine, excluirCabine } from './js/cabines.js?v=20260726w';
+import { onAuthChange, login, logout, iniciarLoginComGoogle, resetSenha } from './js/auth.js?v=20260726x';
+import { VALOR_MENSALIDADE, PIX_PLATAFORMA, WHATSAPP_SUPORTE } from './js/admin-config.js?v=20260726x';
+import { escutarCabines, atualizarStatusCabine, criarCabine, excluirCabine } from './js/cabines.js?v=20260726x';
 import {
   escutarAgendamentosDoDia, criarAgendamento, concluirAgendamento,
   cancelarAgendamento, marcarFalta, atribuirCabine, contarConflitosHorario, marcarEmAndamento,
   salvarAvaliacaoSessao, estenderTempoSessao
-} from './js/agenda.js?v=20260726w';
-import { checarElegibilidade } from './js/agenda.js?v=20260726w';
-import { escutarServicos, criarServico, calcularCombo } from './js/servicos.js?v=20260726w';
-import { escutarClientes, criarCliente, ehAniversarioHoje } from './js/clientes.js?v=20260726w';
-import { criarMembroEquipe, escutarEquipe, excluirMembroEquipe } from './js/equipe.js?v=20260726w';
-import { tempoMaxRecomendado } from './js/ficha-pele.js?v=20260726w';
-import { registrarPagamento, escutarPendencias, quitarPendencia, resumoFinanceiro, escutarFinanceiroPeriodo } from './js/financeiro.js?v=20260726w';
-import { criarPacote, escutarPacotesDoNegocio, consumirSessaoDoPacote } from './js/pacotes-sessoes.js?v=20260726w';
-import { criarProdutoCabine, escutarProdutosCabine, produtosEmAlerta, baixarEstoque, somarEstoque, buscarPorCodigoBarras, excluirProdutoCabine } from './js/produtos-cabine.js?v=20260726w';
-import { criarInsumo, escutarInsumos, reporInsumo, darBaixaInsumo, excluirInsumo, insumosEmAlerta } from './js/insumos.js?v=20260726w';
-import { criarCupom, escutarCupons, desativarCupom, calcularDescontoCupom } from './js/cupons.js?v=20260726w';
-import { exportarExcel, exportarPDF, montarRelatorioFinanceiro, COLUNAS_FINANCEIRO } from './js/relatorios.js?v=20260726w';
+} from './js/agenda.js?v=20260726x';
+import { checarElegibilidade } from './js/agenda.js?v=20260726x';
+import { escutarServicos, criarServico, calcularCombo } from './js/servicos.js?v=20260726x';
+import { escutarClientes, criarCliente, ehAniversarioHoje } from './js/clientes.js?v=20260726x';
+import { criarMembroEquipe, escutarEquipe, excluirMembroEquipe } from './js/equipe.js?v=20260726x';
+import { tempoMaxRecomendado } from './js/ficha-pele.js?v=20260726x';
+import { registrarPagamento, escutarPendencias, quitarPendencia, resumoFinanceiro, escutarFinanceiroPeriodo } from './js/financeiro.js?v=20260726x';
+import { criarPacote, escutarPacotesDoNegocio, consumirSessaoDoPacote } from './js/pacotes-sessoes.js?v=20260726x';
+import { criarProdutoCabine, escutarProdutosCabine, produtosEmAlerta, baixarEstoque, somarEstoque, buscarPorCodigoBarras, excluirProdutoCabine } from './js/produtos-cabine.js?v=20260726x';
+import { criarInsumo, escutarInsumos, reporInsumo, darBaixaInsumo, excluirInsumo, insumosEmAlerta } from './js/insumos.js?v=20260726x';
+import { criarCupom, escutarCupons, desativarCupom, calcularDescontoCupom } from './js/cupons.js?v=20260726x';
+import { exportarExcel, exportarPDF, montarRelatorioFinanceiro, COLUNAS_FINANCEIRO } from './js/relatorios.js?v=20260726x';
 import {
   linkConfirmacaoAgendamento, linkCobrancaPendente, linkAtrasoAgendamento,
   linkClienteSumido, linkMensagemLivre, linkLembreteIntervalo,
   linkSuaVezChegando, linkPromocao, linkAniversario, linkAgradecimento,
   linkPacoteAcabando
-} from './js/whatsapp.js?v=20260726w';
-import { verificarIntervaloMinimo } from './js/ficha-pele.js?v=20260726w';
-import { tutorialJaVisto, iniciarTutorial } from './js/tutorial.js?v=20260726w';
-import { DIAS_SEMANA, escutarHorarios, salvarHorarios } from './js/horarios.js?v=20260726w';
-import { escutarConfigNegocio, salvarConfigNegocio } from './js/config-negocio.js?v=20260726w';
-import { CATEGORIAS_DESPESA, criarDespesa, excluirDespesa, escutarDespesas } from './js/despesas.js?v=20260726w';
-import { toast, confirmar, confirmarForte, executar } from './js/ui-feedback.js?v=20260726w';
-import { db } from './js/firebase-config.js?v=20260726w';
+} from './js/whatsapp.js?v=20260726x';
+import { verificarIntervaloMinimo } from './js/ficha-pele.js?v=20260726x';
+import { tutorialJaVisto, iniciarTutorial } from './js/tutorial.js?v=20260726x';
+import { DIAS_SEMANA, escutarHorarios, salvarHorarios } from './js/horarios.js?v=20260726x';
+import { escutarConfigNegocio, salvarConfigNegocio } from './js/config-negocio.js?v=20260726x';
+import { CATEGORIAS_DESPESA, criarDespesa, excluirDespesa, escutarDespesas } from './js/despesas.js?v=20260726x';
+import { toast, confirmar, confirmarForte, executar } from './js/ui-feedback.js?v=20260726x';
+import { db } from './js/firebase-config.js?v=20260726x';
 
 // Luzinhas douradas ao redor do card de login
 // Mostra o nome da loja usada da última vez que alguém logou neste aparelho
@@ -2537,9 +2548,18 @@ $('btn-confirmar-venda').addEventListener('click', async () => {
   });
   travarPagamento('modal-vender-produto', 'btn-confirmar-venda');
   toast('Venda registrada.', 'sucesso');
+  const rotuloFormaPagamentoVenda = { dinheiro: 'Dinheiro', pix: 'PIX', credito: 'Cartão de crédito', debito: 'Cartão de débito' }[$('venda-forma').dataset.valor] || $('venda-forma').dataset.valor;
   setTimeout(() => {
     $('modal-vender-produto').style.display = 'none';
     destravarPagamento('modal-vender-produto', 'btn-confirmar-venda');
+    abrirModalComprovante({
+      nomeLoja: configNegocioCache?.nome || "Pro'Bronze",
+      clienteNome: cliente?.nome || '',
+      clienteWhatsapp: cliente?.whatsapp || '',
+      descricao: `${quantidade}x ${produto?.nome || 'produto'}`,
+      valor,
+      formaPagamento: rotuloFormaPagamentoVenda
+    });
   }, 1200);
 });
 
@@ -3013,8 +3033,11 @@ $('btn-confirmar-pagamento').addEventListener('click', async () => {
   await atualizarStatusCabine(cabineId, 'livre');
   await concluirAgendamento(sessao.agendamentoId, sessao.clienteId);
 
+  const clienteDaSessao = clientesCache.find((c) => c.id === sessao.clienteId);
+  const rotuloFormaPagamento = { dinheiro: 'Dinheiro', pix: 'PIX', credito: 'Cartão de crédito', debito: 'Cartão de débito' }[formaPagamento] || formaPagamento;
+
   if (pacoteId) {
-    // Sessão consumida do pacote — não gera cobrança avulsa
+    // Sessão consumida do pacote — não gera cobrança avulsa, então não faz sentido comprovante
     await consumirSessaoDoPacote(pacoteId);
   } else {
     let desconto = Number($('pag-desconto').value) || 0;
@@ -3027,7 +3050,7 @@ $('btn-confirmar-pagamento').addEventListener('click', async () => {
     await registrarPagamento(usuarioAtual.negocioId, {
       agendamentoId: sessao.agendamentoId,
       clienteId: sessao.clienteId,
-      clienteNome: (clientesCache.find((c) => c.id === sessao.clienteId) || {}).nome || '',
+      clienteNome: clienteDaSessao?.nome || '',
       valorBruto: sessao.valorBruto,
       desconto,
       formaPagamento,
@@ -3035,6 +3058,14 @@ $('btn-confirmar-pagamento').addEventListener('click', async () => {
       esteticistaUid: usuarioAtual.uid,
       percentualComissao: membroAtivo?.percentualComissao || 0
     });
+    comprovantePendente = {
+      nomeLoja: configNegocioCache?.nome || "Pro'Bronze",
+      clienteNome: clienteDaSessao?.nome || '',
+      clienteWhatsapp: clienteDaSessao?.whatsapp || '',
+      descricao: 'Sessão de bronzeamento',
+      valor: sessao.valorBruto - desconto,
+      formaPagamento: rotuloFormaPagamento
+    };
   }
 
   const agendamentoConcluidoId = sessao.agendamentoId;
@@ -3067,10 +3098,93 @@ document.querySelectorAll('#avaliacao-estrelas span').forEach((el) => {
     if (agendamentoEmAvaliacao) await salvarAvaliacaoSessao(agendamentoEmAvaliacao, nota);
     $('modal-avaliacao').style.display = 'none';
     toast('Avaliação registrada. Obrigada!', 'sucesso');
+    mostrarComprovantePendenteSeHouver();
   });
 });
 $('btn-pular-avaliacao').addEventListener('click', () => {
   $('modal-avaliacao').style.display = 'none';
+  mostrarComprovantePendenteSeHouver();
+});
+
+// ── Comprovante de pagamento em PDF (não é nota fiscal, envio opcional) ──
+let comprovantePendente = null; // dados prontos, aguardando a avaliação fechar
+let comprovanteAtual = null; // { blob, clienteWhatsapp, nomeArquivo } — o que está no modal agora
+
+function mostrarComprovantePendenteSeHouver() {
+  if (!comprovantePendente) return;
+  abrirModalComprovante(comprovantePendente);
+  comprovantePendente = null;
+}
+
+function montarComprovantePdfBlob({ nomeLoja, clienteNome, descricao, valor, formaPagamento }) {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ unit: 'mm', format: 'a5' });
+  const agora = new Date().toLocaleString('pt-BR');
+  doc.setFontSize(16);
+  doc.text(nomeLoja, 74, 15, { align: 'center' });
+  doc.setFontSize(9);
+  doc.setTextColor(193, 85, 74);
+  doc.text('COMPROVANTE DE PAGAMENTO — NÃO É CUPOM FISCAL NEM NOTA FISCAL', 74, 24, { align: 'center', maxWidth: 130 });
+  doc.setTextColor(0, 0, 0);
+  doc.setFontSize(11);
+  let y = 40;
+  doc.text(`Data: ${agora}`, 12, y); y += 8;
+  doc.text(`Cliente: ${clienteNome || 'Não informado'}`, 12, y); y += 8;
+  doc.text(`Descrição: ${descricao}`, 12, y, { maxWidth: 126 }); y += 14;
+  doc.text(`Forma de pagamento: ${formaPagamento}`, 12, y); y += 12;
+  doc.setFontSize(15);
+  doc.text(`Valor: R$${Number(valor).toFixed(2)}`, 12, y); y += 14;
+  doc.setFontSize(8);
+  doc.setTextColor(120, 120, 120);
+  doc.text('Este documento é apenas um recibo interno de controle e não substitui nota fiscal ou cupom fiscal eletrônico.', 12, y, { maxWidth: 126 });
+  return doc.output('blob');
+}
+
+function abrirModalComprovante({ nomeLoja, clienteNome, clienteWhatsapp, descricao, valor, formaPagamento }) {
+  const blob = montarComprovantePdfBlob({ nomeLoja, clienteNome, descricao, valor, formaPagamento });
+  comprovanteAtual = { blob, clienteWhatsapp, nomeArquivo: `comprovante-${Date.now()}.pdf` };
+  $('modal-comprovante').style.display = 'flex';
+}
+
+$('btn-fechar-comprovante').addEventListener('click', () => {
+  $('modal-comprovante').style.display = 'none';
+  comprovanteAtual = null;
+});
+
+$('btn-baixar-comprovante').addEventListener('click', () => {
+  if (!comprovanteAtual) return;
+  const url = URL.createObjectURL(comprovanteAtual.blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = comprovanteAtual.nomeArquivo; a.click();
+  URL.revokeObjectURL(url);
+});
+
+$('btn-enviar-comprovante-wpp').addEventListener('click', async () => {
+  if (!comprovanteAtual) return;
+  const file = new File([comprovanteAtual.blob], comprovanteAtual.nomeArquivo, { type: 'application/pdf' });
+
+  if (navigator.canShare && navigator.canShare({ files: [file] })) {
+    try {
+      await navigator.share({ files: [file], title: 'Comprovante', text: 'Segue o comprovante do seu pagamento (não é nota fiscal).' });
+    } catch (e) {
+      return; // cliente cancelou o compartilhamento — deixa o modal aberto
+    }
+    $('modal-comprovante').style.display = 'none';
+    comprovanteAtual = null;
+    return;
+  }
+
+  // Navegador sem suporte a compartilhar arquivo (comum no desktop):
+  // baixa o PDF e abre o WhatsApp pra anexar manualmente
+  const url = URL.createObjectURL(file);
+  const a = document.createElement('a');
+  a.href = url; a.download = comprovanteAtual.nomeArquivo; a.click();
+  URL.revokeObjectURL(url);
+  toast('Seu navegador não deixa anexar direto — o PDF foi baixado, anexe manualmente no WhatsApp que vai abrir.', 'aviso');
+  const numero = comprovanteAtual.clienteWhatsapp ? comprovanteAtual.clienteWhatsapp.replace(/\D/g, '') : '';
+  window.open(numero ? `https://wa.me/55${numero}` : 'https://wa.me/', '_blank');
+  $('modal-comprovante').style.display = 'none';
+  comprovanteAtual = null;
 });
 
 // ── Novo agendamento ──────────────────────────────────────
