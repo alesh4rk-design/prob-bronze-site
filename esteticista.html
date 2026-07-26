@@ -439,6 +439,11 @@
         <canvas id="grafico-comissao-funcionario" height="200"></canvas>
       </div>
       <div class="card">
+        <div class="card-titulo">Evolução Semanal (últimas 8 semanas)</div>
+        <div id="fin-grafico-semanal-vazio" class="empty-state" style="display:none">Sem dados nas últimas 8 semanas.</div>
+        <canvas id="grafico-evolucao-semanal" height="200"></canvas>
+      </div>
+      <div class="card">
         <div class="card-titulo">Evolução Mensal (últimos 6 meses)</div>
         <div id="fin-grafico-evolucao-vazio" class="empty-state" style="display:none">Sem dados nos últimos 6 meses.</div>
         <canvas id="grafico-evolucao-mensal" height="200"></canvas>
@@ -962,6 +967,7 @@ let graficoServico = null;
 let graficoOrigem = null;
 let graficoComissaoFuncionario = null;
 let graficoEvolucaoMensal = null;
+let graficoEvolucaoSemanal = null;
 const CORES_FORMA_PAGAMENTO = { dinheiro: '#7BA05B', pix: '#C68642', credito: '#D9A441', debito: '#E8B87D', cartao: '#D9A441' };
 
 async function buscarAgendamentosEntre(de, ate) {
@@ -1138,9 +1144,26 @@ async function atualizarAnaliseFinanceira() {
   }
 }
 
-async function atualizarEvolucaoMensal() {
+async function buscarTodoFinanceiro() {
   const q = query(collection(db, 'financeiro'), where('negocioId', '==', usuarioAtual.negocioId));
   const snap = await getDocs(q);
+  const registros = [];
+  snap.forEach((d) => registros.push(d.data()));
+  return registros;
+}
+
+// Segunda-feira da semana de uma data (usada como rótulo/chave da semana)
+function inicioDaSemana(data) {
+  const d = new Date(data);
+  const diaSemana = d.getDay(); // 0=domingo
+  const diff = diaSemana === 0 ? -6 : 1 - diaSemana;
+  d.setDate(d.getDate() + diff);
+  d.setHours(0, 0, 0, 0);
+  return d;
+}
+
+async function atualizarEvolucaoMensal() {
+  const registros = await buscarTodoFinanceiro();
 
   const labelsOrdenados = [];
   const porMes = {};
@@ -1150,9 +1173,7 @@ async function atualizarEvolucaoMensal() {
     labelsOrdenados.push(chave);
     porMes[chave] = 0;
   }
-
-  snap.forEach((doc) => {
-    const r = doc.data();
+  registros.forEach((r) => {
     const data = r.dataHora?.toDate ? r.dataHora.toDate() : null;
     if (!data) return;
     const chave = data.toLocaleDateString('pt-BR', { month: 'short', year: '2-digit' });
@@ -1172,6 +1193,45 @@ async function atualizarEvolucaoMensal() {
           label: 'Faturamento líquido (R$)', data: labelsOrdenados.map((l) => porMes[l]),
           borderColor: '#C68642', backgroundColor: 'rgba(198,134,66,.25)', fill: true, tension: .3
         }]
+      },
+      options: {
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { ticks: { color: '#B8A48C' }, grid: { color: 'rgba(245,230,211,.06)' } },
+          y: { ticks: { color: '#B8A48C' }, grid: { color: 'rgba(245,230,211,.06)' }, beginAtZero: true }
+        }
+      }
+    });
+  }
+
+  // Evolução semanal (últimas 8 semanas, segunda a domingo)
+  const labelsSemana = [];
+  const porSemana = {};
+  const hoje = new Date();
+  for (let i = 7; i >= 0; i--) {
+    const ref = new Date(hoje); ref.setDate(ref.getDate() - i * 7);
+    const inicio = inicioDaSemana(ref);
+    const chave = inicio.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+    labelsSemana.push(chave);
+    porSemana[chave] = 0;
+  }
+  registros.forEach((r) => {
+    const data = r.dataHora?.toDate ? r.dataHora.toDate() : null;
+    if (!data) return;
+    const chave = inicioDaSemana(data).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+    if (chave in porSemana) porSemana[chave] += (r.valorLiquido || 0);
+  });
+
+  const temDadosSemana = Object.values(porSemana).some((v) => v > 0);
+  $('fin-grafico-semanal-vazio').style.display = temDadosSemana ? 'none' : 'block';
+  $('grafico-evolucao-semanal').style.display = temDadosSemana ? 'block' : 'none';
+  if (graficoEvolucaoSemanal) graficoEvolucaoSemanal.destroy();
+  if (temDadosSemana) {
+    graficoEvolucaoSemanal = new Chart($('grafico-evolucao-semanal'), {
+      type: 'bar',
+      data: {
+        labels: labelsSemana,
+        datasets: [{ label: 'Faturamento líquido (R$) — semana de', data: labelsSemana.map((l) => porSemana[l]), backgroundColor: '#D9A441', borderRadius: 4 }]
       },
       options: {
         plugins: { legend: { display: false } },
