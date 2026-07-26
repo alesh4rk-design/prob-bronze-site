@@ -1,10 +1,10 @@
 // Pro'Bronze — Clientes (cadastro pela recepção + ficha de pele embutida)
-import { db } from "./firebase-config.js?v=20260727k";
+import { db } from "./firebase-config.js?v=20260727l";
 import {
   collection, doc, addDoc, updateDoc,
   onSnapshot, query, where, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
-import { notificarErroFirestore } from "./firestore-erro.js?v=20260727k";
+import { notificarErroFirestore } from "./firestore-erro.js?v=20260727l";
 
 export async function criarCliente(negocioId, { nome, whatsapp = "", tipoFitzpatrick = null, observacoesPele = "", dataNascimento = null }) {
   return addDoc(collection(db, "clientes"), {
