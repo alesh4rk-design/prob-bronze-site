@@ -397,13 +397,33 @@
     <!-- ABA FINANCEIRO -->
     <div class="aba-conteudo" id="aba-financeiro">
       <div class="card">
-        <div class="card-titulo">Resumo</div>
+        <div class="card-titulo">Resumo do Mês</div>
         <div class="cabines-grid">
           <div class="cabine-card livre"><div class="cabine-nome" id="fin-bruto">R$0</div><div class="cabine-status">Bruto</div></div>
           <div class="cabine-card livre"><div class="cabine-nome" id="fin-liquido">R$0</div><div class="cabine-status">Líquido</div></div>
           <div class="cabine-card manutencao"><div class="cabine-nome" id="fin-comissao">R$0</div><div class="cabine-status">Comissão</div></div>
           <div class="cabine-card ocupada"><div class="cabine-nome" id="fin-pendente">R$0</div><div class="cabine-status">Pendente</div></div>
+          <div class="cabine-card manutencao"><div class="cabine-nome" id="fin-despesas-mes">R$0</div><div class="cabine-status">Despesas</div></div>
+          <div class="cabine-card livre"><div class="cabine-nome" id="fin-lucro">R$0</div><div class="cabine-status">Lucro</div></div>
         </div>
+      </div>
+      <div class="card">
+        <div class="card-titulo">Nova Despesa</div>
+        <div class="input-group">
+          <label>Categoria</label>
+          <select id="desp-categoria"></select>
+        </div>
+        <div class="input-group"><label>Descrição (opcional)</label><input type="text" id="desp-descricao" placeholder="Ex: Salário Maria — julho"></div>
+        <div class="input-group"><label>Valor (R$)</label><input type="number" id="desp-valor" step="0.01"></div>
+        <div class="input-group"><label>Data</label><input type="date" id="desp-data"></div>
+        <label style="display:flex;align-items:center;gap:.5rem;font-size:.85rem;margin-bottom:1rem">
+          <input type="checkbox" id="desp-recorrente"> Despesa recorrente (repete todo mês, ex: aluguel/salário)
+        </label>
+        <button class="btn-primario" id="btn-criar-despesa">Registrar Despesa</button>
+      </div>
+      <div class="card">
+        <div class="card-titulo">Despesas</div>
+        <div id="lista-despesas"><div class="empty-state">Carregando...</div></div>
       </div>
       <div class="card">
         <div class="card-titulo">Análise do Período</div>
@@ -447,6 +467,16 @@
         <div class="card-titulo">Evolução Mensal (últimos 6 meses)</div>
         <div id="fin-grafico-evolucao-vazio" class="empty-state" style="display:none">Sem dados nos últimos 6 meses.</div>
         <canvas id="grafico-evolucao-mensal" height="200"></canvas>
+      </div>
+      <div class="card">
+        <div class="card-titulo">Receita vs Despesas (período selecionado)</div>
+        <div id="fin-grafico-receita-despesa-vazio" class="empty-state" style="display:none">Sem dados no período selecionado.</div>
+        <canvas id="grafico-receita-despesa" height="200"></canvas>
+      </div>
+      <div class="card">
+        <div class="card-titulo">Despesas por Categoria (período selecionado)</div>
+        <div id="fin-grafico-despesa-categoria-vazio" class="empty-state" style="display:none">Sem despesas no período selecionado.</div>
+        <canvas id="grafico-despesa-categoria" height="200"></canvas>
       </div>
       <div class="card">
         <div class="card-titulo">Pendências</div>
@@ -681,6 +711,7 @@ import { verificarIntervaloMinimo } from './js/ficha-pele.js';
 import { tutorialJaVisto, iniciarTutorial } from './js/tutorial.js';
 import { DIAS_SEMANA, escutarHorarios, salvarHorarios } from './js/horarios.js';
 import { escutarConfigNegocio, salvarConfigNegocio } from './js/config-negocio.js';
+import { CATEGORIAS_DESPESA, criarDespesa, excluirDespesa, escutarDespesas } from './js/despesas.js';
 import { toast, confirmar, confirmarForte, executar } from './js/ui-feedback.js';
 import { db } from './js/firebase-config.js';
 
@@ -710,6 +741,49 @@ let sessaoEmFinalizacao = null; // cabineId da sessão que está no modal de pag
 let pendenciasCache = [];
 let equipeCache = [];
 let produtosCabineCache = [];
+let despesasCache = [];
+let liquidoMesCache = 0;
+let despesasMesCache = 0;
+
+function atualizarLucroMes() {
+  $('fin-despesas-mes').textContent = 'R$' + despesasMesCache.toFixed(2);
+  $('fin-lucro').textContent = 'R$' + (liquidoMesCache - despesasMesCache).toFixed(2);
+}
+
+$('desp-categoria').innerHTML = CATEGORIAS_DESPESA.map((c) => `<option value="${c}">${c}</option>`).join('');
+
+function renderDespesas(despesas) {
+  const wrap = $('lista-despesas');
+  if (despesas.length === 0) { wrap.innerHTML = '<div class="empty-state">Nenhuma despesa cadastrada.</div>'; return; }
+  wrap.innerHTML = despesas.map((d) => `
+    <div class="agendamento-item">
+      <div class="agendamento-info">
+        <div class="nome">${d.categoria}${d.recorrente ? ' 🔁' : ''} — R$${Number(d.valor).toFixed(2)}</div>
+        <div class="detalhe">${d.descricao ? d.descricao + ' · ' : ''}${new Date(d.data + 'T00:00:00').toLocaleDateString('pt-BR')}</div>
+      </div>
+      <button class="btn-secundario" data-excluir-despesa="${d.id}">Excluir</button>
+    </div>
+  `).join('');
+  wrap.querySelectorAll('[data-excluir-despesa]').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      if (!(await confirmar('Excluir esta despesa?'))) return;
+      await excluirDespesa(btn.dataset.excluirDespesa);
+      toast('Despesa excluída.', 'sucesso');
+    });
+  });
+}
+
+$('btn-criar-despesa').addEventListener('click', async () => {
+  const categoria = $('desp-categoria').value;
+  const descricao = $('desp-descricao').value.trim();
+  const valor = Number($('desp-valor').value);
+  const data = $('desp-data').value;
+  const recorrente = $('desp-recorrente').checked;
+  if (!valor || valor <= 0 || !data) { toast('Preencha o valor e a data.', 'aviso'); return; }
+  await criarDespesa(usuarioAtual.negocioId, { categoria, descricao, valor, data, recorrente });
+  $('desp-descricao').value = ''; $('desp-valor').value = ''; $('desp-recorrente').checked = false;
+  toast('Despesa registrada.', 'sucesso');
+});
 let configNegocioCache = { nome: "Pro'Bronze", whatsappNegocio: '', chavePix: '', vitrineSubtitulo: '', intervaloMinimoHoras: 24, limiteSessoesMes: 12 };
 
 function iniciaisDoNome(nome) {
@@ -879,10 +953,22 @@ function iniciarPainel() {
     $('fin-bruto').textContent = 'R$' + resumo.totalBruto.toFixed(2);
     $('fin-liquido').textContent = 'R$' + resumo.totalLiquido.toFixed(2);
     $('fin-comissao').textContent = 'R$' + resumo.totalComissao.toFixed(2);
+    liquidoMesCache = resumo.totalLiquido;
+    atualizarLucroMes();
+  });
+
+  escutarDespesas(negocioId, (despesas) => {
+    despesasCache = despesas;
+    renderDespesas(despesas);
+    despesasMesCache = despesas
+      .filter((d) => { const dt = new Date(d.data + 'T00:00:00'); return dt >= inicioMes && dt <= fimMes; })
+      .reduce((s, d) => s + (d.valor || 0), 0);
+    atualizarLucroMes();
   });
 
   $('fin-de').value = inicioMes.toISOString().slice(0, 10);
   $('fin-ate').value = fimMes.toISOString().slice(0, 10);
+  $('desp-data').value = new Date().toISOString().slice(0, 10);
   atualizarAnaliseFinanceira();
   atualizarEvolucaoMensal();
 
@@ -966,9 +1052,20 @@ let graficoFormasPagamento = null;
 let graficoServico = null;
 let graficoOrigem = null;
 let graficoComissaoFuncionario = null;
+let graficoReceitaDespesa = null;
+let graficoDespesaCategoria = null;
 let graficoEvolucaoMensal = null;
 let graficoEvolucaoSemanal = null;
 const CORES_FORMA_PAGAMENTO = { dinheiro: '#7BA05B', pix: '#C68642', credito: '#D9A441', debito: '#E8B87D', cartao: '#D9A441' };
+
+function buscarDespesasEntre(de, ate) {
+  const inicio = new Date(de + 'T00:00:00');
+  const fim = new Date(ate + 'T23:59:59');
+  return despesasCache.filter((d) => {
+    const dt = new Date(d.data + 'T00:00:00');
+    return dt >= inicio && dt <= fim;
+  });
+}
 
 async function buscarAgendamentosEntre(de, ate) {
   const inicio = new Date(de + 'T00:00:00');
@@ -1140,6 +1237,57 @@ async function atualizarAnaliseFinanceira() {
           y: { ticks: { color: '#B8A48C' }, grid: { color: 'rgba(245,230,211,.06)' }, beginAtZero: true }
         }
       }
+    });
+  }
+
+  // Receita vs Despesas
+  const despesasPeriodo = buscarDespesasEntre(de, ate);
+  const totalReceita = registros.reduce((s, r) => s + (r.valorLiquido || 0), 0);
+  const totalDespesas = despesasPeriodo.reduce((s, d) => s + (d.valor || 0), 0);
+  const temDadosRD = totalReceita > 0 || totalDespesas > 0;
+  $('fin-grafico-receita-despesa-vazio').style.display = temDadosRD ? 'none' : 'block';
+  $('grafico-receita-despesa').style.display = temDadosRD ? 'block' : 'none';
+  if (graficoReceitaDespesa) graficoReceitaDespesa.destroy();
+  if (temDadosRD) {
+    graficoReceitaDespesa = new Chart($('grafico-receita-despesa'), {
+      type: 'bar',
+      data: {
+        labels: ['Receita', 'Despesas', 'Lucro'],
+        datasets: [{
+          data: [totalReceita, totalDespesas, totalReceita - totalDespesas],
+          backgroundColor: ['#7BA05B', '#C1554A', '#C68642'], borderRadius: 4
+        }]
+      },
+      options: {
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { ticks: { color: '#B8A48C' }, grid: { color: 'rgba(245,230,211,.06)' } },
+          y: { ticks: { color: '#B8A48C' }, grid: { color: 'rgba(245,230,211,.06)' } }
+        }
+      }
+    });
+  }
+
+  // Despesas por categoria
+  const porCategoria = {};
+  despesasPeriodo.forEach((d) => {
+    porCategoria[d.categoria] = (porCategoria[d.categoria] || 0) + (d.valor || 0);
+  });
+  const labelsCategoria = Object.keys(porCategoria);
+  $('fin-grafico-despesa-categoria-vazio').style.display = labelsCategoria.length === 0 ? 'block' : 'none';
+  $('grafico-despesa-categoria').style.display = labelsCategoria.length === 0 ? 'none' : 'block';
+  if (graficoDespesaCategoria) graficoDespesaCategoria.destroy();
+  if (labelsCategoria.length > 0) {
+    graficoDespesaCategoria = new Chart($('grafico-despesa-categoria'), {
+      type: 'doughnut',
+      data: {
+        labels: labelsCategoria,
+        datasets: [{
+          data: Object.values(porCategoria),
+          backgroundColor: ['#C1554A', '#D9A441', '#C68642', '#E8B87D', '#7BA05B', '#B8A48C', '#8A6D3B', '#A85C32', '#5C4632']
+        }]
+      },
+      options: { plugins: { legend: { position: 'bottom', labels: { color: '#F5E6D3' } } } }
     });
   }
 }

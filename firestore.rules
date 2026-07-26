@@ -97,6 +97,11 @@ service cloud.firestore {
         (request.method == "create" && ehDoMeuNegocio(request.resource.data.negocioId));
     }
 
+    match /despesas/{id} {
+      allow read, write: if ehDoMeuNegocio(resource.data.negocioId) ||
+        (request.method == "create" && ehDoMeuNegocio(request.resource.data.negocioId));
+    }
+
     // Serviços: leitura aberta a qualquer cliente logada (vitrine pra
     // escolher o que agendar); escrita só de quem é do negócio
     match /servicos/{id} {
