@@ -26,6 +26,13 @@ service cloud.firestore {
       return logado() && request.auth.uid == "vzgts23koAWeJeJ6ojMVdsLRJkJ3";
     }
 
+    // Distingue equipe (dono/funcionário, tem doc em "usuarios") de uma
+    // cliente logada (só tem doc em "clientes", vinculado por clienteUid).
+    // Usado pra abrir leitura pra clientes sem abrir também pra funcionário.
+    function ehClienteSemCadastroDeEquipe() {
+      return logado() && !exists(/databases/$(database)/documents/usuarios/$(request.auth.uid));
+    }
+
     // Negócios: qualquer visitante logado pode criar (cadastro trial);
     // leitura de UM negócio (vitrine da cliente) é aberta a qualquer logado,
     // mas LISTAR todos só é permitido ao dono do próprio negócio ou ao admin geral.
@@ -97,14 +104,26 @@ service cloud.firestore {
         (request.method == "create" && ehDoMeuNegocio(request.resource.data.negocioId));
     }
 
+    // Financeiro/Despesas: qualquer um do negócio pode CRIAR (recepcionista
+    // registra pagamento na venda, e o restoque de produto/insumo lança
+    // despesa automática) — mas só o dono pode LER/editar, já que são
+    // informações estratégicas que a funcionária não deve enxergar.
     match /financeiro/{id} {
-      allow read, write: if ehDoMeuNegocio(resource.data.negocioId) ||
-        (request.method == "create" && ehDoMeuNegocio(request.resource.data.negocioId));
+      allow read, update, delete: if ehDoMeuNegocio(resource.data.negocioId) && ehDono();
+      allow create: if ehDoMeuNegocio(request.resource.data.negocioId);
     }
 
     match /despesas/{id} {
-      allow read, write: if ehDoMeuNegocio(resource.data.negocioId) ||
-        (request.method == "create" && ehDoMeuNegocio(request.resource.data.negocioId));
+      allow read, update, delete: if ehDoMeuNegocio(resource.data.negocioId) && ehDono();
+      allow create: if ehDoMeuNegocio(request.resource.data.negocioId);
+    }
+
+    // Horário de funcionamento: coleção própria (não é mais campo do doc
+    // "negocios") justamente pra poder restringir a leitura só ao dono,
+    // exceto pra clientes logadas, que precisam validar o horário ao agendar.
+    match /horariosFuncionamento/{negocioId} {
+      allow read: if (ehDoMeuNegocio(negocioId) && ehDono()) || ehClienteSemCadastroDeEquipe();
+      allow write: if ehDoMeuNegocio(negocioId) && ehDono();
     }
 
     // Serviços: leitura aberta a qualquer cliente logada (vitrine pra

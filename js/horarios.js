@@ -1,7 +1,10 @@
-// Pro'Bronze — Horário de Funcionamento (configurado pelo dono, guardado no doc do negócio)
-import { db } from "./firebase-config.js?v=20260727a";
+// Pro'Bronze — Horário de Funcionamento
+// Guardado numa coleção própria (não dentro do doc do negócio) de propósito:
+// assim dá pra restringir a leitura só ao dono nas regras do Firestore, sem
+// bloquear o resto do doc "negocios" que a equipe também precisa ler.
+import { db } from "./firebase-config.js?v=20260727b";
 import { doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
-import { notificarErroFirestore } from "./firestore-erro.js?v=20260727a";
+import { notificarErroFirestore } from "./firestore-erro.js?v=20260727b";
 
 export const DIAS_SEMANA = [
   { chave: "seg", nome: "Segunda-feira" },
@@ -22,14 +25,13 @@ export function horariosPadrao() {
 }
 
 export function escutarHorarios(negocioId, callback) {
-  return onSnapshot(doc(db, "negocios", negocioId), (snap) => {
-    const dados = snap.data();
-    callback(dados?.horarioFuncionamento || horariosPadrao());
+  return onSnapshot(doc(db, "horariosFuncionamento", negocioId), (snap) => {
+    callback(snap.data() || horariosPadrao());
   }, notificarErroFirestore);
 }
 
 export function salvarHorarios(negocioId, horarios) {
-  return setDoc(doc(db, "negocios", negocioId), { horarioFuncionamento: horarios }, { merge: true });
+  return setDoc(doc(db, "horariosFuncionamento", negocioId), horarios);
 }
 
 const CHAVE_POR_DIA_JS = ["dom", "seg", "ter", "qua", "qui", "sex", "sab"]; // Date.getDay(): 0=domingo

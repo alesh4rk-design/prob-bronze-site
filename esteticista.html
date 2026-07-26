@@ -7,7 +7,7 @@
 <meta http-equiv="Expires" content="0">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Pro'Bronze — Painel</title>
-<link rel="stylesheet" href="css/theme.css?v=20260727a">
+<link rel="stylesheet" href="css/theme.css?v=20260727b">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -974,38 +974,38 @@
 </div>
 
 <script type="module">
-import { onAuthChange, login, logout, iniciarLoginComGoogle, resetSenha } from './js/auth.js?v=20260727a';
-import { VALOR_MENSALIDADE, PIX_PLATAFORMA, WHATSAPP_SUPORTE } from './js/admin-config.js?v=20260727a';
-import { escutarCabines, atualizarStatusCabine, criarCabine, excluirCabine } from './js/cabines.js?v=20260727a';
+import { onAuthChange, login, logout, iniciarLoginComGoogle, resetSenha } from './js/auth.js?v=20260727b';
+import { VALOR_MENSALIDADE, PIX_PLATAFORMA, WHATSAPP_SUPORTE } from './js/admin-config.js?v=20260727b';
+import { escutarCabines, atualizarStatusCabine, criarCabine, excluirCabine } from './js/cabines.js?v=20260727b';
 import {
   escutarAgendamentosDoDia, criarAgendamento, concluirAgendamento,
   cancelarAgendamento, marcarFalta, atribuirCabine, contarConflitosHorario, marcarEmAndamento,
   salvarAvaliacaoSessao, estenderTempoSessao
-} from './js/agenda.js?v=20260727a';
-import { checarElegibilidade } from './js/agenda.js?v=20260727a';
-import { escutarServicos, criarServico, calcularCombo } from './js/servicos.js?v=20260727a';
-import { escutarClientes, criarCliente, ehAniversarioHoje } from './js/clientes.js?v=20260727a';
-import { criarMembroEquipe, escutarEquipe, excluirMembroEquipe } from './js/equipe.js?v=20260727a';
-import { tempoMaxRecomendado } from './js/ficha-pele.js?v=20260727a';
-import { registrarPagamento, escutarPendencias, quitarPendencia, resumoFinanceiro, escutarFinanceiroPeriodo } from './js/financeiro.js?v=20260727a';
-import { criarPacote, escutarPacotesDoNegocio, consumirSessaoDoPacote } from './js/pacotes-sessoes.js?v=20260727a';
-import { criarProdutoCabine, escutarProdutosCabine, produtosEmAlerta, baixarEstoque, somarEstoque, buscarPorCodigoBarras, excluirProdutoCabine } from './js/produtos-cabine.js?v=20260727a';
-import { criarInsumo, escutarInsumos, reporInsumo, darBaixaInsumo, excluirInsumo, insumosEmAlerta } from './js/insumos.js?v=20260727a';
-import { criarCupom, escutarCupons, desativarCupom, calcularDescontoCupom } from './js/cupons.js?v=20260727a';
-import { exportarExcel, exportarPDF, montarRelatorioFinanceiro, COLUNAS_FINANCEIRO } from './js/relatorios.js?v=20260727a';
+} from './js/agenda.js?v=20260727b';
+import { checarElegibilidade } from './js/agenda.js?v=20260727b';
+import { escutarServicos, criarServico, calcularCombo } from './js/servicos.js?v=20260727b';
+import { escutarClientes, criarCliente, ehAniversarioHoje } from './js/clientes.js?v=20260727b';
+import { criarMembroEquipe, escutarEquipe, excluirMembroEquipe } from './js/equipe.js?v=20260727b';
+import { tempoMaxRecomendado } from './js/ficha-pele.js?v=20260727b';
+import { registrarPagamento, escutarPendencias, quitarPendencia, resumoFinanceiro, escutarFinanceiroPeriodo } from './js/financeiro.js?v=20260727b';
+import { criarPacote, escutarPacotesDoNegocio, consumirSessaoDoPacote } from './js/pacotes-sessoes.js?v=20260727b';
+import { criarProdutoCabine, escutarProdutosCabine, produtosEmAlerta, baixarEstoque, somarEstoque, buscarPorCodigoBarras, excluirProdutoCabine } from './js/produtos-cabine.js?v=20260727b';
+import { criarInsumo, escutarInsumos, reporInsumo, darBaixaInsumo, excluirInsumo, insumosEmAlerta } from './js/insumos.js?v=20260727b';
+import { criarCupom, escutarCupons, desativarCupom, calcularDescontoCupom } from './js/cupons.js?v=20260727b';
+import { exportarExcel, exportarPDF, montarRelatorioFinanceiro, COLUNAS_FINANCEIRO } from './js/relatorios.js?v=20260727b';
 import {
   linkConfirmacaoAgendamento, linkCobrancaPendente, linkAtrasoAgendamento,
   linkClienteSumido, linkMensagemLivre, linkLembreteIntervalo,
   linkSuaVezChegando, linkPromocao, linkAniversario, linkAgradecimento,
   linkPacoteAcabando
-} from './js/whatsapp.js?v=20260727a';
-import { verificarIntervaloMinimo } from './js/ficha-pele.js?v=20260727a';
-import { tutorialJaVisto, iniciarTutorial } from './js/tutorial.js?v=20260727a';
-import { DIAS_SEMANA, escutarHorarios, salvarHorarios, validarHorarioFuncionamento } from './js/horarios.js?v=20260727a';
-import { escutarConfigNegocio, salvarConfigNegocio } from './js/config-negocio.js?v=20260727a';
-import { CATEGORIAS_DESPESA, criarDespesa, excluirDespesa, escutarDespesas } from './js/despesas.js?v=20260727a';
-import { toast, confirmar, confirmarForte, executar } from './js/ui-feedback.js?v=20260727a';
-import { db } from './js/firebase-config.js?v=20260727a';
+} from './js/whatsapp.js?v=20260727b';
+import { verificarIntervaloMinimo } from './js/ficha-pele.js?v=20260727b';
+import { tutorialJaVisto, iniciarTutorial } from './js/tutorial.js?v=20260727b';
+import { DIAS_SEMANA, escutarHorarios, salvarHorarios, validarHorarioFuncionamento } from './js/horarios.js?v=20260727b';
+import { escutarConfigNegocio, salvarConfigNegocio } from './js/config-negocio.js?v=20260727b';
+import { CATEGORIAS_DESPESA, criarDespesa, excluirDespesa, escutarDespesas } from './js/despesas.js?v=20260727b';
+import { toast, confirmar, confirmarForte, executar } from './js/ui-feedback.js?v=20260727b';
+import { db } from './js/firebase-config.js?v=20260727b';
 
 // Luzinhas douradas ao redor do card de login
 // Mostra o nome da loja usada da última vez que alguém logou neste aparelho
@@ -1311,10 +1311,15 @@ function iniciarPainel() {
     restaurarSessoesEmAndamento(lista);
   }));
 
-  listenersAtivos.push(escutarHorarios(negocioId, (horarios) => {
-    horariosCache = horarios;
-    renderHorarios(horarios);
-  }));
+  // Horários e Financeiro/Despesas são abas estratégicas — as regras do
+  // Firestore já bloqueiam a leitura pra quem não é dono, então nem tenta
+  // escutar (evita telas de erro de permissão pro funcionário)
+  if (usuarioAtual.papel === 'dono') {
+    listenersAtivos.push(escutarHorarios(negocioId, (horarios) => {
+      horariosCache = horarios;
+      renderHorarios(horarios);
+    }));
+  }
 
   listenersAtivos.push(escutarConfigNegocio(negocioId, (config) => {
     configNegocioCache = config;
@@ -1343,46 +1348,50 @@ function iniciarPainel() {
     preencherSelectPacoteCliente(clientes);
   }));
 
-  listenersAtivos.push(escutarPendencias(negocioId, (pendencias) => {
-    pendenciasCache = pendencias;
-    renderPendencias(pendencias);
-    $('fin-pendente').textContent = 'R$' + pendencias.reduce((s, p) => s + p.valorLiquido, 0).toFixed(2);
-  }));
-
   listenersAtivos.push(escutarPacotesDoNegocio(negocioId, (pacotes) => {
     pacotesCache = pacotes;
     renderPacotes(pacotes);
   }));
 
-  const inicioMes = new Date(); inicioMes.setDate(1); inicioMes.setHours(0, 0, 0, 0);
-  const fimMes = new Date();
-  listenersAtivos.push(escutarFinanceiroPeriodo(negocioId, inicioMes, fimMes, (registros) => {
-    const resumo = resumoFinanceiro(registros);
-    $('fin-bruto').textContent = 'R$' + resumo.totalBruto.toFixed(2);
-    $('fin-liquido').textContent = 'R$' + resumo.totalLiquido.toFixed(2);
-    $('fin-comissao').textContent = 'R$' + resumo.totalComissao.toFixed(2);
-    const totalVendasProdutos = registros.filter((r) => !r.agendamentoId).reduce((s, r) => s + (r.valorLiquido || 0), 0);
-    $('fin-vendas-produtos').textContent = 'R$' + totalVendasProdutos.toFixed(2);
-    liquidoMesCache = resumo.totalLiquido;
-    atualizarLucroMes();
-    atualizarMetaMensal();
-  }));
+  // Financeiro/Despesas/Pendências são estratégicos — bloqueados no
+  // Firestore pra quem não é dono, então só escuta/consulta se for dono
+  if (usuarioAtual.papel === 'dono') {
+    listenersAtivos.push(escutarPendencias(negocioId, (pendencias) => {
+      pendenciasCache = pendencias;
+      renderPendencias(pendencias);
+      $('fin-pendente').textContent = 'R$' + pendencias.reduce((s, p) => s + p.valorLiquido, 0).toFixed(2);
+    }));
 
-  listenersAtivos.push(escutarDespesas(negocioId, (despesas) => {
-    despesasCache = despesas;
-    renderDespesas(despesas);
-    despesasMesCache = despesas
-      .filter((d) => { const dt = new Date(d.data + 'T00:00:00'); return dt >= inicioMes && dt <= fimMes; })
-      .reduce((s, d) => s + (d.valor || 0), 0);
-    atualizarLucroMes();
+    const inicioMes = new Date(); inicioMes.setDate(1); inicioMes.setHours(0, 0, 0, 0);
+    const fimMes = new Date();
+    listenersAtivos.push(escutarFinanceiroPeriodo(negocioId, inicioMes, fimMes, (registros) => {
+      const resumo = resumoFinanceiro(registros);
+      $('fin-bruto').textContent = 'R$' + resumo.totalBruto.toFixed(2);
+      $('fin-liquido').textContent = 'R$' + resumo.totalLiquido.toFixed(2);
+      $('fin-comissao').textContent = 'R$' + resumo.totalComissao.toFixed(2);
+      const totalVendasProdutos = registros.filter((r) => !r.agendamentoId).reduce((s, r) => s + (r.valorLiquido || 0), 0);
+      $('fin-vendas-produtos').textContent = 'R$' + totalVendasProdutos.toFixed(2);
+      liquidoMesCache = resumo.totalLiquido;
+      atualizarLucroMes();
+      atualizarMetaMensal();
+    }));
+
+    listenersAtivos.push(escutarDespesas(negocioId, (despesas) => {
+      despesasCache = despesas;
+      renderDespesas(despesas);
+      despesasMesCache = despesas
+        .filter((d) => { const dt = new Date(d.data + 'T00:00:00'); return dt >= inicioMes && dt <= fimMes; })
+        .reduce((s, d) => s + (d.valor || 0), 0);
+      atualizarLucroMes();
+      atualizarAnaliseFinanceira();
+    }));
+
+    $('fin-de').value = inicioMes.toISOString().slice(0, 10);
+    $('fin-ate').value = fimMes.toISOString().slice(0, 10);
+    $('desp-data').value = new Date().toISOString().slice(0, 10);
     atualizarAnaliseFinanceira();
-  }));
-
-  $('fin-de').value = inicioMes.toISOString().slice(0, 10);
-  $('fin-ate').value = fimMes.toISOString().slice(0, 10);
-  $('desp-data').value = new Date().toISOString().slice(0, 10);
-  atualizarAnaliseFinanceira();
-  atualizarEvolucaoMensal();
+    atualizarEvolucaoMensal();
+  }
 
   listenersAtivos.push(escutarProdutosCabine(negocioId, (produtos) => {
     produtosCabineCache = produtos;
@@ -3295,10 +3304,15 @@ $('btn-criar-agendamento').addEventListener('click', async () => {
     return;
   }
 
-  const horarioValido = validarHorarioFuncionamento(horariosCache, dataHora);
-  if (!horarioValido.permitido) {
-    avisosWrap.innerHTML = `<div class="aviso-bloqueio">${horarioValido.motivo} Escolha um horário dentro do funcionamento da loja (aba Horários).</div>`;
-    return;
+  // Funcionário(a) não tem acesso à configuração de horários (é uma aba
+  // estratégica, bloqueada até no banco) — só valida quando quem está
+  // logado é o dono, que de fato carrega esse dado.
+  if (usuarioAtual.papel === 'dono') {
+    const horarioValido = validarHorarioFuncionamento(horariosCache, dataHora);
+    if (!horarioValido.permitido) {
+      avisosWrap.innerHTML = `<div class="aviso-bloqueio">${horarioValido.motivo} Escolha um horário dentro do funcionamento da loja (aba Horários).</div>`;
+      return;
+    }
   }
 
   if (clienteId === '__novo__') {
