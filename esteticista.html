@@ -38,8 +38,14 @@
     z-index: 2;
   }
   @keyframes sol-pulsar {
-    0%, 100% { box-shadow: 0 0 34px 12px rgba(var(--accent-rgb),.55), 0 0 84px 28px rgba(var(--accent-rgb),.25); }
-    50% { box-shadow: 0 0 44px 16px rgba(var(--accent-rgb),.7), 0 0 100px 36px rgba(var(--accent-rgb),.35); }
+    0%, 100% {
+      transform: translateX(-50%) scale(1);
+      box-shadow: 0 0 34px 12px rgba(var(--accent-rgb),.55), 0 0 84px 28px rgba(var(--accent-rgb),.25);
+    }
+    50% {
+      transform: translateX(-50%) scale(1.12);
+      box-shadow: 0 0 46px 18px rgba(var(--accent-rgb),.75), 0 0 110px 40px rgba(var(--accent-rgb),.4);
+    }
   }
 
   /* Luzinhas douradas em barra ao redor do card */
