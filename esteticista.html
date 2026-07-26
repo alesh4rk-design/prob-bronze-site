@@ -193,6 +193,7 @@
         <div class="nav-titulo">Operação do dia</div>
         <button class="aba-btn ativa" data-aba="cabines" data-titulo="🛏️ Cabines"><span class="nav-icone">🛏️</span>Cabines</button>
         <button class="aba-btn" data-aba="agenda" data-titulo="📅 Agenda do Dia"><span class="nav-icone">📅</span>Agenda do Dia</button>
+        <button class="aba-btn" data-aba="fila" data-titulo="🪑 Fila de Espera"><span class="nav-icone">🪑</span>Fila de Espera</button>
         <button class="aba-btn" data-aba="novo" data-titulo="➕ Novo Agendamento"><span class="nav-icone">➕</span>Novo Agendamento</button>
       </div>
       <div class="nav-secao">
@@ -202,6 +203,7 @@
       </div>
       <div class="nav-secao">
         <div class="nav-titulo">Pessoas</div>
+        <button class="aba-btn" data-aba="equipe" data-titulo="🧑‍💼 Equipe"><span class="nav-icone">🧑‍💼</span>Equipe</button>
         <button class="aba-btn" data-aba="clientes" data-titulo="👥 Clientes"><span class="nav-icone">👥</span>Clientes</button>
       </div>
       <div class="nav-secao">
@@ -249,6 +251,14 @@
       </div>
     </div>
 
+    <!-- ABA FILA DE ESPERA -->
+    <div class="aba-conteudo" id="aba-fila">
+      <div class="card">
+        <div class="card-titulo">Aguardando ou em andamento</div>
+        <div id="lista-fila"><div class="empty-state">Carregando...</div></div>
+      </div>
+    </div>
+
     <!-- ABA NOVO AGENDAMENTO -->
     <div class="aba-conteudo" id="aba-novo">
       <div class="card">
@@ -279,6 +289,29 @@
           <input type="datetime-local" id="novo-datahora">
         </div>
         <button class="btn-primario" id="btn-criar-agendamento">Confirmar Agendamento</button>
+      </div>
+    </div>
+
+    <!-- ABA EQUIPE -->
+    <div class="aba-conteudo" id="aba-equipe">
+      <div class="card" id="card-nova-equipe">
+        <div class="card-titulo">Adicionar Membro da Equipe</div>
+        <div class="input-group"><label>Nome</label><input type="text" id="eq-nome"></div>
+        <div class="input-group"><label>E-mail</label><input type="email" id="eq-email"></div>
+        <div class="input-group"><label>Senha</label><input type="password" id="eq-senha" placeholder="mínimo 6 caracteres"></div>
+        <div class="input-group">
+          <label>Papel</label>
+          <select id="eq-papel">
+            <option value="recepcionista">Recepcionista</option>
+            <option value="dono">Dono</option>
+          </select>
+        </div>
+        <div class="input-group"><label>Comissão (%)</label><input type="number" id="eq-comissao" value="0" min="0" max="100"></div>
+        <button class="btn-primario" id="btn-criar-equipe">Adicionar</button>
+      </div>
+      <div class="card">
+        <div class="card-titulo">Equipe</div>
+        <div id="lista-equipe"><div class="empty-state">Carregando...</div></div>
       </div>
     </div>
 
@@ -457,11 +490,13 @@
 import { onAuthChange, login, logout } from './js/auth.js';
 import { escutarCabines, atualizarStatusCabine, criarCabine, excluirCabine } from './js/cabines.js';
 import {
-  escutarAgendamentosDoDia, criarAgendamento, concluirAgendamento
+  escutarAgendamentosDoDia, criarAgendamento, concluirAgendamento, escutarFilaEspera,
+  cancelarAgendamento, marcarFalta
 } from './js/agenda.js';
 import { checarElegibilidade } from './js/agenda.js';
 import { escutarServicos, criarServico, calcularCombo } from './js/servicos.js';
 import { escutarClientes, criarCliente } from './js/clientes.js';
+import { criarMembroEquipe, escutarEquipe, excluirMembroEquipe } from './js/equipe.js';
 import { tempoMaxRecomendado } from './js/ficha-pele.js';
 import { registrarPagamento, escutarPendencias, quitarPendencia, resumoFinanceiro, escutarFinanceiroPeriodo } from './js/financeiro.js';
 import { criarPacote, escutarPacotesDoNegocio, consumirSessaoDoPacote } from './js/pacotes-sessoes.js';
@@ -498,6 +533,7 @@ let combosSelecionados = new Set();
 let sessaoAtiva = null; // { cabineId, agendamentoId, clienteId, tempoMin, iniciadoEm, valorBruto }
 let timerInterval = null;
 let pendenciasCache = [];
+let equipeCache = [];
 
 function iniciaisDoNome(nome) {
   const partes = (nome || '').trim().split(/\s+/).filter(Boolean);
@@ -583,7 +619,14 @@ function iniciarPainel() {
 
   escutarAgendamentosDoDia(negocioId, new Date(), renderAgendaDia);
 
+  escutarFilaEspera(negocioId, renderFila);
+
   escutarHorarios(negocioId, renderHorarios);
+
+  escutarEquipe(negocioId, (equipe) => {
+    equipeCache = equipe;
+    renderEquipe(equipe);
+  });
 
   escutarServicos(negocioId, (servicos) => {
     servicosCache = servicos;
@@ -831,6 +874,42 @@ function preencherSelectClientes(clientes) {
   sel.value = atual;
 }
 
+// ── Equipe ────────────────────────────────────────────
+function renderEquipe(equipe) {
+  const wrap = $('lista-equipe');
+  $('card-nova-equipe').style.display = usuarioAtual.papel === 'dono' ? 'block' : 'none';
+  if (equipe.length === 0) { wrap.innerHTML = '<div class="empty-state">Nenhum membro cadastrado.</div>'; return; }
+  wrap.innerHTML = equipe.map((m) => `
+    <div class="agendamento-item">
+      <div class="agendamento-info">
+        <div class="nome">${m.nome}</div>
+        <div class="detalhe">${m.papel} · ${m.email}${m.papel !== 'dono' ? ' · comissão ' + (m.percentualComissao || 0) + '%' : ''}</div>
+      </div>
+      ${(usuarioAtual.papel === 'dono' && m.id !== usuarioAtual.uid) ? `<button class="btn-secundario" data-excluir-membro="${m.id}">Remover</button>` : ''}
+    </div>
+  `).join('');
+  wrap.querySelectorAll('[data-excluir-membro]').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      if (!(await confirmarForte('Remover este membro da equipe? O login dele deixará de funcionar no sistema.'))) return;
+      await excluirMembroEquipe(btn.dataset.excluirMembro);
+      toast('Membro removido.', 'sucesso');
+    });
+  });
+}
+
+$('btn-criar-equipe').addEventListener('click', async () => {
+  const nome = $('eq-nome').value.trim();
+  const email = $('eq-email').value.trim();
+  const senha = $('eq-senha').value;
+  const papel = $('eq-papel').value;
+  const percentualComissao = Number($('eq-comissao').value) || 0;
+  if (!nome || !email || !senha) { toast('Preencha nome, e-mail e senha.', 'aviso'); return; }
+  if (senha.length < 6) { toast('A senha precisa ter pelo menos 6 caracteres.', 'aviso'); return; }
+  await criarMembroEquipe(usuarioAtual.negocioId, { nome, email, senha, papel, percentualComissao });
+  $('eq-nome').value = ''; $('eq-email').value = ''; $('eq-senha').value = ''; $('eq-comissao').value = '0';
+  toast('Membro da equipe adicionado.', 'sucesso');
+});
+
 function renderClientes(clientes) {
   const wrap = $('lista-clientes');
   if (clientes.length === 0) { wrap.innerHTML = '<div class="empty-state">Nenhuma cliente cadastrada.</div>'; return; }
@@ -1047,6 +1126,48 @@ function renderAgendaDia(lista) {
   });
 }
 
+function renderFila(lista) {
+  const wrap = $('lista-fila');
+  if (lista.length === 0) {
+    wrap.innerHTML = '<div class="empty-state">Ninguém aguardando ou em sessão agora.</div>';
+    return;
+  }
+  wrap.innerHTML = lista.map((ag) => {
+    const hora = ag.dataHora?.toDate ? ag.dataHora.toDate().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : '';
+    const servicos = (ag.servicos || []).map((s) => s.nome).join(' + ');
+    return `
+      <div class="agendamento-item">
+        <div class="agendamento-info">
+          <div class="nome">${hora} · ${ag.clienteNome}</div>
+          <div class="detalhe">${servicos} · ${ag.tempoMin}min · ${ag.origem}</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:.5rem">
+          <span class="badge ${ag.status}">${ag.status.replace('_', ' ')}</span>
+          ${ag.status === 'agendado' ? `
+            <button class="btn-secundario" data-falta="${ag.id}">Faltou</button>
+            <button class="btn-secundario" data-cancelar="${ag.id}">Cancelar</button>
+          ` : ''}
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  wrap.querySelectorAll('[data-falta]').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      if (!(await confirmar('Marcar esta cliente como falta?'))) return;
+      await marcarFalta(btn.dataset.falta);
+      toast('Falta registrada.', 'sucesso');
+    });
+  });
+  wrap.querySelectorAll('[data-cancelar]').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      if (!(await confirmar('Cancelar este agendamento?'))) return;
+      await cancelarAgendamento(btn.dataset.cancelar);
+      toast('Agendamento cancelado.', 'sucesso');
+    });
+  });
+}
+
 // ── Timer visual de sessão ──────────────────────────────
 async function iniciarSessao(agendamentoId, cabineId, tempoMin, clienteId, valorBruto) {
   if (sessaoAtiva) { toast('Já existe uma sessão em andamento. Finalize antes de iniciar outra.', 'aviso'); return; }
@@ -1109,6 +1230,7 @@ $('btn-confirmar-pagamento').addEventListener('click', async () => {
       if (cupom) desconto += calcularDescontoCupom(cupom, sessaoAtiva.valorBruto);
       else toast('Cupom não encontrado ou inválido — desconto manual aplicado normalmente.', 'aviso');
     }
+    const membroAtivo = equipeCache.find((m) => m.id === usuarioAtual.uid);
     await registrarPagamento(usuarioAtual.negocioId, {
       agendamentoId: sessaoAtiva.agendamentoId,
       clienteId: sessaoAtiva.clienteId,
@@ -1116,7 +1238,9 @@ $('btn-confirmar-pagamento').addEventListener('click', async () => {
       valorBruto: sessaoAtiva.valorBruto,
       desconto,
       formaPagamento,
-      statusPagamento
+      statusPagamento,
+      esteticistaUid: usuarioAtual.uid,
+      percentualComissao: membroAtivo?.percentualComissao || 0
     });
   }
 

@@ -37,9 +37,12 @@ service cloud.firestore {
       allow delete: if false;
     }
 
-    // Usuários: cada um lê o próprio doc; dono lê/cria os da equipe do seu negócio
+    // Usuários: qualquer um do mesmo negócio pode ver a equipe;
+    // só o dono cria/edita/remove membros (exceto o próprio perfil)
     match /usuarios/{uid} {
-      allow read: if logado() && (request.auth.uid == uid || ehDono());
+      allow read: if logado() && (
+        request.auth.uid == uid || ehDono() || resource.data.negocioId == meuNegocioId()
+      );
       allow create: if logado();
       allow update: if request.auth.uid == uid || ehDono();
       allow delete: if ehDono();
