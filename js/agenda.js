@@ -1,14 +1,14 @@
 // Pro'Bronze — Agenda (online + presencial), combo de serviços,
 // integrando ficha de pele e regras de segurança
-import { db } from "./firebase-config.js?v=20260726h";
+import { db } from "./firebase-config.js?v=20260726i";
 import {
   collection, doc, addDoc, updateDoc, getDoc, getDocs,
   onSnapshot, query, where, orderBy, serverTimestamp, Timestamp
 } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
 import {
   verificarIntervaloMinimo, verificarLimiteMensal, tempoMaxRecomendado
-} from "./ficha-pele.js?v=20260726h";
-import { notificarErroFirestore } from "./firestore-erro.js?v=20260726h";
+} from "./ficha-pele.js?v=20260726i";
+import { notificarErroFirestore } from "./firestore-erro.js?v=20260726i";
 
 // status: "agendado" | "em_andamento" | "concluido" | "cancelado" | "faltou"
 // origem: "online" | "presencial"
@@ -104,6 +104,11 @@ export function marcarEmAndamento(agendamentoId) {
 export async function concluirAgendamento(agendamentoId, clienteId) {
   await updateDoc(doc(db, "agendamentos", agendamentoId), { status: "concluido" });
   await updateDoc(doc(db, "clientes", clienteId), { ultimaSessaoEm: new Date().toISOString() });
+}
+
+// Registra a avaliação (1 a 5) que a cliente deu pra sessão concluída
+export function salvarAvaliacaoSessao(agendamentoId, nota) {
+  return updateDoc(doc(db, "agendamentos", agendamentoId), { avaliacao: nota });
 }
 
 // Atribui/troca a cabine de um agendamento online (criado sem cabine definida)

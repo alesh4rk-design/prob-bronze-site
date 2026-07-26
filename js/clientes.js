@@ -1,16 +1,17 @@
 // Pro'Bronze — Clientes (cadastro pela recepção + ficha de pele embutida)
-import { db } from "./firebase-config.js?v=20260726h";
+import { db } from "./firebase-config.js?v=20260726i";
 import {
   collection, doc, addDoc, updateDoc,
   onSnapshot, query, where, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
-import { notificarErroFirestore } from "./firestore-erro.js?v=20260726h";
+import { notificarErroFirestore } from "./firestore-erro.js?v=20260726i";
 
-export async function criarCliente(negocioId, { nome, whatsapp = "", tipoFitzpatrick = null, observacoesPele = "" }) {
+export async function criarCliente(negocioId, { nome, whatsapp = "", tipoFitzpatrick = null, observacoesPele = "", dataNascimento = null }) {
   return addDoc(collection(db, "clientes"), {
     negocioId,
     nome,
     whatsapp,
+    dataNascimento: dataNascimento || null,
     fichaPele: tipoFitzpatrick ? {
       tipoFitzpatrick,
       observacoes: observacoesPele,
@@ -19,6 +20,14 @@ export async function criarCliente(negocioId, { nome, whatsapp = "", tipoFitzpat
     ultimaSessaoEm: null,
     criadoEm: serverTimestamp()
   });
+}
+
+// Verdadeiro se a data de nascimento (formato "AAAA-MM-DD") cai hoje
+export function ehAniversarioHoje(dataNascimento) {
+  if (!dataNascimento) return false;
+  const [, mes, dia] = dataNascimento.split("-").map(Number);
+  const hoje = new Date();
+  return mes === hoje.getMonth() + 1 && dia === hoje.getDate();
 }
 
 export function editarCliente(clienteId, dados) {

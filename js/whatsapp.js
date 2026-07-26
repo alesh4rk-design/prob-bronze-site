@@ -66,6 +66,12 @@ export function linkAniversario({ whatsapp, clienteNome, nomeNegocio }) {
   return `https://wa.me/55${numero}?text=${encodeURIComponent(texto)}`;
 }
 
+export function linkPacoteAcabando({ whatsapp, clienteNome, sessoesRestantes, nomeNegocio }) {
+  const numero = limparNumero(whatsapp);
+  const texto = `Oi, ${clienteNome}! Seu pacote de sessões na ${nomeNegocio} está quase no fim — ${sessoesRestantes === 0 ? 'já acabou' : `restam só ${sessoesRestantes}`}. Bora renovar pra não perder o ritmo? ☀️`;
+  return `https://wa.me/55${numero}?text=${encodeURIComponent(texto)}`;
+}
+
 export function linkAgradecimento({ whatsapp, clienteNome, nomeNegocio }) {
   const numero = limparNumero(whatsapp);
   const texto = `Oi, ${clienteNome}! Muito obrigada por ter vindo na ${nomeNegocio} hoje. Foi um prazer te atender — até a próxima! ☀️`;
