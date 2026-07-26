@@ -7,7 +7,7 @@
 <meta http-equiv="Expires" content="0">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Pro'Bronze — Painel</title>
-<link rel="stylesheet" href="css/theme.css?v=20260727e">
+<link rel="stylesheet" href="css/theme.css?v=20260727f">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -255,6 +255,25 @@
   }
   .timer-flutuante-item:last-child { border-bottom: none; }
   .timer-flutuante-item .timer-flutuante-tempo { font-weight: 800; font-variant-numeric: tabular-nums; }
+
+  /* Central de Avisos — fica junto do botão flutuante de timers, mas
+     os avisos aqui só somem quando a pessoa clica em "Dispensar",
+     diferente do toast normal que desaparece sozinho */
+  #btn-central-avisos {
+    position: fixed; bottom: 8.6rem; right: 1.2rem; z-index: 199; width: 52px; height: 52px; border-radius: 50%;
+    background: var(--card); border: 1.5px solid var(--card-border); color: var(--accent-light);
+    font-size: 1.3rem; cursor: pointer; box-shadow: 0 8px 24px rgba(0,0,0,.4); display: flex; align-items: center; justify-content: center;
+  }
+  #painel-central-avisos {
+    position: fixed; bottom: 12rem; right: 1.2rem; z-index: 200; width: 280px; max-width: calc(100vw - 2.4rem);
+    background: var(--card); border: 1.5px solid var(--card-border); border-radius: 14px; padding: 1rem;
+    box-shadow: 0 12px 36px rgba(0,0,0,.45); max-height: 60vh; overflow-y: auto;
+  }
+  .aviso-persistente-item {
+    display: flex; justify-content: space-between; align-items: center; gap: .5rem; padding: .6rem 0;
+    border-bottom: 1px solid var(--card-border); font-size: .82rem;
+  }
+  .aviso-persistente-item:last-child { border-bottom: none; }
 
   .horario-dia {
     display: flex; align-items: center; gap: .7rem; flex-wrap: wrap; padding: .6rem 0;
@@ -985,28 +1004,37 @@
     <div class="card-titulo" style="margin-bottom:.6rem">Sessões em andamento</div>
     <div id="timers-flutuante-lista"></div>
   </div>
+
+  <!-- Central de Avisos — persistente, só some ao clicar em Dispensar -->
+  <button id="btn-central-avisos" style="display:none">
+    🔔<span id="avisos-flutuante-contador" class="timers-flutuante-badge"></span>
+  </button>
+  <div id="painel-central-avisos" style="display:none">
+    <div class="card-titulo" style="margin-bottom:.6rem">Central de Avisos</div>
+    <div id="avisos-flutuante-lista"></div>
+  </div>
 </div>
 
 <script type="module">
-import { onAuthChange, login, logout, iniciarLoginComGoogle, resetSenha } from './js/auth.js?v=20260727e';
-import { VALOR_MENSALIDADE, PIX_PLATAFORMA, WHATSAPP_SUPORTE } from './js/admin-config.js?v=20260727e';
-import { escutarCabines, atualizarStatusCabine, criarCabine, excluirCabine } from './js/cabines.js?v=20260727e';
+import { onAuthChange, login, logout, iniciarLoginComGoogle, resetSenha } from './js/auth.js?v=20260727f';
+import { VALOR_MENSALIDADE, PIX_PLATAFORMA, WHATSAPP_SUPORTE } from './js/admin-config.js?v=20260727f';
+import { escutarCabines, atualizarStatusCabine, criarCabine, excluirCabine } from './js/cabines.js?v=20260727f';
 import {
   escutarAgendamentosDoDia, criarAgendamento, concluirAgendamento,
   cancelarAgendamento, marcarFalta, atribuirCabine, contarConflitosHorario, marcarEmAndamento,
   salvarAvaliacaoSessao, estenderTempoSessao
-} from './js/agenda.js?v=20260727e';
-import { checarElegibilidade } from './js/agenda.js?v=20260727e';
-import { escutarServicos, criarServico, calcularCombo } from './js/servicos.js?v=20260727e';
-import { escutarClientes, criarCliente, ehAniversarioHoje } from './js/clientes.js?v=20260727e';
-import { criarMembroEquipe, escutarEquipe, excluirMembroEquipe, editarMembroEquipe } from './js/equipe.js?v=20260727e';
-import { tempoMaxRecomendado } from './js/ficha-pele.js?v=20260727e';
-import { registrarPagamento, escutarPendencias, quitarPendencia, resumoFinanceiro, escutarFinanceiroPeriodo } from './js/financeiro.js?v=20260727e';
-import { criarPacote, escutarPacotesDoNegocio, consumirSessaoDoPacote, pacoteVencido, diasParado, DIAS_PARADO_ALERTA } from './js/pacotes-sessoes.js?v=20260727e';
-import { criarProdutoCabine, escutarProdutosCabine, produtosEmAlerta, baixarEstoque, somarEstoque, buscarPorCodigoBarras, excluirProdutoCabine } from './js/produtos-cabine.js?v=20260727e';
-import { criarInsumo, escutarInsumos, reporInsumo, darBaixaInsumo, excluirInsumo, insumosEmAlerta } from './js/insumos.js?v=20260727e';
-import { criarCupom, escutarCupons, desativarCupom, calcularDescontoCupom } from './js/cupons.js?v=20260727e';
-import { exportarExcel, exportarPDF, montarRelatorioFinanceiro, COLUNAS_FINANCEIRO } from './js/relatorios.js?v=20260727e';
+} from './js/agenda.js?v=20260727f';
+import { checarElegibilidade } from './js/agenda.js?v=20260727f';
+import { escutarServicos, criarServico, calcularCombo } from './js/servicos.js?v=20260727f';
+import { escutarClientes, criarCliente, ehAniversarioHoje } from './js/clientes.js?v=20260727f';
+import { criarMembroEquipe, escutarEquipe, excluirMembroEquipe, editarMembroEquipe } from './js/equipe.js?v=20260727f';
+import { tempoMaxRecomendado } from './js/ficha-pele.js?v=20260727f';
+import { registrarPagamento, escutarPendencias, quitarPendencia, resumoFinanceiro, escutarFinanceiroPeriodo } from './js/financeiro.js?v=20260727f';
+import { criarPacote, escutarPacotesDoNegocio, consumirSessaoDoPacote, pacoteVencido, diasParado, DIAS_PARADO_ALERTA } from './js/pacotes-sessoes.js?v=20260727f';
+import { criarProdutoCabine, escutarProdutosCabine, produtosEmAlerta, baixarEstoque, somarEstoque, buscarPorCodigoBarras, excluirProdutoCabine } from './js/produtos-cabine.js?v=20260727f';
+import { criarInsumo, escutarInsumos, reporInsumo, darBaixaInsumo, excluirInsumo, insumosEmAlerta } from './js/insumos.js?v=20260727f';
+import { criarCupom, escutarCupons, desativarCupom, calcularDescontoCupom } from './js/cupons.js?v=20260727f';
+import { exportarExcel, exportarPDF, montarRelatorioFinanceiro, COLUNAS_FINANCEIRO } from './js/relatorios.js?v=20260727f';
 import {
   linkConfirmacaoAgendamento, linkCobrancaPendente, linkAtrasoAgendamento,
   linkClienteSumido, linkMensagemLivre, linkLembreteIntervalo,
@@ -1014,14 +1042,14 @@ import {
   linkPacoteAcabando,
   linkSessaoPacoteAtendida,
   linkPacoteParado
-} from './js/whatsapp.js?v=20260727e';
-import { verificarIntervaloMinimo } from './js/ficha-pele.js?v=20260727e';
-import { tutorialJaVisto, iniciarTutorial } from './js/tutorial.js?v=20260727e';
-import { DIAS_SEMANA, escutarHorarios, salvarHorarios, validarHorarioFuncionamento } from './js/horarios.js?v=20260727e';
-import { escutarConfigNegocio, salvarConfigNegocio } from './js/config-negocio.js?v=20260727e';
-import { CATEGORIAS_DESPESA, criarDespesa, excluirDespesa, escutarDespesas } from './js/despesas.js?v=20260727e';
-import { toast, confirmar, confirmarForte, executar } from './js/ui-feedback.js?v=20260727e';
-import { db } from './js/firebase-config.js?v=20260727e';
+} from './js/whatsapp.js?v=20260727f';
+import { verificarIntervaloMinimo } from './js/ficha-pele.js?v=20260727f';
+import { tutorialJaVisto, iniciarTutorial } from './js/tutorial.js?v=20260727f';
+import { DIAS_SEMANA, escutarHorarios, salvarHorarios, validarHorarioFuncionamento } from './js/horarios.js?v=20260727f';
+import { escutarConfigNegocio, salvarConfigNegocio } from './js/config-negocio.js?v=20260727f';
+import { CATEGORIAS_DESPESA, criarDespesa, excluirDespesa, escutarDespesas } from './js/despesas.js?v=20260727f';
+import { toast, confirmar, confirmarForte, executar } from './js/ui-feedback.js?v=20260727f';
+import { db } from './js/firebase-config.js?v=20260727f';
 
 // Luzinhas douradas ao redor do card de login
 // Mostra o nome da loja usada da última vez que alguém logou neste aparelho
@@ -1063,8 +1091,7 @@ let sessoesAtivas = new Map(); // cabineId -> { agendamentoId, clienteId, tempoM
 let timerIntervalGlobal = null;
 let sessaoEmFinalizacao = null; // cabineId da sessão que está no modal de pagamento agora
 let agendamentoEmAvaliacao = null; // agendamentoId aguardando nota da cliente no modal de avaliação
-const produtosJaAlertados = new Set(); // evita repetir o toast de estoque baixo pro mesmo produto na mesma sessão
-const insumosJaAlertados = new Set(); // idem, pra insumos acabando
+const avisosDispensados = new Set(); // ids de avisos que a pessoa já dispensou na Central de Avisos
 let pendenciasCache = [];
 let equipeCache = [];
 let produtosCabineCache = [];
@@ -1413,20 +1440,12 @@ function iniciarPainel() {
     produtosCabineCache = produtos;
     renderProdutos(produtos);
     preencherSelectVenderProduto(produtos);
-    produtosEmAlerta(produtos).forEach((p) => {
-      if (produtosJaAlertados.has(p.id)) return;
-      produtosJaAlertados.add(p.id);
-      toast(`📦 Estoque baixo: ${p.nome} (${p.quantidade}${p.unidade} restantes)`, 'aviso');
-    });
+    atualizarCentralAvisos();
   }));
   listenersAtivos.push(escutarInsumos(negocioId, (insumos) => {
     insumosCache = insumos;
     renderInsumos(insumos);
-    insumosEmAlerta(insumos).forEach((i) => {
-      if (insumosJaAlertados.has(i.id)) return;
-      insumosJaAlertados.add(i.id);
-      toast(`🧪 Insumo acabando: ${i.nome} (${i.quantidade}${i.unidade} restantes)`, 'aviso');
-    });
+    atualizarCentralAvisos();
   }));
   listenersAtivos.push(escutarCupons(negocioId, (cupons) => {
     cuponsCache = cupons;
@@ -3097,6 +3116,54 @@ function renderTimersFlutuante() {
 
 $('btn-timers-flutuante').addEventListener('click', () => {
   const painel = $('painel-timers-flutuante');
+  painel.style.display = painel.style.display === 'block' ? 'none' : 'block';
+});
+
+// ── Central de Avisos — persistente, só some quando a pessoa clica em
+// "Dispensar" (diferente do toast normal, que desaparece sozinho) ──
+function atualizarCentralAvisos() {
+  const avisos = [];
+  produtosEmAlerta(produtosCabineCache || []).forEach((p) => {
+    avisos.push({ id: `produto-${p.id}`, texto: `📦 Estoque baixo: ${p.nome} (${p.quantidade}${p.unidade})`, aba: 'produtos' });
+  });
+  insumosEmAlerta(insumosCache || []).forEach((i) => {
+    avisos.push({ id: `insumo-${i.id}`, texto: `🧪 Insumo acabando: ${i.nome} (${i.quantidade}${i.unidade})`, aba: 'insumos' });
+  });
+
+  const visiveis = avisos.filter((a) => !avisosDispensados.has(a.id));
+  const btn = $('btn-central-avisos');
+  const contador = $('avisos-flutuante-contador');
+  const lista = $('avisos-flutuante-lista');
+
+  if (visiveis.length === 0) {
+    btn.style.display = 'none';
+    $('painel-central-avisos').style.display = 'none';
+    return;
+  }
+  btn.style.display = 'flex';
+  contador.textContent = visiveis.length;
+  lista.innerHTML = visiveis.map((a) => `
+    <div class="aviso-persistente-item">
+      <span data-ir-aba="${a.aba}" style="cursor:pointer;flex:1">${a.texto}</span>
+      <button class="btn-secundario" data-dispensar-aviso="${a.id}" style="flex-shrink:0">Dispensar</button>
+    </div>
+  `).join('');
+  lista.querySelectorAll('[data-ir-aba]').forEach((el) => {
+    el.addEventListener('click', () => {
+      document.querySelector(`[data-aba="${el.dataset.irAba}"]`)?.click();
+      $('painel-central-avisos').style.display = 'none';
+    });
+  });
+  lista.querySelectorAll('[data-dispensar-aviso]').forEach((btnDispensar) => {
+    btnDispensar.addEventListener('click', () => {
+      avisosDispensados.add(btnDispensar.dataset.dispensarAviso);
+      atualizarCentralAvisos();
+    });
+  });
+}
+
+$('btn-central-avisos').addEventListener('click', () => {
+  const painel = $('painel-central-avisos');
   painel.style.display = painel.style.display === 'block' ? 'none' : 'block';
 });
 
