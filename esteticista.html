@@ -185,6 +185,12 @@
     <!-- ABA CABINES -->
     <div class="aba-conteudo ativa" id="aba-cabines">
       <div class="card">
+        <div class="card-titulo">Nova Cabine / Cama</div>
+        <div class="input-group"><label>Nome</label><input type="text" id="cab-nome" placeholder="Ex: Cabine 1"></div>
+        <div class="input-group"><label>Tempo padrão (minutos)</label><input type="number" id="cab-tempo" value="15" min="1"></div>
+        <button class="btn-primario" id="btn-criar-cabine">Cadastrar Cabine</button>
+      </div>
+      <div class="card">
         <div class="card-titulo">Cabines / Camas</div>
         <div class="cabines-grid" id="grid-cabines">
           <div class="empty-state">Carregando...</div>
@@ -398,7 +404,7 @@
 
 <script type="module">
 import { onAuthChange, login, logout } from './js/auth.js';
-import { escutarCabines, atualizarStatusCabine } from './js/cabines.js';
+import { escutarCabines, atualizarStatusCabine, criarCabine, excluirCabine } from './js/cabines.js';
 import {
   escutarAgendamentosDoDia, criarAgendamento, concluirAgendamento
 } from './js/agenda.js';
@@ -562,6 +568,15 @@ function renderProdutos(produtos) {
     </div>
   `).join('');
 }
+
+$('btn-criar-cabine').addEventListener('click', async () => {
+  const nome = $('cab-nome').value.trim();
+  const tempoPadraoMin = Number($('cab-tempo').value) || 15;
+  if (!nome) { toast('Informe o nome da cabine.', 'aviso'); return; }
+  await criarCabine(usuarioAtual.negocioId, { nome, tempoPadraoMin });
+  $('cab-nome').value = ''; $('cab-tempo').value = '15';
+  toast('Cabine cadastrada.', 'sucesso');
+});
 
 $('btn-criar-produto').addEventListener('click', async () => {
   const nome = $('prod-nome').value.trim();
@@ -758,11 +773,20 @@ function renderCabines(cabines) {
     <div class="cabine-card ${c.status}" data-id="${c.id}">
       <div class="cabine-nome">${c.nome}</div>
       <div class="cabine-status">${rotuloStatus(c.status)}</div>
+      ${c.status === 'livre' ? `<button class="btn-secundario cabine-excluir" data-excluir="${c.id}" style="margin-top:.5rem;font-size:.68rem;padding:.3rem .5rem">Excluir</button>` : ''}
     </div>
   `).join('');
 
   grid.querySelectorAll('.cabine-card').forEach((el) => {
     el.addEventListener('click', () => cicloStatusCabine(el.dataset.id));
+  });
+  grid.querySelectorAll('[data-excluir]').forEach((btn) => {
+    btn.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      if (!(await confirmar('Excluir esta cabine? Essa ação não pode ser desfeita.'))) return;
+      await excluirCabine(btn.dataset.excluir);
+      toast('Cabine excluída.', 'sucesso');
+    });
   });
 }
 
