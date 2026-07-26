@@ -1,10 +1,10 @@
 // Pro'Bronze — Serviços (usados para montar combo no agendamento)
-import { db } from "./firebase-config.js?v=20260727m";
+import { db } from "./firebase-config.js?v=20260727n";
 import {
   collection, doc, addDoc, updateDoc, deleteDoc,
   onSnapshot, query, where, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
-import { notificarErroFirestore } from "./firestore-erro.js?v=20260727m";
+import { notificarErroFirestore } from "./firestore-erro.js?v=20260727n";
 
 export async function criarServico(negocioId, { nome, preco, duracaoMin, categoria = "" }) {
   return addDoc(collection(db, "servicos"), {

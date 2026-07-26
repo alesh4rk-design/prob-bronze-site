@@ -15,7 +15,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Pro'Bronze">
-<link rel="stylesheet" href="css/theme.css?v=20260727m">
+<link rel="stylesheet" href="css/theme.css?v=20260727n">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -1044,25 +1044,25 @@
 </div>
 
 <script type="module">
-import { onAuthChange, login, logout, iniciarLoginComGoogle, resetSenha } from './js/auth.js?v=20260727m';
-import { VALOR_MENSALIDADE, PIX_PLATAFORMA, WHATSAPP_SUPORTE } from './js/admin-config.js?v=20260727m';
-import { escutarCabines, atualizarStatusCabine, criarCabine, excluirCabine } from './js/cabines.js?v=20260727m';
+import { onAuthChange, login, logout, iniciarLoginComGoogle, resetSenha } from './js/auth.js?v=20260727n';
+import { VALOR_MENSALIDADE, PIX_PLATAFORMA, WHATSAPP_SUPORTE } from './js/admin-config.js?v=20260727n';
+import { escutarCabines, atualizarStatusCabine, criarCabine, excluirCabine } from './js/cabines.js?v=20260727n';
 import {
   escutarAgendamentosDoDia, criarAgendamento, concluirAgendamento,
   cancelarAgendamento, marcarFalta, atribuirCabine, contarConflitosHorario, marcarEmAndamento,
   salvarAvaliacaoSessao, estenderTempoSessao
-} from './js/agenda.js?v=20260727m';
-import { checarElegibilidade } from './js/agenda.js?v=20260727m';
-import { escutarServicos, criarServico, calcularCombo } from './js/servicos.js?v=20260727m';
-import { escutarClientes, criarCliente, ehAniversarioHoje } from './js/clientes.js?v=20260727m';
-import { criarMembroEquipe, escutarEquipe, excluirMembroEquipe, editarMembroEquipe } from './js/equipe.js?v=20260727m';
-import { tempoMaxRecomendado } from './js/ficha-pele.js?v=20260727m';
-import { registrarPagamento, escutarPendencias, quitarPendencia, resumoFinanceiro, escutarFinanceiroPeriodo } from './js/financeiro.js?v=20260727m';
-import { criarPacote, escutarPacotesDoNegocio, consumirSessaoDoPacote, pacoteVencido, diasParado, DIAS_PARADO_ALERTA } from './js/pacotes-sessoes.js?v=20260727m';
-import { criarProdutoCabine, escutarProdutosCabine, produtosEmAlerta, baixarEstoque, somarEstoque, buscarPorCodigoBarras, excluirProdutoCabine } from './js/produtos-cabine.js?v=20260727m';
-import { criarInsumo, escutarInsumos, reporInsumo, darBaixaInsumo, excluirInsumo, insumosEmAlerta, buscarInsumoPorCodigoBarras } from './js/insumos.js?v=20260727m';
-import { criarCupom, escutarCupons, desativarCupom, calcularDescontoCupom } from './js/cupons.js?v=20260727m';
-import { exportarExcel, exportarPDF, montarRelatorioFinanceiro, COLUNAS_FINANCEIRO } from './js/relatorios.js?v=20260727m';
+} from './js/agenda.js?v=20260727n';
+import { checarElegibilidade } from './js/agenda.js?v=20260727n';
+import { escutarServicos, criarServico, calcularCombo } from './js/servicos.js?v=20260727n';
+import { escutarClientes, criarCliente, ehAniversarioHoje } from './js/clientes.js?v=20260727n';
+import { criarMembroEquipe, escutarEquipe, excluirMembroEquipe, editarMembroEquipe } from './js/equipe.js?v=20260727n';
+import { tempoMaxRecomendado } from './js/ficha-pele.js?v=20260727n';
+import { registrarPagamento, escutarPendencias, quitarPendencia, resumoFinanceiro, escutarFinanceiroPeriodo } from './js/financeiro.js?v=20260727n';
+import { criarPacote, escutarPacotesDoNegocio, consumirSessaoDoPacote, pacoteVencido, diasParado, DIAS_PARADO_ALERTA } from './js/pacotes-sessoes.js?v=20260727n';
+import { criarProdutoCabine, escutarProdutosCabine, produtosEmAlerta, baixarEstoque, somarEstoque, buscarPorCodigoBarras, excluirProdutoCabine } from './js/produtos-cabine.js?v=20260727n';
+import { criarInsumo, escutarInsumos, reporInsumo, darBaixaInsumo, excluirInsumo, insumosEmAlerta, buscarInsumoPorCodigoBarras } from './js/insumos.js?v=20260727n';
+import { criarCupom, escutarCupons, desativarCupom, calcularDescontoCupom } from './js/cupons.js?v=20260727n';
+import { exportarExcel, exportarPDF, montarRelatorioFinanceiro, COLUNAS_FINANCEIRO } from './js/relatorios.js?v=20260727n';
 import {
   linkConfirmacaoAgendamento, linkCobrancaPendente, linkAtrasoAgendamento,
   linkClienteSumido, linkMensagemLivre, linkLembreteIntervalo,
@@ -1070,14 +1070,14 @@ import {
   linkPacoteAcabando,
   linkSessaoPacoteAtendida,
   linkPacoteParado
-} from './js/whatsapp.js?v=20260727m';
-import { verificarIntervaloMinimo } from './js/ficha-pele.js?v=20260727m';
-import { tutorialJaVisto, iniciarTutorial } from './js/tutorial.js?v=20260727m';
-import { DIAS_SEMANA, escutarHorarios, salvarHorarios, validarHorarioFuncionamento } from './js/horarios.js?v=20260727m';
-import { escutarConfigNegocio, salvarConfigNegocio } from './js/config-negocio.js?v=20260727m';
-import { CATEGORIAS_DESPESA, criarDespesa, excluirDespesa, escutarDespesas } from './js/despesas.js?v=20260727m';
-import { toast, confirmar, confirmarForte, executar } from './js/ui-feedback.js?v=20260727m';
-import { db } from './js/firebase-config.js?v=20260727m';
+} from './js/whatsapp.js?v=20260727n';
+import { verificarIntervaloMinimo } from './js/ficha-pele.js?v=20260727n';
+import { tutorialJaVisto, iniciarTutorial } from './js/tutorial.js?v=20260727n';
+import { DIAS_SEMANA, escutarHorarios, salvarHorarios, validarHorarioFuncionamento } from './js/horarios.js?v=20260727n';
+import { escutarConfigNegocio, salvarConfigNegocio } from './js/config-negocio.js?v=20260727n';
+import { CATEGORIAS_DESPESA, criarDespesa, excluirDespesa, escutarDespesas } from './js/despesas.js?v=20260727n';
+import { toast, confirmar, confirmarForte, executar } from './js/ui-feedback.js?v=20260727n';
+import { db } from './js/firebase-config.js?v=20260727n';
 
 // Luzinhas douradas ao redor do card de login
 // Mostra o nome da loja usada da última vez que alguém logou neste aparelho
@@ -3464,10 +3464,23 @@ function montarComprovantePdfBlob({ nomeLoja, clienteNome, descricao, valor, for
   // ── Cabeçalho ──
   doc.setFillColor(...bg);
   doc.rect(0, 0, W, 40, 'F');
-  doc.setTextColor(...accentLight);
+  // Sol desenhado em vetor (fontes padrão do PDF não têm o emoji ☀️,
+  // que virava um símbolo quebrado tipo "&þ")
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(20);
-  doc.text(`☀️ ${nomeLoja}`, W / 2, 18, { align: 'center' });
+  const solX = W / 2 - doc.getStringUnitWidth(nomeLoja) * 20 / doc.internal.scaleFactor / 2 - 7;
+  doc.setFillColor(...accentLight);
+  doc.circle(solX, 15.5, 3.2, 'F');
+  for (let i = 0; i < 8; i++) {
+    const ang = (i * Math.PI) / 4;
+    const x1 = solX + Math.cos(ang) * 4.6, y1 = 15.5 + Math.sin(ang) * 4.6;
+    const x2 = solX + Math.cos(ang) * 6.4, y2 = 15.5 + Math.sin(ang) * 6.4;
+    doc.setDrawColor(...accentLight);
+    doc.setLineWidth(0.6);
+    doc.line(x1, y1, x2, y2);
+  }
+  doc.setTextColor(...accentLight);
+  doc.text(nomeLoja, W / 2 + 7, 18, { align: 'center' });
   doc.setDrawColor(...accent);
   doc.setLineWidth(0.6);
   doc.line(30, 24, W - 30, 24);
@@ -3477,12 +3490,17 @@ function montarComprovantePdfBlob({ nomeLoja, clienteNome, descricao, valor, for
   doc.text('COMPROVANTE DE PAGAMENTO', W / 2, 33, { align: 'center' });
 
   // ── Aviso: não é documento fiscal ──
-  doc.setFillColor(60, 28, 24);
-  doc.roundedRect(14, 46, W - 28, 12, 2, 2, 'F');
-  doc.setTextColor(224, 130, 118);
+  // Sem emoji (⚠ também não existe na fonte padrão) e com quebra de
+  // linha calculada pra nunca estourar a caixa, não importa o texto.
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(8.5);
-  doc.text('⚠ ESTE DOCUMENTO NÃO É CUPOM FISCAL NEM NOTA FISCAL', W / 2, 53.5, { align: 'center' });
+  const avisoTexto = 'ATENÇÃO: ESTE DOCUMENTO NÃO É CUPOM FISCAL NEM NOTA FISCAL';
+  const avisoLinhas = doc.splitTextToSize(avisoTexto, W - 40);
+  const avisoAltura = 8 + avisoLinhas.length * 4.2;
+  doc.setFillColor(60, 28, 24);
+  doc.roundedRect(14, 46, W - 28, avisoAltura, 2, 2, 'F');
+  doc.setTextColor(224, 130, 118);
+  doc.text(avisoLinhas, W / 2, 46 + 5.5, { align: 'center', lineHeightFactor: 1.3 });
 
   // ── Corpo — campos em blocos ──
   const caixa = (x, y, w, h, rotulo, valorTexto, opts = {}) => {
@@ -3499,7 +3517,7 @@ function montarComprovantePdfBlob({ nomeLoja, clienteNome, descricao, valor, for
     doc.text(String(valorTexto), x + 4, y + (opts.fontSize ? 15 : 13), { maxWidth: w - 8 });
   };
 
-  let y = 65;
+  let y = 46 + avisoAltura + 7;
   caixa(14, y, (W - 28 - 4) / 2, 20, 'Data', agora);
   caixa(14 + (W - 28 - 4) / 2 + 4, y, (W - 28 - 4) / 2, 20, 'Forma de pagamento', formaPagamento);
   y += 26;
