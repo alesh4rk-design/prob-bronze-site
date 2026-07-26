@@ -7,7 +7,7 @@
 <meta http-equiv="Expires" content="0">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Pro'Bronze — Painel</title>
-<link rel="stylesheet" href="css/theme.css?v=20260726v">
+<link rel="stylesheet" href="css/theme.css?v=20260726w">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -914,6 +914,10 @@
   <div id="modal-vender-produto" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:55;align-items:center;justify-content:center;padding:1rem">
     <div class="card" style="max-width:380px;width:100%">
       <div class="card-titulo">Vender Produto — <span id="venda-cliente-nome"></span></div>
+      <div class="input-group" id="venda-cliente-select-wrap" style="display:none">
+        <label>Cliente</label>
+        <select id="venda-cliente-select"><option value="">Venda avulsa (sem cliente)</option></select>
+      </div>
       <div class="input-group">
         <label>Produto</label>
         <select id="venda-produto"><option value="">Selecione...</option></select>
@@ -952,38 +956,38 @@
 </div>
 
 <script type="module">
-import { onAuthChange, login, logout, iniciarLoginComGoogle, resetSenha } from './js/auth.js?v=20260726v';
-import { VALOR_MENSALIDADE, PIX_PLATAFORMA, WHATSAPP_SUPORTE } from './js/admin-config.js?v=20260726v';
-import { escutarCabines, atualizarStatusCabine, criarCabine, excluirCabine } from './js/cabines.js?v=20260726v';
+import { onAuthChange, login, logout, iniciarLoginComGoogle, resetSenha } from './js/auth.js?v=20260726w';
+import { VALOR_MENSALIDADE, PIX_PLATAFORMA, WHATSAPP_SUPORTE } from './js/admin-config.js?v=20260726w';
+import { escutarCabines, atualizarStatusCabine, criarCabine, excluirCabine } from './js/cabines.js?v=20260726w';
 import {
   escutarAgendamentosDoDia, criarAgendamento, concluirAgendamento,
   cancelarAgendamento, marcarFalta, atribuirCabine, contarConflitosHorario, marcarEmAndamento,
   salvarAvaliacaoSessao, estenderTempoSessao
-} from './js/agenda.js?v=20260726v';
-import { checarElegibilidade } from './js/agenda.js?v=20260726v';
-import { escutarServicos, criarServico, calcularCombo } from './js/servicos.js?v=20260726v';
-import { escutarClientes, criarCliente, ehAniversarioHoje } from './js/clientes.js?v=20260726v';
-import { criarMembroEquipe, escutarEquipe, excluirMembroEquipe } from './js/equipe.js?v=20260726v';
-import { tempoMaxRecomendado } from './js/ficha-pele.js?v=20260726v';
-import { registrarPagamento, escutarPendencias, quitarPendencia, resumoFinanceiro, escutarFinanceiroPeriodo } from './js/financeiro.js?v=20260726v';
-import { criarPacote, escutarPacotesDoNegocio, consumirSessaoDoPacote } from './js/pacotes-sessoes.js?v=20260726v';
-import { criarProdutoCabine, escutarProdutosCabine, produtosEmAlerta, baixarEstoque, somarEstoque, buscarPorCodigoBarras } from './js/produtos-cabine.js?v=20260726v';
-import { criarInsumo, escutarInsumos, reporInsumo, darBaixaInsumo, excluirInsumo, insumosEmAlerta } from './js/insumos.js?v=20260726v';
-import { criarCupom, escutarCupons, desativarCupom, calcularDescontoCupom } from './js/cupons.js?v=20260726v';
-import { exportarExcel, exportarPDF, montarRelatorioFinanceiro, COLUNAS_FINANCEIRO } from './js/relatorios.js?v=20260726v';
+} from './js/agenda.js?v=20260726w';
+import { checarElegibilidade } from './js/agenda.js?v=20260726w';
+import { escutarServicos, criarServico, calcularCombo } from './js/servicos.js?v=20260726w';
+import { escutarClientes, criarCliente, ehAniversarioHoje } from './js/clientes.js?v=20260726w';
+import { criarMembroEquipe, escutarEquipe, excluirMembroEquipe } from './js/equipe.js?v=20260726w';
+import { tempoMaxRecomendado } from './js/ficha-pele.js?v=20260726w';
+import { registrarPagamento, escutarPendencias, quitarPendencia, resumoFinanceiro, escutarFinanceiroPeriodo } from './js/financeiro.js?v=20260726w';
+import { criarPacote, escutarPacotesDoNegocio, consumirSessaoDoPacote } from './js/pacotes-sessoes.js?v=20260726w';
+import { criarProdutoCabine, escutarProdutosCabine, produtosEmAlerta, baixarEstoque, somarEstoque, buscarPorCodigoBarras, excluirProdutoCabine } from './js/produtos-cabine.js?v=20260726w';
+import { criarInsumo, escutarInsumos, reporInsumo, darBaixaInsumo, excluirInsumo, insumosEmAlerta } from './js/insumos.js?v=20260726w';
+import { criarCupom, escutarCupons, desativarCupom, calcularDescontoCupom } from './js/cupons.js?v=20260726w';
+import { exportarExcel, exportarPDF, montarRelatorioFinanceiro, COLUNAS_FINANCEIRO } from './js/relatorios.js?v=20260726w';
 import {
   linkConfirmacaoAgendamento, linkCobrancaPendente, linkAtrasoAgendamento,
   linkClienteSumido, linkMensagemLivre, linkLembreteIntervalo,
   linkSuaVezChegando, linkPromocao, linkAniversario, linkAgradecimento,
   linkPacoteAcabando
-} from './js/whatsapp.js?v=20260726v';
-import { verificarIntervaloMinimo } from './js/ficha-pele.js?v=20260726v';
-import { tutorialJaVisto, iniciarTutorial } from './js/tutorial.js?v=20260726v';
-import { DIAS_SEMANA, escutarHorarios, salvarHorarios } from './js/horarios.js?v=20260726v';
-import { escutarConfigNegocio, salvarConfigNegocio } from './js/config-negocio.js?v=20260726v';
-import { CATEGORIAS_DESPESA, criarDespesa, excluirDespesa, escutarDespesas } from './js/despesas.js?v=20260726v';
-import { toast, confirmar, confirmarForte, executar } from './js/ui-feedback.js?v=20260726v';
-import { db } from './js/firebase-config.js?v=20260726v';
+} from './js/whatsapp.js?v=20260726w';
+import { verificarIntervaloMinimo } from './js/ficha-pele.js?v=20260726w';
+import { tutorialJaVisto, iniciarTutorial } from './js/tutorial.js?v=20260726w';
+import { DIAS_SEMANA, escutarHorarios, salvarHorarios } from './js/horarios.js?v=20260726w';
+import { escutarConfigNegocio, salvarConfigNegocio } from './js/config-negocio.js?v=20260726w';
+import { CATEGORIAS_DESPESA, criarDespesa, excluirDespesa, escutarDespesas } from './js/despesas.js?v=20260726w';
+import { toast, confirmar, confirmarForte, executar } from './js/ui-feedback.js?v=20260726w';
+import { db } from './js/firebase-config.js?v=20260726w';
 
 // Luzinhas douradas ao redor do card de login
 // Mostra o nome da loja usada da última vez que alguém logou neste aparelho
@@ -1385,9 +1389,19 @@ function renderProdutos(produtos) {
         <div class="nome">${p.nome} ${emAlerta.has(p.id) ? '<span class="badge cancelado">estoque baixo</span>' : ''}</div>
         <div class="detalhe">${p.codigoBarras ? `código ${p.codigoBarras} · ` : ''}${p.quantidade}${p.unidade} · mínimo ${p.estoqueMinimo}${p.unidade}${margemTexto}</div>
       </div>
+      <button class="btn-secundario" data-excluir-produto="${p.id}">Excluir</button>
     </div>
   `;
   }).join('');
+
+  wrap.querySelectorAll('[data-excluir-produto]').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      const produto = produtosCabineCache.find((p) => p.id === btn.dataset.excluirProduto);
+      if (!(await confirmar(`Excluir "${produto?.nome || 'produto'}" do catálogo? O histórico de vendas dele não é afetado.`))) return;
+      await excluirProdutoCabine(btn.dataset.excluirProduto);
+      toast('Produto excluído.', 'sucesso');
+    });
+  });
 }
 
 // ── Insumos (uso interno, sem venda) ──────────────────────
@@ -2352,6 +2366,15 @@ function abrirModalVenderProduto(clienteId, produtoIdPreSelecionado = null) {
   $('modal-whatsapp').style.display = 'none';
   const cliente = clientesCache.find((c) => c.id === clienteId);
   $('venda-cliente-nome').textContent = cliente?.nome || (produtoIdPreSelecionado ? 'Venda avulsa' : '');
+  // Venda pelo menu da cliente já vem com cliente definido — só mostra o
+  // seletor quando é venda rápida por código de barras (sem cliente ainda)
+  const mostrarSeletorCliente = !clienteId && produtoIdPreSelecionado;
+  $('venda-cliente-select-wrap').style.display = mostrarSeletorCliente ? 'block' : 'none';
+  if (mostrarSeletorCliente) {
+    $('venda-cliente-select').innerHTML = '<option value="">Venda avulsa (sem cliente)</option>' +
+      clientesCache.map((c) => `<option value="${c.id}">${c.nome}</option>`).join('');
+    $('venda-cliente-select').value = '';
+  }
   $('venda-produto').value = produtoIdPreSelecionado || '';
   $('venda-quantidade').value = '1';
   $('venda-valor').value = '';
@@ -2497,12 +2520,13 @@ $('btn-confirmar-venda').addEventListener('click', async () => {
     toast('Quantidade maior que o estoque disponível.', 'aviso');
     return;
   }
-  const cliente = clientesCache.find((c) => c.id === clienteMenuAtualId);
+  const clienteVendaId = clienteMenuAtualId || $('venda-cliente-select').value || null;
+  const cliente = clientesCache.find((c) => c.id === clienteVendaId);
   const membroAtivo = equipeCache.find((m) => m.id === usuarioAtual.uid);
   await baixarEstoque(produtoId, quantidade);
   await registrarPagamento(usuarioAtual.negocioId, {
     agendamentoId: null,
-    clienteId: clienteMenuAtualId,
+    clienteId: clienteVendaId,
     clienteNome: cliente?.nome || '',
     valorBruto: valor,
     desconto: 0,
