@@ -4,6 +4,7 @@ import {
   collection, doc, addDoc, updateDoc, deleteDoc,
   onSnapshot, query, where, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+import { notificarErroFirestore } from "./firestore-erro.js";
 
 // tipoDesconto: "percentual" | "fixo"
 export async function criarCupom(negocioId, { codigo, tipoDesconto, valor, validade = null, usoUnico = false }) {
@@ -34,7 +35,7 @@ export function escutarCupons(negocioId, callback) {
     const cupons = [];
     snap.forEach((d) => cupons.push({ id: d.id, ...d.data() }));
     callback(cupons.sort((a, b) => (a.criadoEm < b.criadoEm ? 1 : -1)));
-  });
+  }, notificarErroFirestore);
 }
 
 // Calcula o valor de desconto de um cupom sobre um valor bruto

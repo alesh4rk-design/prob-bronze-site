@@ -8,6 +8,7 @@ import {
 import {
   verificarIntervaloMinimo, verificarLimiteMensal, tempoMaxRecomendado
 } from "./ficha-pele.js";
+import { notificarErroFirestore } from "./firestore-erro.js";
 
 // status: "agendado" | "em_andamento" | "concluido" | "cancelado" | "faltou"
 // origem: "online" | "presencial"
@@ -93,7 +94,7 @@ export function escutarAgendamentosDoDia(negocioId, data, callback) {
     const lista = [];
     snap.forEach((d) => lista.push({ id: d.id, ...d.data() }));
     callback(lista);
-  });
+  }, notificarErroFirestore);
 }
 
 // Fila de espera: agendamentos presenciais "em_andamento" ou aguardando cabine livre
@@ -108,5 +109,5 @@ export function escutarFilaEspera(negocioId, callback) {
     snap.forEach((d) => fila.push({ id: d.id, ...d.data() }));
     fila.sort((a, b) => a.dataHora.toMillis() - b.dataHora.toMillis());
     callback(fila);
-  });
+  }, notificarErroFirestore);
 }

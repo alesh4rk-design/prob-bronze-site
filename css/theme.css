@@ -16,6 +16,14 @@
   --font: 'Segoe UI', system-ui, -apple-system, sans-serif;
 }
 
+/* O dropdown nativo do <select> abre com fundo claro do sistema;
+   sem isso, o texto herdava a cor clara pensada pro fundo escuro
+   e ficava ilegível sobre o fundo branco. */
+select option {
+  color: #1a1410;
+  background: #fff;
+}
+
 /* Toasts (substitui alert()) */
 #toast-container {
   position: fixed; top: 1rem; right: 1rem; left: 1rem; z-index: 1000;

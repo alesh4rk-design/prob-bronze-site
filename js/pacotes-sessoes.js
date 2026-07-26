@@ -4,6 +4,7 @@ import {
   collection, doc, addDoc, updateDoc, getDoc,
   onSnapshot, query, where, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+import { notificarErroFirestore } from "./firestore-erro.js";
 
 // status: "ativo" | "finalizado" | "expirado"
 export async function criarPacote(negocioId, { clienteId, clienteNome, totalSessoes, valorTotal, validadeDias = 90 }) {
@@ -38,7 +39,7 @@ export function escutarPacotesDoCliente(clienteId, callback) {
     const lista = [];
     snap.forEach((d) => lista.push({ id: d.id, ...d.data() }));
     callback(lista);
-  });
+  }, notificarErroFirestore);
 }
 
 export function escutarPacotesDoNegocio(negocioId, callback) {
@@ -47,5 +48,5 @@ export function escutarPacotesDoNegocio(negocioId, callback) {
     const lista = [];
     snap.forEach((d) => lista.push({ id: d.id, ...d.data() }));
     callback(lista.sort((a, b) => (a.criadoEm < b.criadoEm ? 1 : -1)));
-  });
+  }, notificarErroFirestore);
 }

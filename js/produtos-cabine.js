@@ -4,6 +4,7 @@ import {
   collection, doc, addDoc, updateDoc, deleteDoc, increment,
   onSnapshot, query, where, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+import { notificarErroFirestore } from "./firestore-erro.js";
 
 export async function criarProdutoCabine(negocioId, { nome, quantidade, unidade = "ml", estoqueMinimo = 0 }) {
   return addDoc(collection(db, "produtosCabine"), {
@@ -30,7 +31,7 @@ export function escutarProdutosCabine(negocioId, callback) {
     const produtos = [];
     snap.forEach((d) => produtos.push({ id: d.id, ...d.data() }));
     callback(produtos.sort((a, b) => a.nome.localeCompare(b.nome)));
-  });
+  }, notificarErroFirestore);
 }
 
 export function produtosEmAlerta(produtos) {

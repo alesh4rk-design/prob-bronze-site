@@ -4,6 +4,7 @@ import {
   collection, doc, addDoc, updateDoc, getDocs,
   onSnapshot, query, where, Timestamp, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+import { notificarErroFirestore } from "./firestore-erro.js";
 
 // status: "pago" | "pendente"
 // Registra o pagamento de um agendamento concluído
@@ -49,7 +50,7 @@ export function escutarFinanceiroPeriodo(negocioId, inicio, fim, callback) {
       if (!data || (data >= inicio && data <= fim)) lista.push({ id: d.id, ...dado });
     });
     callback(lista);
-  });
+  }, notificarErroFirestore);
 }
 
 export function escutarPendencias(negocioId, callback) {
@@ -62,7 +63,7 @@ export function escutarPendencias(negocioId, callback) {
     const lista = [];
     snap.forEach((d) => lista.push({ id: d.id, ...d.data() }));
     callback(lista);
-  });
+  }, notificarErroFirestore);
 }
 
 // Resumo simples: total bruto, líquido, comissões, pendências
