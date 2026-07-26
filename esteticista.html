@@ -7,7 +7,7 @@
 <meta http-equiv="Expires" content="0">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Pro'Bronze — Painel</title>
-<link rel="stylesheet" href="css/theme.css?v=20260726m">
+<link rel="stylesheet" href="css/theme.css?v=20260726n">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -47,6 +47,25 @@
       transform: translateX(-50%) scale(1.12);
       filter: drop-shadow(0 0 26px rgba(var(--accent-rgb),1)) drop-shadow(0 0 56px rgba(var(--accent-rgb),.65));
     }
+  }
+
+  /* Raios de sol girando atrás do emoji — anel de "faixas" de luz que
+     gira devagar, com máscara pra sumir perto do centro e nas bordas */
+  .login-sol::before {
+    content: '';
+    position: absolute; top: 50%; left: 50%;
+    width: 210px; height: 210px;
+    transform: translate(-50%, -50%) rotate(0deg);
+    border-radius: 50%;
+    background: repeating-conic-gradient(from 0deg, rgba(var(--accent-rgb),.55) 0deg 3deg, transparent 3deg 18deg);
+    -webkit-mask-image: radial-gradient(circle, transparent 30%, black 42%, black 58%, transparent 72%);
+    mask-image: radial-gradient(circle, transparent 30%, black 42%, black 58%, transparent 72%);
+    z-index: -1;
+    animation: raios-girar 16s linear infinite;
+    pointer-events: none;
+  }
+  @keyframes raios-girar {
+    to { transform: translate(-50%, -50%) rotate(360deg); }
   }
 
   /* Néon contínuo ao redor de todo o card */
@@ -882,38 +901,38 @@
 </div>
 
 <script type="module">
-import { onAuthChange, login, logout, iniciarLoginComGoogle, resetSenha } from './js/auth.js?v=20260726m';
-import { VALOR_MENSALIDADE, PIX_PLATAFORMA, WHATSAPP_SUPORTE } from './js/admin-config.js?v=20260726m';
-import { escutarCabines, atualizarStatusCabine, criarCabine, excluirCabine } from './js/cabines.js?v=20260726m';
+import { onAuthChange, login, logout, iniciarLoginComGoogle, resetSenha } from './js/auth.js?v=20260726n';
+import { VALOR_MENSALIDADE, PIX_PLATAFORMA, WHATSAPP_SUPORTE } from './js/admin-config.js?v=20260726n';
+import { escutarCabines, atualizarStatusCabine, criarCabine, excluirCabine } from './js/cabines.js?v=20260726n';
 import {
   escutarAgendamentosDoDia, criarAgendamento, concluirAgendamento, escutarFilaEspera,
   cancelarAgendamento, marcarFalta, atribuirCabine, contarConflitosHorario, marcarEmAndamento,
   salvarAvaliacaoSessao
-} from './js/agenda.js?v=20260726m';
-import { checarElegibilidade } from './js/agenda.js?v=20260726m';
-import { escutarServicos, criarServico, calcularCombo } from './js/servicos.js?v=20260726m';
-import { escutarClientes, criarCliente, ehAniversarioHoje } from './js/clientes.js?v=20260726m';
-import { criarMembroEquipe, escutarEquipe, excluirMembroEquipe } from './js/equipe.js?v=20260726m';
-import { tempoMaxRecomendado } from './js/ficha-pele.js?v=20260726m';
-import { registrarPagamento, escutarPendencias, quitarPendencia, resumoFinanceiro, escutarFinanceiroPeriodo } from './js/financeiro.js?v=20260726m';
-import { criarPacote, escutarPacotesDoNegocio, consumirSessaoDoPacote } from './js/pacotes-sessoes.js?v=20260726m';
-import { criarProdutoCabine, escutarProdutosCabine, produtosEmAlerta, baixarEstoque, somarEstoque, buscarPorCodigoBarras } from './js/produtos-cabine.js?v=20260726m';
-import { criarInsumo, escutarInsumos, reporInsumo, darBaixaInsumo, excluirInsumo, insumosEmAlerta } from './js/insumos.js?v=20260726m';
-import { criarCupom, escutarCupons, desativarCupom, calcularDescontoCupom } from './js/cupons.js?v=20260726m';
-import { exportarExcel, exportarPDF, montarRelatorioFinanceiro, COLUNAS_FINANCEIRO } from './js/relatorios.js?v=20260726m';
+} from './js/agenda.js?v=20260726n';
+import { checarElegibilidade } from './js/agenda.js?v=20260726n';
+import { escutarServicos, criarServico, calcularCombo } from './js/servicos.js?v=20260726n';
+import { escutarClientes, criarCliente, ehAniversarioHoje } from './js/clientes.js?v=20260726n';
+import { criarMembroEquipe, escutarEquipe, excluirMembroEquipe } from './js/equipe.js?v=20260726n';
+import { tempoMaxRecomendado } from './js/ficha-pele.js?v=20260726n';
+import { registrarPagamento, escutarPendencias, quitarPendencia, resumoFinanceiro, escutarFinanceiroPeriodo } from './js/financeiro.js?v=20260726n';
+import { criarPacote, escutarPacotesDoNegocio, consumirSessaoDoPacote } from './js/pacotes-sessoes.js?v=20260726n';
+import { criarProdutoCabine, escutarProdutosCabine, produtosEmAlerta, baixarEstoque, somarEstoque, buscarPorCodigoBarras } from './js/produtos-cabine.js?v=20260726n';
+import { criarInsumo, escutarInsumos, reporInsumo, darBaixaInsumo, excluirInsumo, insumosEmAlerta } from './js/insumos.js?v=20260726n';
+import { criarCupom, escutarCupons, desativarCupom, calcularDescontoCupom } from './js/cupons.js?v=20260726n';
+import { exportarExcel, exportarPDF, montarRelatorioFinanceiro, COLUNAS_FINANCEIRO } from './js/relatorios.js?v=20260726n';
 import {
   linkConfirmacaoAgendamento, linkCobrancaPendente, linkAtrasoAgendamento,
   linkClienteSumido, linkMensagemLivre, linkLembreteIntervalo,
   linkSuaVezChegando, linkPromocao, linkAniversario, linkAgradecimento,
   linkPacoteAcabando
-} from './js/whatsapp.js?v=20260726m';
-import { verificarIntervaloMinimo } from './js/ficha-pele.js?v=20260726m';
-import { tutorialJaVisto, iniciarTutorial } from './js/tutorial.js?v=20260726m';
-import { DIAS_SEMANA, escutarHorarios, salvarHorarios } from './js/horarios.js?v=20260726m';
-import { escutarConfigNegocio, salvarConfigNegocio } from './js/config-negocio.js?v=20260726m';
-import { CATEGORIAS_DESPESA, criarDespesa, excluirDespesa, escutarDespesas } from './js/despesas.js?v=20260726m';
-import { toast, confirmar, confirmarForte, executar } from './js/ui-feedback.js?v=20260726m';
-import { db } from './js/firebase-config.js?v=20260726m';
+} from './js/whatsapp.js?v=20260726n';
+import { verificarIntervaloMinimo } from './js/ficha-pele.js?v=20260726n';
+import { tutorialJaVisto, iniciarTutorial } from './js/tutorial.js?v=20260726n';
+import { DIAS_SEMANA, escutarHorarios, salvarHorarios } from './js/horarios.js?v=20260726n';
+import { escutarConfigNegocio, salvarConfigNegocio } from './js/config-negocio.js?v=20260726n';
+import { CATEGORIAS_DESPESA, criarDespesa, excluirDespesa, escutarDespesas } from './js/despesas.js?v=20260726n';
+import { toast, confirmar, confirmarForte, executar } from './js/ui-feedback.js?v=20260726n';
+import { db } from './js/firebase-config.js?v=20260726n';
 
 // Luzinhas douradas ao redor do card de login
 // Mostra o nome da loja usada da última vez que alguém logou neste aparelho
