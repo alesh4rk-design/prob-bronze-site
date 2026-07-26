@@ -1,10 +1,10 @@
 // Pro'Bronze — Financeiro: pagamentos, pendências, desconto, comissão
-import { db } from "./firebase-config.js?v=20260726y";
+import { db } from "./firebase-config.js?v=20260726z";
 import {
   collection, doc, addDoc, updateDoc, getDocs,
   onSnapshot, query, where, Timestamp, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
-import { notificarErroFirestore } from "./firestore-erro.js?v=20260726y";
+import { notificarErroFirestore } from "./firestore-erro.js?v=20260726z";
 
 // status: "pago" | "pendente"
 // Registra o pagamento de um agendamento concluído

@@ -1,7 +1,7 @@
 // Pro'Bronze — Horário de Funcionamento (configurado pelo dono, guardado no doc do negócio)
-import { db } from "./firebase-config.js?v=20260726y";
+import { db } from "./firebase-config.js?v=20260726z";
 import { doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
-import { notificarErroFirestore } from "./firestore-erro.js?v=20260726y";
+import { notificarErroFirestore } from "./firestore-erro.js?v=20260726z";
 
 export const DIAS_SEMANA = [
   { chave: "seg", nome: "Segunda-feira" },
@@ -30,4 +30,23 @@ export function escutarHorarios(negocioId, callback) {
 
 export function salvarHorarios(negocioId, horarios) {
   return setDoc(doc(db, "negocios", negocioId), { horarioFuncionamento: horarios }, { merge: true });
+}
+
+const CHAVE_POR_DIA_JS = ["dom", "seg", "ter", "qua", "qui", "sex", "sab"]; // Date.getDay(): 0=domingo
+
+// Verifica se uma data/hora cai dentro do horário de funcionamento configurado
+export function validarHorarioFuncionamento(horarios, dataHora) {
+  const data = dataHora instanceof Date ? dataHora : new Date(dataHora);
+  const chave = CHAVE_POR_DIA_JS[data.getDay()];
+  const nomeDia = DIAS_SEMANA.find((d) => d.chave === chave)?.nome || chave;
+  const config = (horarios || horariosPadrao())[chave];
+
+  if (!config || !config.aberto) {
+    return { permitido: false, motivo: `A loja não funciona ${nomeDia.toLowerCase()}.` };
+  }
+  const horaAtual = `${String(data.getHours()).padStart(2, "0")}:${String(data.getMinutes()).padStart(2, "0")}`;
+  if (horaAtual < config.abre || horaAtual > config.fecha) {
+    return { permitido: false, motivo: `Fora do horário de funcionamento ${nomeDia.toLowerCase()} (${config.abre} às ${config.fecha}).` };
+  }
+  return { permitido: true, motivo: null };
 }

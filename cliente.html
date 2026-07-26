@@ -7,7 +7,7 @@
 <meta http-equiv="Expires" content="0">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Pro'Bronze — Área da Cliente</title>
-<link rel="stylesheet" href="css/theme.css?v=20260726y">
+<link rel="stylesheet" href="css/theme.css?v=20260726z">
 <style>
   * { box-sizing: border-box; }
   body { margin: 0; background: var(--bg); color: var(--text); font-family: var(--font); min-height: 100vh; }
@@ -107,17 +107,18 @@
 </div>
 
 <script type="module">
-import { onAuthChange, login, logout } from './js/auth.js?v=20260726y';
-import { db } from './js/firebase-config.js?v=20260726y';
+import { onAuthChange, login, logout } from './js/auth.js?v=20260726z';
+import { db } from './js/firebase-config.js?v=20260726z';
 import {
   collection, query, where, onSnapshot
 } from 'https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js';
-import { escutarServicos, calcularCombo } from './js/servicos.js?v=20260726y';
-import { criarAgendamento, contarConflitosHorario } from './js/agenda.js?v=20260726y';
-import { checarElegibilidade } from './js/agenda.js?v=20260726y';
-import { escutarCabines } from './js/cabines.js?v=20260726y';
-import { escutarConfigNegocio } from './js/config-negocio.js?v=20260726y';
-import { toast } from './js/ui-feedback.js?v=20260726y';
+import { escutarServicos, calcularCombo } from './js/servicos.js?v=20260726z';
+import { criarAgendamento, contarConflitosHorario } from './js/agenda.js?v=20260726z';
+import { checarElegibilidade } from './js/agenda.js?v=20260726z';
+import { escutarCabines } from './js/cabines.js?v=20260726z';
+import { escutarConfigNegocio } from './js/config-negocio.js?v=20260726z';
+import { escutarHorarios, validarHorarioFuncionamento } from './js/horarios.js?v=20260726z';
+import { toast } from './js/ui-feedback.js?v=20260726z';
 
 window.addEventListener('unhandledrejection', (e) => {
   console.error(e.reason);
@@ -136,6 +137,7 @@ let combosSelecionados = new Set();
 let clienteAtual = null;
 let cabinesCache = [];
 let configNegocioCache = { nome: "Pro'Bronze", whatsappNegocio: '', chavePix: '', vitrineSubtitulo: '', intervaloMinimoHoras: 24, limiteSessoesMes: 12 };
+let horariosCache = null;
 
 // Login da cliente usa a mesma Auth do Firebase; o vínculo com o
 // documento em "clientes" é feito por clienteUid (campo salvo no
@@ -195,6 +197,7 @@ $('btn-sair-cliente').addEventListener('click', async () => {
         $('vitrine-subtitulo').textContent = config.vitrineSubtitulo;
         renderContatoEstabelecimento(config);
       });
+      escutarHorarios(cliente.negocioId, (horarios) => { horariosCache = horarios; });
     });
   });
 })();
@@ -291,6 +294,12 @@ $('btn-agendar-online').addEventListener('click', async () => {
 
   if (combosSelecionados.size === 0 || !dataHora) {
     avisosWrap.innerHTML = '<div class="empty-state">Selecione ao menos um serviço e a data/hora.</div>';
+    return;
+  }
+
+  const horarioValido = validarHorarioFuncionamento(horariosCache, dataHora);
+  if (!horarioValido.permitido) {
+    avisosWrap.innerHTML = `<div class="empty-state" style="color:var(--red)">${horarioValido.motivo}</div>`;
     return;
   }
 
