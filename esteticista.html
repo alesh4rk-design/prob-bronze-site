@@ -7,7 +7,7 @@
 <meta http-equiv="Expires" content="0">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Pro'Bronze — Painel</title>
-<link rel="stylesheet" href="css/theme.css?v=20260726p">
+<link rel="stylesheet" href="css/theme.css?v=20260726q">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -910,38 +910,38 @@
 </div>
 
 <script type="module">
-import { onAuthChange, login, logout, iniciarLoginComGoogle, resetSenha } from './js/auth.js?v=20260726p';
-import { VALOR_MENSALIDADE, PIX_PLATAFORMA, WHATSAPP_SUPORTE } from './js/admin-config.js?v=20260726p';
-import { escutarCabines, atualizarStatusCabine, criarCabine, excluirCabine } from './js/cabines.js?v=20260726p';
+import { onAuthChange, login, logout, iniciarLoginComGoogle, resetSenha } from './js/auth.js?v=20260726q';
+import { VALOR_MENSALIDADE, PIX_PLATAFORMA, WHATSAPP_SUPORTE } from './js/admin-config.js?v=20260726q';
+import { escutarCabines, atualizarStatusCabine, criarCabine, excluirCabine } from './js/cabines.js?v=20260726q';
 import {
   escutarAgendamentosDoDia, criarAgendamento, concluirAgendamento, escutarFilaEspera,
   cancelarAgendamento, marcarFalta, atribuirCabine, contarConflitosHorario, marcarEmAndamento,
   salvarAvaliacaoSessao
-} from './js/agenda.js?v=20260726p';
-import { checarElegibilidade } from './js/agenda.js?v=20260726p';
-import { escutarServicos, criarServico, calcularCombo } from './js/servicos.js?v=20260726p';
-import { escutarClientes, criarCliente, ehAniversarioHoje } from './js/clientes.js?v=20260726p';
-import { criarMembroEquipe, escutarEquipe, excluirMembroEquipe } from './js/equipe.js?v=20260726p';
-import { tempoMaxRecomendado } from './js/ficha-pele.js?v=20260726p';
-import { registrarPagamento, escutarPendencias, quitarPendencia, resumoFinanceiro, escutarFinanceiroPeriodo } from './js/financeiro.js?v=20260726p';
-import { criarPacote, escutarPacotesDoNegocio, consumirSessaoDoPacote } from './js/pacotes-sessoes.js?v=20260726p';
-import { criarProdutoCabine, escutarProdutosCabine, produtosEmAlerta, baixarEstoque, somarEstoque, buscarPorCodigoBarras } from './js/produtos-cabine.js?v=20260726p';
-import { criarInsumo, escutarInsumos, reporInsumo, darBaixaInsumo, excluirInsumo, insumosEmAlerta } from './js/insumos.js?v=20260726p';
-import { criarCupom, escutarCupons, desativarCupom, calcularDescontoCupom } from './js/cupons.js?v=20260726p';
-import { exportarExcel, exportarPDF, montarRelatorioFinanceiro, COLUNAS_FINANCEIRO } from './js/relatorios.js?v=20260726p';
+} from './js/agenda.js?v=20260726q';
+import { checarElegibilidade } from './js/agenda.js?v=20260726q';
+import { escutarServicos, criarServico, calcularCombo } from './js/servicos.js?v=20260726q';
+import { escutarClientes, criarCliente, ehAniversarioHoje } from './js/clientes.js?v=20260726q';
+import { criarMembroEquipe, escutarEquipe, excluirMembroEquipe } from './js/equipe.js?v=20260726q';
+import { tempoMaxRecomendado } from './js/ficha-pele.js?v=20260726q';
+import { registrarPagamento, escutarPendencias, quitarPendencia, resumoFinanceiro, escutarFinanceiroPeriodo } from './js/financeiro.js?v=20260726q';
+import { criarPacote, escutarPacotesDoNegocio, consumirSessaoDoPacote } from './js/pacotes-sessoes.js?v=20260726q';
+import { criarProdutoCabine, escutarProdutosCabine, produtosEmAlerta, baixarEstoque, somarEstoque, buscarPorCodigoBarras } from './js/produtos-cabine.js?v=20260726q';
+import { criarInsumo, escutarInsumos, reporInsumo, darBaixaInsumo, excluirInsumo, insumosEmAlerta } from './js/insumos.js?v=20260726q';
+import { criarCupom, escutarCupons, desativarCupom, calcularDescontoCupom } from './js/cupons.js?v=20260726q';
+import { exportarExcel, exportarPDF, montarRelatorioFinanceiro, COLUNAS_FINANCEIRO } from './js/relatorios.js?v=20260726q';
 import {
   linkConfirmacaoAgendamento, linkCobrancaPendente, linkAtrasoAgendamento,
   linkClienteSumido, linkMensagemLivre, linkLembreteIntervalo,
   linkSuaVezChegando, linkPromocao, linkAniversario, linkAgradecimento,
   linkPacoteAcabando
-} from './js/whatsapp.js?v=20260726p';
-import { verificarIntervaloMinimo } from './js/ficha-pele.js?v=20260726p';
-import { tutorialJaVisto, iniciarTutorial } from './js/tutorial.js?v=20260726p';
-import { DIAS_SEMANA, escutarHorarios, salvarHorarios } from './js/horarios.js?v=20260726p';
-import { escutarConfigNegocio, salvarConfigNegocio } from './js/config-negocio.js?v=20260726p';
-import { CATEGORIAS_DESPESA, criarDespesa, excluirDespesa, escutarDespesas } from './js/despesas.js?v=20260726p';
-import { toast, confirmar, confirmarForte, executar } from './js/ui-feedback.js?v=20260726p';
-import { db } from './js/firebase-config.js?v=20260726p';
+} from './js/whatsapp.js?v=20260726q';
+import { verificarIntervaloMinimo } from './js/ficha-pele.js?v=20260726q';
+import { tutorialJaVisto, iniciarTutorial } from './js/tutorial.js?v=20260726q';
+import { DIAS_SEMANA, escutarHorarios, salvarHorarios } from './js/horarios.js?v=20260726q';
+import { escutarConfigNegocio, salvarConfigNegocio } from './js/config-negocio.js?v=20260726q';
+import { CATEGORIAS_DESPESA, criarDespesa, excluirDespesa, escutarDespesas } from './js/despesas.js?v=20260726q';
+import { toast, confirmar, confirmarForte, executar } from './js/ui-feedback.js?v=20260726q';
+import { db } from './js/firebase-config.js?v=20260726q';
 
 // Luzinhas douradas ao redor do card de login
 // Mostra o nome da loja usada da última vez que alguém logou neste aparelho
@@ -2149,9 +2149,9 @@ function renderClientes(clientes) {
   const wrap = $('lista-clientes');
   if (clientes.length === 0) { wrap.innerHTML = '<div class="empty-state">Nenhuma cliente cadastrada.</div>'; return; }
   wrap.innerHTML = clientes.map((c) => `
-    <div class="agendamento-item">
+    <div class="agendamento-item nome-clicavel" data-abrir-menu-cliente="${c.id}">
       <div class="agendamento-info">
-        <div class="nome nome-clicavel" data-abrir-menu-cliente="${c.id}">${c.nome} 💬</div>
+        <div class="nome">${c.nome} 💬</div>
         <div class="detalhe">${c.whatsapp || 'sem WhatsApp'}${c.fichaPele ? ' · Fitzpatrick ' + c.fichaPele.tipoFitzpatrick : ' · sem ficha de pele'}</div>
       </div>
     </div>
@@ -2589,9 +2589,9 @@ function renderAgendaDia(lista) {
     const atrasado = ag.status === 'agendado' && ag.dataHora?.toDate && (new Date() - ag.dataHora.toDate()) > 10 * 60000;
     const sugerirRealocacao = atrasado && !semCabine && cabineAtual?.status !== 'livre' && cabinesLivres.length > 0;
     return `
-      <div class="agendamento-item">
+      <div class="agendamento-item nome-clicavel" data-abrir-menu-cliente="${ag.clienteId}">
         <div class="agendamento-info">
-          <div class="nome nome-clicavel" data-abrir-menu-cliente="${ag.clienteId}">${hora} · ${ag.clienteNome}</div>
+          <div class="nome">${hora} · ${ag.clienteNome}</div>
           <div class="detalhe">${servicos} · ${ag.tempoMin}min · ${ag.origem}${semCabine && ag.status === 'agendado' ? ' · sem cabine definida' : ''}</div>
           ${sugerirRealocacao ? `<div class="aviso-bloqueio">⏰ Atrasado — cabine ${cabineAtual?.nome || ''} ocupada. <button class="btn-secundario" data-mover-agendamento="${ag.id}" data-mover-destino="${cabinesLivres[0].id}" style="margin-left:.4rem">Mover pra ${cabinesLivres[0].nome} (livre)</button></div>` : ''}
         </div>
@@ -2612,12 +2612,13 @@ function renderAgendaDia(lista) {
   }).join('');
 
   wrap.querySelectorAll('[data-iniciar]').forEach((btn) => {
-    btn.addEventListener('click', () => iniciarSessao(
+    btn.addEventListener('click', (e) => { e.stopPropagation(); iniciarSessao(
       btn.dataset.iniciar, btn.dataset.cabine, Number(btn.dataset.tempo), btn.dataset.cliente, Number(btn.dataset.valor)
-    ));
+    ); });
   });
   wrap.querySelectorAll('[data-atribuir-iniciar]').forEach((btn) => {
-    btn.addEventListener('click', async () => {
+    btn.addEventListener('click', async (e) => {
+      e.stopPropagation();
       const agendamentoId = btn.dataset.atribuirIniciar;
       const sel = wrap.querySelector(`[data-select-cabine="${agendamentoId}"]`);
       const cabineId = sel.value;
@@ -2627,7 +2628,13 @@ function renderAgendaDia(lista) {
     });
   });
   wrap.querySelectorAll('[data-abrir-menu-cliente]').forEach((el) => {
-    el.addEventListener('click', () => abrirMenuCliente(el.dataset.abrirMenuCliente));
+    el.addEventListener('click', (e) => {
+      if (e.target.closest('button, a, select, option')) return;
+      abrirMenuCliente(el.dataset.abrirMenuCliente);
+    });
+  });
+  wrap.querySelectorAll('select[data-select-cabine]').forEach((sel) => {
+    sel.addEventListener('click', (e) => e.stopPropagation());
   });
   wrap.querySelectorAll('[data-mover-agendamento]').forEach((btn) => {
     btn.addEventListener('click', async () => {
@@ -2647,9 +2654,9 @@ function renderFila(lista) {
     const hora = ag.dataHora?.toDate ? ag.dataHora.toDate().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : '';
     const servicos = (ag.servicos || []).map((s) => s.nome).join(' + ');
     return `
-      <div class="agendamento-item">
+      <div class="agendamento-item nome-clicavel" data-abrir-menu-cliente="${ag.clienteId}">
         <div class="agendamento-info">
-          <div class="nome nome-clicavel" data-abrir-menu-cliente="${ag.clienteId}">${hora} · ${ag.clienteNome}</div>
+          <div class="nome">${hora} · ${ag.clienteNome}</div>
           <div class="detalhe">${servicos} · ${ag.tempoMin}min · ${ag.origem}</div>
         </div>
         <div style="display:flex;align-items:center;gap:.5rem">
@@ -2664,7 +2671,10 @@ function renderFila(lista) {
   }).join('');
 
   wrap.querySelectorAll('[data-abrir-menu-cliente]').forEach((el) => {
-    el.addEventListener('click', () => abrirMenuCliente(el.dataset.abrirMenuCliente));
+    el.addEventListener('click', (e) => {
+      if (e.target.closest('button, a, select, option')) return;
+      abrirMenuCliente(el.dataset.abrirMenuCliente);
+    });
   });
   wrap.querySelectorAll('[data-falta]').forEach((btn) => {
     btn.addEventListener('click', async () => {
