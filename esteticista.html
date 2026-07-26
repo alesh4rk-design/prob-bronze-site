@@ -27,39 +27,37 @@
   .login-card p { color: var(--muted); font-size: .85rem; margin: 0 0 1.5rem; }
   #login-nome-loja { color: var(--accent-light); font-weight: 800; font-size: 1.7rem; margin: 0 0 .1rem; line-height: 1.15; }
 
-  /* Sol no topo do card */
+  /* Sol no topo do card — só o emoji brilhando, sem fundo redondo */
   .login-sol {
-    position: absolute; top: -52px; left: 50%; transform: translateX(-50%);
-    width: 92px; height: 92px; border-radius: 50%;
-    background: radial-gradient(circle, var(--accent-light), var(--accent) 70%);
-    box-shadow: 0 0 34px 12px rgba(var(--accent-rgb),.55), 0 0 84px 28px rgba(var(--accent-rgb),.25);
-    display: flex; align-items: center; justify-content: center; font-size: 2.6rem;
+    position: absolute; top: -60px; left: 50%; transform: translateX(-50%);
+    display: flex; align-items: center; justify-content: center; font-size: 3.6rem;
+    filter: drop-shadow(0 0 18px rgba(var(--accent-rgb),.85)) drop-shadow(0 0 40px rgba(var(--accent-rgb),.5));
     animation: sol-pulsar 3s ease-in-out infinite;
     z-index: 2;
   }
   @keyframes sol-pulsar {
     0%, 100% {
       transform: translateX(-50%) scale(1);
-      box-shadow: 0 0 34px 12px rgba(var(--accent-rgb),.55), 0 0 84px 28px rgba(var(--accent-rgb),.25);
+      filter: drop-shadow(0 0 18px rgba(var(--accent-rgb),.85)) drop-shadow(0 0 40px rgba(var(--accent-rgb),.5));
     }
     50% {
       transform: translateX(-50%) scale(1.12);
-      box-shadow: 0 0 46px 18px rgba(var(--accent-rgb),.75), 0 0 110px 40px rgba(var(--accent-rgb),.4);
+      filter: drop-shadow(0 0 26px rgba(var(--accent-rgb),1)) drop-shadow(0 0 56px rgba(var(--accent-rgb),.65));
     }
   }
 
-  /* Luzinhas douradas em barra ao redor do card */
-  .led {
-    position: absolute; width: 22px; height: 5px; border-radius: 3px;
-    background: linear-gradient(90deg, var(--accent), var(--accent-light));
-    box-shadow: 0 0 8px 2px rgba(var(--accent-rgb),.85);
-    animation: led-piscar 1.8s ease-in-out infinite;
+  /* Néon contínuo ao redor de todo o card */
+  .login-card-wrap { padding: 4px; border-radius: 24px; }
+  .login-card-wrap::before {
+    content: ''; position: absolute; inset: 0; border-radius: 24px;
+    border: 3px solid var(--accent-light);
+    box-shadow: 0 0 10px 2px rgba(var(--accent-rgb),.9), 0 0 22px 6px rgba(var(--accent-rgb),.6), inset 0 0 14px 2px rgba(var(--accent-rgb),.5);
+    animation: neon-pulsar 2.2s ease-in-out infinite;
     pointer-events: none;
   }
-  .led.led-vertical { width: 5px; height: 22px; }
-  @keyframes led-piscar {
-    0%, 100% { opacity: .35; transform: scale(.9); }
-    50% { opacity: 1; transform: scale(1.05); }
+  @keyframes neon-pulsar {
+    0%, 100% { box-shadow: 0 0 10px 2px rgba(var(--accent-rgb),.9), 0 0 22px 6px rgba(var(--accent-rgb),.6), inset 0 0 14px 2px rgba(var(--accent-rgb),.5); }
+    50% { box-shadow: 0 0 16px 4px rgba(var(--accent-rgb),1), 0 0 34px 10px rgba(var(--accent-rgb),.8), inset 0 0 20px 4px rgba(var(--accent-rgb),.7); }
   }
   .input-group { margin-bottom: 1rem; text-align: left; }
   .input-group label { display: block; font-size: .78rem; color: var(--muted); margin-bottom: .35rem; font-weight: 600; }
@@ -768,27 +766,6 @@ import { toast, confirmar, confirmarForte, executar } from './js/ui-feedback.js'
 import { db } from './js/firebase-config.js';
 
 // Luzinhas douradas ao redor do card de login
-(function gerarLedsLogin() {
-  const wrap = document.getElementById('login-card-wrap');
-  const total = 20;
-  for (let i = 0; i < total; i++) {
-    const led = document.createElement('div');
-    const perc = i / total;
-    let x, y, vertical;
-    if (perc < 0.25) { x = perc / 0.25; y = 0; vertical = false; }
-    else if (perc < 0.5) { x = 1; y = (perc - 0.25) / 0.25; vertical = true; }
-    else if (perc < 0.75) { x = 1 - (perc - 0.5) / 0.25; y = 1; vertical = false; }
-    else { x = 0; y = 1 - (perc - 0.75) / 0.25; vertical = true; }
-    led.className = 'led' + (vertical ? ' led-vertical' : '');
-    led.style.left = `${x * 100}%`;
-    led.style.top = `${y * 100}%`;
-    led.style.marginLeft = vertical ? '-2px' : '-11px';
-    led.style.marginTop = vertical ? '-11px' : '-2px';
-    led.style.animationDelay = `${(i % 6) * 0.3}s`;
-    wrap.appendChild(led);
-  }
-})();
-
 // Mostra o nome da loja usada da última vez que alguém logou neste aparelho
 // (a tela de login é compartilhada por todos os negócios, então só dá pra
 // saber qual loja é depois do primeiro login em cada dispositivo)
