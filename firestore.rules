@@ -68,8 +68,10 @@ service cloud.firestore {
       allow read: if ehDoMeuNegocio(resource.data.negocioId) ||
         (logado() && resource.data.clienteId != null &&
          get(/databases/$(database)/documents/clientes/$(resource.data.clienteId)).data.clienteUid == request.auth.uid);
-      allow write: if ehDoMeuNegocio(resource.data.negocioId) ||
-        (request.method == "create" && ehDoMeuNegocio(request.resource.data.negocioId));
+      allow create: if ehDoMeuNegocio(request.resource.data.negocioId) ||
+        (logado() && request.resource.data.clienteId != null &&
+         get(/databases/$(database)/documents/clientes/$(request.resource.data.clienteId)).data.clienteUid == request.auth.uid);
+      allow update, delete: if ehDoMeuNegocio(resource.data.negocioId);
     }
 
     match /pacotesSessoes/{id} {
@@ -92,8 +94,11 @@ service cloud.firestore {
         (request.method == "create" && ehDoMeuNegocio(request.resource.data.negocioId));
     }
 
+    // Serviços: leitura aberta a qualquer cliente logada (vitrine pra
+    // escolher o que agendar); escrita só de quem é do negócio
     match /servicos/{id} {
-      allow read, write: if ehDoMeuNegocio(resource.data.negocioId) ||
+      allow read: if ehDoMeuNegocio(resource.data.negocioId) || logado();
+      allow write: if ehDoMeuNegocio(resource.data.negocioId) ||
         (request.method == "create" && ehDoMeuNegocio(request.resource.data.negocioId));
     }
 

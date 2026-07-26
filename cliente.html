@@ -73,6 +73,17 @@
     </header>
 
     <div class="card">
+      <div class="card-titulo">Agendar Nova Sessão</div>
+      <div id="agendar-avisos"></div>
+      <div class="input-group">
+        <label>Serviços (selecione um ou mais)</label>
+        <div id="agendar-servicos" class="empty-state">Carregando...</div>
+      </div>
+      <div class="input-group"><label>Data e hora</label><input type="datetime-local" id="agendar-datahora"></div>
+      <button class="btn-primario" id="btn-agendar-online">Confirmar Agendamento</button>
+    </div>
+
+    <div class="card">
       <div class="card-titulo">Meus Pacotes</div>
       <div id="lista-meus-pacotes"><div class="empty-state">Carregando...</div></div>
     </div>
@@ -97,8 +108,15 @@ import { db } from './js/firebase-config.js';
 import {
   collection, query, where, onSnapshot, doc, getDoc, orderBy
 } from 'https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js';
+import { escutarServicos, calcularCombo } from './js/servicos.js';
+import { criarAgendamento } from './js/agenda.js';
+import { checarElegibilidade } from './js/agenda.js';
+import { toast } from './js/ui-feedback.js';
 
 const $ = (id) => document.getElementById(id);
+let servicosCache = [];
+let combosSelecionados = new Set();
+let clienteAtual = null;
 
 // Login da cliente usa a mesma Auth do Firebase; o vínculo com o
 // documento em "clientes" é feito por clienteUid (campo salvo no
@@ -142,11 +160,16 @@ $('btn-sair-cliente').addEventListener('click', async () => {
       }
       const clienteDoc = snap.docs[0];
       const cliente = { id: clienteDoc.id, ...clienteDoc.data() };
+      clienteAtual = cliente;
       $('tela-login').style.display = 'none';
       $('painel-cliente').style.display = 'block';
       carregarVitrine(cliente.negocioId);
       escutarMeusPacotes(cliente.id);
       escutarMinhasSessoes(cliente.negocioId, cliente.id);
+      escutarServicos(cliente.negocioId, (servicos) => {
+        servicosCache = servicos;
+        renderServicosAgendar(servicos);
+      });
     });
   });
 })();
@@ -220,6 +243,58 @@ function renderLista(elId, lista, futura) {
     `;
   }).join('');
 }
+
+// ── Agendamento online ───────────────────────────────────
+function renderServicosAgendar(servicos) {
+  const wrap = $('agendar-servicos');
+  if (servicos.length === 0) { wrap.innerHTML = '<div class="empty-state">Nenhum serviço disponível no momento.</div>'; return; }
+  wrap.innerHTML = servicos.map((s) => `
+    <label style="display:flex;align-items:center;gap:.5rem;padding:.5rem 0;font-size:.85rem">
+      <input type="checkbox" data-combo="${s.id}"> ${s.nome} — R$${Number(s.preco).toFixed(2)} (${s.duracaoMin}min)
+    </label>
+  `).join('');
+  wrap.querySelectorAll('[data-combo]').forEach((chk) => {
+    chk.addEventListener('change', () => {
+      if (chk.checked) combosSelecionados.add(chk.dataset.combo);
+      else combosSelecionados.delete(chk.dataset.combo);
+    });
+  });
+}
+
+$('btn-agendar-online').addEventListener('click', async () => {
+  const avisosWrap = $('agendar-avisos');
+  avisosWrap.innerHTML = '';
+  const dataHora = $('agendar-datahora').value;
+
+  if (combosSelecionados.size === 0 || !dataHora) {
+    avisosWrap.innerHTML = '<div class="empty-state">Selecione ao menos um serviço e a data/hora.</div>';
+    return;
+  }
+
+  const elegibilidade = await checarElegibilidade(clienteAtual.id);
+  if (!elegibilidade.podeAgendar) {
+    avisosWrap.innerHTML = elegibilidade.avisos.map((a) => `<div class="empty-state" style="color:var(--red)">${a}</div>`).join('');
+    return;
+  }
+
+  const servicosDoCombo = servicosCache.filter((s) => combosSelecionados.has(s.id));
+  const { duracaoTotalMin } = calcularCombo(servicosDoCombo);
+
+  await criarAgendamento(clienteAtual.negocioId, {
+    clienteId: clienteAtual.id,
+    clienteNome: clienteAtual.nome,
+    cabineId: null,
+    servicos: servicosDoCombo,
+    dataHora,
+    origem: 'online',
+    tempoMin: duracaoTotalMin || 15
+  });
+
+  combosSelecionados.clear();
+  $('agendar-datahora').value = '';
+  document.querySelectorAll('#agendar-servicos [data-combo]').forEach((chk) => { chk.checked = false; });
+  toast('Agendamento solicitado! A loja vai confirmar.', 'sucesso');
+});
 </script>
 </body>
 </html>

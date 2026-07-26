@@ -72,6 +72,11 @@ export async function concluirAgendamento(agendamentoId, clienteId) {
   await updateDoc(doc(db, "clientes", clienteId), { ultimaSessaoEm: new Date().toISOString() });
 }
 
+// Atribui/troca a cabine de um agendamento online (criado sem cabine definida)
+export function atribuirCabine(agendamentoId, cabineId) {
+  return updateDoc(doc(db, "agendamentos", agendamentoId), { cabineId });
+}
+
 export function cancelarAgendamento(agendamentoId) {
   return updateDoc(doc(db, "agendamentos", agendamentoId), { status: "cancelado" });
 }
