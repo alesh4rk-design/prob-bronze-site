@@ -154,6 +154,7 @@
   }
   .forma-pagamento-btn span { font-size: 1.3rem; }
   .forma-pagamento-btn.ativa { border-color: var(--accent); color: var(--accent-light); background: rgba(var(--accent-rgb),.14); }
+  .forma-pagamento-btn:disabled, .btn-primario:disabled, .btn-secundario:disabled { opacity: .55; cursor: not-allowed; }
 
   #btn-timers-flutuante {
     position: fixed; bottom: 1.2rem; right: 1.2rem; z-index: 200; width: 56px; height: 56px; border-radius: 50%;
@@ -749,6 +750,25 @@ function selecionarFormaPagamento(grupoId, valor) {
   grupo.querySelectorAll('.forma-pagamento-btn').forEach((b) => b.classList.toggle('ativa', b.dataset.valor === valor));
 }
 
+// ── Travar modal de pagamento após confirmar (evita clique duplo) ──
+function travarPagamento(modalId, botaoId) {
+  const modal = $(modalId);
+  const btn = $(botaoId);
+  btn.dataset.textoOriginal = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = 'Pagamento realizado ✓';
+  modal.querySelectorAll('button, select, input').forEach((el) => {
+    if (el !== btn) el.disabled = true;
+  });
+}
+function destravarPagamento(modalId, botaoId) {
+  const modal = $(modalId);
+  const btn = $(botaoId);
+  btn.disabled = false;
+  if (btn.dataset.textoOriginal) btn.textContent = btn.dataset.textoOriginal;
+  modal.querySelectorAll('button, select, input').forEach((el) => { el.disabled = false; });
+}
+
 $('btn-abrir-menu').addEventListener('click', abrirMenu);
 $('btn-fechar-menu').addEventListener('click', fecharMenu);
 $('sidebar-overlay').addEventListener('click', fecharMenu);
@@ -1323,8 +1343,12 @@ $('btn-confirmar-registrar-pagamento').addEventListener('click', async () => {
     esteticistaUid: usuarioAtual.uid,
     percentualComissao: membroAtivo?.percentualComissao || 0
   });
-  $('modal-registrar-pagamento').style.display = 'none';
+  travarPagamento('modal-registrar-pagamento', 'btn-confirmar-registrar-pagamento');
   toast('Pagamento registrado.', 'sucesso');
+  setTimeout(() => {
+    $('modal-registrar-pagamento').style.display = 'none';
+    destravarPagamento('modal-registrar-pagamento', 'btn-confirmar-registrar-pagamento');
+  }, 1200);
 });
 
 // ── Vender produto ao cliente ────────────────────────────
@@ -1390,8 +1414,12 @@ $('btn-confirmar-venda').addEventListener('click', async () => {
     esteticistaUid: usuarioAtual.uid,
     percentualComissao: membroAtivo?.percentualComissao || 0
   });
-  $('modal-vender-produto').style.display = 'none';
+  travarPagamento('modal-vender-produto', 'btn-confirmar-venda');
   toast('Venda registrada.', 'sucesso');
+  setTimeout(() => {
+    $('modal-vender-produto').style.display = 'none';
+    destravarPagamento('modal-vender-produto', 'btn-confirmar-venda');
+  }, 1200);
 });
 
 function renderServicos(servicos) {
@@ -1789,9 +1817,13 @@ $('btn-confirmar-pagamento').addEventListener('click', async () => {
     timerIntervalGlobal = null;
   }
   sessaoEmFinalizacao = null;
-  $('modal-pagamento').style.display = 'none';
+  travarPagamento('modal-pagamento', 'btn-confirmar-pagamento');
   renderCabines(cabinesCache);
   renderTimersFlutuante();
+  setTimeout(() => {
+    $('modal-pagamento').style.display = 'none';
+    destravarPagamento('modal-pagamento', 'btn-confirmar-pagamento');
+  }, 1200);
   toast('Sessão finalizada e pagamento registrado.', 'sucesso');
 });
 
