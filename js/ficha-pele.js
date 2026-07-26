@@ -1,5 +1,5 @@
 // Pro'Bronze — Ficha de Pele (Fitzpatrick) e regras de segurança
-import { db } from "./firebase-config.js?v=20260727x";
+import { db } from "./firebase-config.js?v=20260727y";
 import {
   doc, getDoc, setDoc, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
@@ -35,6 +35,20 @@ export async function obterFichaPele(clienteId) {
 
 export function tempoMaxRecomendado(tipoFitzpatrick) {
   return TEMPO_MAX_POR_TIPO[tipoFitzpatrick] || null;
+}
+
+// Descrição em linguagem simples do tipo de pele, pra mostrar nos cards em
+// vez do termo técnico "Fitzpatrick" (que não diz nada pra maioria)
+export const DESCRICAO_TIPO_PELE = {
+  I: "pele muito clara",
+  II: "pele clara",
+  III: "pele morena clara",
+  IV: "pele morena moderada",
+  V: "pele morena escura",
+  VI: "pele negra"
+};
+export function descricaoTipoPele(tipoFitzpatrick) {
+  return DESCRICAO_TIPO_PELE[tipoFitzpatrick] || null;
 }
 
 // Verifica intervalo mínimo desde a última sessão registrada

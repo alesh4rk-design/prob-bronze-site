@@ -2,9 +2,9 @@
 // Guardado numa coleção própria (não dentro do doc do negócio) de propósito:
 // assim dá pra restringir a leitura só ao dono nas regras do Firestore, sem
 // bloquear o resto do doc "negocios" que a equipe também precisa ler.
-import { db } from "./firebase-config.js?v=20260727x";
+import { db } from "./firebase-config.js?v=20260727y";
 import { doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
-import { notificarErroFirestore } from "./firestore-erro.js?v=20260727x";
+import { notificarErroFirestore } from "./firestore-erro.js?v=20260727y";
 
 export const DIAS_SEMANA = [
   { chave: "seg", nome: "Segunda-feira" },

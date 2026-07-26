@@ -15,7 +15,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Pro'Bronze">
-<link rel="stylesheet" href="css/theme.css?v=20260727x">
+<link rel="stylesheet" href="css/theme.css?v=20260727y">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -1084,25 +1084,25 @@
 </div>
 
 <script type="module">
-import { onAuthChange, login, logout, iniciarLoginComGoogle, resetSenha } from './js/auth.js?v=20260727x';
-import { VALOR_MENSALIDADE, PIX_PLATAFORMA, WHATSAPP_SUPORTE } from './js/admin-config.js?v=20260727x';
-import { escutarCabines, atualizarStatusCabine, criarCabine, excluirCabine } from './js/cabines.js?v=20260727x';
+import { onAuthChange, login, logout, iniciarLoginComGoogle, resetSenha } from './js/auth.js?v=20260727y';
+import { VALOR_MENSALIDADE, PIX_PLATAFORMA, WHATSAPP_SUPORTE } from './js/admin-config.js?v=20260727y';
+import { escutarCabines, atualizarStatusCabine, criarCabine, excluirCabine } from './js/cabines.js?v=20260727y';
 import {
   escutarAgendamentosDoDia, criarAgendamento, concluirAgendamento,
   cancelarAgendamento, marcarFalta, atribuirCabine, contarConflitosHorario, marcarEmAndamento,
   salvarAvaliacaoSessao, estenderTempoSessao
-} from './js/agenda.js?v=20260727x';
-import { checarElegibilidade } from './js/agenda.js?v=20260727x';
-import { escutarServicos, criarServico, excluirServico, calcularCombo } from './js/servicos.js?v=20260727x';
-import { escutarClientes, criarCliente, ehAniversarioHoje } from './js/clientes.js?v=20260727x';
-import { criarMembroEquipe, escutarEquipe, excluirMembroEquipe, editarMembroEquipe } from './js/equipe.js?v=20260727x';
-import { tempoMaxRecomendado } from './js/ficha-pele.js?v=20260727x';
-import { registrarPagamento, escutarPendencias, quitarPendencia, resumoFinanceiro, escutarFinanceiroPeriodo } from './js/financeiro.js?v=20260727x';
-import { criarPacote, escutarPacotesDoNegocio, consumirSessaoDoPacote, excluirPacote, pacoteVencido, diasParado, DIAS_PARADO_ALERTA } from './js/pacotes-sessoes.js?v=20260727x';
-import { criarProdutoCabine, escutarProdutosCabine, produtosEmAlerta, baixarEstoque, somarEstoque, buscarPorCodigoBarras, excluirProdutoCabine } from './js/produtos-cabine.js?v=20260727x';
-import { criarInsumo, escutarInsumos, reporInsumo, darBaixaInsumo, excluirInsumo, insumosEmAlerta, buscarInsumoPorCodigoBarras } from './js/insumos.js?v=20260727x';
-import { criarCupom, escutarCupons, desativarCupom, calcularDescontoCupom } from './js/cupons.js?v=20260727x';
-import { exportarExcel, exportarPDF, montarRelatorioFinanceiro, COLUNAS_FINANCEIRO } from './js/relatorios.js?v=20260727x';
+} from './js/agenda.js?v=20260727y';
+import { checarElegibilidade } from './js/agenda.js?v=20260727y';
+import { escutarServicos, criarServico, excluirServico, calcularCombo } from './js/servicos.js?v=20260727y';
+import { escutarClientes, criarCliente, ehAniversarioHoje } from './js/clientes.js?v=20260727y';
+import { criarMembroEquipe, escutarEquipe, excluirMembroEquipe, editarMembroEquipe } from './js/equipe.js?v=20260727y';
+import { tempoMaxRecomendado, descricaoTipoPele } from './js/ficha-pele.js?v=20260727y';
+import { registrarPagamento, escutarPendencias, quitarPendencia, resumoFinanceiro, escutarFinanceiroPeriodo } from './js/financeiro.js?v=20260727y';
+import { criarPacote, escutarPacotesDoNegocio, consumirSessaoDoPacote, excluirPacote, pacoteVencido, diasParado, DIAS_PARADO_ALERTA } from './js/pacotes-sessoes.js?v=20260727y';
+import { criarProdutoCabine, escutarProdutosCabine, produtosEmAlerta, baixarEstoque, somarEstoque, buscarPorCodigoBarras, excluirProdutoCabine } from './js/produtos-cabine.js?v=20260727y';
+import { criarInsumo, escutarInsumos, reporInsumo, darBaixaInsumo, excluirInsumo, insumosEmAlerta, buscarInsumoPorCodigoBarras } from './js/insumos.js?v=20260727y';
+import { criarCupom, escutarCupons, desativarCupom, calcularDescontoCupom } from './js/cupons.js?v=20260727y';
+import { exportarExcel, exportarPDF, montarRelatorioFinanceiro, COLUNAS_FINANCEIRO } from './js/relatorios.js?v=20260727y';
 import {
   linkConfirmacaoAgendamento, linkCobrancaPendente, linkAtrasoAgendamento,
   linkClienteSumido, linkMensagemLivre, linkLembreteIntervalo,
@@ -1110,14 +1110,14 @@ import {
   linkPacoteAcabando,
   linkSessaoPacoteAtendida,
   linkPacoteParado
-} from './js/whatsapp.js?v=20260727x';
-import { verificarIntervaloMinimo } from './js/ficha-pele.js?v=20260727x';
-import { tutorialJaVisto, iniciarTutorial } from './js/tutorial.js?v=20260727x';
-import { DIAS_SEMANA, escutarHorarios, salvarHorarios, validarHorarioFuncionamento } from './js/horarios.js?v=20260727x';
-import { escutarConfigNegocio, salvarConfigNegocio } from './js/config-negocio.js?v=20260727x';
-import { CATEGORIAS_DESPESA, criarDespesa, excluirDespesa, escutarDespesas } from './js/despesas.js?v=20260727x';
-import { toast, confirmar, confirmarForte, executar } from './js/ui-feedback.js?v=20260727x';
-import { db } from './js/firebase-config.js?v=20260727x';
+} from './js/whatsapp.js?v=20260727y';
+import { verificarIntervaloMinimo } from './js/ficha-pele.js?v=20260727y';
+import { tutorialJaVisto, iniciarTutorial } from './js/tutorial.js?v=20260727y';
+import { DIAS_SEMANA, escutarHorarios, salvarHorarios, validarHorarioFuncionamento } from './js/horarios.js?v=20260727y';
+import { escutarConfigNegocio, salvarConfigNegocio } from './js/config-negocio.js?v=20260727y';
+import { CATEGORIAS_DESPESA, criarDespesa, excluirDespesa, escutarDespesas } from './js/despesas.js?v=20260727y';
+import { toast, confirmar, confirmarForte, executar } from './js/ui-feedback.js?v=20260727y';
+import { db } from './js/firebase-config.js?v=20260727y';
 
 // Luzinhas douradas ao redor do card de login
 // Mostra o nome da loja usada da última vez que alguém logou neste aparelho
@@ -2555,7 +2555,7 @@ function renderClientes(clientes) {
     <div class="agendamento-item nome-clicavel" data-abrir-menu-cliente="${c.id}">
       <div class="agendamento-info">
         <div class="nome">${c.nome} 💬</div>
-        <div class="detalhe">${c.whatsapp || 'sem WhatsApp'}${c.fichaPele ? ' · Fitzpatrick ' + c.fichaPele.tipoFitzpatrick : ' · sem ficha de pele'}</div>
+        <div class="detalhe">${c.whatsapp || 'sem WhatsApp'}${c.fichaPele ? ' · ' + (descricaoTipoPele(c.fichaPele.tipoFitzpatrick) || 'ficha de pele preenchida') : ' · sem ficha de pele'}</div>
       </div>
     </div>
   `).join('');
@@ -3163,11 +3163,12 @@ function renderAgendaDia(lista) {
     const cabineAtual = cabinesCache.find((c) => c.id === ag.cabineId);
     const atrasado = ag.status === 'agendado' && ag.dataHora?.toDate && (new Date() - ag.dataHora.toDate()) > 10 * 60000;
     const sugerirRealocacao = atrasado && !semCabine && cabineAtual?.status !== 'livre' && cabinesLivres.length > 0;
+    const tipoPeleTexto = descricaoTipoPele(cliente?.fichaPele?.tipoFitzpatrick);
     return `
       <div class="agendamento-item nome-clicavel" data-abrir-menu-cliente="${ag.clienteId}">
         <div class="agendamento-info">
           <div class="nome">${hora} · ${ag.clienteNome}</div>
-          <div class="detalhe">${servicos} · ${ag.tempoMin}min · ${ag.origem}${semCabine && ag.status === 'agendado' ? ' · sem cabine definida' : ''}</div>
+          <div class="detalhe">${servicos} · ${ag.tempoMin}min · ${ag.origem}${semCabine && ag.status === 'agendado' ? ' · sem cabine definida' : ''}${tipoPeleTexto ? ' · ' + tipoPeleTexto : ''}</div>
           ${sugerirRealocacao ? `<div class="aviso-bloqueio">⏰ Atrasado — cabine ${cabineAtual?.nome || ''} ocupada. <button class="btn-secundario" data-mover-agendamento="${ag.id}" data-mover-destino="${cabinesLivres[0].id}" style="margin-left:.4rem">Mover pra ${cabinesLivres[0].nome} (livre)</button></div>` : ''}
         </div>
         <div style="display:flex;align-items:center;gap:.5rem;flex-wrap:wrap">
