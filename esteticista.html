@@ -15,7 +15,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Pro'Bronze">
-<link rel="stylesheet" href="css/theme.css?v=20260727o">
+<link rel="stylesheet" href="css/theme.css?v=20260727p">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -772,6 +772,22 @@
     <!-- ABA INSUMOS -->
     <div class="aba-conteudo" id="aba-insumos">
       <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:.6rem;flex-wrap:wrap;margin-bottom:.8rem">
+          <div class="card-titulo" style="margin-bottom:0">Insumos</div>
+          <button class="btn-primario" style="width:auto" id="btn-abrir-cadastro-insumo">+ Cadastrar Insumo</button>
+        </div>
+        <div class="ajuda-inline">Itens de uso interno, necessários pro funcionamento da loja (papel toalha, água oxigenada, luvas, algodão etc.) — não são vendidos, só controlados aqui. Controle o estoque e receba um aviso quando algo estiver acabando.</div>
+        <div style="display:flex;gap:1.5rem;margin-bottom:.8rem;font-size:.85rem">
+          <div>Cadastrados: <strong id="ins-kpi-total">0</strong></div>
+          <div style="color:var(--red)">Acabando: <strong id="ins-kpi-baixo">0</strong></div>
+        </div>
+        <div id="lista-insumos"><div class="empty-state">Carregando...</div></div>
+      </div>
+    </div>
+
+    <!-- Modal Cadastrar Insumo -->
+    <div id="modal-cadastro-insumo" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:55;align-items:center;justify-content:center;padding:1rem">
+      <div class="card" style="max-width:420px;width:100%;max-height:90vh;overflow-y:auto">
         <div class="card-titulo com-ajuda">Novo Insumo</div>
         <div class="ajuda-inline">Itens de uso interno, necessários pro funcionamento da loja (papel toalha, água oxigenada, luvas, algodão etc.) — não são vendidos, só controlados aqui.</div>
         <div class="input-group"><label>Nome</label><input type="text" id="ins-nome" placeholder="Ex: Papel toalha"></div>
@@ -797,14 +813,7 @@
         <div class="input-group"><label>Quantidade mínima (alerta)</label><input type="number" id="ins-qtd-min"></div>
         <div class="input-group"><label>Custo unitário (R$, opcional — lança como despesa automática)</label><input type="number" id="ins-custo" step="0.01"></div>
         <button class="btn-primario" id="btn-criar-insumo">Adicionar Insumo</button>
-      </div>
-      <div class="card">
-        <div class="card-titulo">Insumos</div>
-        <div style="display:flex;gap:1.5rem;margin-bottom:.8rem;font-size:.85rem">
-          <div>Cadastrados: <strong id="ins-kpi-total">0</strong></div>
-          <div style="color:var(--red)">Acabando: <strong id="ins-kpi-baixo">0</strong></div>
-        </div>
-        <div id="lista-insumos"><div class="empty-state">Carregando...</div></div>
+        <button class="btn-secundario" style="width:100%;margin-top:.5rem" id="btn-cancelar-cadastro-insumo">Cancelar</button>
       </div>
     </div>
 
@@ -1044,25 +1053,25 @@
 </div>
 
 <script type="module">
-import { onAuthChange, login, logout, iniciarLoginComGoogle, resetSenha } from './js/auth.js?v=20260727o';
-import { VALOR_MENSALIDADE, PIX_PLATAFORMA, WHATSAPP_SUPORTE } from './js/admin-config.js?v=20260727o';
-import { escutarCabines, atualizarStatusCabine, criarCabine, excluirCabine } from './js/cabines.js?v=20260727o';
+import { onAuthChange, login, logout, iniciarLoginComGoogle, resetSenha } from './js/auth.js?v=20260727p';
+import { VALOR_MENSALIDADE, PIX_PLATAFORMA, WHATSAPP_SUPORTE } from './js/admin-config.js?v=20260727p';
+import { escutarCabines, atualizarStatusCabine, criarCabine, excluirCabine } from './js/cabines.js?v=20260727p';
 import {
   escutarAgendamentosDoDia, criarAgendamento, concluirAgendamento,
   cancelarAgendamento, marcarFalta, atribuirCabine, contarConflitosHorario, marcarEmAndamento,
   salvarAvaliacaoSessao, estenderTempoSessao
-} from './js/agenda.js?v=20260727o';
-import { checarElegibilidade } from './js/agenda.js?v=20260727o';
-import { escutarServicos, criarServico, calcularCombo } from './js/servicos.js?v=20260727o';
-import { escutarClientes, criarCliente, ehAniversarioHoje } from './js/clientes.js?v=20260727o';
-import { criarMembroEquipe, escutarEquipe, excluirMembroEquipe, editarMembroEquipe } from './js/equipe.js?v=20260727o';
-import { tempoMaxRecomendado } from './js/ficha-pele.js?v=20260727o';
-import { registrarPagamento, escutarPendencias, quitarPendencia, resumoFinanceiro, escutarFinanceiroPeriodo } from './js/financeiro.js?v=20260727o';
-import { criarPacote, escutarPacotesDoNegocio, consumirSessaoDoPacote, pacoteVencido, diasParado, DIAS_PARADO_ALERTA } from './js/pacotes-sessoes.js?v=20260727o';
-import { criarProdutoCabine, escutarProdutosCabine, produtosEmAlerta, baixarEstoque, somarEstoque, buscarPorCodigoBarras, excluirProdutoCabine } from './js/produtos-cabine.js?v=20260727o';
-import { criarInsumo, escutarInsumos, reporInsumo, darBaixaInsumo, excluirInsumo, insumosEmAlerta, buscarInsumoPorCodigoBarras } from './js/insumos.js?v=20260727o';
-import { criarCupom, escutarCupons, desativarCupom, calcularDescontoCupom } from './js/cupons.js?v=20260727o';
-import { exportarExcel, exportarPDF, montarRelatorioFinanceiro, COLUNAS_FINANCEIRO } from './js/relatorios.js?v=20260727o';
+} from './js/agenda.js?v=20260727p';
+import { checarElegibilidade } from './js/agenda.js?v=20260727p';
+import { escutarServicos, criarServico, calcularCombo } from './js/servicos.js?v=20260727p';
+import { escutarClientes, criarCliente, ehAniversarioHoje } from './js/clientes.js?v=20260727p';
+import { criarMembroEquipe, escutarEquipe, excluirMembroEquipe, editarMembroEquipe } from './js/equipe.js?v=20260727p';
+import { tempoMaxRecomendado } from './js/ficha-pele.js?v=20260727p';
+import { registrarPagamento, escutarPendencias, quitarPendencia, resumoFinanceiro, escutarFinanceiroPeriodo } from './js/financeiro.js?v=20260727p';
+import { criarPacote, escutarPacotesDoNegocio, consumirSessaoDoPacote, pacoteVencido, diasParado, DIAS_PARADO_ALERTA } from './js/pacotes-sessoes.js?v=20260727p';
+import { criarProdutoCabine, escutarProdutosCabine, produtosEmAlerta, baixarEstoque, somarEstoque, buscarPorCodigoBarras, excluirProdutoCabine } from './js/produtos-cabine.js?v=20260727p';
+import { criarInsumo, escutarInsumos, reporInsumo, darBaixaInsumo, excluirInsumo, insumosEmAlerta, buscarInsumoPorCodigoBarras } from './js/insumos.js?v=20260727p';
+import { criarCupom, escutarCupons, desativarCupom, calcularDescontoCupom } from './js/cupons.js?v=20260727p';
+import { exportarExcel, exportarPDF, montarRelatorioFinanceiro, COLUNAS_FINANCEIRO } from './js/relatorios.js?v=20260727p';
 import {
   linkConfirmacaoAgendamento, linkCobrancaPendente, linkAtrasoAgendamento,
   linkClienteSumido, linkMensagemLivre, linkLembreteIntervalo,
@@ -1070,14 +1079,14 @@ import {
   linkPacoteAcabando,
   linkSessaoPacoteAtendida,
   linkPacoteParado
-} from './js/whatsapp.js?v=20260727o';
-import { verificarIntervaloMinimo } from './js/ficha-pele.js?v=20260727o';
-import { tutorialJaVisto, iniciarTutorial } from './js/tutorial.js?v=20260727o';
-import { DIAS_SEMANA, escutarHorarios, salvarHorarios, validarHorarioFuncionamento } from './js/horarios.js?v=20260727o';
-import { escutarConfigNegocio, salvarConfigNegocio } from './js/config-negocio.js?v=20260727o';
-import { CATEGORIAS_DESPESA, criarDespesa, excluirDespesa, escutarDespesas } from './js/despesas.js?v=20260727o';
-import { toast, confirmar, confirmarForte, executar } from './js/ui-feedback.js?v=20260727o';
-import { db } from './js/firebase-config.js?v=20260727o';
+} from './js/whatsapp.js?v=20260727p';
+import { verificarIntervaloMinimo } from './js/ficha-pele.js?v=20260727p';
+import { tutorialJaVisto, iniciarTutorial } from './js/tutorial.js?v=20260727p';
+import { DIAS_SEMANA, escutarHorarios, salvarHorarios, validarHorarioFuncionamento } from './js/horarios.js?v=20260727p';
+import { escutarConfigNegocio, salvarConfigNegocio } from './js/config-negocio.js?v=20260727p';
+import { CATEGORIAS_DESPESA, criarDespesa, excluirDespesa, escutarDespesas } from './js/despesas.js?v=20260727p';
+import { toast, confirmar, confirmarForte, executar } from './js/ui-feedback.js?v=20260727p';
+import { db } from './js/firebase-config.js?v=20260727p';
 
 // Luzinhas douradas ao redor do card de login
 // Mostra o nome da loja usada da última vez que alguém logou neste aparelho
@@ -1624,6 +1633,14 @@ $('btn-criar-insumo').addEventListener('click', async () => {
   }
   $('ins-nome').value = ''; $('ins-qtd').value = ''; $('ins-qtd-min').value = ''; $('ins-custo').value = '';
   $('ins-codigo').value = ''; $('ins-tamanho').value = '';
+  $('modal-cadastro-insumo').style.display = 'none';
+});
+
+$('btn-abrir-cadastro-insumo').addEventListener('click', () => {
+  $('modal-cadastro-insumo').style.display = 'flex';
+});
+$('btn-cancelar-cadastro-insumo').addEventListener('click', () => {
+  $('modal-cadastro-insumo').style.display = 'none';
 });
 
 $('btn-criar-cabine').addEventListener('click', async () => {
