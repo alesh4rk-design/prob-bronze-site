@@ -7,7 +7,7 @@
 <meta http-equiv="Expires" content="0">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Pro'Bronze — Painel</title>
-<link rel="stylesheet" href="css/theme.css?v=20260726e">
+<link rel="stylesheet" href="css/theme.css?v=20260726f">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -275,6 +275,22 @@
       Não tem conta? <a href="index.html" style="color:var(--accent-light);text-decoration:none">Cadastre-se</a>
     </div>
   </div>
+  </div>
+</div>
+
+<!-- Tela de assinatura vencida (bloqueia o painel) -->
+<div id="tela-vencida" style="display:none;min-height:100vh;align-items:center;justify-content:center;padding:1.5rem;background:radial-gradient(circle at 20% 20%, rgba(var(--accent-rgb),.20), transparent 55%), var(--bg)">
+  <div class="login-card" style="max-width:400px">
+    <h1 style="color:var(--red);font-size:1.1rem">⏰ Seu teste grátis acabou</h1>
+    <p style="margin-bottom:1rem">Pra continuar usando o Pro'Bronze, é só assinar por <strong id="vencida-valor" style="color:var(--accent-light)"></strong>/mês.</p>
+    <div class="card" style="text-align:left;margin-bottom:1rem">
+      <div class="card-titulo">Como pagar</div>
+      <div class="ajuda-inline" style="margin-bottom:.6rem">1. Faça um PIX pra chave abaixo<br>2. Mande o comprovante no WhatsApp<br>3. Seu acesso é liberado em seguida</div>
+      <div class="input-group"><label>Chave PIX</label><input type="text" id="vencida-pix" readonly></div>
+    </div>
+    <a class="btn-primario" id="vencida-whatsapp" href="#" target="_blank" style="display:block;text-align:center;text-decoration:none;margin-bottom:.8rem">📱 Enviar comprovante no WhatsApp</a>
+    <button class="btn-secundario" id="btn-vencida-verificar" style="width:100%;margin-bottom:.8rem">Já paguei, verificar de novo</button>
+    <button class="btn-secundario" id="btn-vencida-sair" style="width:100%">Sair</button>
   </div>
 </div>
 
@@ -774,34 +790,35 @@
 </div>
 
 <script type="module">
-import { onAuthChange, login, logout, iniciarLoginComGoogle, resetSenha } from './js/auth.js?v=20260726e';
-import { escutarCabines, atualizarStatusCabine, criarCabine, excluirCabine } from './js/cabines.js?v=20260726e';
+import { onAuthChange, login, logout, iniciarLoginComGoogle, resetSenha } from './js/auth.js?v=20260726f';
+import { VALOR_MENSALIDADE, PIX_PLATAFORMA, WHATSAPP_SUPORTE } from './js/admin-config.js?v=20260726f';
+import { escutarCabines, atualizarStatusCabine, criarCabine, excluirCabine } from './js/cabines.js?v=20260726f';
 import {
   escutarAgendamentosDoDia, criarAgendamento, concluirAgendamento, escutarFilaEspera,
   cancelarAgendamento, marcarFalta, atribuirCabine, contarConflitosHorario, marcarEmAndamento
-} from './js/agenda.js?v=20260726e';
-import { checarElegibilidade } from './js/agenda.js?v=20260726e';
-import { escutarServicos, criarServico, calcularCombo } from './js/servicos.js?v=20260726e';
-import { escutarClientes, criarCliente } from './js/clientes.js?v=20260726e';
-import { criarMembroEquipe, escutarEquipe, excluirMembroEquipe } from './js/equipe.js?v=20260726e';
-import { tempoMaxRecomendado } from './js/ficha-pele.js?v=20260726e';
-import { registrarPagamento, escutarPendencias, quitarPendencia, resumoFinanceiro, escutarFinanceiroPeriodo } from './js/financeiro.js?v=20260726e';
-import { criarPacote, escutarPacotesDoNegocio, consumirSessaoDoPacote } from './js/pacotes-sessoes.js?v=20260726e';
-import { criarProdutoCabine, escutarProdutosCabine, produtosEmAlerta, baixarEstoque } from './js/produtos-cabine.js?v=20260726e';
-import { criarCupom, escutarCupons, desativarCupom, calcularDescontoCupom } from './js/cupons.js?v=20260726e';
-import { exportarExcel, exportarPDF, montarRelatorioFinanceiro, COLUNAS_FINANCEIRO } from './js/relatorios.js?v=20260726e';
+} from './js/agenda.js?v=20260726f';
+import { checarElegibilidade } from './js/agenda.js?v=20260726f';
+import { escutarServicos, criarServico, calcularCombo } from './js/servicos.js?v=20260726f';
+import { escutarClientes, criarCliente } from './js/clientes.js?v=20260726f';
+import { criarMembroEquipe, escutarEquipe, excluirMembroEquipe } from './js/equipe.js?v=20260726f';
+import { tempoMaxRecomendado } from './js/ficha-pele.js?v=20260726f';
+import { registrarPagamento, escutarPendencias, quitarPendencia, resumoFinanceiro, escutarFinanceiroPeriodo } from './js/financeiro.js?v=20260726f';
+import { criarPacote, escutarPacotesDoNegocio, consumirSessaoDoPacote } from './js/pacotes-sessoes.js?v=20260726f';
+import { criarProdutoCabine, escutarProdutosCabine, produtosEmAlerta, baixarEstoque } from './js/produtos-cabine.js?v=20260726f';
+import { criarCupom, escutarCupons, desativarCupom, calcularDescontoCupom } from './js/cupons.js?v=20260726f';
+import { exportarExcel, exportarPDF, montarRelatorioFinanceiro, COLUNAS_FINANCEIRO } from './js/relatorios.js?v=20260726f';
 import {
   linkConfirmacaoAgendamento, linkCobrancaPendente, linkAtrasoAgendamento,
   linkClienteSumido, linkMensagemLivre, linkLembreteIntervalo,
   linkSuaVezChegando, linkPromocao, linkAniversario, linkAgradecimento
-} from './js/whatsapp.js?v=20260726e';
-import { verificarIntervaloMinimo } from './js/ficha-pele.js?v=20260726e';
-import { tutorialJaVisto, iniciarTutorial } from './js/tutorial.js?v=20260726e';
-import { DIAS_SEMANA, escutarHorarios, salvarHorarios } from './js/horarios.js?v=20260726e';
-import { escutarConfigNegocio, salvarConfigNegocio } from './js/config-negocio.js?v=20260726e';
-import { CATEGORIAS_DESPESA, criarDespesa, excluirDespesa, escutarDespesas } from './js/despesas.js?v=20260726e';
-import { toast, confirmar, confirmarForte, executar } from './js/ui-feedback.js?v=20260726e';
-import { db } from './js/firebase-config.js?v=20260726e';
+} from './js/whatsapp.js?v=20260726f';
+import { verificarIntervaloMinimo } from './js/ficha-pele.js?v=20260726f';
+import { tutorialJaVisto, iniciarTutorial } from './js/tutorial.js?v=20260726f';
+import { DIAS_SEMANA, escutarHorarios, salvarHorarios } from './js/horarios.js?v=20260726f';
+import { escutarConfigNegocio, salvarConfigNegocio } from './js/config-negocio.js?v=20260726f';
+import { CATEGORIAS_DESPESA, criarDespesa, excluirDespesa, escutarDespesas } from './js/despesas.js?v=20260726f';
+import { toast, confirmar, confirmarForte, executar } from './js/ui-feedback.js?v=20260726f';
+import { db } from './js/firebase-config.js?v=20260726f';
 
 // Luzinhas douradas ao redor do card de login
 // Mostra o nome da loja usada da última vez que alguém logou neste aparelho
@@ -1029,6 +1046,34 @@ function pararTodosOsListeners() {
   listenersAtivos = [];
 }
 
+// Verifica se o negócio ainda tem acesso (trial válido ou assinatura ativa).
+// Roda em tempo real: assim que o admin ativa o acesso, a tela libera sozinha.
+function verificarAssinatura(config) {
+  let bloqueado = false;
+  if (config.status === 'expirado') {
+    bloqueado = true;
+  } else if (config.status === 'trial') {
+    const trialFim = config.trialFim?.toDate ? config.trialFim.toDate() : (config.trialFim ? new Date(config.trialFim) : null);
+    if (trialFim && new Date() > trialFim) bloqueado = true;
+  }
+
+  if (bloqueado) {
+    $('painel').style.display = 'none';
+    $('tela-vencida').style.display = 'flex';
+    $('vencida-valor').textContent = 'R$' + VALOR_MENSALIDADE;
+    $('vencida-pix').value = PIX_PLATAFORMA;
+    const nomeLoja = config.nome || "Pro'Bronze";
+    const textoWpp = `Olá! Fiz o PIX da mensalidade do Pro'Bronze referente à loja "${nomeLoja}". Segue o comprovante:`;
+    $('vencida-whatsapp').href = `https://wa.me/${WHATSAPP_SUPORTE}?text=${encodeURIComponent(textoWpp)}`;
+  } else {
+    $('tela-vencida').style.display = 'none';
+    $('painel').style.display = 'block';
+  }
+}
+
+$('btn-vencida-verificar').addEventListener('click', () => verificarAssinatura(configNegocioCache));
+$('btn-vencida-sair').addEventListener('click', () => logout());
+
 function iniciarPainel() {
   const negocioId = usuarioAtual.negocioId;
 
@@ -1057,6 +1102,7 @@ function iniciarPainel() {
     configNegocioCache = config;
     renderConfiguracoes(config);
     localStorage.setItem('probronze_nome_loja', config.nome);
+    verificarAssinatura(config);
   }));
 
   listenersAtivos.push(escutarEquipe(negocioId, (equipe) => {
