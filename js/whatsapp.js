@@ -72,6 +72,12 @@ export function linkSessaoPacoteAtendida({ whatsapp, clienteNome, sessoesRestant
   return `https://wa.me/55${numero}?text=${encodeURIComponent(texto)}`;
 }
 
+export function linkPacoteParado({ whatsapp, clienteNome, dias, nomeNegocio }) {
+  const numero = limparNumero(whatsapp);
+  const texto = `Oi, ${clienteNome}! Notamos que faz ${dias} dias que você não usa as sessões do seu pacote na ${nomeNegocio}. Ainda tem sessões esperando por você — bora agendar? ☀️`;
+  return `https://wa.me/55${numero}?text=${encodeURIComponent(texto)}`;
+}
+
 export function linkPacoteAcabando({ whatsapp, clienteNome, sessoesRestantes, nomeNegocio }) {
   const numero = limparNumero(whatsapp);
   const texto = `Oi, ${clienteNome}! Seu pacote de sessões na ${nomeNegocio} está quase no fim — ${sessoesRestantes === 0 ? 'já acabou' : `restam só ${sessoesRestantes}`}. Bora renovar pra não perder o ritmo? ☀️`;

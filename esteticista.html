@@ -7,7 +7,7 @@
 <meta http-equiv="Expires" content="0">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Pro'Bronze — Painel</title>
-<link rel="stylesheet" href="css/theme.css?v=20260727d">
+<link rel="stylesheet" href="css/theme.css?v=20260727e">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -661,6 +661,7 @@
         </div>
         <div class="input-group"><label>Total de sessões</label><input type="number" id="pac-total" placeholder="Ex: 10"></div>
         <div class="input-group"><label>Valor total (R$)</label><input type="number" id="pac-valor" step="0.01"></div>
+        <div class="input-group"><label>Validade (dias)</label><input type="number" id="pac-validade-dias" value="90" min="1"></div>
         <button class="btn-primario" id="btn-criar-pacote">Criar Pacote</button>
       </div>
       <div class="card">
@@ -987,39 +988,40 @@
 </div>
 
 <script type="module">
-import { onAuthChange, login, logout, iniciarLoginComGoogle, resetSenha } from './js/auth.js?v=20260727d';
-import { VALOR_MENSALIDADE, PIX_PLATAFORMA, WHATSAPP_SUPORTE } from './js/admin-config.js?v=20260727d';
-import { escutarCabines, atualizarStatusCabine, criarCabine, excluirCabine } from './js/cabines.js?v=20260727d';
+import { onAuthChange, login, logout, iniciarLoginComGoogle, resetSenha } from './js/auth.js?v=20260727e';
+import { VALOR_MENSALIDADE, PIX_PLATAFORMA, WHATSAPP_SUPORTE } from './js/admin-config.js?v=20260727e';
+import { escutarCabines, atualizarStatusCabine, criarCabine, excluirCabine } from './js/cabines.js?v=20260727e';
 import {
   escutarAgendamentosDoDia, criarAgendamento, concluirAgendamento,
   cancelarAgendamento, marcarFalta, atribuirCabine, contarConflitosHorario, marcarEmAndamento,
   salvarAvaliacaoSessao, estenderTempoSessao
-} from './js/agenda.js?v=20260727d';
-import { checarElegibilidade } from './js/agenda.js?v=20260727d';
-import { escutarServicos, criarServico, calcularCombo } from './js/servicos.js?v=20260727d';
-import { escutarClientes, criarCliente, ehAniversarioHoje } from './js/clientes.js?v=20260727d';
-import { criarMembroEquipe, escutarEquipe, excluirMembroEquipe, editarMembroEquipe } from './js/equipe.js?v=20260727d';
-import { tempoMaxRecomendado } from './js/ficha-pele.js?v=20260727d';
-import { registrarPagamento, escutarPendencias, quitarPendencia, resumoFinanceiro, escutarFinanceiroPeriodo } from './js/financeiro.js?v=20260727d';
-import { criarPacote, escutarPacotesDoNegocio, consumirSessaoDoPacote } from './js/pacotes-sessoes.js?v=20260727d';
-import { criarProdutoCabine, escutarProdutosCabine, produtosEmAlerta, baixarEstoque, somarEstoque, buscarPorCodigoBarras, excluirProdutoCabine } from './js/produtos-cabine.js?v=20260727d';
-import { criarInsumo, escutarInsumos, reporInsumo, darBaixaInsumo, excluirInsumo, insumosEmAlerta } from './js/insumos.js?v=20260727d';
-import { criarCupom, escutarCupons, desativarCupom, calcularDescontoCupom } from './js/cupons.js?v=20260727d';
-import { exportarExcel, exportarPDF, montarRelatorioFinanceiro, COLUNAS_FINANCEIRO } from './js/relatorios.js?v=20260727d';
+} from './js/agenda.js?v=20260727e';
+import { checarElegibilidade } from './js/agenda.js?v=20260727e';
+import { escutarServicos, criarServico, calcularCombo } from './js/servicos.js?v=20260727e';
+import { escutarClientes, criarCliente, ehAniversarioHoje } from './js/clientes.js?v=20260727e';
+import { criarMembroEquipe, escutarEquipe, excluirMembroEquipe, editarMembroEquipe } from './js/equipe.js?v=20260727e';
+import { tempoMaxRecomendado } from './js/ficha-pele.js?v=20260727e';
+import { registrarPagamento, escutarPendencias, quitarPendencia, resumoFinanceiro, escutarFinanceiroPeriodo } from './js/financeiro.js?v=20260727e';
+import { criarPacote, escutarPacotesDoNegocio, consumirSessaoDoPacote, pacoteVencido, diasParado, DIAS_PARADO_ALERTA } from './js/pacotes-sessoes.js?v=20260727e';
+import { criarProdutoCabine, escutarProdutosCabine, produtosEmAlerta, baixarEstoque, somarEstoque, buscarPorCodigoBarras, excluirProdutoCabine } from './js/produtos-cabine.js?v=20260727e';
+import { criarInsumo, escutarInsumos, reporInsumo, darBaixaInsumo, excluirInsumo, insumosEmAlerta } from './js/insumos.js?v=20260727e';
+import { criarCupom, escutarCupons, desativarCupom, calcularDescontoCupom } from './js/cupons.js?v=20260727e';
+import { exportarExcel, exportarPDF, montarRelatorioFinanceiro, COLUNAS_FINANCEIRO } from './js/relatorios.js?v=20260727e';
 import {
   linkConfirmacaoAgendamento, linkCobrancaPendente, linkAtrasoAgendamento,
   linkClienteSumido, linkMensagemLivre, linkLembreteIntervalo,
   linkSuaVezChegando, linkPromocao, linkAniversario, linkAgradecimento,
   linkPacoteAcabando,
-  linkSessaoPacoteAtendida
-} from './js/whatsapp.js?v=20260727d';
-import { verificarIntervaloMinimo } from './js/ficha-pele.js?v=20260727d';
-import { tutorialJaVisto, iniciarTutorial } from './js/tutorial.js?v=20260727d';
-import { DIAS_SEMANA, escutarHorarios, salvarHorarios, validarHorarioFuncionamento } from './js/horarios.js?v=20260727d';
-import { escutarConfigNegocio, salvarConfigNegocio } from './js/config-negocio.js?v=20260727d';
-import { CATEGORIAS_DESPESA, criarDespesa, excluirDespesa, escutarDespesas } from './js/despesas.js?v=20260727d';
-import { toast, confirmar, confirmarForte, executar } from './js/ui-feedback.js?v=20260727d';
-import { db } from './js/firebase-config.js?v=20260727d';
+  linkSessaoPacoteAtendida,
+  linkPacoteParado
+} from './js/whatsapp.js?v=20260727e';
+import { verificarIntervaloMinimo } from './js/ficha-pele.js?v=20260727e';
+import { tutorialJaVisto, iniciarTutorial } from './js/tutorial.js?v=20260727e';
+import { DIAS_SEMANA, escutarHorarios, salvarHorarios, validarHorarioFuncionamento } from './js/horarios.js?v=20260727e';
+import { escutarConfigNegocio, salvarConfigNegocio } from './js/config-negocio.js?v=20260727e';
+import { CATEGORIAS_DESPESA, criarDespesa, excluirDespesa, escutarDespesas } from './js/despesas.js?v=20260727e';
+import { toast, confirmar, confirmarForte, executar } from './js/ui-feedback.js?v=20260727e';
+import { db } from './js/firebase-config.js?v=20260727e';
 
 // Luzinhas douradas ao redor do card de login
 // Mostra o nome da loja usada da última vez que alguém logou neste aparelho
@@ -2188,17 +2190,30 @@ function renderPacotes(pacotes) {
   wrap.innerHTML = ativos.map((p) => {
     const restantes = p.totalSessoes - p.sessoesUsadas;
     const acabando = restantes <= 1;
+    const vencido = pacoteVencido(p);
+    const parado = !vencido && diasParado(p) >= DIAS_PARADO_ALERTA;
     const cliente = clientesCache.find((c) => c.id === p.clienteId);
+    const diasRestantesValidade = p.validade ? Math.ceil((new Date(p.validade) - new Date()) / (1000 * 60 * 60 * 24)) : null;
+    const validadeTexto = vencido
+      ? '<span class="badge cancelado">vencido</span>'
+      : (diasRestantesValidade != null ? ` · vence em ${diasRestantesValidade}d` : '');
+    const historico = p.historicoBaixas || [];
+    const historicoTexto = historico.length
+      ? `Últimas sessões: ${historico.slice(-3).map((d) => new Date(d).toLocaleDateString('pt-BR')).join(', ')}`
+      : 'Nenhuma sessão usada ainda';
     return `
-    <div class="agendamento-item nome-clicavel" data-baixa-pacote="${p.id}" data-cliente-pacote="${p.clienteId}">
+    <div class="agendamento-item ${vencido ? '' : 'nome-clicavel'}" ${vencido ? '' : `data-baixa-pacote="${p.id}"`}>
       <div class="agendamento-info">
-        <div class="nome">${p.clienteNome} ${acabando ? '<span class="badge cancelado">acabando</span>' : ''}</div>
+        <div class="nome">${p.clienteNome} ${acabando ? '<span class="badge cancelado">acabando</span>' : ''}${validadeTexto}</div>
         <div class="detalhe">${p.sessoesUsadas}/${p.totalSessoes} sessões usadas · R$${Number(p.valorTotal).toFixed(2)}</div>
+        <div class="detalhe">${historicoTexto}</div>
       </div>
       <div style="display:flex;gap:.4rem;flex-wrap:wrap">
-        <button class="btn-secundario" data-baixa-btn="${p.id}">− Dar baixa</button>
+        ${!vencido ? `<button class="btn-secundario" data-baixa-btn="${p.id}">− Dar baixa</button>` : ''}
         <button class="btn-secundario" data-vender-pacote="${p.clienteId}">🛍️ Vender Produto</button>
+        ${(acabando || vencido) ? `<button class="btn-secundario" data-renovar-pacote="${p.id}">🔁 Renovar Pacote</button>` : ''}
         ${acabando && cliente?.whatsapp ? `<a class="btn-secundario" href="${linkPacoteAcabando({ whatsapp: cliente.whatsapp, clienteNome: p.clienteNome, sessoesRestantes: restantes, nomeNegocio })}" target="_blank" style="text-decoration:none">Avisar recompra</a>` : ''}
+        ${parado && cliente?.whatsapp ? `<a class="btn-secundario" href="${linkPacoteParado({ whatsapp: cliente.whatsapp, clienteNome: p.clienteNome, dias: diasParado(p), nomeNegocio })}" target="_blank" style="text-decoration:none">⏰ Avisar parado</a>` : ''}
       </div>
     </div>
   `;
@@ -2207,6 +2222,7 @@ function renderPacotes(pacotes) {
   const darBaixa = async (pacoteId) => {
     const pacote = pacotesCache.find((p) => p.id === pacoteId);
     if (!pacote) return;
+    if (pacoteVencido(pacote)) { toast('Esse pacote já venceu — renove antes de dar baixa.', 'aviso'); return; }
     if (!(await confirmar(`Dar baixa em uma sessão do pacote de "${pacote.clienteNome}"?`))) return;
     const resultado = await consumirSessaoDoPacote(pacoteId);
     toast(`Sessão registrada — restam ${resultado.sessoesRestantes} de ${pacote.totalSessoes}.`, 'sucesso');
@@ -2235,6 +2251,20 @@ function renderPacotes(pacotes) {
       abrirModalVenderProduto(btn.dataset.venderPacote);
     });
   });
+  wrap.querySelectorAll('[data-renovar-pacote]').forEach((btn) => {
+    btn.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      const pacote = pacotesCache.find((p) => p.id === btn.dataset.renovarPacote);
+      if (!pacote) return;
+      if (!(await confirmar(`Criar um novo pacote de ${pacote.totalSessoes} sessões (R$${Number(pacote.valorTotal).toFixed(2)}) pra "${pacote.clienteNome}"?`))) return;
+      await criarPacote(usuarioAtual.negocioId, {
+        clienteId: pacote.clienteId, clienteNome: pacote.clienteNome,
+        totalSessoes: pacote.totalSessoes, valorTotal: pacote.valorTotal,
+        validadeDias: pacote.validadeDias
+      });
+      toast('Pacote renovado.', 'sucesso');
+    });
+  });
 }
 
 $('btn-criar-pacote').addEventListener('click', async () => {
@@ -2242,6 +2272,7 @@ $('btn-criar-pacote').addEventListener('click', async () => {
   let clienteNome = $('pac-cliente').selectedOptions[0]?.textContent;
   const totalSessoes = Number($('pac-total').value);
   const valorTotal = Number($('pac-valor').value);
+  const validadeDias = Number($('pac-validade-dias').value) || 90;
   if (!clienteId || !totalSessoes || !valorTotal) { toast('Preencha cliente, total de sessões e valor.', 'aviso'); return; }
 
   if (clienteId === '__novo__') {
@@ -2255,8 +2286,8 @@ $('btn-criar-pacote').addEventListener('click', async () => {
     clienteNome = nomeNovaCliente;
   }
 
-  await criarPacote(usuarioAtual.negocioId, { clienteId, clienteNome, totalSessoes, valorTotal });
-  $('pac-cliente').value = ''; $('pac-total').value = ''; $('pac-valor').value = '';
+  await criarPacote(usuarioAtual.negocioId, { clienteId, clienteNome, totalSessoes, valorTotal, validadeDias });
+  $('pac-cliente').value = ''; $('pac-total').value = ''; $('pac-valor').value = ''; $('pac-validade-dias').value = '90';
   $('pac-cliente-form-novo').style.display = 'none';
   $('pac-cliente-novo-nome').value = ''; $('pac-cliente-novo-wpp').value = '';
   toast('Pacote criado.', 'sucesso');
