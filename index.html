@@ -7,7 +7,7 @@
 <meta http-equiv="Expires" content="0">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Pro'Bronze — Comece Grátis</title>
-<link rel="stylesheet" href="css/theme.css?v=20260726d">
+<link rel="stylesheet" href="css/theme.css?v=20260726e">
 <style>
   * { box-sizing: border-box; }
   body {
@@ -76,7 +76,7 @@
 </div>
 
 <script type="module">
-import { cadastrarNegocioComDono, iniciarCadastroComGoogle, processarRetornoGoogleCadastro } from './js/auth.js?v=20260726d';
+import { cadastrarNegocioComDono, cadastrarNegocioComDonoGoogle } from './js/auth.js?v=20260726e';
 
 const $ = (id) => document.getElementById(id);
 
@@ -123,15 +123,13 @@ $('btn-cadastrar-google').addEventListener('click', async () => {
   }
 
   $('btn-cadastrar-google').disabled = true;
-  await iniciarCadastroComGoogle({ nomeNegocio, nomeDono, whatsappNegocio });
-});
-
-// Ao voltar do redirecionamento do Google, termina o cadastro
-processarRetornoGoogleCadastro().then((uid) => {
-  if (uid) window.location.href = 'esteticista.html';
-}).catch((err) => {
-  $('btn-cadastrar-google').disabled = false;
-  $('erro').textContent = err.message || 'Não foi possível cadastrar com Google. Tente novamente.';
+  try {
+    await cadastrarNegocioComDonoGoogle({ nomeNegocio, nomeDono, whatsappNegocio });
+    window.location.href = 'esteticista.html';
+  } catch (err) {
+    $('btn-cadastrar-google').disabled = false;
+    $('erro').textContent = err.message || 'Não foi possível cadastrar com Google. Tente novamente.';
+  }
 });
 </script>
 </body>

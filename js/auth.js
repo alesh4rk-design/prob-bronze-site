@@ -1,10 +1,9 @@
 // Pro'Bronze — Autenticação e controle de papéis (dono | recepcionista)
-import { auth, db } from "./firebase-config.js?v=20260726d";
+import { auth, db } from "./firebase-config.js?v=20260726e";
 import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
-  signInWithRedirect,
-  getRedirectResult,
+  signInWithPopup,
   GoogleAuthProvider,
   sendPasswordResetEmail,
   onAuthStateChanged,
@@ -24,12 +23,10 @@ export async function login(email, senha) {
   return { uid: cred.user.uid, ...userDoc.data() };
 }
 
-// Login da equipe com Google — usa redirecionamento (não popup) porque o
-// navegador do celular costuma bloquear popups. A página sai, autentica no
-// Google e volta; onAuthChange (mais abaixo) detecta o retorno sozinho e
-// avisa se a conta não tiver cadastro (motivo "sem-cadastro").
+// Login da equipe com Google — onAuthChange (mais abaixo) detecta o
+// resultado sozinho e avisa se a conta não tiver cadastro ("sem-cadastro").
 export function iniciarLoginComGoogle() {
-  return signInWithRedirect(auth, googleProvider);
+  return signInWithPopup(auth, googleProvider);
 }
 
 export function logout() {
@@ -70,31 +67,13 @@ export async function cadastrarNegocioComDono({ nomeNegocio, email, senha, nomeD
   return cred.user.uid;
 }
 
-// Cadastro público via Google — usa redirecionamento. Como a página recarrega
-// no meio do processo, guardamos nome do negócio/dono/whatsapp no navegador
-// (sessionStorage) antes de sair, e recuperamos depois que o Google volta.
-const CHAVE_CADASTRO_PENDENTE = "probronze_cadastro_google_pendente";
-
-export function iniciarCadastroComGoogle({ nomeNegocio, nomeDono, whatsappNegocio = "" }) {
-  sessionStorage.setItem(CHAVE_CADASTRO_PENDENTE, JSON.stringify({ nomeNegocio, nomeDono, whatsappNegocio }));
-  return signInWithRedirect(auth, googleProvider);
-}
-
-// Chame no carregamento da página de cadastro. Retorna null se não houver
-// um retorno de redirecionamento do Google pendente.
-export async function processarRetornoGoogleCadastro() {
-  const cred = await getRedirectResult(auth);
-  if (!cred) return null;
-
-  const pendente = sessionStorage.getItem(CHAVE_CADASTRO_PENDENTE);
-  sessionStorage.removeItem(CHAVE_CADASTRO_PENDENTE);
-  if (!pendente) return null; // esse retorno era de um login, não de um cadastro
-
+// Cadastro público via Google — mesma lógica, sem senha
+export async function cadastrarNegocioComDonoGoogle({ nomeNegocio, nomeDono, whatsappNegocio = "" }) {
+  const cred = await signInWithPopup(auth, googleProvider);
   const jaExiste = await getDoc(doc(db, "usuarios", cred.user.uid));
   if (jaExiste.exists()) {
     throw new Error("Este Google já tem uma conta cadastrada — faça login em vez de se cadastrar.");
   }
-  const { nomeNegocio, nomeDono, whatsappNegocio } = JSON.parse(pendente);
   await criarNegocioEDono(cred.user.uid, { nomeNegocio, nomeDono, email: cred.user.email, whatsappNegocio });
   return cred.user.uid;
 }
