@@ -7,7 +7,7 @@
 <meta http-equiv="Expires" content="0">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Pro'Bronze — Painel</title>
-<link rel="stylesheet" href="css/theme.css?v=20260726t">
+<link rel="stylesheet" href="css/theme.css?v=20260726u">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -94,6 +94,7 @@
     background: transparent; border: 1.5px solid var(--card-border); color: var(--muted);
     border-radius: 8px; padding: .5rem .9rem; font-size: .78rem; cursor: pointer;
   }
+  .agenda-filtro-btn.ativo { border-color: var(--accent); color: var(--accent-light); background: rgba(var(--accent-rgb),.12); }
   #login-erro { color: var(--red); font-size: .8rem; margin-top: .75rem; min-height: 1em; }
 
   /* Botão de entrar com neon pulsante */
@@ -348,7 +349,6 @@
         <div class="nav-titulo">Operação do dia</div>
         <button class="aba-btn ativa" data-aba="cabines" data-titulo="🛏️ Cabines"><span class="nav-icone">🛏️</span>Cabines</button>
         <button class="aba-btn" data-aba="agenda" data-titulo="📅 Agenda do Dia"><span class="nav-icone">📅</span>Agenda do Dia</button>
-        <button class="aba-btn" data-aba="fila" data-titulo="🪑 Fila de Espera"><span class="nav-icone">🪑</span>Fila de Espera</button>
       </div>
       <div class="nav-secao">
         <div class="nav-titulo">Catálogo</div>
@@ -401,18 +401,13 @@
           <div class="card-titulo" style="margin-bottom:0">Hoje</div>
           <button class="btn-primario" style="width:auto" id="btn-abrir-novo-agendamento-agenda">+ Agendar / Colocar na fila</button>
         </div>
-        <div id="lista-agenda-dia"><div class="empty-state">Carregando...</div></div>
-      </div>
-    </div>
-
-    <!-- ABA FILA DE ESPERA -->
-    <div class="aba-conteudo" id="aba-fila">
-      <div class="card">
-        <div style="display:flex;justify-content:space-between;align-items:center;gap:.6rem;flex-wrap:wrap;margin-bottom:.8rem">
-          <div class="card-titulo" style="margin-bottom:0">Aguardando ou em andamento</div>
-          <button class="btn-primario" style="width:auto" id="btn-abrir-novo-agendamento-fila">+ Agendar / Colocar na fila</button>
+        <div style="display:flex;gap:.4rem;flex-wrap:wrap;margin-bottom:.8rem" id="agenda-filtros">
+          <button class="btn-secundario agenda-filtro-btn ativo" data-filtro-agenda="todos">Todos</button>
+          <button class="btn-secundario agenda-filtro-btn" data-filtro-agenda="agendado">Aguardando</button>
+          <button class="btn-secundario agenda-filtro-btn" data-filtro-agenda="em_andamento">Em andamento</button>
+          <button class="btn-secundario agenda-filtro-btn" data-filtro-agenda="concluido">Concluídos</button>
         </div>
-        <div id="lista-fila"><div class="empty-state">Carregando...</div></div>
+        <div id="lista-agenda-dia"><div class="empty-state">Carregando...</div></div>
       </div>
     </div>
 
@@ -937,38 +932,38 @@
 </div>
 
 <script type="module">
-import { onAuthChange, login, logout, iniciarLoginComGoogle, resetSenha } from './js/auth.js?v=20260726t';
-import { VALOR_MENSALIDADE, PIX_PLATAFORMA, WHATSAPP_SUPORTE } from './js/admin-config.js?v=20260726t';
-import { escutarCabines, atualizarStatusCabine, criarCabine, excluirCabine } from './js/cabines.js?v=20260726t';
+import { onAuthChange, login, logout, iniciarLoginComGoogle, resetSenha } from './js/auth.js?v=20260726u';
+import { VALOR_MENSALIDADE, PIX_PLATAFORMA, WHATSAPP_SUPORTE } from './js/admin-config.js?v=20260726u';
+import { escutarCabines, atualizarStatusCabine, criarCabine, excluirCabine } from './js/cabines.js?v=20260726u';
 import {
-  escutarAgendamentosDoDia, criarAgendamento, concluirAgendamento, escutarFilaEspera,
+  escutarAgendamentosDoDia, criarAgendamento, concluirAgendamento,
   cancelarAgendamento, marcarFalta, atribuirCabine, contarConflitosHorario, marcarEmAndamento,
   salvarAvaliacaoSessao, estenderTempoSessao
-} from './js/agenda.js?v=20260726t';
-import { checarElegibilidade } from './js/agenda.js?v=20260726t';
-import { escutarServicos, criarServico, calcularCombo } from './js/servicos.js?v=20260726t';
-import { escutarClientes, criarCliente, ehAniversarioHoje } from './js/clientes.js?v=20260726t';
-import { criarMembroEquipe, escutarEquipe, excluirMembroEquipe } from './js/equipe.js?v=20260726t';
-import { tempoMaxRecomendado } from './js/ficha-pele.js?v=20260726t';
-import { registrarPagamento, escutarPendencias, quitarPendencia, resumoFinanceiro, escutarFinanceiroPeriodo } from './js/financeiro.js?v=20260726t';
-import { criarPacote, escutarPacotesDoNegocio, consumirSessaoDoPacote } from './js/pacotes-sessoes.js?v=20260726t';
-import { criarProdutoCabine, escutarProdutosCabine, produtosEmAlerta, baixarEstoque, somarEstoque, buscarPorCodigoBarras } from './js/produtos-cabine.js?v=20260726t';
-import { criarInsumo, escutarInsumos, reporInsumo, darBaixaInsumo, excluirInsumo, insumosEmAlerta } from './js/insumos.js?v=20260726t';
-import { criarCupom, escutarCupons, desativarCupom, calcularDescontoCupom } from './js/cupons.js?v=20260726t';
-import { exportarExcel, exportarPDF, montarRelatorioFinanceiro, COLUNAS_FINANCEIRO } from './js/relatorios.js?v=20260726t';
+} from './js/agenda.js?v=20260726u';
+import { checarElegibilidade } from './js/agenda.js?v=20260726u';
+import { escutarServicos, criarServico, calcularCombo } from './js/servicos.js?v=20260726u';
+import { escutarClientes, criarCliente, ehAniversarioHoje } from './js/clientes.js?v=20260726u';
+import { criarMembroEquipe, escutarEquipe, excluirMembroEquipe } from './js/equipe.js?v=20260726u';
+import { tempoMaxRecomendado } from './js/ficha-pele.js?v=20260726u';
+import { registrarPagamento, escutarPendencias, quitarPendencia, resumoFinanceiro, escutarFinanceiroPeriodo } from './js/financeiro.js?v=20260726u';
+import { criarPacote, escutarPacotesDoNegocio, consumirSessaoDoPacote } from './js/pacotes-sessoes.js?v=20260726u';
+import { criarProdutoCabine, escutarProdutosCabine, produtosEmAlerta, baixarEstoque, somarEstoque, buscarPorCodigoBarras } from './js/produtos-cabine.js?v=20260726u';
+import { criarInsumo, escutarInsumos, reporInsumo, darBaixaInsumo, excluirInsumo, insumosEmAlerta } from './js/insumos.js?v=20260726u';
+import { criarCupom, escutarCupons, desativarCupom, calcularDescontoCupom } from './js/cupons.js?v=20260726u';
+import { exportarExcel, exportarPDF, montarRelatorioFinanceiro, COLUNAS_FINANCEIRO } from './js/relatorios.js?v=20260726u';
 import {
   linkConfirmacaoAgendamento, linkCobrancaPendente, linkAtrasoAgendamento,
   linkClienteSumido, linkMensagemLivre, linkLembreteIntervalo,
   linkSuaVezChegando, linkPromocao, linkAniversario, linkAgradecimento,
   linkPacoteAcabando
-} from './js/whatsapp.js?v=20260726t';
-import { verificarIntervaloMinimo } from './js/ficha-pele.js?v=20260726t';
-import { tutorialJaVisto, iniciarTutorial } from './js/tutorial.js?v=20260726t';
-import { DIAS_SEMANA, escutarHorarios, salvarHorarios } from './js/horarios.js?v=20260726t';
-import { escutarConfigNegocio, salvarConfigNegocio } from './js/config-negocio.js?v=20260726t';
-import { CATEGORIAS_DESPESA, criarDespesa, excluirDespesa, escutarDespesas } from './js/despesas.js?v=20260726t';
-import { toast, confirmar, confirmarForte, executar } from './js/ui-feedback.js?v=20260726t';
-import { db } from './js/firebase-config.js?v=20260726t';
+} from './js/whatsapp.js?v=20260726u';
+import { verificarIntervaloMinimo } from './js/ficha-pele.js?v=20260726u';
+import { tutorialJaVisto, iniciarTutorial } from './js/tutorial.js?v=20260726u';
+import { DIAS_SEMANA, escutarHorarios, salvarHorarios } from './js/horarios.js?v=20260726u';
+import { escutarConfigNegocio, salvarConfigNegocio } from './js/config-negocio.js?v=20260726u';
+import { CATEGORIAS_DESPESA, criarDespesa, excluirDespesa, escutarDespesas } from './js/despesas.js?v=20260726u';
+import { toast, confirmar, confirmarForte, executar } from './js/ui-feedback.js?v=20260726u';
+import { db } from './js/firebase-config.js?v=20260726u';
 
 // Luzinhas douradas ao redor do card de login
 // Mostra o nome da loja usada da última vez que alguém logou neste aparelho
@@ -1002,6 +997,8 @@ let usuarioAtual = null;
 let cabinesCache = [];
 let servicosCache = [];
 let clientesCache = [];
+let agendaDiaCache = [];
+let filtroAgendaAtual = 'todos';
 let combosSelecionados = new Set();
 let sessoesAtivas = new Map(); // cabineId -> { agendamentoId, clienteId, tempoMin, iniciadoEm, valorBruto }
 let timerIntervalGlobal = null;
@@ -1252,11 +1249,10 @@ function iniciarPainel() {
     preencherSelectCabines(cabines);
   }));
 
-  listenersAtivos.push(escutarAgendamentosDoDia(negocioId, new Date(), renderAgendaDia));
-
-  listenersAtivos.push(escutarFilaEspera(negocioId, (fila) => {
-    renderFila(fila);
-    restaurarSessoesEmAndamento(fila);
+  listenersAtivos.push(escutarAgendamentosDoDia(negocioId, new Date(), (lista) => {
+    agendaDiaCache = lista;
+    aplicarFiltroAgenda();
+    restaurarSessoesEmAndamento(lista);
   }));
 
   listenersAtivos.push(escutarHorarios(negocioId, renderHorarios));
@@ -2656,13 +2652,27 @@ function abrirModalNovoAgendamento() {
   $('modal-novo-agendamento').style.display = 'flex';
 }
 $('btn-abrir-novo-agendamento-agenda').addEventListener('click', abrirModalNovoAgendamento);
-$('btn-abrir-novo-agendamento-fila').addEventListener('click', abrirModalNovoAgendamento);
 $('btn-cancelar-novo-agendamento').addEventListener('click', () => { $('modal-novo-agendamento').style.display = 'none'; });
+
+document.querySelectorAll('.agenda-filtro-btn').forEach((btn) => {
+  btn.addEventListener('click', () => {
+    filtroAgendaAtual = btn.dataset.filtroAgenda;
+    document.querySelectorAll('.agenda-filtro-btn').forEach((b) => b.classList.toggle('ativo', b === btn));
+    aplicarFiltroAgenda();
+  });
+});
+
+function aplicarFiltroAgenda() {
+  const lista = filtroAgendaAtual === 'todos'
+    ? agendaDiaCache
+    : agendaDiaCache.filter((ag) => ag.status === filtroAgendaAtual);
+  renderAgendaDia(lista);
+}
 
 function renderAgendaDia(lista) {
   const wrap = $('lista-agenda-dia');
   if (lista.length === 0) {
-    wrap.innerHTML = '<div class="empty-state">Nenhum agendamento hoje.</div>';
+    wrap.innerHTML = '<div class="empty-state">Nenhum agendamento nesse filtro.</div>';
     return;
   }
   wrap.innerHTML = lista.map((ag) => {
@@ -2696,11 +2706,31 @@ function renderAgendaDia(lista) {
             <button class="btn-secundario" data-atribuir-iniciar="${ag.id}" data-tempo="${ag.tempoMin}" data-cliente="${ag.clienteId}" data-valor="${(ag.servicos || []).reduce((s, x) => s + (x.preco || 0), 0)}">Iniciar</button>
           ` : ''}
           ${ag.status === 'agendado' && !semCabine ? `<button class="btn-secundario" data-iniciar="${ag.id}" data-cabine="${ag.cabineId}" data-tempo="${ag.tempoMin}" data-cliente="${ag.clienteId}" data-valor="${(ag.servicos || []).reduce((s, x) => s + (x.preco || 0), 0)}">Iniciar</button>` : ''}
+          ${ag.status === 'agendado' ? `
+            <button class="btn-secundario" data-falta="${ag.id}">Faltou</button>
+            <button class="btn-secundario" data-cancelar="${ag.id}">Cancelar</button>
+          ` : ''}
         </div>
       </div>
     `;
   }).join('');
 
+  wrap.querySelectorAll('[data-falta]').forEach((btn) => {
+    btn.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      if (!(await confirmar('Marcar esta cliente como falta?'))) return;
+      await marcarFalta(btn.dataset.falta);
+      toast('Falta registrada.', 'sucesso');
+    });
+  });
+  wrap.querySelectorAll('[data-cancelar]').forEach((btn) => {
+    btn.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      if (!(await confirmar('Cancelar este agendamento?'))) return;
+      await cancelarAgendamento(btn.dataset.cancelar);
+      toast('Agendamento cancelado.', 'sucesso');
+    });
+  });
   wrap.querySelectorAll('[data-iniciar]').forEach((btn) => {
     btn.addEventListener('click', (e) => { e.stopPropagation(); iniciarSessao(
       btn.dataset.iniciar, btn.dataset.cabine, Number(btn.dataset.tempo), btn.dataset.cliente, Number(btn.dataset.valor)
@@ -2730,54 +2760,6 @@ function renderAgendaDia(lista) {
     btn.addEventListener('click', async () => {
       await atribuirCabine(btn.dataset.moverAgendamento, btn.dataset.moverDestino);
       toast('Cabine realocada.', 'sucesso');
-    });
-  });
-}
-
-function renderFila(lista) {
-  const wrap = $('lista-fila');
-  if (lista.length === 0) {
-    wrap.innerHTML = '<div class="empty-state">Ninguém aguardando ou em sessão agora.</div>';
-    return;
-  }
-  wrap.innerHTML = lista.map((ag) => {
-    const hora = ag.dataHora?.toDate ? ag.dataHora.toDate().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : '';
-    const servicos = (ag.servicos || []).map((s) => s.nome).join(' + ');
-    return `
-      <div class="agendamento-item nome-clicavel" data-abrir-menu-cliente="${ag.clienteId}">
-        <div class="agendamento-info">
-          <div class="nome">${hora} · ${ag.clienteNome}</div>
-          <div class="detalhe">${servicos} · ${ag.tempoMin}min · ${ag.origem}</div>
-        </div>
-        <div style="display:flex;align-items:center;gap:.5rem">
-          <span class="badge ${ag.status}">${rotuloStatusAgendamento(ag)}</span>
-          ${ag.status === 'agendado' ? `
-            <button class="btn-secundario" data-falta="${ag.id}">Faltou</button>
-            <button class="btn-secundario" data-cancelar="${ag.id}">Cancelar</button>
-          ` : ''}
-        </div>
-      </div>
-    `;
-  }).join('');
-
-  wrap.querySelectorAll('[data-abrir-menu-cliente]').forEach((el) => {
-    el.addEventListener('click', (e) => {
-      if (e.target.closest('button, a, select, option')) return;
-      abrirMenuCliente(el.dataset.abrirMenuCliente);
-    });
-  });
-  wrap.querySelectorAll('[data-falta]').forEach((btn) => {
-    btn.addEventListener('click', async () => {
-      if (!(await confirmar('Marcar esta cliente como falta?'))) return;
-      await marcarFalta(btn.dataset.falta);
-      toast('Falta registrada.', 'sucesso');
-    });
-  });
-  wrap.querySelectorAll('[data-cancelar]').forEach((btn) => {
-    btn.addEventListener('click', async () => {
-      if (!(await confirmar('Cancelar este agendamento?'))) return;
-      await cancelarAgendamento(btn.dataset.cancelar);
-      toast('Agendamento cancelado.', 'sucesso');
     });
   });
 }

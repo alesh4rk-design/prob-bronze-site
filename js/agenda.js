@@ -1,14 +1,14 @@
 // Pro'Bronze — Agenda (online + presencial), combo de serviços,
 // integrando ficha de pele e regras de segurança
-import { db } from "./firebase-config.js?v=20260726t";
+import { db } from "./firebase-config.js?v=20260726u";
 import {
   collection, doc, addDoc, updateDoc, getDoc, getDocs, increment,
   onSnapshot, query, where, orderBy, serverTimestamp, Timestamp
 } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
 import {
   verificarIntervaloMinimo, verificarLimiteMensal, tempoMaxRecomendado
-} from "./ficha-pele.js?v=20260726t";
-import { notificarErroFirestore } from "./firestore-erro.js?v=20260726t";
+} from "./ficha-pele.js?v=20260726u";
+import { notificarErroFirestore } from "./firestore-erro.js?v=20260726u";
 
 // status: "agendado" | "em_andamento" | "concluido" | "cancelado" | "faltou"
 // origem: "online" | "presencial"
@@ -143,20 +143,5 @@ export function escutarAgendamentosDoDia(negocioId, data, callback) {
     const lista = [];
     snap.forEach((d) => lista.push({ id: d.id, ...d.data() }));
     callback(lista);
-  }, notificarErroFirestore);
-}
-
-// Fila de espera: agendamentos presenciais "em_andamento" ou aguardando cabine livre
-export function escutarFilaEspera(negocioId, callback) {
-  const q = query(
-    collection(db, "agendamentos"),
-    where("negocioId", "==", negocioId),
-    where("status", "in", ["agendado", "em_andamento"])
-  );
-  return onSnapshot(q, (snap) => {
-    const fila = [];
-    snap.forEach((d) => fila.push({ id: d.id, ...d.data() }));
-    fila.sort((a, b) => a.dataHora.toMillis() - b.dataHora.toMillis());
-    callback(fila);
   }, notificarErroFirestore);
 }
