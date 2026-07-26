@@ -109,14 +109,16 @@ import {
   collection, query, where, onSnapshot, doc, getDoc, orderBy
 } from 'https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js';
 import { escutarServicos, calcularCombo } from './js/servicos.js';
-import { criarAgendamento } from './js/agenda.js';
+import { criarAgendamento, contarConflitosHorario } from './js/agenda.js';
 import { checarElegibilidade } from './js/agenda.js';
+import { escutarCabines } from './js/cabines.js';
 import { toast } from './js/ui-feedback.js';
 
 const $ = (id) => document.getElementById(id);
 let servicosCache = [];
 let combosSelecionados = new Set();
 let clienteAtual = null;
+let cabinesCache = [];
 
 // Login da cliente usa a mesma Auth do Firebase; o vínculo com o
 // documento em "clientes" é feito por clienteUid (campo salvo no
@@ -170,6 +172,7 @@ $('btn-sair-cliente').addEventListener('click', async () => {
         servicosCache = servicos;
         renderServicosAgendar(servicos);
       });
+      escutarCabines(cliente.negocioId, (cabines) => { cabinesCache = cabines; });
     });
   });
 })();
@@ -279,6 +282,13 @@ $('btn-agendar-online').addEventListener('click', async () => {
 
   const servicosDoCombo = servicosCache.filter((s) => combosSelecionados.has(s.id));
   const { duracaoTotalMin } = calcularCombo(servicosDoCombo);
+  const tempoMin = duracaoTotalMin || 15;
+
+  const conflitos = await contarConflitosHorario(clienteAtual.negocioId, dataHora, tempoMin);
+  if (conflitos >= cabinesCache.length) {
+    avisosWrap.innerHTML = `<div class="empty-state" style="color:var(--red)">Todas as cabines já estão ocupadas nesse horário. Escolha outro horário.</div>`;
+    return;
+  }
 
   await criarAgendamento(clienteAtual.negocioId, {
     clienteId: clienteAtual.id,
@@ -287,7 +297,7 @@ $('btn-agendar-online').addEventListener('click', async () => {
     servicos: servicosDoCombo,
     dataHora,
     origem: 'online',
-    tempoMin: duracaoTotalMin || 15
+    tempoMin
   });
 
   combosSelecionados.clear();

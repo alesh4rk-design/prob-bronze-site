@@ -50,6 +50,29 @@ export async function checarElegibilidade(clienteId) {
   };
 }
 
+// Conta quantos agendamentos ativos (agendado/em_andamento) do negócio
+// se sobrepõem ao intervalo [dataHora, dataHora + tempoMin) — usado pra
+// não deixar marcar mais sessões simultâneas do que o número de cabines
+export async function contarConflitosHorario(negocioId, dataHora, tempoMin) {
+  const inicio = new Date(dataHora);
+  const fim = new Date(inicio.getTime() + tempoMin * 60000);
+  const q = query(
+    collection(db, "agendamentos"),
+    where("negocioId", "==", negocioId),
+    where("status", "in", ["agendado", "em_andamento"])
+  );
+  const snap = await getDocs(q);
+  let conflitos = 0;
+  snap.forEach((d) => {
+    const ag = d.data();
+    if (!ag.dataHora?.toDate) return;
+    const agInicio = ag.dataHora.toDate();
+    const agFim = new Date(agInicio.getTime() + (ag.tempoMin || 15) * 60000);
+    if (agInicio < fim && agFim > inicio) conflitos++;
+  });
+  return conflitos;
+}
+
 export async function criarAgendamento(negocioId, {
   clienteId, clienteNome, cabineId, servicos, dataHora, origem, tempoMin
 }) {

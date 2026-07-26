@@ -544,7 +544,7 @@ import { onAuthChange, login, logout } from './js/auth.js';
 import { escutarCabines, atualizarStatusCabine, criarCabine, excluirCabine } from './js/cabines.js';
 import {
   escutarAgendamentosDoDia, criarAgendamento, concluirAgendamento, escutarFilaEspera,
-  cancelarAgendamento, marcarFalta, atribuirCabine
+  cancelarAgendamento, marcarFalta, atribuirCabine, contarConflitosHorario
 } from './js/agenda.js';
 import { checarElegibilidade } from './js/agenda.js';
 import { escutarServicos, criarServico, calcularCombo } from './js/servicos.js';
@@ -1474,6 +1474,12 @@ $('btn-criar-agendamento').addEventListener('click', async () => {
   }
   if (elegibilidade.avisos.length > 0) {
     avisosWrap.innerHTML = elegibilidade.avisos.map((a) => `<div class="aviso-atencao">${a}</div>`).join('');
+  }
+
+  const conflitos = await contarConflitosHorario(usuarioAtual.negocioId, dataHora, tempoMin);
+  if (conflitos >= cabinesCache.length) {
+    avisosWrap.innerHTML = `<div class="aviso-bloqueio">Todas as ${cabinesCache.length} cabines já estão ocupadas nesse horário. Escolha outro horário.</div>`;
+    return;
   }
 
   const servicosDoCombo = servicosCache.filter((s) => combosSelecionados.has(s.id));

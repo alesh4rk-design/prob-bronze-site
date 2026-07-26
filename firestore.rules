@@ -59,15 +59,18 @@ service cloud.firestore {
       allow update, delete: if ehDoMeuNegocio(resource.data.negocioId);
     }
 
+    // Cabines: leitura aberta a qualquer cliente logada (só pra saber
+    // quantas existem, e checar se há vaga no horário escolhido)
     match /cabines/{id} {
-      allow read, write: if ehDoMeuNegocio(resource.data.negocioId) ||
+      allow read: if ehDoMeuNegocio(resource.data.negocioId) || logado();
+      allow write: if ehDoMeuNegocio(resource.data.negocioId) ||
         (request.method == "create" && ehDoMeuNegocio(request.resource.data.negocioId));
     }
 
     match /agendamentos/{id} {
-      allow read: if ehDoMeuNegocio(resource.data.negocioId) ||
-        (logado() && resource.data.clienteId != null &&
-         get(/databases/$(database)/documents/clientes/$(resource.data.clienteId)).data.clienteUid == request.auth.uid);
+      // Leitura aberta a qualquer logado: a cliente precisa contar quantos
+      // horários já estão ocupados (capacidade de cabines) antes de agendar
+      allow read: if ehDoMeuNegocio(resource.data.negocioId) || logado();
       allow create: if ehDoMeuNegocio(request.resource.data.negocioId) ||
         (logado() && request.resource.data.clienteId != null &&
          get(/databases/$(database)/documents/clientes/$(request.resource.data.clienteId)).data.clienteUid == request.auth.uid);
