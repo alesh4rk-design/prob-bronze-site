@@ -550,6 +550,10 @@
   <div id="modal-registrar-pagamento" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:55;align-items:center;justify-content:center;padding:1rem">
     <div class="card" style="max-width:380px;width:100%">
       <div class="card-titulo">Registrar Pagamento — <span id="rp-cliente-nome"></span></div>
+      <div class="input-group">
+        <label>Serviço (opcional — preenche o valor sozinho)</label>
+        <div id="rp-servicos" class="empty-state">Nenhum serviço cadastrado.</div>
+      </div>
       <div class="input-group"><label>Valor (R$)</label><input type="number" id="rp-valor" step="0.01"></div>
       <div class="input-group">
         <label>Forma de pagamento</label>
@@ -1246,11 +1250,29 @@ $('btn-fechar-whatsapp').addEventListener('click', () => {
 });
 
 // ── Registrar pagamento avulso (fora do fluxo de sessão) ─────────
+function renderServicosRegistrarPagamento() {
+  const wrap = $('rp-servicos');
+  if (servicosCache.length === 0) { wrap.innerHTML = '<div class="empty-state">Nenhum serviço cadastrado.</div>'; return; }
+  wrap.innerHTML = servicosCache.map((s) => `
+    <label style="display:flex;align-items:center;gap:.5rem;padding:.4rem 0;font-size:.85rem">
+      <input type="checkbox" data-rp-servico="${s.id}" data-preco="${s.preco}"> ${s.nome} — R$${Number(s.preco).toFixed(2)}
+    </label>
+  `).join('');
+  wrap.querySelectorAll('[data-rp-servico]').forEach((chk) => {
+    chk.addEventListener('change', () => {
+      const total = Array.from(wrap.querySelectorAll('[data-rp-servico]:checked'))
+        .reduce((soma, el) => soma + Number(el.dataset.preco), 0);
+      $('rp-valor').value = total.toFixed(2);
+    });
+  });
+}
+
 function abrirModalRegistrarPagamento(clienteId) {
   $('modal-whatsapp').style.display = 'none';
   const cliente = clientesCache.find((c) => c.id === clienteId);
   $('rp-cliente-nome').textContent = cliente?.nome || '';
   $('rp-valor').value = '';
+  renderServicosRegistrarPagamento();
   selecionarFormaPagamento('rp-forma', 'dinheiro');
   $('rp-status').value = 'pago';
   $('modal-registrar-pagamento').style.display = 'flex';
