@@ -15,7 +15,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Pro'Bronze">
-<link rel="stylesheet" href="css/theme.css?v=20260727u">
+<link rel="stylesheet" href="css/theme.css?v=20260727v">
 <style>
   * { box-sizing: border-box; }
   body { margin: 0; background: var(--bg); color: var(--text); font-family: var(--font); min-height: 100vh; }
@@ -24,13 +24,76 @@
   #tela-login {
     min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 1.5rem;
     background: radial-gradient(circle at 20% 20%, rgba(var(--accent-rgb),.20), transparent 55%), var(--bg);
+    position: relative; overflow: hidden;
+  }
+  /* Raios de luz gigantes girando atrás de toda a tela de login */
+  #tela-login::before {
+    content: '';
+    position: absolute; top: 50%; left: 50%;
+    width: 160vmax; height: 160vmax;
+    transform: translate(-50%, -50%) rotate(0deg);
+    background: repeating-conic-gradient(from 0deg, rgba(var(--accent-rgb),.16) 0deg 3deg, transparent 3deg 18deg);
+    -webkit-mask-image: radial-gradient(circle, transparent 8%, black 18%, black 38%, transparent 58%);
+    mask-image: radial-gradient(circle, transparent 8%, black 18%, black 38%, transparent 58%);
+    z-index: 0;
+    animation: raios-girar 26s linear infinite;
+    pointer-events: none;
+  }
+  @keyframes raios-girar {
+    to { transform: translate(-50%, -50%) rotate(360deg); }
+  }
+  .login-card-wrap { position: relative; width: 100%; max-width: 380px; z-index: 1; padding: 4px; border-radius: 24px; }
+  /* Néon contínuo ao redor de todo o card */
+  .login-card-wrap::before {
+    content: ''; position: absolute; inset: 0; border-radius: 24px;
+    border: 3px solid var(--accent-light);
+    box-shadow: 0 0 10px 2px rgba(var(--accent-rgb),.9), 0 0 22px 6px rgba(var(--accent-rgb),.6), inset 0 0 14px 2px rgba(var(--accent-rgb),.5);
+    animation: neon-pulsar 2.2s ease-in-out infinite;
+    pointer-events: none;
+  }
+  @keyframes neon-pulsar {
+    0%, 100% { box-shadow: 0 0 10px 2px rgba(var(--accent-rgb),.9), 0 0 22px 6px rgba(var(--accent-rgb),.6), inset 0 0 14px 2px rgba(var(--accent-rgb),.5); }
+    50% { box-shadow: 0 0 16px 4px rgba(var(--accent-rgb),1), 0 0 34px 10px rgba(var(--accent-rgb),.8), inset 0 0 20px 4px rgba(var(--accent-rgb),.7); }
   }
   .login-card {
-    width: 100%; max-width: 380px; background: rgba(36,28,22,.72); backdrop-filter: blur(18px);
-    border: 1.5px solid var(--card-border); border-radius: 20px; padding: 2.3rem 1.9rem; text-align: center;
+    width: 100%; background: rgba(36,28,22,.72); backdrop-filter: blur(18px);
+    border: 1.5px solid var(--card-border); border-radius: 20px; padding: 2.6rem 1.9rem 2.3rem; text-align: center;
+    position: relative;
   }
   .login-card h1 { font-size: 1.4rem; margin: 0 0 .3rem; color: var(--accent-light); }
   .login-card p { color: var(--muted); font-size: .85rem; margin: 0 0 1.5rem; }
+
+  /* Sol no topo do card — só o emoji brilhando, sem fundo redondo */
+  .login-sol {
+    position: absolute; top: -90px; left: 50%; transform: translateX(-50%);
+    display: flex; align-items: center; justify-content: center; font-size: 3.6rem;
+    filter: drop-shadow(0 0 18px rgba(var(--accent-rgb),.85)) drop-shadow(0 0 40px rgba(var(--accent-rgb),.5));
+    animation: sol-pulsar 3s ease-in-out infinite;
+    z-index: 2;
+  }
+  @keyframes sol-pulsar {
+    0%, 100% {
+      transform: translateX(-50%) scale(1);
+      filter: drop-shadow(0 0 18px rgba(var(--accent-rgb),.85)) drop-shadow(0 0 40px rgba(var(--accent-rgb),.5));
+    }
+    50% {
+      transform: translateX(-50%) scale(1.12);
+      filter: drop-shadow(0 0 26px rgba(var(--accent-rgb),1)) drop-shadow(0 0 56px rgba(var(--accent-rgb),.65));
+    }
+  }
+
+  /* Botão de entrar com neon pulsante */
+  #tela-login .btn-primario {
+    letter-spacing: .03em; text-shadow: 0 0 10px rgba(255,255,255,.35);
+    animation: btn-neon-pulsar 2.2s ease-in-out infinite;
+    transition: transform .12s ease;
+  }
+  #tela-login .btn-primario:hover { transform: translateY(-1px); filter: brightness(1.1); }
+  #tela-login .btn-primario:active { transform: translateY(0) scale(.98); }
+  @keyframes btn-neon-pulsar {
+    0%, 100% { box-shadow: 0 0 10px 1px rgba(var(--accent-rgb),.5), 0 4px 14px rgba(var(--accent-rgb),.28); }
+    50% { box-shadow: 0 0 20px 4px rgba(var(--accent-rgb),.85), 0 4px 20px rgba(var(--accent-rgb),.5); }
+  }
   .input-group { margin-bottom: 1rem; text-align: left; }
   .input-group label { display: block; font-size: .78rem; color: var(--muted); margin-bottom: .35rem; font-weight: 600; }
   .input-group input {
@@ -66,13 +129,16 @@
 <body>
 
 <div id="tela-login">
+  <div class="login-card-wrap">
   <div class="login-card">
+    <div class="login-sol">☀️</div>
     <h1><span class="marca-pro">Pro</span><span class="marca-apo">'</span>Bronze</h1>
     <p>Área da Cliente</p>
     <div class="input-group"><label>E-mail</label><input type="email" id="login-email" autocomplete="username"></div>
     <div class="input-group"><label>Senha</label><input type="password" id="login-senha" autocomplete="current-password"></div>
     <button class="btn-primario" id="btn-login">Entrar</button>
     <div id="login-erro"></div>
+  </div>
   </div>
 </div>
 
@@ -115,18 +181,18 @@
 </div>
 
 <script type="module">
-import { onAuthChange, login, logout } from './js/auth.js?v=20260727u';
-import { db } from './js/firebase-config.js?v=20260727u';
+import { onAuthChange, login, logout } from './js/auth.js?v=20260727v';
+import { db } from './js/firebase-config.js?v=20260727v';
 import {
   collection, query, where, onSnapshot
 } from 'https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js';
-import { escutarServicos, calcularCombo } from './js/servicos.js?v=20260727u';
-import { criarAgendamento, contarConflitosHorario } from './js/agenda.js?v=20260727u';
-import { checarElegibilidade } from './js/agenda.js?v=20260727u';
-import { escutarCabines } from './js/cabines.js?v=20260727u';
-import { escutarConfigNegocio } from './js/config-negocio.js?v=20260727u';
-import { escutarHorarios, validarHorarioFuncionamento } from './js/horarios.js?v=20260727u';
-import { toast } from './js/ui-feedback.js?v=20260727u';
+import { escutarServicos, calcularCombo } from './js/servicos.js?v=20260727v';
+import { criarAgendamento, contarConflitosHorario } from './js/agenda.js?v=20260727v';
+import { checarElegibilidade } from './js/agenda.js?v=20260727v';
+import { escutarCabines } from './js/cabines.js?v=20260727v';
+import { escutarConfigNegocio } from './js/config-negocio.js?v=20260727v';
+import { escutarHorarios, validarHorarioFuncionamento } from './js/horarios.js?v=20260727v';
+import { toast } from './js/ui-feedback.js?v=20260727v';
 
 window.addEventListener('unhandledrejection', (e) => {
   console.error(e.reason);
