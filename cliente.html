@@ -7,7 +7,7 @@
 <meta http-equiv="Expires" content="0">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Pro'Bronze — Área da Cliente</title>
-<link rel="stylesheet" href="css/theme.css?v=20260726q">
+<link rel="stylesheet" href="css/theme.css?v=20260726r">
 <style>
   * { box-sizing: border-box; }
   body { margin: 0; background: var(--bg); color: var(--text); font-family: var(--font); min-height: 100vh; }
@@ -107,17 +107,17 @@
 </div>
 
 <script type="module">
-import { onAuthChange, login, logout } from './js/auth.js?v=20260726q';
-import { db } from './js/firebase-config.js?v=20260726q';
+import { onAuthChange, login, logout } from './js/auth.js?v=20260726r';
+import { db } from './js/firebase-config.js?v=20260726r';
 import {
   collection, query, where, onSnapshot
 } from 'https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js';
-import { escutarServicos, calcularCombo } from './js/servicos.js?v=20260726q';
-import { criarAgendamento, contarConflitosHorario } from './js/agenda.js?v=20260726q';
-import { checarElegibilidade } from './js/agenda.js?v=20260726q';
-import { escutarCabines } from './js/cabines.js?v=20260726q';
-import { escutarConfigNegocio } from './js/config-negocio.js?v=20260726q';
-import { toast } from './js/ui-feedback.js?v=20260726q';
+import { escutarServicos, calcularCombo } from './js/servicos.js?v=20260726r';
+import { criarAgendamento, contarConflitosHorario } from './js/agenda.js?v=20260726r';
+import { checarElegibilidade } from './js/agenda.js?v=20260726r';
+import { escutarCabines } from './js/cabines.js?v=20260726r';
+import { escutarConfigNegocio } from './js/config-negocio.js?v=20260726r';
+import { toast } from './js/ui-feedback.js?v=20260726r';
 
 window.addEventListener('unhandledrejection', (e) => {
   console.error(e.reason);

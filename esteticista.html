@@ -7,7 +7,7 @@
 <meta http-equiv="Expires" content="0">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Pro'Bronze — Painel</title>
-<link rel="stylesheet" href="css/theme.css?v=20260726q">
+<link rel="stylesheet" href="css/theme.css?v=20260726r">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -788,6 +788,28 @@
   </div>
 
   <!-- Modal de pagamento ao finalizar sessão -->
+  <!-- Modal de detalhe da cabine ocupada -->
+  <div id="modal-detalhe-cabine" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:50;align-items:center;justify-content:center;padding:1rem">
+    <div class="card" style="max-width:340px;width:100%">
+      <div class="card-titulo">Cabine <span id="detalhe-cabine-nome"></span></div>
+      <p style="margin-bottom:.4rem">Cliente: <strong id="detalhe-cabine-cliente" class="nome-clicavel"></strong></p>
+      <div class="timer-wrap" style="margin-bottom:1rem">
+        <div class="timer-num" id="detalhe-cabine-timer">00:00</div>
+        <div class="timer-barra"><div class="timer-barra-fill" id="detalhe-cabine-fill" style="width:100%"></div></div>
+      </div>
+      <div class="input-group">
+        <label>Adicionar tempo</label>
+        <div style="display:flex;gap:.5rem">
+          <button class="btn-secundario" style="flex:1" data-estender="5">+5 min</button>
+          <button class="btn-secundario" style="flex:1" data-estender="10">+10 min</button>
+          <button class="btn-secundario" style="flex:1" data-estender="15">+15 min</button>
+        </div>
+      </div>
+      <button class="btn-primario" id="btn-detalhe-cabine-finalizar">Finalizar Sessão</button>
+      <button class="btn-secundario" style="width:100%;margin-top:.5rem" id="btn-fechar-detalhe-cabine">Fechar</button>
+    </div>
+  </div>
+
   <div id="modal-pagamento" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:50;align-items:center;justify-content:center;padding:1rem">
     <div class="card" style="max-width:380px;width:100%">
       <div class="card-titulo">Registrar Pagamento</div>
@@ -910,38 +932,38 @@
 </div>
 
 <script type="module">
-import { onAuthChange, login, logout, iniciarLoginComGoogle, resetSenha } from './js/auth.js?v=20260726q';
-import { VALOR_MENSALIDADE, PIX_PLATAFORMA, WHATSAPP_SUPORTE } from './js/admin-config.js?v=20260726q';
-import { escutarCabines, atualizarStatusCabine, criarCabine, excluirCabine } from './js/cabines.js?v=20260726q';
+import { onAuthChange, login, logout, iniciarLoginComGoogle, resetSenha } from './js/auth.js?v=20260726r';
+import { VALOR_MENSALIDADE, PIX_PLATAFORMA, WHATSAPP_SUPORTE } from './js/admin-config.js?v=20260726r';
+import { escutarCabines, atualizarStatusCabine, criarCabine, excluirCabine } from './js/cabines.js?v=20260726r';
 import {
   escutarAgendamentosDoDia, criarAgendamento, concluirAgendamento, escutarFilaEspera,
   cancelarAgendamento, marcarFalta, atribuirCabine, contarConflitosHorario, marcarEmAndamento,
-  salvarAvaliacaoSessao
-} from './js/agenda.js?v=20260726q';
-import { checarElegibilidade } from './js/agenda.js?v=20260726q';
-import { escutarServicos, criarServico, calcularCombo } from './js/servicos.js?v=20260726q';
-import { escutarClientes, criarCliente, ehAniversarioHoje } from './js/clientes.js?v=20260726q';
-import { criarMembroEquipe, escutarEquipe, excluirMembroEquipe } from './js/equipe.js?v=20260726q';
-import { tempoMaxRecomendado } from './js/ficha-pele.js?v=20260726q';
-import { registrarPagamento, escutarPendencias, quitarPendencia, resumoFinanceiro, escutarFinanceiroPeriodo } from './js/financeiro.js?v=20260726q';
-import { criarPacote, escutarPacotesDoNegocio, consumirSessaoDoPacote } from './js/pacotes-sessoes.js?v=20260726q';
-import { criarProdutoCabine, escutarProdutosCabine, produtosEmAlerta, baixarEstoque, somarEstoque, buscarPorCodigoBarras } from './js/produtos-cabine.js?v=20260726q';
-import { criarInsumo, escutarInsumos, reporInsumo, darBaixaInsumo, excluirInsumo, insumosEmAlerta } from './js/insumos.js?v=20260726q';
-import { criarCupom, escutarCupons, desativarCupom, calcularDescontoCupom } from './js/cupons.js?v=20260726q';
-import { exportarExcel, exportarPDF, montarRelatorioFinanceiro, COLUNAS_FINANCEIRO } from './js/relatorios.js?v=20260726q';
+  salvarAvaliacaoSessao, estenderTempoSessao
+} from './js/agenda.js?v=20260726r';
+import { checarElegibilidade } from './js/agenda.js?v=20260726r';
+import { escutarServicos, criarServico, calcularCombo } from './js/servicos.js?v=20260726r';
+import { escutarClientes, criarCliente, ehAniversarioHoje } from './js/clientes.js?v=20260726r';
+import { criarMembroEquipe, escutarEquipe, excluirMembroEquipe } from './js/equipe.js?v=20260726r';
+import { tempoMaxRecomendado } from './js/ficha-pele.js?v=20260726r';
+import { registrarPagamento, escutarPendencias, quitarPendencia, resumoFinanceiro, escutarFinanceiroPeriodo } from './js/financeiro.js?v=20260726r';
+import { criarPacote, escutarPacotesDoNegocio, consumirSessaoDoPacote } from './js/pacotes-sessoes.js?v=20260726r';
+import { criarProdutoCabine, escutarProdutosCabine, produtosEmAlerta, baixarEstoque, somarEstoque, buscarPorCodigoBarras } from './js/produtos-cabine.js?v=20260726r';
+import { criarInsumo, escutarInsumos, reporInsumo, darBaixaInsumo, excluirInsumo, insumosEmAlerta } from './js/insumos.js?v=20260726r';
+import { criarCupom, escutarCupons, desativarCupom, calcularDescontoCupom } from './js/cupons.js?v=20260726r';
+import { exportarExcel, exportarPDF, montarRelatorioFinanceiro, COLUNAS_FINANCEIRO } from './js/relatorios.js?v=20260726r';
 import {
   linkConfirmacaoAgendamento, linkCobrancaPendente, linkAtrasoAgendamento,
   linkClienteSumido, linkMensagemLivre, linkLembreteIntervalo,
   linkSuaVezChegando, linkPromocao, linkAniversario, linkAgradecimento,
   linkPacoteAcabando
-} from './js/whatsapp.js?v=20260726q';
-import { verificarIntervaloMinimo } from './js/ficha-pele.js?v=20260726q';
-import { tutorialJaVisto, iniciarTutorial } from './js/tutorial.js?v=20260726q';
-import { DIAS_SEMANA, escutarHorarios, salvarHorarios } from './js/horarios.js?v=20260726q';
-import { escutarConfigNegocio, salvarConfigNegocio } from './js/config-negocio.js?v=20260726q';
-import { CATEGORIAS_DESPESA, criarDespesa, excluirDespesa, escutarDespesas } from './js/despesas.js?v=20260726q';
-import { toast, confirmar, confirmarForte, executar } from './js/ui-feedback.js?v=20260726q';
-import { db } from './js/firebase-config.js?v=20260726q';
+} from './js/whatsapp.js?v=20260726r';
+import { verificarIntervaloMinimo } from './js/ficha-pele.js?v=20260726r';
+import { tutorialJaVisto, iniciarTutorial } from './js/tutorial.js?v=20260726r';
+import { DIAS_SEMANA, escutarHorarios, salvarHorarios } from './js/horarios.js?v=20260726r';
+import { escutarConfigNegocio, salvarConfigNegocio } from './js/config-negocio.js?v=20260726r';
+import { CATEGORIAS_DESPESA, criarDespesa, excluirDespesa, escutarDespesas } from './js/despesas.js?v=20260726r';
+import { toast, confirmar, confirmarForte, executar } from './js/ui-feedback.js?v=20260726r';
+import { db } from './js/firebase-config.js?v=20260726r';
 
 // Luzinhas douradas ao redor do card de login
 // Mostra o nome da loja usada da última vez que alguém logou neste aparelho
@@ -2476,7 +2498,15 @@ function renderCabines(cabines) {
   }).join('');
 
   grid.querySelectorAll('.cabine-card').forEach((el) => {
-    el.addEventListener('click', () => cicloStatusCabine(el.dataset.id));
+    el.addEventListener('click', (e) => {
+      if (e.target.closest('button')) return;
+      const cabine = cabinesCache.find((c) => c.id === el.dataset.id);
+      if (cabine?.status === 'ocupada' && sessoesAtivas.has(el.dataset.id)) {
+        abrirModalDetalheCabine(el.dataset.id);
+      } else {
+        cicloStatusCabine(el.dataset.id);
+      }
+    });
   });
   grid.querySelectorAll('[data-excluir]').forEach((btn) => {
     btn.addEventListener('click', async (e) => {
@@ -2498,6 +2528,15 @@ function renderCabines(cabines) {
 
 function rotuloStatus(status) {
   return { livre: 'Livre', ocupada: 'Ocupada', manutencao: 'Manutenção' }[status] || status;
+}
+
+// Mostra "na cabine X" pra quem já está dentro da cabine, em vez de só "em andamento"
+function rotuloStatusAgendamento(ag) {
+  if (ag.status === 'em_andamento' && ag.cabineId) {
+    const cabine = cabinesCache.find((c) => c.id === ag.cabineId);
+    return `🛏️ Na ${cabine?.nome || 'cabine'}`;
+  }
+  return ag.status.replace('_', ' ');
 }
 
 async function cicloStatusCabine(cabineId) {
@@ -2596,7 +2635,7 @@ function renderAgendaDia(lista) {
           ${sugerirRealocacao ? `<div class="aviso-bloqueio">⏰ Atrasado — cabine ${cabineAtual?.nome || ''} ocupada. <button class="btn-secundario" data-mover-agendamento="${ag.id}" data-mover-destino="${cabinesLivres[0].id}" style="margin-left:.4rem">Mover pra ${cabinesLivres[0].nome} (livre)</button></div>` : ''}
         </div>
         <div style="display:flex;align-items:center;gap:.5rem;flex-wrap:wrap">
-          <span class="badge ${ag.status}">${ag.status.replace('_', ' ')}</span>
+          <span class="badge ${ag.status}">${rotuloStatusAgendamento(ag)}</span>
           ${linkWpp ? `<a class="btn-secundario" href="${linkWpp}" target="_blank" style="text-decoration:none">WhatsApp</a>` : ''}
           ${ag.status === 'agendado' && semCabine ? `
             <select data-select-cabine="${ag.id}">
@@ -2660,7 +2699,7 @@ function renderFila(lista) {
           <div class="detalhe">${servicos} · ${ag.tempoMin}min · ${ag.origem}</div>
         </div>
         <div style="display:flex;align-items:center;gap:.5rem">
-          <span class="badge ${ag.status}">${ag.status.replace('_', ' ')}</span>
+          <span class="badge ${ag.status}">${rotuloStatusAgendamento(ag)}</span>
           ${ag.status === 'agendado' ? `
             <button class="btn-secundario" data-falta="${ag.id}">Faltou</button>
             <button class="btn-secundario" data-cancelar="${ag.id}">Cancelar</button>
@@ -2787,6 +2826,12 @@ function atualizarTimers() {
     const elFlutuante = $(`timer-flutuante-num-${cabineId}`);
     if (elFlutuante) { elFlutuante.textContent = textoTempo; elFlutuante.style.color = cor; }
 
+    if (cabineEmDetalhe === cabineId) {
+      $('detalhe-cabine-timer').textContent = textoTempo;
+      $('detalhe-cabine-timer').style.color = cor;
+      $('detalhe-cabine-fill').style.width = `${(restante / totalSeg) * 100}%`;
+    }
+
     if (restante === 0 && !sessao.avisado) {
       sessao.avisado = true;
       toast(`⏱️ Tempo esgotado na ${nomeDaCabine(cabineId)}!`, 'aviso');
@@ -2794,6 +2839,51 @@ function atualizarTimers() {
     }
   });
 }
+
+let cabineEmDetalhe = null;
+
+function abrirModalDetalheCabine(cabineId) {
+  const sessao = sessoesAtivas.get(cabineId);
+  if (!sessao) return;
+  cabineEmDetalhe = cabineId;
+  const cabine = cabinesCache.find((c) => c.id === cabineId);
+  const cliente = clientesCache.find((c) => c.id === sessao.clienteId);
+  $('detalhe-cabine-nome').textContent = cabine?.nome || '';
+  $('detalhe-cabine-cliente').textContent = cliente?.nome || 'Cliente';
+  $('detalhe-cabine-cliente').dataset.clienteId = sessao.clienteId || '';
+  $('modal-detalhe-cabine').style.display = 'flex';
+  atualizarTimers();
+}
+
+$('detalhe-cabine-cliente').addEventListener('click', () => {
+  const clienteId = $('detalhe-cabine-cliente').dataset.clienteId;
+  if (!clienteId) return;
+  $('modal-detalhe-cabine').style.display = 'none';
+  abrirMenuCliente(clienteId);
+});
+
+$('modal-detalhe-cabine').querySelectorAll('[data-estender]').forEach((btn) => {
+  btn.addEventListener('click', async () => {
+    const sessao = sessoesAtivas.get(cabineEmDetalhe);
+    if (!sessao) return;
+    const minutos = Number(btn.dataset.estender);
+    await estenderTempoSessao(sessao.agendamentoId, minutos);
+    sessao.tempoMin += minutos;
+    toast(`+${minutos} min adicionados.`, 'sucesso');
+    atualizarTimers();
+  });
+});
+
+$('btn-detalhe-cabine-finalizar').addEventListener('click', () => {
+  const cabineId = cabineEmDetalhe;
+  $('modal-detalhe-cabine').style.display = 'none';
+  abrirModalFinalizarSessao(cabineId);
+});
+
+$('btn-fechar-detalhe-cabine').addEventListener('click', () => {
+  $('modal-detalhe-cabine').style.display = 'none';
+  cabineEmDetalhe = null;
+});
 
 function abrirModalFinalizarSessao(cabineId) {
   const sessao = sessoesAtivas.get(cabineId);

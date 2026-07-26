@@ -1,14 +1,14 @@
 // Pro'Bronze — Agenda (online + presencial), combo de serviços,
 // integrando ficha de pele e regras de segurança
-import { db } from "./firebase-config.js?v=20260726q";
+import { db } from "./firebase-config.js?v=20260726r";
 import {
-  collection, doc, addDoc, updateDoc, getDoc, getDocs,
+  collection, doc, addDoc, updateDoc, getDoc, getDocs, increment,
   onSnapshot, query, where, orderBy, serverTimestamp, Timestamp
 } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
 import {
   verificarIntervaloMinimo, verificarLimiteMensal, tempoMaxRecomendado
-} from "./ficha-pele.js?v=20260726q";
-import { notificarErroFirestore } from "./firestore-erro.js?v=20260726q";
+} from "./ficha-pele.js?v=20260726r";
+import { notificarErroFirestore } from "./firestore-erro.js?v=20260726r";
 
 // status: "agendado" | "em_andamento" | "concluido" | "cancelado" | "faltou"
 // origem: "online" | "presencial"
@@ -104,6 +104,11 @@ export function marcarEmAndamento(agendamentoId) {
 export async function concluirAgendamento(agendamentoId, clienteId) {
   await updateDoc(doc(db, "agendamentos", agendamentoId), { status: "concluido" });
   await updateDoc(doc(db, "clientes", clienteId), { ultimaSessaoEm: new Date().toISOString() });
+}
+
+// Adiciona minutos ao tempo de cabine de uma sessão já em andamento
+export function estenderTempoSessao(agendamentoId, minutosAdicionais) {
+  return updateDoc(doc(db, "agendamentos", agendamentoId), { tempoMin: increment(minutosAdicionais) });
 }
 
 // Registra a avaliação (1 a 5) que a cliente deu pra sessão concluída
