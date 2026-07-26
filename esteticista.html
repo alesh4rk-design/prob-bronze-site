@@ -7,7 +7,7 @@
 <meta http-equiv="Expires" content="0">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Pro'Bronze — Painel</title>
-<link rel="stylesheet" href="css/theme.css?v=20260727g">
+<link rel="stylesheet" href="css/theme.css?v=20260727h">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -723,6 +723,8 @@
           <div id="prod-codigo-aviso" style="display:none;font-size:.78rem;color:var(--accent-light);margin-top:.4rem"></div>
         </div>
         <div class="input-group"><label id="prod-nome-label">Nome</label><input type="text" id="prod-nome" placeholder="Ex: Bronzeador"></div>
+        <div class="input-group"><label>Tamanho da embalagem (opcional)</label><input type="text" id="prod-tamanho" placeholder="Ex: 120ml, 500ml, 1kg"></div>
+        <div class="ajuda-inline">Se o mesmo produto vem em tamanhos diferentes (ex: acetona 120ml e 500ml), cadastre cada tamanho separado, com o código de barras dele — cada um soma no estoque certo.</div>
         <div class="input-group"><label id="prod-estoque-label">Quantidade</label><input type="number" id="prod-qtd"></div>
         <div class="input-group">
           <label>Unidade</label>
@@ -752,6 +754,11 @@
         <div class="card-titulo com-ajuda">Novo Insumo</div>
         <div class="ajuda-inline">Itens de uso interno, necessários pro funcionamento da loja (papel toalha, água oxigenada, luvas, algodão etc.) — não são vendidos, só controlados aqui.</div>
         <div class="input-group"><label>Nome</label><input type="text" id="ins-nome" placeholder="Ex: Papel toalha"></div>
+        <div class="input-group"><label>Tamanho da embalagem (opcional)</label><input type="text" id="ins-tamanho" placeholder="Ex: 120ml, 500ml, 1kg"></div>
+        <div class="input-group">
+          <label>Código de barras (opcional)</label>
+          <input type="text" id="ins-codigo" placeholder="Cada tamanho tem seu próprio código">
+        </div>
         <div class="input-group"><label>Quantidade</label><input type="number" id="ins-qtd"></div>
         <div class="input-group">
           <label>Unidade</label>
@@ -1016,25 +1023,25 @@
 </div>
 
 <script type="module">
-import { onAuthChange, login, logout, iniciarLoginComGoogle, resetSenha } from './js/auth.js?v=20260727g';
-import { VALOR_MENSALIDADE, PIX_PLATAFORMA, WHATSAPP_SUPORTE } from './js/admin-config.js?v=20260727g';
-import { escutarCabines, atualizarStatusCabine, criarCabine, excluirCabine } from './js/cabines.js?v=20260727g';
+import { onAuthChange, login, logout, iniciarLoginComGoogle, resetSenha } from './js/auth.js?v=20260727h';
+import { VALOR_MENSALIDADE, PIX_PLATAFORMA, WHATSAPP_SUPORTE } from './js/admin-config.js?v=20260727h';
+import { escutarCabines, atualizarStatusCabine, criarCabine, excluirCabine } from './js/cabines.js?v=20260727h';
 import {
   escutarAgendamentosDoDia, criarAgendamento, concluirAgendamento,
   cancelarAgendamento, marcarFalta, atribuirCabine, contarConflitosHorario, marcarEmAndamento,
   salvarAvaliacaoSessao, estenderTempoSessao
-} from './js/agenda.js?v=20260727g';
-import { checarElegibilidade } from './js/agenda.js?v=20260727g';
-import { escutarServicos, criarServico, calcularCombo } from './js/servicos.js?v=20260727g';
-import { escutarClientes, criarCliente, ehAniversarioHoje } from './js/clientes.js?v=20260727g';
-import { criarMembroEquipe, escutarEquipe, excluirMembroEquipe, editarMembroEquipe } from './js/equipe.js?v=20260727g';
-import { tempoMaxRecomendado } from './js/ficha-pele.js?v=20260727g';
-import { registrarPagamento, escutarPendencias, quitarPendencia, resumoFinanceiro, escutarFinanceiroPeriodo } from './js/financeiro.js?v=20260727g';
-import { criarPacote, escutarPacotesDoNegocio, consumirSessaoDoPacote, pacoteVencido, diasParado, DIAS_PARADO_ALERTA } from './js/pacotes-sessoes.js?v=20260727g';
-import { criarProdutoCabine, escutarProdutosCabine, produtosEmAlerta, baixarEstoque, somarEstoque, buscarPorCodigoBarras, excluirProdutoCabine } from './js/produtos-cabine.js?v=20260727g';
-import { criarInsumo, escutarInsumos, reporInsumo, darBaixaInsumo, excluirInsumo, insumosEmAlerta } from './js/insumos.js?v=20260727g';
-import { criarCupom, escutarCupons, desativarCupom, calcularDescontoCupom } from './js/cupons.js?v=20260727g';
-import { exportarExcel, exportarPDF, montarRelatorioFinanceiro, COLUNAS_FINANCEIRO } from './js/relatorios.js?v=20260727g';
+} from './js/agenda.js?v=20260727h';
+import { checarElegibilidade } from './js/agenda.js?v=20260727h';
+import { escutarServicos, criarServico, calcularCombo } from './js/servicos.js?v=20260727h';
+import { escutarClientes, criarCliente, ehAniversarioHoje } from './js/clientes.js?v=20260727h';
+import { criarMembroEquipe, escutarEquipe, excluirMembroEquipe, editarMembroEquipe } from './js/equipe.js?v=20260727h';
+import { tempoMaxRecomendado } from './js/ficha-pele.js?v=20260727h';
+import { registrarPagamento, escutarPendencias, quitarPendencia, resumoFinanceiro, escutarFinanceiroPeriodo } from './js/financeiro.js?v=20260727h';
+import { criarPacote, escutarPacotesDoNegocio, consumirSessaoDoPacote, pacoteVencido, diasParado, DIAS_PARADO_ALERTA } from './js/pacotes-sessoes.js?v=20260727h';
+import { criarProdutoCabine, escutarProdutosCabine, produtosEmAlerta, baixarEstoque, somarEstoque, buscarPorCodigoBarras, excluirProdutoCabine } from './js/produtos-cabine.js?v=20260727h';
+import { criarInsumo, escutarInsumos, reporInsumo, darBaixaInsumo, excluirInsumo, insumosEmAlerta, buscarInsumoPorCodigoBarras } from './js/insumos.js?v=20260727h';
+import { criarCupom, escutarCupons, desativarCupom, calcularDescontoCupom } from './js/cupons.js?v=20260727h';
+import { exportarExcel, exportarPDF, montarRelatorioFinanceiro, COLUNAS_FINANCEIRO } from './js/relatorios.js?v=20260727h';
 import {
   linkConfirmacaoAgendamento, linkCobrancaPendente, linkAtrasoAgendamento,
   linkClienteSumido, linkMensagemLivre, linkLembreteIntervalo,
@@ -1042,14 +1049,14 @@ import {
   linkPacoteAcabando,
   linkSessaoPacoteAtendida,
   linkPacoteParado
-} from './js/whatsapp.js?v=20260727g';
-import { verificarIntervaloMinimo } from './js/ficha-pele.js?v=20260727g';
-import { tutorialJaVisto, iniciarTutorial } from './js/tutorial.js?v=20260727g';
-import { DIAS_SEMANA, escutarHorarios, salvarHorarios, validarHorarioFuncionamento } from './js/horarios.js?v=20260727g';
-import { escutarConfigNegocio, salvarConfigNegocio } from './js/config-negocio.js?v=20260727g';
-import { CATEGORIAS_DESPESA, criarDespesa, excluirDespesa, escutarDespesas } from './js/despesas.js?v=20260727g';
-import { toast, confirmar, confirmarForte, executar } from './js/ui-feedback.js?v=20260727g';
-import { db } from './js/firebase-config.js?v=20260727g';
+} from './js/whatsapp.js?v=20260727h';
+import { verificarIntervaloMinimo } from './js/ficha-pele.js?v=20260727h';
+import { tutorialJaVisto, iniciarTutorial } from './js/tutorial.js?v=20260727h';
+import { DIAS_SEMANA, escutarHorarios, salvarHorarios, validarHorarioFuncionamento } from './js/horarios.js?v=20260727h';
+import { escutarConfigNegocio, salvarConfigNegocio } from './js/config-negocio.js?v=20260727h';
+import { CATEGORIAS_DESPESA, criarDespesa, excluirDespesa, escutarDespesas } from './js/despesas.js?v=20260727h';
+import { toast, confirmar, confirmarForte, executar } from './js/ui-feedback.js?v=20260727h';
+import { db } from './js/firebase-config.js?v=20260727h';
 
 // Luzinhas douradas ao redor do card de login
 // Mostra o nome da loja usada da última vez que alguém logou neste aparelho
@@ -1472,7 +1479,7 @@ function renderProdutos(produtos) {
     return `
     <div class="agendamento-item">
       <div class="agendamento-info">
-        <div class="nome">${p.nome} ${emAlerta.has(p.id) ? '<span class="badge cancelado">estoque baixo</span>' : ''}</div>
+        <div class="nome">${p.nome}${p.tamanhoEmbalagem ? ` (${p.tamanhoEmbalagem})` : ''} ${emAlerta.has(p.id) ? '<span class="badge cancelado">estoque baixo</span>' : ''}</div>
         <div class="detalhe">${p.codigoBarras ? `código ${p.codigoBarras} · ` : ''}${p.quantidade}${p.unidade} · mínimo ${p.estoqueMinimo}${p.unidade}${margemTexto}</div>
       </div>
       <button class="btn-secundario" data-excluir-produto="${p.id}">Excluir</button>
@@ -1504,8 +1511,8 @@ function renderInsumos(insumos) {
     return `
     <div class="agendamento-item">
       <div class="agendamento-info">
-        <div class="nome">${i.nome} ${emAlerta.has(i.id) ? '<span class="badge cancelado">acabando</span>' : ''}</div>
-        <div class="detalhe">${i.quantidade}${un}${i.quantidadeMinima != null ? ` · mínimo ${i.quantidadeMinima}${un}` : ''}</div>
+        <div class="nome">${i.nome}${i.tamanhoEmbalagem ? ` (${i.tamanhoEmbalagem})` : ''} ${emAlerta.has(i.id) ? '<span class="badge cancelado">acabando</span>' : ''}</div>
+        <div class="detalhe">${i.codigoBarras ? `código ${i.codigoBarras} · ` : ''}${i.quantidade}${un}${i.quantidadeMinima != null ? ` · mínimo ${i.quantidadeMinima}${un}` : ''}</div>
       </div>
       <div style="display:flex;gap:.4rem;flex-wrap:wrap">
         <button class="btn-secundario" data-repor-insumo="${i.id}">+ Repor</button>
@@ -1562,15 +1569,21 @@ $('btn-criar-insumo').addEventListener('click', async () => {
   const unidade = $('ins-unidade').value;
   const quantidadeMinima = $('ins-qtd-min').value ? Number($('ins-qtd-min').value) : null;
   const custoUnitario = $('ins-custo').value ? Number($('ins-custo').value) : null;
+  const codigoBarras = $('ins-codigo').value.trim() || null;
+  const tamanhoEmbalagem = $('ins-tamanho').value.trim();
   if (!nome) { toast('Digite o nome do insumo.', 'aviso'); return; }
   if (isNaN(quantidade) || quantidade < 0) { toast('Informe a quantidade.', 'aviso'); return; }
 
-  const existente = insumosCache.find((i) => (i.nome || '').toLowerCase() === nome.toLowerCase());
+  // Se tem código de barras, casa por código (cada tamanho é um cadastro
+  // separado); senão cai no comportamento antigo de casar só pelo nome.
+  const existente = codigoBarras
+    ? buscarInsumoPorCodigoBarras(insumosCache, codigoBarras)
+    : insumosCache.find((i) => (i.nome || '').toLowerCase() === nome.toLowerCase() && !i.tamanhoEmbalagem && !tamanhoEmbalagem);
   if (existente) {
     await reporInsumo(existente.id, quantidade);
-    toast(`+${quantidade} adicionado a "${existente.nome}" (já cadastrado).`, 'sucesso');
+    toast(`+${quantidade} adicionado a "${existente.nome}${existente.tamanhoEmbalagem ? ` (${existente.tamanhoEmbalagem})` : ''}" (já cadastrado).`, 'sucesso');
   } else {
-    await criarInsumo(usuarioAtual.negocioId, { nome, quantidade, unidade, quantidadeMinima, custoUnitario });
+    await criarInsumo(usuarioAtual.negocioId, { nome, quantidade, unidade, quantidadeMinima, custoUnitario, codigoBarras, tamanhoEmbalagem });
     toast('Insumo cadastrado.', 'sucesso');
   }
   const custoParaDespesa = existente ? existente.custoUnitario : custoUnitario;
@@ -1584,6 +1597,7 @@ $('btn-criar-insumo').addEventListener('click', async () => {
     });
   }
   $('ins-nome').value = ''; $('ins-qtd').value = ''; $('ins-qtd-min').value = ''; $('ins-custo').value = '';
+  $('ins-codigo').value = ''; $('ins-tamanho').value = '';
 });
 
 $('btn-criar-cabine').addEventListener('click', async () => {
@@ -1603,6 +1617,7 @@ $('btn-criar-produto').addEventListener('click', async () => {
   const precoVenda = Number($('prod-preco-venda').value) || 0;
   const codigoBarras = $('prod-codigo').value.trim() || null;
   const custo = $('prod-custo').value ? Number($('prod-custo').value) : null;
+  const tamanhoEmbalagem = $('prod-tamanho').value.trim();
   if (!nome || !quantidade) { toast('Preencha nome e quantidade.', 'aviso'); return; }
 
   const existente = buscarPorCodigoBarras(produtosCabineCache, codigoBarras);
@@ -1611,7 +1626,7 @@ $('btn-criar-produto').addEventListener('click', async () => {
     await somarEstoque(existente.id, quantidade);
     toast(`+${quantidade}${unidade} adicionado ao estoque de "${existente.nome}".`, 'sucesso');
   } else {
-    await criarProdutoCabine(usuarioAtual.negocioId, { nome, quantidade, unidade, estoqueMinimo, precoVenda, codigoBarras, custo });
+    await criarProdutoCabine(usuarioAtual.negocioId, { nome, quantidade, unidade, estoqueMinimo, precoVenda, codigoBarras, custo, tamanhoEmbalagem });
     toast('Produto cadastrado.', 'sucesso');
   }
   // Reposição de estoque é um gasto real da loja — lança automaticamente
@@ -1626,7 +1641,7 @@ $('btn-criar-produto').addEventListener('click', async () => {
     });
   }
   $('prod-nome').value = ''; $('prod-qtd').value = ''; $('prod-minimo').value = '0'; $('prod-preco-venda').value = '0';
-  $('prod-codigo').value = ''; $('prod-custo').value = '';
+  $('prod-codigo').value = ''; $('prod-custo').value = ''; $('prod-tamanho').value = '';
   $('prod-codigo-aviso').style.display = 'none';
   $('prod-margem-aviso').style.display = 'none';
   $('prod-nome-label').textContent = 'Nome';
@@ -1649,8 +1664,9 @@ $('prod-codigo').addEventListener('input', () => {
   const existente = buscarPorCodigoBarras(produtosCabineCache, codigo);
   if (existente) {
     aviso.style.display = 'block';
-    aviso.textContent = `📦 Esse código já é de "${existente.nome}" (${existente.quantidade}${existente.unidade} em estoque). Vai só somar a quantidade abaixo.`;
+    aviso.textContent = `📦 Esse código já é de "${existente.nome}${existente.tamanhoEmbalagem ? ` (${existente.tamanhoEmbalagem})` : ''}" (${existente.quantidade}${existente.unidade} em estoque). Vai só somar a quantidade abaixo.`;
     $('prod-nome').value = existente.nome;
+    $('prod-tamanho').value = existente.tamanhoEmbalagem || '';
     $('prod-nome-label').textContent = 'Nome (já cadastrado)';
     $('prod-estoque-label').textContent = 'Quantas chegaram agora';
     $('btn-criar-produto').textContent = '+ Somar ao estoque';
@@ -2579,7 +2595,7 @@ function preencherSelectVenderProduto(produtos) {
   if (!sel) return;
   const atual = sel.value;
   sel.innerHTML = '<option value="">Selecione...</option>' +
-    produtos.map((p) => `<option value="${p.id}" data-preco="${p.precoVenda || 0}">${p.nome} (${p.quantidade}${p.unidade} em estoque)</option>`).join('');
+    produtos.map((p) => `<option value="${p.id}" data-preco="${p.precoVenda || 0}">${p.nome}${p.tamanhoEmbalagem ? ` ${p.tamanhoEmbalagem}` : ''} (${p.quantidade}${p.unidade} em estoque)</option>`).join('');
   sel.value = atual;
 }
 

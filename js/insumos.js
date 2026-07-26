@@ -1,20 +1,29 @@
 // Pro'Bronze — Insumos (itens de uso interno: creme, papel toalha, água
 // oxigenada etc.) Diferente de "Produtos", não tem preço de venda nem é
 // pra vender — é só pra controlar o gasto necessário pro funcionamento.
-import { db } from "./firebase-config.js?v=20260727g";
+import { db } from "./firebase-config.js?v=20260727h";
 import {
   collection, doc, addDoc, updateDoc, deleteDoc, increment,
   onSnapshot, query, where, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
-import { notificarErroFirestore } from "./firestore-erro.js?v=20260727g";
+import { notificarErroFirestore } from "./firestore-erro.js?v=20260727h";
 
-export async function criarInsumo(negocioId, { nome, quantidade, unidade = "unidade", quantidadeMinima = null, custoUnitario = null }) {
+export async function criarInsumo(negocioId, { nome, quantidade, unidade = "unidade", quantidadeMinima = null, custoUnitario = null, codigoBarras = null, tamanhoEmbalagem = "" }) {
   return addDoc(collection(db, "insumos"), {
     negocioId, nome, quantidade, unidade,
     quantidadeMinima: quantidadeMinima != null ? quantidadeMinima : null,
     custoUnitario: custoUnitario != null ? custoUnitario : null,
+    codigoBarras: codigoBarras || null,
+    tamanhoEmbalagem: tamanhoEmbalagem || "",
     criadoEm: serverTimestamp()
   });
+}
+
+// Acha um insumo já cadastrado pelo código de barras (mesmo padrão de
+// Produtos) — cada tamanho de embalagem (ex: acetona 120ml vs 500ml) tem
+// seu próprio código, então isso soma no tamanho certo em vez de duplicar.
+export function buscarInsumoPorCodigoBarras(insumos, codigoBarras) {
+  return codigoBarras ? insumos.find((i) => i.codigoBarras && i.codigoBarras === codigoBarras) : null;
 }
 
 export function reporInsumo(insumoId, quantidadeAdicionada) {
