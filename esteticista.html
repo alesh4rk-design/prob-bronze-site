@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Pro'Bronze — Painel</title>
 <link rel="stylesheet" href="css/theme.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
@@ -382,6 +383,24 @@
         </div>
       </div>
       <div class="card">
+        <div class="card-titulo">Análise do Período</div>
+        <div style="display:flex;gap:.6rem;flex-wrap:wrap;align-items:flex-end">
+          <div class="input-group" style="flex:1;min-width:140px;margin-bottom:0"><label>De</label><input type="date" id="fin-de"></div>
+          <div class="input-group" style="flex:1;min-width:140px;margin-bottom:0"><label>Até</label><input type="date" id="fin-ate"></div>
+          <button class="btn-primario" id="btn-fin-aplicar" style="width:auto;padding:.7rem 1.2rem">Aplicar</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-titulo">Faturamento por Dia</div>
+        <div id="fin-grafico-dia-vazio" class="empty-state" style="display:none">Sem dados no período selecionado.</div>
+        <canvas id="grafico-faturamento-dia" height="200"></canvas>
+      </div>
+      <div class="card">
+        <div class="card-titulo">Formas de Pagamento</div>
+        <div id="fin-grafico-formas-vazio" class="empty-state" style="display:none">Sem dados no período selecionado.</div>
+        <canvas id="grafico-formas-pagamento" height="200"></canvas>
+      </div>
+      <div class="card">
         <div class="card-titulo">Pendências</div>
         <div id="lista-pendencias"><div class="empty-state">Carregando...</div></div>
       </div>
@@ -744,6 +763,10 @@ function iniciarPainel() {
     $('fin-comissao').textContent = 'R$' + resumo.totalComissao.toFixed(2);
   });
 
+  $('fin-de').value = inicioMes.toISOString().slice(0, 10);
+  $('fin-ate').value = fimMes.toISOString().slice(0, 10);
+  atualizarAnaliseFinanceira();
+
   escutarProdutosCabine(negocioId, (produtos) => {
     produtosCabineCache = produtos;
     renderProdutos(produtos);
@@ -817,6 +840,80 @@ $('btn-criar-cupom').addEventListener('click', async () => {
   $('cup-codigo').value = ''; $('cup-valor').value = '';
   toast('Cupom criado.', 'sucesso');
 });
+
+// ── Financeiro: análise do período (gráficos) ────────────
+let graficoFaturamentoDia = null;
+let graficoFormasPagamento = null;
+const CORES_FORMA_PAGAMENTO = { dinheiro: '#7BA05B', pix: '#C68642', cartao: '#D9A441' };
+
+async function buscarFinanceiroEntre(de, ate) {
+  const inicio = Timestamp.fromDate(new Date(de + 'T00:00:00'));
+  const fim = Timestamp.fromDate(new Date(ate + 'T23:59:59'));
+  const q = query(
+    collection(db, 'financeiro'),
+    where('negocioId', '==', usuarioAtual.negocioId),
+    where('dataHora', '>=', inicio),
+    where('dataHora', '<=', fim)
+  );
+  const snap = await getDocs(q);
+  const registros = [];
+  snap.forEach((d) => registros.push(d.data()));
+  return registros;
+}
+
+async function atualizarAnaliseFinanceira() {
+  const de = $('fin-de').value;
+  const ate = $('fin-ate').value;
+  if (!de || !ate) return;
+  const registros = await buscarFinanceiroEntre(de, ate);
+
+  // Faturamento por dia (valor líquido)
+  const porDia = {};
+  registros.forEach((r) => {
+    const data = r.dataHora?.toDate ? r.dataHora.toDate() : new Date();
+    const chave = data.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+    porDia[chave] = (porDia[chave] || 0) + (r.valorLiquido || 0);
+  });
+  const labelsDia = Object.keys(porDia);
+  $('fin-grafico-dia-vazio').style.display = labelsDia.length === 0 ? 'block' : 'none';
+  $('grafico-faturamento-dia').style.display = labelsDia.length === 0 ? 'none' : 'block';
+  if (graficoFaturamentoDia) graficoFaturamentoDia.destroy();
+  if (labelsDia.length > 0) {
+    graficoFaturamentoDia = new Chart($('grafico-faturamento-dia'), {
+      type: 'bar',
+      data: { labels: labelsDia, datasets: [{ label: 'Faturamento líquido (R$)', data: Object.values(porDia), backgroundColor: '#C68642', borderRadius: 4 }] },
+      options: {
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { ticks: { color: '#B8A48C' }, grid: { color: 'rgba(245,230,211,.06)' } },
+          y: { ticks: { color: '#B8A48C' }, grid: { color: 'rgba(245,230,211,.06)' }, beginAtZero: true }
+        }
+      }
+    });
+  }
+
+  // Distribuição por forma de pagamento
+  const porForma = {};
+  registros.forEach((r) => {
+    porForma[r.formaPagamento] = (porForma[r.formaPagamento] || 0) + (r.valorLiquido || 0);
+  });
+  const labelsForma = Object.keys(porForma);
+  $('fin-grafico-formas-vazio').style.display = labelsForma.length === 0 ? 'block' : 'none';
+  $('grafico-formas-pagamento').style.display = labelsForma.length === 0 ? 'none' : 'block';
+  if (graficoFormasPagamento) graficoFormasPagamento.destroy();
+  if (labelsForma.length > 0) {
+    graficoFormasPagamento = new Chart($('grafico-formas-pagamento'), {
+      type: 'doughnut',
+      data: {
+        labels: labelsForma,
+        datasets: [{ data: Object.values(porForma), backgroundColor: labelsForma.map((f) => CORES_FORMA_PAGAMENTO[f] || '#B8A48C') }]
+      },
+      options: { plugins: { legend: { position: 'bottom', labels: { color: '#F5E6D3' } } } }
+    });
+  }
+}
+
+$('btn-fin-aplicar').addEventListener('click', atualizarAnaliseFinanceira);
 
 // ── Relatórios ──────────────────────────────────────────
 async function buscarFinanceiroPeriodo() {
