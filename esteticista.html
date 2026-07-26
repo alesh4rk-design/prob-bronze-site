@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Pro'Bronze — Painel</title>
-<link rel="stylesheet" href="css/theme.css?v=20260726c">
+<link rel="stylesheet" href="css/theme.css?v=20260726d">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -771,34 +771,34 @@
 </div>
 
 <script type="module">
-import { onAuthChange, login, logout, iniciarLoginComGoogle, processarRetornoGoogleLogin, resetSenha } from './js/auth.js?v=20260726c';
-import { escutarCabines, atualizarStatusCabine, criarCabine, excluirCabine } from './js/cabines.js?v=20260726c';
+import { onAuthChange, login, logout, iniciarLoginComGoogle, resetSenha } from './js/auth.js?v=20260726d';
+import { escutarCabines, atualizarStatusCabine, criarCabine, excluirCabine } from './js/cabines.js?v=20260726d';
 import {
   escutarAgendamentosDoDia, criarAgendamento, concluirAgendamento, escutarFilaEspera,
   cancelarAgendamento, marcarFalta, atribuirCabine, contarConflitosHorario, marcarEmAndamento
-} from './js/agenda.js?v=20260726c';
-import { checarElegibilidade } from './js/agenda.js?v=20260726c';
-import { escutarServicos, criarServico, calcularCombo } from './js/servicos.js?v=20260726c';
-import { escutarClientes, criarCliente } from './js/clientes.js?v=20260726c';
-import { criarMembroEquipe, escutarEquipe, excluirMembroEquipe } from './js/equipe.js?v=20260726c';
-import { tempoMaxRecomendado } from './js/ficha-pele.js?v=20260726c';
-import { registrarPagamento, escutarPendencias, quitarPendencia, resumoFinanceiro, escutarFinanceiroPeriodo } from './js/financeiro.js?v=20260726c';
-import { criarPacote, escutarPacotesDoNegocio, consumirSessaoDoPacote } from './js/pacotes-sessoes.js?v=20260726c';
-import { criarProdutoCabine, escutarProdutosCabine, produtosEmAlerta, baixarEstoque } from './js/produtos-cabine.js?v=20260726c';
-import { criarCupom, escutarCupons, desativarCupom, calcularDescontoCupom } from './js/cupons.js?v=20260726c';
-import { exportarExcel, exportarPDF, montarRelatorioFinanceiro, COLUNAS_FINANCEIRO } from './js/relatorios.js?v=20260726c';
+} from './js/agenda.js?v=20260726d';
+import { checarElegibilidade } from './js/agenda.js?v=20260726d';
+import { escutarServicos, criarServico, calcularCombo } from './js/servicos.js?v=20260726d';
+import { escutarClientes, criarCliente } from './js/clientes.js?v=20260726d';
+import { criarMembroEquipe, escutarEquipe, excluirMembroEquipe } from './js/equipe.js?v=20260726d';
+import { tempoMaxRecomendado } from './js/ficha-pele.js?v=20260726d';
+import { registrarPagamento, escutarPendencias, quitarPendencia, resumoFinanceiro, escutarFinanceiroPeriodo } from './js/financeiro.js?v=20260726d';
+import { criarPacote, escutarPacotesDoNegocio, consumirSessaoDoPacote } from './js/pacotes-sessoes.js?v=20260726d';
+import { criarProdutoCabine, escutarProdutosCabine, produtosEmAlerta, baixarEstoque } from './js/produtos-cabine.js?v=20260726d';
+import { criarCupom, escutarCupons, desativarCupom, calcularDescontoCupom } from './js/cupons.js?v=20260726d';
+import { exportarExcel, exportarPDF, montarRelatorioFinanceiro, COLUNAS_FINANCEIRO } from './js/relatorios.js?v=20260726d';
 import {
   linkConfirmacaoAgendamento, linkCobrancaPendente, linkAtrasoAgendamento,
   linkClienteSumido, linkMensagemLivre, linkLembreteIntervalo,
   linkSuaVezChegando, linkPromocao, linkAniversario, linkAgradecimento
-} from './js/whatsapp.js?v=20260726c';
-import { verificarIntervaloMinimo } from './js/ficha-pele.js?v=20260726c';
-import { tutorialJaVisto, iniciarTutorial } from './js/tutorial.js?v=20260726c';
-import { DIAS_SEMANA, escutarHorarios, salvarHorarios } from './js/horarios.js?v=20260726c';
-import { escutarConfigNegocio, salvarConfigNegocio } from './js/config-negocio.js?v=20260726c';
-import { CATEGORIAS_DESPESA, criarDespesa, excluirDespesa, escutarDespesas } from './js/despesas.js?v=20260726c';
-import { toast, confirmar, confirmarForte, executar } from './js/ui-feedback.js?v=20260726c';
-import { db } from './js/firebase-config.js?v=20260726c';
+} from './js/whatsapp.js?v=20260726d';
+import { verificarIntervaloMinimo } from './js/ficha-pele.js?v=20260726d';
+import { tutorialJaVisto, iniciarTutorial } from './js/tutorial.js?v=20260726d';
+import { DIAS_SEMANA, escutarHorarios, salvarHorarios } from './js/horarios.js?v=20260726d';
+import { escutarConfigNegocio, salvarConfigNegocio } from './js/config-negocio.js?v=20260726d';
+import { CATEGORIAS_DESPESA, criarDespesa, excluirDespesa, escutarDespesas } from './js/despesas.js?v=20260726d';
+import { toast, confirmar, confirmarForte, executar } from './js/ui-feedback.js?v=20260726d';
+import { db } from './js/firebase-config.js?v=20260726d';
 
 // Luzinhas douradas ao redor do card de login
 // Mostra o nome da loja usada da última vez que alguém logou neste aparelho
@@ -910,13 +910,6 @@ $('btn-login-google').addEventListener('click', async () => {
   await iniciarLoginComGoogle();
 });
 
-// Ao voltar do redirecionamento do Google, onAuthChange já cuida do login
-// normal — isso aqui só existe pra mostrar uma mensagem clara quando a
-// conta do Google não tem cadastro ainda.
-processarRetornoGoogleLogin().catch((err) => {
-  $('login-erro').textContent = err.message || 'Não foi possível entrar com Google.';
-});
-
 $('link-esqueci-senha').addEventListener('click', async (e) => {
   e.preventDefault();
   const email = $('login-email').value.trim();
@@ -929,10 +922,14 @@ $('link-esqueci-senha').addEventListener('click', async (e) => {
   }
 });
 
-onAuthChange((usuario) => {
+onAuthChange((usuario, motivo) => {
   if (!usuario) {
+    pararTodosOsListeners();
     $('tela-login').style.display = 'flex';
     $('painel').style.display = 'none';
+    if (motivo === 'sem-cadastro') {
+      $('login-erro').textContent = 'Essa conta ainda não tem cadastro aqui. Se você já tem conta, entre com o e-mail/senha ou o mesmo método usado no cadastro.';
+    }
     return;
   }
   usuarioAtual = usuario;
@@ -1016,6 +1013,13 @@ document.querySelectorAll('.aba-btn').forEach((btn) => {
 });
 
 // ── Painel ──────────────────────────────────────────────
+let listenersAtivos = [];
+
+function pararTodosOsListeners() {
+  listenersAtivos.forEach((cancelar) => { try { cancelar(); } catch (e) { /* ignora */ } });
+  listenersAtivos = [];
+}
+
 function iniciarPainel() {
   const negocioId = usuarioAtual.negocioId;
 
@@ -1025,68 +1029,68 @@ function iniciarPainel() {
     document.execCommand('copy');
   });
 
-  escutarCabines(negocioId, (cabines) => {
+  listenersAtivos.push(escutarCabines(negocioId, (cabines) => {
     cabinesCache = cabines;
     renderCabines(cabines);
     preencherSelectCabines(cabines);
-  });
+  }));
 
-  escutarAgendamentosDoDia(negocioId, new Date(), renderAgendaDia);
+  listenersAtivos.push(escutarAgendamentosDoDia(negocioId, new Date(), renderAgendaDia));
 
-  escutarFilaEspera(negocioId, (fila) => {
+  listenersAtivos.push(escutarFilaEspera(negocioId, (fila) => {
     renderFila(fila);
     restaurarSessoesEmAndamento(fila);
-  });
+  }));
 
-  escutarHorarios(negocioId, renderHorarios);
+  listenersAtivos.push(escutarHorarios(negocioId, renderHorarios));
 
-  escutarConfigNegocio(negocioId, (config) => {
+  listenersAtivos.push(escutarConfigNegocio(negocioId, (config) => {
     configNegocioCache = config;
     renderConfiguracoes(config);
     localStorage.setItem('probronze_nome_loja', config.nome);
-  });
+  }));
 
-  escutarEquipe(negocioId, (equipe) => {
+  listenersAtivos.push(escutarEquipe(negocioId, (equipe) => {
     equipeCache = equipe;
     renderEquipe(equipe);
-  });
+  }));
 
-  escutarServicos(negocioId, (servicos) => {
+  listenersAtivos.push(escutarServicos(negocioId, (servicos) => {
     servicosCache = servicos;
     renderServicos(servicos);
     renderComboServicos(servicos);
-  });
+  }));
 
-  escutarClientes(negocioId, (clientes) => {
+  listenersAtivos.push(escutarClientes(negocioId, (clientes) => {
     clientesCache = clientes;
     renderClientes(clientes);
     preencherSelectClientes(clientes);
     preencherSelectPacoteCliente(clientes);
-  });
+  }));
 
-  escutarPendencias(negocioId, (pendencias) => {
+  listenersAtivos.push(escutarPendencias(negocioId, (pendencias) => {
     pendenciasCache = pendencias;
     renderPendencias(pendencias);
     $('fin-pendente').textContent = 'R$' + pendencias.reduce((s, p) => s + p.valorLiquido, 0).toFixed(2);
-  });
+  }));
 
-  escutarPacotesDoNegocio(negocioId, (pacotes) => {
+  listenersAtivos.push(escutarPacotesDoNegocio(negocioId, (pacotes) => {
     pacotesCache = pacotes;
     renderPacotes(pacotes);
-  });
+  }));
 
   const inicioMes = new Date(); inicioMes.setDate(1); inicioMes.setHours(0, 0, 0, 0);
   const fimMes = new Date();
-  escutarFinanceiroPeriodo(negocioId, inicioMes, fimMes, (registros) => {
+  listenersAtivos.push(escutarFinanceiroPeriodo(negocioId, inicioMes, fimMes, (registros) => {
     const resumo = resumoFinanceiro(registros);
     $('fin-bruto').textContent = 'R$' + resumo.totalBruto.toFixed(2);
     $('fin-liquido').textContent = 'R$' + resumo.totalLiquido.toFixed(2);
     $('fin-comissao').textContent = 'R$' + resumo.totalComissao.toFixed(2);
     liquidoMesCache = resumo.totalLiquido;
     atualizarLucroMes();
-  });
+  }));
 
-  escutarDespesas(negocioId, (despesas) => {
+  listenersAtivos.push(escutarDespesas(negocioId, (despesas) => {
     despesasCache = despesas;
     renderDespesas(despesas);
     despesasMesCache = despesas
@@ -1094,7 +1098,7 @@ function iniciarPainel() {
       .reduce((s, d) => s + (d.valor || 0), 0);
     atualizarLucroMes();
     atualizarAnaliseFinanceira();
-  });
+  }));
 
   $('fin-de').value = inicioMes.toISOString().slice(0, 10);
   $('fin-ate').value = fimMes.toISOString().slice(0, 10);
@@ -1102,15 +1106,15 @@ function iniciarPainel() {
   atualizarAnaliseFinanceira();
   atualizarEvolucaoMensal();
 
-  escutarProdutosCabine(negocioId, (produtos) => {
+  listenersAtivos.push(escutarProdutosCabine(negocioId, (produtos) => {
     produtosCabineCache = produtos;
     renderProdutos(produtos);
     preencherSelectVenderProduto(produtos);
-  });
-  escutarCupons(negocioId, (cupons) => {
+  }));
+  listenersAtivos.push(escutarCupons(negocioId, (cupons) => {
     cuponsCache = cupons;
     renderCupons(cupons);
-  });
+  }));
 }
 
 function renderProdutos(produtos) {

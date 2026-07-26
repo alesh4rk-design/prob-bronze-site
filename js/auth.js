@@ -1,5 +1,5 @@
 // Pro'Bronze — Autenticação e controle de papéis (dono | recepcionista)
-import { auth, db } from "./firebase-config.js?v=20260726c";
+import { auth, db } from "./firebase-config.js?v=20260726d";
 import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
@@ -25,24 +25,11 @@ export async function login(email, senha) {
 }
 
 // Login da equipe com Google — usa redirecionamento (não popup) porque o
-// navegador do celular costuma bloquear popups. A página recarrega e volta
-// aqui; chame processarRetornoGoogleLogin() ao carregar a página pra
-// completar o processo.
+// navegador do celular costuma bloquear popups. A página sai, autentica no
+// Google e volta; onAuthChange (mais abaixo) detecta o retorno sozinho e
+// avisa se a conta não tiver cadastro (motivo "sem-cadastro").
 export function iniciarLoginComGoogle() {
   return signInWithRedirect(auth, googleProvider);
-}
-
-// Chame no carregamento da página de login da equipe. Retorna null se não
-// houver um retorno de redirecionamento do Google pendente.
-export async function processarRetornoGoogleLogin() {
-  const cred = await getRedirectResult(auth);
-  if (!cred) return null;
-  const userDoc = await getDoc(doc(db, "usuarios", cred.user.uid));
-  if (!userDoc.exists()) {
-    await signOut(auth);
-    throw new Error("Nenhuma conta encontrada para este Google. Cadastre-se primeiro.");
-  }
-  return { uid: cred.user.uid, ...userDoc.data() };
 }
 
 export function logout() {
@@ -112,11 +99,20 @@ export async function processarRetornoGoogleCadastro() {
   return cred.user.uid;
 }
 
+// callback recebe (usuario, motivo). motivo === "sem-cadastro" quando o
+// Firebase autenticou (ex.: Google) mas não existe cadastro em "usuarios"
+// pra essa conta — ex.: pessoa criou conta com e-mail/senha e tentou
+// entrar com um Google que nunca foi cadastrado.
 export function onAuthChange(callback) {
   return onAuthStateChanged(auth, async (user) => {
     if (!user) return callback(null);
     const userDoc = await getDoc(doc(db, "usuarios", user.uid));
-    callback(userDoc.exists() ? { uid: user.uid, ...userDoc.data() } : null);
+    if (userDoc.exists()) {
+      callback({ uid: user.uid, ...userDoc.data() });
+    } else {
+      await signOut(auth);
+      callback(null, "sem-cadastro");
+    }
   });
 }
 
