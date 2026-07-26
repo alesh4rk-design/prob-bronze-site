@@ -1,5 +1,5 @@
 // Pro'Bronze — Autenticação e controle de papéis (dono | recepcionista)
-import { auth, db } from "./firebase-config.js?v=20260726g";
+import { auth, db } from "./firebase-config.js?v=20260726h";
 import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
@@ -37,17 +37,15 @@ export function resetSenha(email) {
   return sendPasswordResetEmail(auth, email);
 }
 
+// O negócio nasce como "pendente" — o teste grátis de 7 dias só começa
+// quando o admin aprova (vira "trial" com trialFim definido ali).
 async function criarNegocioEDono(uid, { nomeNegocio, nomeDono, email, whatsappNegocio = "" }) {
   const negocioRef = doc(db, "negocios", uid); // negocioId = uid do dono
-  const agora = new Date();
-  const trialFim = new Date(agora.getTime() + 7 * 24 * 60 * 60 * 1000);
 
   await setDoc(negocioRef, {
     nome: nomeNegocio,
     whatsappNegocio,
-    status: "trial",
-    trialInicio: serverTimestamp(),
-    trialFim: trialFim,
+    status: "pendente",
     criadoEm: serverTimestamp()
   });
 
