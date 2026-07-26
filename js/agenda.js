@@ -13,14 +13,16 @@ import { notificarErroFirestore } from "./firestore-erro.js";
 // status: "agendado" | "em_andamento" | "concluido" | "cancelado" | "faltou"
 // origem: "online" | "presencial"
 
-// Checa se o cliente pode agendar (intervalo mínimo + limite mensal)
-export async function checarElegibilidade(clienteId) {
+// Checa se o cliente pode agendar (intervalo mínimo + limite mensal).
+// opcoes.intervaloHoras e opcoes.limiteMes vêm da Configuração do negócio;
+// se não informados, usam os padrões de ficha-pele.js.
+export async function checarElegibilidade(clienteId, opcoes = {}) {
   const clienteSnap = await getDoc(doc(db, "clientes", clienteId));
   if (!clienteSnap.exists()) return { podeAgendar: true, avisos: [] };
   const cliente = clienteSnap.data();
   const avisos = [];
 
-  const intervalo = verificarIntervaloMinimo(cliente.ultimaSessaoEm);
+  const intervalo = verificarIntervaloMinimo(cliente.ultimaSessaoEm, opcoes.intervaloHoras);
   if (!intervalo.permitido) {
     avisos.push(`Intervalo mínimo não cumprido: faltam ${intervalo.horasFaltando}h desde a última sessão.`);
   }
@@ -33,7 +35,7 @@ export async function checarElegibilidade(clienteId) {
     where("dataHora", ">=", Timestamp.fromDate(inicioMes))
   );
   const sessoesSnap = await getDocs(q);
-  const limite = verificarLimiteMensal(sessoesSnap.size);
+  const limite = verificarLimiteMensal(sessoesSnap.size, opcoes.limiteMes);
   if (!limite.dentroDoLimite) {
     avisos.push("Limite de sessões do mês atingido.");
   } else if (limite.alerta) {

@@ -217,6 +217,7 @@
         <button class="aba-btn" data-aba="produtos" data-titulo="🧴 Produtos"><span class="nav-icone">🧴</span>Produtos</button>
         <button class="aba-btn" data-aba="relatorios" data-titulo="📊 Relatórios"><span class="nav-icone">📊</span>Relatórios</button>
         <button class="aba-btn" data-aba="horarios" data-titulo="🕐 Horários de Funcionamento"><span class="nav-icone">🕐</span>Horários</button>
+        <button class="aba-btn" data-aba="configuracoes" data-titulo="⚙️ Configurações"><span class="nav-icone">⚙️</span>Configurações</button>
       </div>
     </nav>
 
@@ -454,6 +455,23 @@
         <button class="btn-primario" id="btn-salvar-horarios" style="margin-top:.5rem">Salvar Horários</button>
       </div>
     </div>
+
+    <!-- ABA CONFIGURAÇÕES -->
+    <div class="aba-conteudo" id="aba-configuracoes">
+      <div class="card">
+        <div class="card-titulo">Dados do Estabelecimento</div>
+        <div class="input-group"><label>Nome do estabelecimento</label><input type="text" id="cfg-nome"></div>
+        <div class="input-group"><label>WhatsApp do estabelecimento</label><input type="text" id="cfg-whatsapp" placeholder="21999999999"></div>
+        <div class="input-group"><label>Chave PIX</label><input type="text" id="cfg-pix" placeholder="CPF/CNPJ, e-mail, telefone ou chave aleatória"></div>
+        <div class="input-group"><label>Subtítulo da tela da cliente</label><input type="text" id="cfg-subtitulo"></div>
+      </div>
+      <div class="card">
+        <div class="card-titulo">Regras de Segurança</div>
+        <div class="input-group"><label>Intervalo mínimo entre sessões (horas)</label><input type="number" id="cfg-intervalo" min="1"></div>
+        <div class="input-group"><label>Limite de sessões por mês</label><input type="number" id="cfg-limite-mes" min="1"></div>
+      </div>
+      <button class="btn-primario" id="btn-salvar-configuracoes">Salvar Configurações</button>
+    </div>
     </main>
   </div>
 
@@ -564,6 +582,7 @@ import {
 import { verificarIntervaloMinimo } from './js/ficha-pele.js';
 import { tutorialJaVisto, iniciarTutorial } from './js/tutorial.js';
 import { DIAS_SEMANA, escutarHorarios, salvarHorarios } from './js/horarios.js';
+import { escutarConfigNegocio, salvarConfigNegocio } from './js/config-negocio.js';
 import { toast, confirmar, confirmarForte, executar } from './js/ui-feedback.js';
 import { db } from './js/firebase-config.js';
 
@@ -589,6 +608,7 @@ let timerInterval = null;
 let pendenciasCache = [];
 let equipeCache = [];
 let produtosCabineCache = [];
+let configNegocioCache = { nome: "Pro'Bronze", whatsappNegocio: '', chavePix: '', vitrineSubtitulo: '', intervaloMinimoHoras: 24, limiteSessoesMes: 12 };
 
 function iniciaisDoNome(nome) {
   const partes = (nome || '').trim().split(/\s+/).filter(Boolean);
@@ -677,6 +697,11 @@ function iniciarPainel() {
   escutarFilaEspera(negocioId, renderFila);
 
   escutarHorarios(negocioId, renderHorarios);
+
+  escutarConfigNegocio(negocioId, (config) => {
+    configNegocioCache = config;
+    renderConfiguracoes(config);
+  });
 
   escutarEquipe(negocioId, (equipe) => {
     equipeCache = equipe;
@@ -867,6 +892,30 @@ $('btn-salvar-horarios').addEventListener('click', async () => {
   toast('Horários salvos.', 'sucesso');
 });
 
+// ── Configurações do negócio ──────────────────────────────
+function renderConfiguracoes(config) {
+  $('cfg-nome').value = config.nome || '';
+  $('cfg-whatsapp').value = config.whatsappNegocio || '';
+  $('cfg-pix').value = config.chavePix || '';
+  $('cfg-subtitulo').value = config.vitrineSubtitulo || '';
+  $('cfg-intervalo').value = config.intervaloMinimoHoras;
+  $('cfg-limite-mes').value = config.limiteSessoesMes;
+}
+
+$('btn-salvar-configuracoes').addEventListener('click', async () => {
+  const nome = $('cfg-nome').value.trim();
+  if (!nome) { toast('Informe o nome do estabelecimento.', 'aviso'); return; }
+  await salvarConfigNegocio(usuarioAtual.negocioId, {
+    nome,
+    whatsappNegocio: $('cfg-whatsapp').value.trim(),
+    chavePix: $('cfg-pix').value.trim(),
+    vitrineSubtitulo: $('cfg-subtitulo').value.trim(),
+    intervaloMinimoHoras: Number($('cfg-intervalo').value) || 24,
+    limiteSessoesMes: Number($('cfg-limite-mes').value) || 12
+  });
+  toast('Configurações salvas.', 'sucesso');
+});
+
 function preencherSelectPacoteCliente(clientes) {
   const sel = $('pac-cliente');
   const atual = sel.value;
@@ -881,7 +930,7 @@ function renderPendencias(pendencias) {
   wrap.innerHTML = pendencias.map((p) => {
     const cliente = clientesCache.find((c) => c.id === p.clienteId);
     const linkWpp = cliente?.whatsapp ? linkCobrancaPendente({
-      whatsapp: cliente.whatsapp, clienteNome: p.clienteNome, valor: p.valorLiquido, nomeNegocio: "Pro'Bronze"
+      whatsapp: cliente.whatsapp, clienteNome: p.clienteNome, valor: p.valorLiquido, nomeNegocio: configNegocioCache.nome
     }) : null;
     return `
     <div class="agendamento-item">
@@ -993,7 +1042,7 @@ function abrirMenuCliente(clienteId) {
   const cliente = clientesCache.find((c) => c.id === clienteId);
   if (!cliente) return;
   clienteMenuAtualId = clienteId;
-  const nomeNegocio = "Pro'Bronze";
+  const nomeNegocio = configNegocioCache.nome;
 
   $('wpp-cliente-nome').textContent = cliente.nome;
 
@@ -1279,7 +1328,7 @@ function renderAgendaDia(lista) {
     const cliente = clientesCache.find((c) => c.id === ag.clienteId);
     const dataHoraTexto = ag.dataHora?.toDate ? ag.dataHora.toDate().toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' }) : '';
     const linkWpp = (cliente?.whatsapp && ag.status === 'agendado') ? linkConfirmacaoAgendamento({
-      whatsapp: cliente.whatsapp, clienteNome: ag.clienteNome, servicos: servicos || 'sessão', dataHoraTexto, nomeNegocio: "Pro'Bronze"
+      whatsapp: cliente.whatsapp, clienteNome: ag.clienteNome, servicos: servicos || 'sessão', dataHoraTexto, nomeNegocio: configNegocioCache.nome
     }) : null;
     const cabinesLivres = cabinesCache.filter((c) => c.status === 'livre');
     const semCabine = !ag.cabineId;
@@ -1467,7 +1516,7 @@ $('btn-criar-agendamento').addEventListener('click', async () => {
     return;
   }
 
-  const elegibilidade = await checarElegibilidade(clienteId);
+  const elegibilidade = await checarElegibilidade(clienteId, { intervaloHoras: configNegocioCache.intervaloMinimoHoras, limiteMes: configNegocioCache.limiteSessoesMes });
   if (!elegibilidade.podeAgendar) {
     avisosWrap.innerHTML = elegibilidade.avisos.map((a) => `<div class="aviso-bloqueio">${a}</div>`).join('');
     return;

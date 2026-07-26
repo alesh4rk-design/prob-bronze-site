@@ -70,6 +70,7 @@
     <header class="topo-cliente">
       <h1 id="vitrine-titulo">Pro'Bronze</h1>
       <p id="vitrine-subtitulo">Olá! Acompanhe suas sessões por aqui.</p>
+      <div id="contato-estabelecimento" style="margin-top:.4rem"></div>
     </header>
 
     <div class="card">
@@ -106,12 +107,13 @@
 import { onAuthChange, login, logout } from './js/auth.js';
 import { db } from './js/firebase-config.js';
 import {
-  collection, query, where, onSnapshot, doc, getDoc, orderBy
+  collection, query, where, onSnapshot
 } from 'https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js';
 import { escutarServicos, calcularCombo } from './js/servicos.js';
 import { criarAgendamento, contarConflitosHorario } from './js/agenda.js';
 import { checarElegibilidade } from './js/agenda.js';
 import { escutarCabines } from './js/cabines.js';
+import { escutarConfigNegocio } from './js/config-negocio.js';
 import { toast } from './js/ui-feedback.js';
 
 const $ = (id) => document.getElementById(id);
@@ -119,6 +121,7 @@ let servicosCache = [];
 let combosSelecionados = new Set();
 let clienteAtual = null;
 let cabinesCache = [];
+let configNegocioCache = { nome: "Pro'Bronze", whatsappNegocio: '', chavePix: '', vitrineSubtitulo: '', intervaloMinimoHoras: 24, limiteSessoesMes: 12 };
 
 // Login da cliente usa a mesma Auth do Firebase; o vínculo com o
 // documento em "clientes" é feito por clienteUid (campo salvo no
@@ -165,7 +168,6 @@ $('btn-sair-cliente').addEventListener('click', async () => {
       clienteAtual = cliente;
       $('tela-login').style.display = 'none';
       $('painel-cliente').style.display = 'block';
-      carregarVitrine(cliente.negocioId);
       escutarMeusPacotes(cliente.id);
       escutarMinhasSessoes(cliente.negocioId, cliente.id);
       escutarServicos(cliente.negocioId, (servicos) => {
@@ -173,19 +175,23 @@ $('btn-sair-cliente').addEventListener('click', async () => {
         renderServicosAgendar(servicos);
       });
       escutarCabines(cliente.negocioId, (cabines) => { cabinesCache = cabines; });
+      escutarConfigNegocio(cliente.negocioId, (config) => {
+        configNegocioCache = config;
+        $('vitrine-titulo').textContent = config.nome;
+        $('vitrine-subtitulo').textContent = config.vitrineSubtitulo;
+        renderContatoEstabelecimento(config);
+      });
     });
   });
 })();
 
-async function carregarVitrine(negocioId) {
-  try {
-    const snap = await getDoc(doc(db, 'negocios', negocioId));
-    if (snap.exists()) {
-      const dados = snap.data();
-      if (dados.vitrineTitulo) $('vitrine-titulo').textContent = dados.vitrineTitulo;
-      if (dados.vitrineSubtitulo) $('vitrine-subtitulo').textContent = dados.vitrineSubtitulo;
-    }
-  } catch (err) { /* usa padrão */ }
+function renderContatoEstabelecimento(config) {
+  const wrap = $('contato-estabelecimento');
+  if (!wrap) return;
+  const linhas = [];
+  if (config.whatsappNegocio) linhas.push(`<div class="detalhe">📱 WhatsApp: ${config.whatsappNegocio}</div>`);
+  if (config.chavePix) linhas.push(`<div class="detalhe">💳 PIX: ${config.chavePix}</div>`);
+  wrap.innerHTML = linhas.join('');
 }
 
 function escutarMeusPacotes(clienteId) {
@@ -274,7 +280,7 @@ $('btn-agendar-online').addEventListener('click', async () => {
     return;
   }
 
-  const elegibilidade = await checarElegibilidade(clienteAtual.id);
+  const elegibilidade = await checarElegibilidade(clienteAtual.id, { intervaloHoras: configNegocioCache.intervaloMinimoHoras, limiteMes: configNegocioCache.limiteSessoesMes });
   if (!elegibilidade.podeAgendar) {
     avisosWrap.innerHTML = elegibilidade.avisos.map((a) => `<div class="empty-state" style="color:var(--red)">${a}</div>`).join('');
     return;
