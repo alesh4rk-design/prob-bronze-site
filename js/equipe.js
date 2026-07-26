@@ -1,11 +1,11 @@
 // Pro'Bronze — Equipe (dono cria contas de recepcionista, define comissão)
-import { db } from "./firebase-config.js?v=20260726k";
+import { db } from "./firebase-config.js?v=20260726l";
 import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
 import { getAuth, createUserWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
 import {
   collection, doc, setDoc, updateDoc, deleteDoc, onSnapshot, query, where, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
-import { notificarErroFirestore } from "./firestore-erro.js?v=20260726k";
+import { notificarErroFirestore } from "./firestore-erro.js?v=20260726l";
 
 const firebaseConfig = {
   apiKey: "AIzaSyCd43MswTK67CbddpLLyWNou8uTv9W3Chc",
