@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Pro'Bronze — Painel</title>
 <link rel="stylesheet" href="css/theme.css">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/chart.js/4.4.4/chart.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
@@ -956,6 +956,10 @@ async function atualizarAnaliseFinanceira() {
   const de = $('fin-de').value;
   const ate = $('fin-ate').value;
   if (!de || !ate) return;
+  if (typeof Chart === 'undefined') {
+    toast('Não foi possível carregar os gráficos. Verifique sua conexão e recarregue a página.', 'erro');
+    return;
+  }
   const registros = await buscarFinanceiroEntre(de, ate);
 
   // Faturamento por dia (valor líquido)
