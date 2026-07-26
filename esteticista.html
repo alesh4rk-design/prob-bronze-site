@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Pro'Bronze — Painel</title>
-<link rel="stylesheet" href="css/theme.css?v=20260726a">
+<link rel="stylesheet" href="css/theme.css?v=20260726b">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -161,6 +161,8 @@
     padding: 1.1rem; margin-bottom: .8rem;
   }
   .card-titulo { font-weight: 800; font-size: .95rem; margin-bottom: .6rem; color: var(--accent-light); }
+  .card-titulo.com-ajuda { margin-bottom: .2rem; }
+  .ajuda-inline { font-size: .76rem; color: var(--muted); margin-bottom: .8rem; line-height: 1.4; }
 
   .cabines-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: .8rem; }
   .cabine-card {
@@ -331,7 +333,8 @@
     <!-- ABA CABINES -->
     <div class="aba-conteudo ativa" id="aba-cabines">
       <div class="card">
-        <div class="card-titulo">Nova Cabine / Cama</div>
+        <div class="card-titulo com-ajuda">Nova Cabine / Cama</div>
+        <div class="ajuda-inline">Cada cabine é um espaço físico de bronzeamento (cama ou cabine). Cadastre quantas você tiver — isso define quantas clientes podem ser atendidas ao mesmo tempo.</div>
         <div class="input-group"><label>Nome</label><input type="text" id="cab-nome" placeholder="Ex: Cabine 1"></div>
         <div class="input-group"><label>Tempo padrão (minutos)</label><input type="number" id="cab-tempo" value="15" min="1"></div>
         <button class="btn-primario" id="btn-criar-cabine">Cadastrar Cabine</button>
@@ -364,7 +367,8 @@
     <!-- ABA NOVO AGENDAMENTO -->
     <div class="aba-conteudo" id="aba-novo">
       <div class="card">
-        <div class="card-titulo">Novo Agendamento (presencial)</div>
+        <div class="card-titulo com-ajuda">Novo Agendamento (presencial)</div>
+        <div class="ajuda-inline">Use aqui quando a cliente marcar por telefone ou chegar na loja sem ter agendado pelo celular dela.</div>
         <div id="novo-avisos"></div>
         <div class="input-group">
           <label>Cliente</label>
@@ -397,7 +401,8 @@
     <!-- ABA EQUIPE -->
     <div class="aba-conteudo" id="aba-equipe">
       <div class="card" id="card-nova-equipe">
-        <div class="card-titulo">Adicionar Membro da Equipe</div>
+        <div class="card-titulo com-ajuda">Adicionar Membro da Equipe</div>
+        <div class="ajuda-inline">Cadastre quem trabalha com você (recepcionista, outro dono). Cada pessoa ganha seu próprio login e uma % de comissão sobre o que atender.</div>
         <div class="input-group"><label>Nome</label><input type="text" id="eq-nome"></div>
         <div class="input-group"><label>E-mail</label><input type="email" id="eq-email"></div>
         <div class="input-group"><label>Senha</label><input type="password" id="eq-senha" placeholder="mínimo 6 caracteres"></div>
@@ -467,7 +472,8 @@
     <!-- ABA FINANCEIRO -->
     <div class="aba-conteudo" id="aba-financeiro">
       <div class="card">
-        <div class="card-titulo">Resumo do Mês</div>
+        <div class="card-titulo com-ajuda">Resumo do Mês</div>
+        <div class="ajuda-inline">Bruto = tudo que entrou. Líquido = depois dos descontos. Comissão = o que a equipe ganhou. Pendente = o que falta receber. Lucro = Líquido menos Despesas.</div>
         <div class="cabines-grid">
           <div class="cabine-card livre"><div class="cabine-nome" id="fin-bruto">R$0</div><div class="cabine-status">Bruto</div></div>
           <div class="cabine-card livre"><div class="cabine-nome" id="fin-liquido">R$0</div><div class="cabine-status">Líquido</div></div>
@@ -478,7 +484,8 @@
         </div>
       </div>
       <div class="card">
-        <div class="card-titulo">Nova Despesa</div>
+        <div class="card-titulo com-ajuda">Nova Despesa</div>
+        <div class="ajuda-inline">Registre tudo que sai do caixa: aluguel, salário, água, luz, manutenção etc. Isso é descontado do faturamento pra mostrar o lucro real.</div>
         <div class="input-group">
           <label>Categoria</label>
           <select id="desp-categoria"></select>
@@ -496,7 +503,8 @@
         <div id="lista-despesas"><div class="empty-state">Carregando...</div></div>
       </div>
       <div class="card">
-        <div class="card-titulo">Análise do Período</div>
+        <div class="card-titulo com-ajuda">Análise do Período</div>
+        <div class="ajuda-inline">Escolha qualquer intervalo de datas pra ver os gráficos abaixo daquele período específico.</div>
         <div style="display:flex;gap:.6rem;flex-wrap:wrap;align-items:flex-end">
           <div class="input-group" style="flex:1;min-width:140px;margin-bottom:0"><label>De</label><input type="date" id="fin-de"></div>
           <div class="input-group" style="flex:1;min-width:140px;margin-bottom:0"><label>Até</label><input type="date" id="fin-ate"></div>
@@ -557,7 +565,8 @@
     <!-- ABA PACOTES -->
     <div class="aba-conteudo" id="aba-pacotes">
       <div class="card">
-        <div class="card-titulo">Novo Pacote de Sessões</div>
+        <div class="card-titulo com-ajuda">Novo Pacote de Sessões</div>
+        <div class="ajuda-inline">Venda várias sessões de uma vez (ex: 10 sessões por um valor fechado). A cada atendimento, uma sessão é descontada automaticamente.</div>
         <div class="input-group">
           <label>Cliente</label>
           <select id="pac-cliente"><option value="">Selecione...</option></select>
@@ -574,7 +583,8 @@
     <!-- ABA PRODUTOS -->
     <div class="aba-conteudo" id="aba-produtos">
       <div class="card">
-        <div class="card-titulo">Novo Produto de Cabine</div>
+        <div class="card-titulo com-ajuda">Novo Produto de Cabine</div>
+        <div class="ajuda-inline">Cadastre produtos usados nas sessões (bronzeador, protetor, óleo) pra controlar o estoque, ou produtos que você vende direto pra cliente.</div>
         <div class="input-group"><label>Nome</label><input type="text" id="prod-nome" placeholder="Ex: Bronzeador"></div>
         <div class="input-group"><label>Quantidade</label><input type="number" id="prod-qtd"></div>
         <div class="input-group"><label>Unidade</label><input type="text" id="prod-unidade" value="ml"></div>
@@ -591,7 +601,8 @@
     <!-- ABA CUPONS -->
     <div class="aba-conteudo" id="aba-cupons">
       <div class="card">
-        <div class="card-titulo">Novo Cupom</div>
+        <div class="card-titulo com-ajuda">Novo Cupom</div>
+        <div class="ajuda-inline">Crie um código que a cliente pode usar pra ganhar desconto na hora de pagar.</div>
         <div class="input-group"><label>Código</label><input type="text" id="cup-codigo" placeholder="Ex: VERAO10"></div>
         <div class="input-group">
           <label>Tipo de desconto</label>
@@ -609,7 +620,8 @@
     <!-- ABA RELATÓRIOS -->
     <div class="aba-conteudo" id="aba-relatorios">
       <div class="card">
-        <div class="card-titulo">Relatório Financeiro</div>
+        <div class="card-titulo com-ajuda">Relatório Financeiro</div>
+        <div class="ajuda-inline">Baixe um arquivo (Excel ou PDF) com todos os pagamentos de um período — útil pra contabilidade ou pra guardar.</div>
         <div class="input-group"><label>De</label><input type="date" id="rel-de"></div>
         <div class="input-group"><label>Até</label><input type="date" id="rel-ate"></div>
         <button class="btn-primario" id="btn-exportar-excel">Exportar Excel</button>
@@ -620,7 +632,8 @@
     <!-- ABA HORÁRIOS DE FUNCIONAMENTO -->
     <div class="aba-conteudo" id="aba-horarios">
       <div class="card">
-        <div class="card-titulo">Horário de Funcionamento</div>
+        <div class="card-titulo com-ajuda">Horário de Funcionamento</div>
+        <div class="ajuda-inline">Marque os dias que sua loja abre e os horários — isso ajuda a organizar a agenda (ainda não bloqueia agendamento fora do horário).</div>
         <div id="lista-horarios"><div class="empty-state">Carregando...</div></div>
         <button class="btn-primario" id="btn-salvar-horarios" style="margin-top:.5rem">Salvar Horários</button>
       </div>
@@ -629,14 +642,16 @@
     <!-- ABA CONFIGURAÇÕES -->
     <div class="aba-conteudo" id="aba-configuracoes">
       <div class="card">
-        <div class="card-titulo">Dados do Estabelecimento</div>
+        <div class="card-titulo com-ajuda">Dados do Estabelecimento</div>
+        <div class="ajuda-inline">Essas informações aparecem pra suas clientes e nas mensagens automáticas de WhatsApp.</div>
         <div class="input-group"><label>Nome do estabelecimento</label><input type="text" id="cfg-nome"></div>
         <div class="input-group"><label>WhatsApp do estabelecimento</label><input type="text" id="cfg-whatsapp" placeholder="21999999999"></div>
         <div class="input-group"><label>Chave PIX</label><input type="text" id="cfg-pix" placeholder="CPF/CNPJ, e-mail, telefone ou chave aleatória"></div>
         <div class="input-group"><label>Subtítulo da tela da cliente</label><input type="text" id="cfg-subtitulo"></div>
       </div>
       <div class="card">
-        <div class="card-titulo">Regras de Segurança</div>
+        <div class="card-titulo com-ajuda">Regras de Segurança</div>
+        <div class="ajuda-inline">Controla de quanto em quanto tempo uma cliente pode agendar de novo, e quantas sessões ela pode fazer por mês — protege a pele dela.</div>
         <div class="input-group"><label>Intervalo mínimo entre sessões (horas)</label><input type="number" id="cfg-intervalo" min="1"></div>
         <div class="input-group"><label>Limite de sessões por mês</label><input type="number" id="cfg-limite-mes" min="1"></div>
       </div>
@@ -756,34 +771,34 @@
 </div>
 
 <script type="module">
-import { onAuthChange, login, logout, loginComGoogle, resetSenha } from './js/auth.js?v=20260726a';
-import { escutarCabines, atualizarStatusCabine, criarCabine, excluirCabine } from './js/cabines.js?v=20260726a';
+import { onAuthChange, login, logout, loginComGoogle, resetSenha } from './js/auth.js?v=20260726b';
+import { escutarCabines, atualizarStatusCabine, criarCabine, excluirCabine } from './js/cabines.js?v=20260726b';
 import {
   escutarAgendamentosDoDia, criarAgendamento, concluirAgendamento, escutarFilaEspera,
   cancelarAgendamento, marcarFalta, atribuirCabine, contarConflitosHorario, marcarEmAndamento
-} from './js/agenda.js?v=20260726a';
-import { checarElegibilidade } from './js/agenda.js?v=20260726a';
-import { escutarServicos, criarServico, calcularCombo } from './js/servicos.js?v=20260726a';
-import { escutarClientes, criarCliente } from './js/clientes.js?v=20260726a';
-import { criarMembroEquipe, escutarEquipe, excluirMembroEquipe } from './js/equipe.js?v=20260726a';
-import { tempoMaxRecomendado } from './js/ficha-pele.js?v=20260726a';
-import { registrarPagamento, escutarPendencias, quitarPendencia, resumoFinanceiro, escutarFinanceiroPeriodo } from './js/financeiro.js?v=20260726a';
-import { criarPacote, escutarPacotesDoNegocio, consumirSessaoDoPacote } from './js/pacotes-sessoes.js?v=20260726a';
-import { criarProdutoCabine, escutarProdutosCabine, produtosEmAlerta, baixarEstoque } from './js/produtos-cabine.js?v=20260726a';
-import { criarCupom, escutarCupons, desativarCupom, calcularDescontoCupom } from './js/cupons.js?v=20260726a';
-import { exportarExcel, exportarPDF, montarRelatorioFinanceiro, COLUNAS_FINANCEIRO } from './js/relatorios.js?v=20260726a';
+} from './js/agenda.js?v=20260726b';
+import { checarElegibilidade } from './js/agenda.js?v=20260726b';
+import { escutarServicos, criarServico, calcularCombo } from './js/servicos.js?v=20260726b';
+import { escutarClientes, criarCliente } from './js/clientes.js?v=20260726b';
+import { criarMembroEquipe, escutarEquipe, excluirMembroEquipe } from './js/equipe.js?v=20260726b';
+import { tempoMaxRecomendado } from './js/ficha-pele.js?v=20260726b';
+import { registrarPagamento, escutarPendencias, quitarPendencia, resumoFinanceiro, escutarFinanceiroPeriodo } from './js/financeiro.js?v=20260726b';
+import { criarPacote, escutarPacotesDoNegocio, consumirSessaoDoPacote } from './js/pacotes-sessoes.js?v=20260726b';
+import { criarProdutoCabine, escutarProdutosCabine, produtosEmAlerta, baixarEstoque } from './js/produtos-cabine.js?v=20260726b';
+import { criarCupom, escutarCupons, desativarCupom, calcularDescontoCupom } from './js/cupons.js?v=20260726b';
+import { exportarExcel, exportarPDF, montarRelatorioFinanceiro, COLUNAS_FINANCEIRO } from './js/relatorios.js?v=20260726b';
 import {
   linkConfirmacaoAgendamento, linkCobrancaPendente, linkAtrasoAgendamento,
   linkClienteSumido, linkMensagemLivre, linkLembreteIntervalo,
   linkSuaVezChegando, linkPromocao, linkAniversario, linkAgradecimento
-} from './js/whatsapp.js?v=20260726a';
-import { verificarIntervaloMinimo } from './js/ficha-pele.js?v=20260726a';
-import { tutorialJaVisto, iniciarTutorial } from './js/tutorial.js?v=20260726a';
-import { DIAS_SEMANA, escutarHorarios, salvarHorarios } from './js/horarios.js?v=20260726a';
-import { escutarConfigNegocio, salvarConfigNegocio } from './js/config-negocio.js?v=20260726a';
-import { CATEGORIAS_DESPESA, criarDespesa, excluirDespesa, escutarDespesas } from './js/despesas.js?v=20260726a';
-import { toast, confirmar, confirmarForte, executar } from './js/ui-feedback.js?v=20260726a';
-import { db } from './js/firebase-config.js?v=20260726a';
+} from './js/whatsapp.js?v=20260726b';
+import { verificarIntervaloMinimo } from './js/ficha-pele.js?v=20260726b';
+import { tutorialJaVisto, iniciarTutorial } from './js/tutorial.js?v=20260726b';
+import { DIAS_SEMANA, escutarHorarios, salvarHorarios } from './js/horarios.js?v=20260726b';
+import { escutarConfigNegocio, salvarConfigNegocio } from './js/config-negocio.js?v=20260726b';
+import { CATEGORIAS_DESPESA, criarDespesa, excluirDespesa, escutarDespesas } from './js/despesas.js?v=20260726b';
+import { toast, confirmar, confirmarForte, executar } from './js/ui-feedback.js?v=20260726b';
+import { db } from './js/firebase-config.js?v=20260726b';
 
 // Luzinhas douradas ao redor do card de login
 // Mostra o nome da loja usada da última vez que alguém logou neste aparelho
