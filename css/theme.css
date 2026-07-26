@@ -16,6 +16,10 @@
   --font: 'Segoe UI', system-ui, -apple-system, sans-serif;
 }
 
+/* Marca "Pro'Bronze": "Pro" branco, apóstrofo verde, "Bronze" mantém a cor do elemento */
+.marca-pro { color: #ffffff; }
+.marca-apo { color: var(--green); }
+
 /* ── Polimento visual global (aplica em todas as páginas) ── */
 
 * { scrollbar-color: rgba(245,230,211,.25) transparent; }
