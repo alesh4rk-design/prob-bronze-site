@@ -49,6 +49,17 @@
 .confirm-botoes { display: flex; gap: .6rem; justify-content: center; }
 .confirm-botoes button { flex: 1; }
 
+.confirm-card-perigo { border-color: var(--red); text-align: left; }
+.confirm-card-perigo .confirm-msg { text-align: center; }
+.confirm-msg-aviso { font-size: .8rem; color: var(--muted); margin: 0 0 .5rem; }
+.confirm-input {
+  width: 100%; background: var(--card-inp-bg); border: 1.5px solid var(--card-inp-border); border-radius: 8px;
+  padding: .6rem .8rem; color: var(--text); font-size: .9rem; font-family: var(--font); outline: none;
+  margin-bottom: 1rem; box-sizing: border-box;
+}
+.confirm-perigo-ok { background: var(--red) !important; color: #fff !important; }
+.confirm-perigo-ok:disabled { opacity: .5; cursor: not-allowed; }
+
 @media (max-width: 480px) {
   #toast-container { left: .75rem; right: .75rem; top: .75rem; align-items: stretch; }
   .toast { max-width: none; }

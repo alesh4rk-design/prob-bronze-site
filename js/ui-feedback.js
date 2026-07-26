@@ -61,3 +61,38 @@ export function confirmar(mensagem) {
     requestAnimationFrame(() => overlay.classList.add('confirm-visivel'));
   });
 }
+
+// Confirmação reforçada para ações irreversíveis: exige digitar uma palavra (padrão "APAGAR")
+export function confirmarForte(mensagem, palavra = 'APAGAR') {
+  return new Promise((resolve) => {
+    const overlay = document.createElement('div');
+    overlay.className = 'confirm-overlay';
+    overlay.innerHTML = `
+      <div class="confirm-card confirm-card-perigo">
+        <p class="confirm-msg"></p>
+        <p class="confirm-msg-aviso">Para confirmar, digite <strong>${palavra}</strong> abaixo:</p>
+        <input type="text" class="confirm-input" autocomplete="off">
+        <div class="confirm-botoes">
+          <button class="btn-secundario confirm-cancelar" type="button">Cancelar</button>
+          <button class="btn-primario confirm-perigo-ok" type="button" disabled>Apagar de vez</button>
+        </div>
+      </div>`;
+    overlay.querySelector('.confirm-msg').textContent = mensagem;
+    document.body.appendChild(overlay);
+
+    const input = overlay.querySelector('.confirm-input');
+    const btnOk = overlay.querySelector('.confirm-perigo-ok');
+
+    const fechar = (resultado) => {
+      overlay.remove();
+      resolve(resultado);
+    };
+    input.addEventListener('input', () => {
+      btnOk.disabled = input.value.trim().toUpperCase() !== palavra;
+    });
+    btnOk.addEventListener('click', () => { if (!btnOk.disabled) fechar(true); });
+    overlay.querySelector('.confirm-cancelar').addEventListener('click', () => fechar(false));
+    overlay.addEventListener('click', (e) => { if (e.target === overlay) fechar(false); });
+    requestAnimationFrame(() => overlay.classList.add('confirm-visivel'));
+  });
+}

@@ -44,6 +44,11 @@
     border-bottom: 1.5px solid var(--card-border); position: sticky; top: 0; background: var(--bg); z-index: 10;
   }
   header.topo .marca { font-weight: 800; font-size: 1.1rem; color: var(--accent-light); }
+  .avatar-iniciais {
+    width: 30px; height: 30px; border-radius: 50%; background: linear-gradient(135deg, var(--accent), var(--accent-light));
+    color: var(--card-btn-text); font-weight: 800; font-size: .78rem; display: flex; align-items: center;
+    justify-content: center; flex-shrink: 0;
+  }
   .btn-menu {
     display: inline-block; background: transparent; border: none; color: var(--text); font-size: 1.3rem;
     cursor: pointer; padding: .2rem .4rem; line-height: 1;
@@ -154,7 +159,8 @@
       <button class="btn-menu" id="btn-abrir-menu" aria-label="Abrir menu">☰</button>
       <div class="marca">Pro'Bronze</div>
     </div>
-    <div style="display:flex;align-items:center;gap:.7rem">
+    <div style="display:flex;align-items:center;gap:.6rem">
+      <div class="avatar-iniciais" id="avatar-iniciais"></div>
       <span id="usuario-nome" style="font-size:.8rem;color:var(--muted)"></span>
       <button class="btn-secundario" id="btn-sair">Sair</button>
     </div>
@@ -431,7 +437,7 @@ import { criarCupom, escutarCupons, desativarCupom, calcularDescontoCupom } from
 import { exportarExcel, exportarPDF, montarRelatorioFinanceiro, COLUNAS_FINANCEIRO } from './js/relatorios.js';
 import { linkConfirmacaoAgendamento, linkCobrancaPendente } from './js/whatsapp.js';
 import { tutorialJaVisto, iniciarTutorial } from './js/tutorial.js';
-import { toast, confirmar, executar } from './js/ui-feedback.js';
+import { toast, confirmar, confirmarForte, executar } from './js/ui-feedback.js';
 import { db } from './js/firebase-config.js';
 
 window.addEventListener('unhandledrejection', (e) => {
@@ -451,6 +457,12 @@ let combosSelecionados = new Set();
 let sessaoAtiva = null; // { cabineId, agendamentoId, clienteId, tempoMin, iniciadoEm, valorBruto }
 let timerInterval = null;
 let pendenciasCache = [];
+
+function iniciaisDoNome(nome) {
+  const partes = (nome || '').trim().split(/\s+/).filter(Boolean);
+  if (partes.length === 0) return '?';
+  return (partes[0][0] + (partes[1]?.[0] || '')).toUpperCase();
+}
 
 // ── Login ──────────────────────────────────────────────
 $('btn-login').addEventListener('click', async () => {
@@ -475,6 +487,7 @@ onAuthChange((usuario) => {
   }
   usuarioAtual = usuario;
   $('usuario-nome').textContent = `${usuario.nome} · ${usuario.papel}`;
+  $('avatar-iniciais').textContent = iniciaisDoNome(usuario.nome);
   $('tela-login').style.display = 'none';
   $('painel').style.display = 'block';
   iniciarPainel();
@@ -797,7 +810,7 @@ function renderCabines(cabines) {
   grid.querySelectorAll('[data-excluir]').forEach((btn) => {
     btn.addEventListener('click', async (e) => {
       e.stopPropagation();
-      if (!(await confirmar('Excluir esta cabine? Essa ação não pode ser desfeita.'))) return;
+      if (!(await confirmarForte('Excluir esta cabine? Essa ação não pode ser desfeita.'))) return;
       await excluirCabine(btn.dataset.excluir);
       toast('Cabine excluída.', 'sucesso');
     });
