@@ -101,6 +101,11 @@ import { signInWithEmailAndPassword, signOut, onAuthStateChanged } from 'https:/
 import { collection, onSnapshot, doc, updateDoc } from 'https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js';
 import { toast, confirmar } from './js/ui-feedback.js';
 
+window.addEventListener('unhandledrejection', (e) => {
+  console.error(e.reason);
+  toast('Algo deu errado. Tente novamente.', 'erro');
+});
+
 const $ = (id) => document.getElementById(id);
 
 $('btn-login').addEventListener('click', async () => {

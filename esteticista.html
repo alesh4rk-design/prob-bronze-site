@@ -361,8 +361,13 @@ import { criarCupom, escutarCupons, desativarCupom, calcularDescontoCupom } from
 import { exportarExcel, exportarPDF, montarRelatorioFinanceiro, COLUNAS_FINANCEIRO } from './js/relatorios.js';
 import { linkConfirmacaoAgendamento, linkCobrancaPendente } from './js/whatsapp.js';
 import { tutorialJaVisto, iniciarTutorial } from './js/tutorial.js';
-import { toast, confirmar } from './js/ui-feedback.js';
+import { toast, confirmar, executar } from './js/ui-feedback.js';
 import { db } from './js/firebase-config.js';
+
+window.addEventListener('unhandledrejection', (e) => {
+  console.error(e.reason);
+  toast('Algo deu errado. Tente novamente.', 'erro');
+});
 import { collection, query, where, getDocs, Timestamp } from 'https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js';
 let pacotesCache = [];
 let cuponsCache = [];
@@ -501,6 +506,7 @@ $('btn-criar-produto').addEventListener('click', async () => {
   if (!nome || !quantidade) { toast('Preencha nome e quantidade.', 'aviso'); return; }
   await criarProdutoCabine(usuarioAtual.negocioId, { nome, quantidade, unidade, estoqueMinimo });
   $('prod-nome').value = ''; $('prod-qtd').value = ''; $('prod-minimo').value = '0';
+  toast('Produto cadastrado.', 'sucesso');
 });
 
 function renderCupons(cupons) {
@@ -528,6 +534,7 @@ $('btn-criar-cupom').addEventListener('click', async () => {
   if (!codigo || !valor) { toast('Preencha código e valor.', 'aviso'); return; }
   await criarCupom(usuarioAtual.negocioId, { codigo, tipoDesconto, valor });
   $('cup-codigo').value = ''; $('cup-valor').value = '';
+  toast('Cupom criado.', 'sucesso');
 });
 
 // ── Relatórios ──────────────────────────────────────────
@@ -623,6 +630,7 @@ $('btn-criar-pacote').addEventListener('click', async () => {
   if (!clienteId || !totalSessoes || !valorTotal) { toast('Preencha cliente, total de sessões e valor.', 'aviso'); return; }
   await criarPacote(usuarioAtual.negocioId, { clienteId, clienteNome, totalSessoes, valorTotal });
   $('pac-cliente').value = ''; $('pac-total').value = ''; $('pac-valor').value = '';
+  toast('Pacote criado.', 'sucesso');
 });
 
 function preencherSelectClientes(clientes) {
@@ -726,6 +734,7 @@ $('btn-criar-cliente').addEventListener('click', async () => {
     observacoesPele: $('cli-obs-pele').value.trim()
   });
   $('cli-nome').value = ''; $('cli-wpp').value = ''; $('cli-fitzpatrick').value = ''; $('cli-obs-pele').value = '';
+  toast('Cliente cadastrada.', 'sucesso');
 });
 
 $('btn-criar-servico').addEventListener('click', async () => {
@@ -735,6 +744,7 @@ $('btn-criar-servico').addEventListener('click', async () => {
   if (!nome || !preco || !duracaoMin) { toast('Preencha nome, preço e duração.', 'aviso'); return; }
   await criarServico(usuarioAtual.negocioId, { nome, preco, duracaoMin });
   $('serv-nome').value = ''; $('serv-preco').value = ''; $('serv-duracao').value = '';
+  toast('Serviço cadastrado.', 'sucesso');
 });
 
 // Sugere tempo de cabine com base na ficha de pele da cliente selecionada
@@ -857,6 +867,7 @@ $('btn-confirmar-pagamento').addEventListener('click', async () => {
   sessaoAtiva = null;
   $('card-timer').style.display = 'none';
   $('modal-pagamento').style.display = 'none';
+  toast('Sessão finalizada e pagamento registrado.', 'sucesso');
 });
 
 // ── Novo agendamento ──────────────────────────────────────

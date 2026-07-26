@@ -23,6 +23,19 @@ export function toast(mensagem, tipo = 'info') {
   }, 3800);
 }
 
+// Envolve uma ação assíncrona (ex.: escrita no Firestore) com feedback de erro/sucesso
+export async function executar(fn, msgSucesso) {
+  try {
+    const resultado = await fn();
+    if (msgSucesso) toast(msgSucesso, 'sucesso');
+    return resultado;
+  } catch (err) {
+    console.error(err);
+    toast('Algo deu errado. Tente novamente.', 'erro');
+    throw err;
+  }
+}
+
 export function confirmar(mensagem) {
   return new Promise((resolve) => {
     const overlay = document.createElement('div');
