@@ -43,13 +43,14 @@ export function resetSenha(email) {
   return sendPasswordResetEmail(auth, email);
 }
 
-async function criarNegocioEDono(uid, { nomeNegocio, nomeDono, email }) {
+async function criarNegocioEDono(uid, { nomeNegocio, nomeDono, email, whatsappNegocio = "" }) {
   const negocioRef = doc(db, "negocios", uid); // negocioId = uid do dono
   const agora = new Date();
   const trialFim = new Date(agora.getTime() + 7 * 24 * 60 * 60 * 1000);
 
   await setDoc(negocioRef, {
     nome: nomeNegocio,
+    whatsappNegocio,
     status: "trial",
     trialInicio: serverTimestamp(),
     trialFim: trialFim,
@@ -66,20 +67,20 @@ async function criarNegocioEDono(uid, { nomeNegocio, nomeDono, email }) {
 }
 
 // Cria negócio (trial 7 dias) + usuário dono — usado no cadastro público (index.html)
-export async function cadastrarNegocioComDono({ nomeNegocio, email, senha, nomeDono }) {
+export async function cadastrarNegocioComDono({ nomeNegocio, email, senha, nomeDono, whatsappNegocio = "" }) {
   const cred = await createUserWithEmailAndPassword(auth, email, senha);
-  await criarNegocioEDono(cred.user.uid, { nomeNegocio, nomeDono, email });
+  await criarNegocioEDono(cred.user.uid, { nomeNegocio, nomeDono, email, whatsappNegocio });
   return cred.user.uid;
 }
 
 // Cadastro público via Google — mesma lógica, sem senha
-export async function cadastrarNegocioComDonoGoogle({ nomeNegocio, nomeDono }) {
+export async function cadastrarNegocioComDonoGoogle({ nomeNegocio, nomeDono, whatsappNegocio = "" }) {
   const cred = await signInWithPopup(auth, googleProvider);
   const jaExiste = await getDoc(doc(db, "usuarios", cred.user.uid));
   if (jaExiste.exists()) {
     throw new Error("Este Google já tem uma conta cadastrada — faça login em vez de se cadastrar.");
   }
-  await criarNegocioEDono(cred.user.uid, { nomeNegocio, nomeDono, email: cred.user.email });
+  await criarNegocioEDono(cred.user.uid, { nomeNegocio, nomeDono, email: cred.user.email, whatsappNegocio });
   return cred.user.uid;
 }
 
