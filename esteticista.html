@@ -666,7 +666,7 @@ window.addEventListener('unhandledrejection', (e) => {
 window.addEventListener('firestore-erro', () => {
   toast('Não foi possível carregar alguns dados. Verifique sua conexão e recarregue a página.', 'erro');
 });
-import { collection, query, where, getDocs, Timestamp } from 'https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js';
+import { collection, query, where, getDocs } from 'https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js';
 let pacotesCache = [];
 let cuponsCache = [];
 
@@ -937,17 +937,18 @@ let graficoFormasPagamento = null;
 const CORES_FORMA_PAGAMENTO = { dinheiro: '#7BA05B', pix: '#C68642', credito: '#D9A441', debito: '#E8B87D', cartao: '#D9A441' };
 
 async function buscarFinanceiroEntre(de, ate) {
-  const inicio = Timestamp.fromDate(new Date(de + 'T00:00:00'));
-  const fim = Timestamp.fromDate(new Date(ate + 'T23:59:59'));
-  const q = query(
-    collection(db, 'financeiro'),
-    where('negocioId', '==', usuarioAtual.negocioId),
-    where('dataHora', '>=', inicio),
-    where('dataHora', '<=', fim)
-  );
+  // Filtra a data no próprio código (não no Firestore) pra não depender
+  // de índice composto — mesmo padrão já usado em escutarFinanceiroPeriodo.
+  const inicio = new Date(de + 'T00:00:00');
+  const fim = new Date(ate + 'T23:59:59');
+  const q = query(collection(db, 'financeiro'), where('negocioId', '==', usuarioAtual.negocioId));
   const snap = await getDocs(q);
   const registros = [];
-  snap.forEach((d) => registros.push(d.data()));
+  snap.forEach((d) => {
+    const dado = d.data();
+    const data = dado.dataHora?.toDate ? dado.dataHora.toDate() : null;
+    if (data && data >= inicio && data <= fim) registros.push(dado);
+  });
   return registros;
 }
 
@@ -1010,18 +1011,7 @@ async function buscarFinanceiroPeriodo() {
   const de = $('rel-de').value;
   const ate = $('rel-ate').value;
   if (!de || !ate) { toast('Selecione o período (de/até).', 'aviso'); return null; }
-  const inicio = Timestamp.fromDate(new Date(de + 'T00:00:00'));
-  const fim = Timestamp.fromDate(new Date(ate + 'T23:59:59'));
-  const q = query(
-    collection(db, 'financeiro'),
-    where('negocioId', '==', usuarioAtual.negocioId),
-    where('dataHora', '>=', inicio),
-    where('dataHora', '<=', fim)
-  );
-  const snap = await getDocs(q);
-  const registros = [];
-  snap.forEach((d) => registros.push(d.data()));
-  return registros;
+  return buscarFinanceiroEntre(de, ate);
 }
 
 $('btn-exportar-excel').addEventListener('click', async () => {
