@@ -41,3 +41,33 @@ export function linkMensagemLivre({ whatsapp }) {
   const numero = limparNumero(whatsapp);
   return `https://wa.me/55${numero}`;
 }
+
+export function linkLembreteVespera({ whatsapp, clienteNome, servicos, dataHoraTexto, nomeNegocio }) {
+  const numero = limparNumero(whatsapp);
+  const texto = `Oi, ${clienteNome}! Passando pra lembrar do seu horário amanhã na ${nomeNegocio}:\n${servicos} em ${dataHoraTexto}.\nAté lá! ☀️`;
+  return `https://wa.me/55${numero}?text=${encodeURIComponent(texto)}`;
+}
+
+export function linkSuaVezChegando({ whatsapp, clienteNome, nomeNegocio }) {
+  const numero = limparNumero(whatsapp);
+  const texto = `Oi, ${clienteNome}! Já é praticamente sua vez na ${nomeNegocio} — pode vir se aproximando que já vamos te chamar! 😊`;
+  return `https://wa.me/55${numero}?text=${encodeURIComponent(texto)}`;
+}
+
+export function linkPromocao({ whatsapp, clienteNome, textoPromocao, nomeNegocio }) {
+  const numero = limparNumero(whatsapp);
+  const texto = `Oi, ${clienteNome}! Tem novidade na ${nomeNegocio}: ${textoPromocao} Bora aproveitar? ☀️🎁`;
+  return `https://wa.me/55${numero}?text=${encodeURIComponent(texto)}`;
+}
+
+export function linkAniversario({ whatsapp, clienteNome, nomeNegocio }) {
+  const numero = limparNumero(whatsapp);
+  const texto = `Feliz aniversário, ${clienteNome}! 🎉 A equipe da ${nomeNegocio} deseja um dia lindo pra você. Como presente, fala com a gente que preparamos algo especial!`;
+  return `https://wa.me/55${numero}?text=${encodeURIComponent(texto)}`;
+}
+
+export function linkAgradecimento({ whatsapp, clienteNome, nomeNegocio }) {
+  const numero = limparNumero(whatsapp);
+  const texto = `Oi, ${clienteNome}! Muito obrigada por ter vindo na ${nomeNegocio} hoje. Foi um prazer te atender — até a próxima! ☀️`;
+  return `https://wa.me/55${numero}?text=${encodeURIComponent(texto)}`;
+}

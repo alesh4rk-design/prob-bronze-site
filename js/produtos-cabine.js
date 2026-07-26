@@ -6,9 +6,9 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
 import { notificarErroFirestore } from "./firestore-erro.js";
 
-export async function criarProdutoCabine(negocioId, { nome, quantidade, unidade = "ml", estoqueMinimo = 0 }) {
+export async function criarProdutoCabine(negocioId, { nome, quantidade, unidade = "ml", estoqueMinimo = 0, precoVenda = 0 }) {
   return addDoc(collection(db, "produtosCabine"), {
-    negocioId, nome, quantidade, unidade, estoqueMinimo,
+    negocioId, nome, quantidade, unidade, estoqueMinimo, precoVenda,
     criadoEm: serverTimestamp()
   });
 }

@@ -408,6 +408,7 @@
         <div class="input-group"><label>Quantidade</label><input type="number" id="prod-qtd"></div>
         <div class="input-group"><label>Unidade</label><input type="text" id="prod-unidade" value="ml"></div>
         <div class="input-group"><label>Estoque mínimo (alerta)</label><input type="number" id="prod-minimo" value="0"></div>
+        <div class="input-group"><label>Preço de venda (R$, se vender pra cliente)</label><input type="number" id="prod-preco-venda" step="0.01" value="0"></div>
         <button class="btn-primario" id="btn-criar-produto">Adicionar Produto</button>
       </div>
       <div class="card">
@@ -483,9 +484,57 @@
   <!-- Modal de mensagens rápidas de WhatsApp -->
   <div id="modal-whatsapp" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:50;align-items:center;justify-content:center;padding:1rem">
     <div class="card" style="max-width:380px;width:100%">
-      <div class="card-titulo">WhatsApp — <span id="wpp-cliente-nome"></span></div>
+      <div class="card-titulo">Cliente — <span id="wpp-cliente-nome"></span></div>
+      <div id="wpp-acoes" style="display:flex;flex-direction:column;gap:.5rem;margin-bottom:.6rem"></div>
       <div id="wpp-opcoes" style="display:flex;flex-direction:column;gap:.5rem"></div>
       <button class="btn-secundario" style="width:100%;margin-top:.8rem" id="btn-fechar-whatsapp">Fechar</button>
+    </div>
+  </div>
+
+  <!-- Modal de registro de pagamento avulso (fora do fluxo de sessão) -->
+  <div id="modal-registrar-pagamento" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:55;align-items:center;justify-content:center;padding:1rem">
+    <div class="card" style="max-width:380px;width:100%">
+      <div class="card-titulo">Registrar Pagamento — <span id="rp-cliente-nome"></span></div>
+      <div class="input-group"><label>Valor (R$)</label><input type="number" id="rp-valor" step="0.01"></div>
+      <div class="input-group">
+        <label>Forma de pagamento</label>
+        <select id="rp-forma"><option value="dinheiro">Dinheiro</option><option value="pix">PIX</option><option value="cartao">Cartão</option></select>
+      </div>
+      <div class="input-group">
+        <label>Status</label>
+        <select id="rp-status">
+          <option value="pago">Já pagou</option>
+          <option value="pendente">Ainda não pagou (pendente)</option>
+        </select>
+      </div>
+      <button class="btn-primario" id="btn-confirmar-registrar-pagamento">Registrar</button>
+      <button class="btn-secundario" style="width:100%;margin-top:.5rem" id="btn-cancelar-registrar-pagamento">Cancelar</button>
+    </div>
+  </div>
+
+  <!-- Modal de venda de produto ao cliente -->
+  <div id="modal-vender-produto" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:55;align-items:center;justify-content:center;padding:1rem">
+    <div class="card" style="max-width:380px;width:100%">
+      <div class="card-titulo">Vender Produto — <span id="venda-cliente-nome"></span></div>
+      <div class="input-group">
+        <label>Produto</label>
+        <select id="venda-produto"><option value="">Selecione...</option></select>
+      </div>
+      <div class="input-group"><label>Quantidade</label><input type="number" id="venda-quantidade" value="1" min="1"></div>
+      <div class="input-group"><label>Valor total (R$)</label><input type="number" id="venda-valor" step="0.01"></div>
+      <div class="input-group">
+        <label>Forma de pagamento</label>
+        <select id="venda-forma"><option value="dinheiro">Dinheiro</option><option value="pix">PIX</option><option value="cartao">Cartão</option></select>
+      </div>
+      <div class="input-group">
+        <label>Status</label>
+        <select id="venda-status">
+          <option value="pago">Já pagou</option>
+          <option value="pendente">Ainda não pagou (pendente)</option>
+        </select>
+      </div>
+      <button class="btn-primario" id="btn-confirmar-venda">Confirmar Venda</button>
+      <button class="btn-secundario" style="width:100%;margin-top:.5rem" id="btn-cancelar-venda">Cancelar</button>
     </div>
   </div>
 </div>
@@ -504,12 +553,13 @@ import { criarMembroEquipe, escutarEquipe, excluirMembroEquipe } from './js/equi
 import { tempoMaxRecomendado } from './js/ficha-pele.js';
 import { registrarPagamento, escutarPendencias, quitarPendencia, resumoFinanceiro, escutarFinanceiroPeriodo } from './js/financeiro.js';
 import { criarPacote, escutarPacotesDoNegocio, consumirSessaoDoPacote } from './js/pacotes-sessoes.js';
-import { criarProdutoCabine, escutarProdutosCabine, produtosEmAlerta } from './js/produtos-cabine.js';
+import { criarProdutoCabine, escutarProdutosCabine, produtosEmAlerta, baixarEstoque } from './js/produtos-cabine.js';
 import { criarCupom, escutarCupons, desativarCupom, calcularDescontoCupom } from './js/cupons.js';
 import { exportarExcel, exportarPDF, montarRelatorioFinanceiro, COLUNAS_FINANCEIRO } from './js/relatorios.js';
 import {
   linkConfirmacaoAgendamento, linkCobrancaPendente, linkAtrasoAgendamento,
-  linkClienteSumido, linkMensagemLivre, linkLembreteIntervalo
+  linkClienteSumido, linkMensagemLivre, linkLembreteIntervalo,
+  linkSuaVezChegando, linkPromocao, linkAniversario, linkAgradecimento
 } from './js/whatsapp.js';
 import { verificarIntervaloMinimo } from './js/ficha-pele.js';
 import { tutorialJaVisto, iniciarTutorial } from './js/tutorial.js';
@@ -538,6 +588,7 @@ let sessaoAtiva = null; // { cabineId, agendamentoId, clienteId, tempoMin, inici
 let timerInterval = null;
 let pendenciasCache = [];
 let equipeCache = [];
+let produtosCabineCache = [];
 
 function iniciaisDoNome(nome) {
   const partes = (nome || '').trim().split(/\s+/).filter(Boolean);
@@ -665,7 +716,11 @@ function iniciarPainel() {
     $('fin-comissao').textContent = 'R$' + resumo.totalComissao.toFixed(2);
   });
 
-  escutarProdutosCabine(negocioId, renderProdutos);
+  escutarProdutosCabine(negocioId, (produtos) => {
+    produtosCabineCache = produtos;
+    renderProdutos(produtos);
+    preencherSelectVenderProduto(produtos);
+  });
   escutarCupons(negocioId, (cupons) => {
     cuponsCache = cupons;
     renderCupons(cupons);
@@ -700,9 +755,10 @@ $('btn-criar-produto').addEventListener('click', async () => {
   const quantidade = Number($('prod-qtd').value);
   const unidade = $('prod-unidade').value.trim() || 'ml';
   const estoqueMinimo = Number($('prod-minimo').value) || 0;
+  const precoVenda = Number($('prod-preco-venda').value) || 0;
   if (!nome || !quantidade) { toast('Preencha nome e quantidade.', 'aviso'); return; }
-  await criarProdutoCabine(usuarioAtual.negocioId, { nome, quantidade, unidade, estoqueMinimo });
-  $('prod-nome').value = ''; $('prod-qtd').value = ''; $('prod-minimo').value = '0';
+  await criarProdutoCabine(usuarioAtual.negocioId, { nome, quantidade, unidade, estoqueMinimo, precoVenda });
+  $('prod-nome').value = ''; $('prod-qtd').value = ''; $('prod-minimo').value = '0'; $('prod-preco-venda').value = '0';
   toast('Produto cadastrado.', 'sucesso');
 });
 
@@ -920,25 +976,41 @@ function renderClientes(clientes) {
   wrap.innerHTML = clientes.map((c) => `
     <div class="agendamento-item">
       <div class="agendamento-info">
-        <div class="nome nome-clicavel" data-abrir-whatsapp="${c.id}">${c.nome} 💬</div>
+        <div class="nome nome-clicavel" data-abrir-menu-cliente="${c.id}">${c.nome} 💬</div>
         <div class="detalhe">${c.whatsapp || 'sem WhatsApp'}${c.fichaPele ? ' · Fitzpatrick ' + c.fichaPele.tipoFitzpatrick : ' · sem ficha de pele'}</div>
       </div>
     </div>
   `).join('');
-  wrap.querySelectorAll('[data-abrir-whatsapp]').forEach((el) => {
-    el.addEventListener('click', () => abrirMenuWhatsapp(el.dataset.abrirWhatsapp));
+  wrap.querySelectorAll('[data-abrir-menu-cliente]').forEach((el) => {
+    el.addEventListener('click', () => abrirMenuCliente(el.dataset.abrirMenuCliente));
   });
 }
 
-// ── Menu de mensagens rápidas de WhatsApp ────────────────
-function abrirMenuWhatsapp(clienteId) {
+// ── Menu de ações rápidas por cliente (WhatsApp, pagamento, venda) ──
+let clienteMenuAtualId = null;
+
+function abrirMenuCliente(clienteId) {
   const cliente = clientesCache.find((c) => c.id === clienteId);
   if (!cliente) return;
-  if (!cliente.whatsapp) { toast('Esta cliente não tem WhatsApp cadastrado.', 'aviso'); return; }
-
+  clienteMenuAtualId = clienteId;
   const nomeNegocio = "Pro'Bronze";
-  const opcoes = [];
 
+  $('wpp-cliente-nome').textContent = cliente.nome;
+
+  $('wpp-acoes').innerHTML = `
+    <button class="btn-primario" id="btn-ir-registrar-pagamento" style="text-align:left">💳 Registrar Pagamento</button>
+    <button class="btn-primario" id="btn-ir-vender-produto" style="text-align:left">🛍️ Vender Produto</button>
+  `;
+  $('btn-ir-registrar-pagamento').addEventListener('click', () => abrirModalRegistrarPagamento(clienteId));
+  $('btn-ir-vender-produto').addEventListener('click', () => abrirModalVenderProduto(clienteId));
+
+  if (!cliente.whatsapp) {
+    $('wpp-opcoes').innerHTML = '<div class="empty-state">Sem WhatsApp cadastrado — mensagens indisponíveis.</div>';
+    $('modal-whatsapp').style.display = 'flex';
+    return;
+  }
+
+  const opcoes = [];
   const pendencia = pendenciasCache.find((p) => p.clienteId === clienteId);
   if (pendencia) {
     opcoes.push({
@@ -964,16 +1036,15 @@ function abrirMenuWhatsapp(clienteId) {
     });
   }
 
-  opcoes.push({
-    texto: `⏰ Avisar atraso (não chegou no horário)`,
-    link: linkAtrasoAgendamento({ whatsapp: cliente.whatsapp, clienteNome: cliente.nome, minutosAtraso: 15, nomeNegocio })
-  });
-  opcoes.push({
-    texto: `💬 Abrir conversa (mensagem livre)`,
-    link: linkMensagemLivre({ whatsapp: cliente.whatsapp })
-  });
+  opcoes.push(
+    { texto: `⏰ Avisar atraso (não chegou no horário)`, link: linkAtrasoAgendamento({ whatsapp: cliente.whatsapp, clienteNome: cliente.nome, minutosAtraso: 15, nomeNegocio }) },
+    { texto: `😊 Já é sua vez (fila de espera)`, link: linkSuaVezChegando({ whatsapp: cliente.whatsapp, clienteNome: cliente.nome, nomeNegocio }) },
+    { texto: `🙏 Agradecimento pós-atendimento`, link: linkAgradecimento({ whatsapp: cliente.whatsapp, clienteNome: cliente.nome, nomeNegocio }) },
+    { texto: `🎁 Promoção especial`, link: linkPromocao({ whatsapp: cliente.whatsapp, clienteNome: cliente.nome, textoPromocao: 'temos uma condição especial pra você esta semana.', nomeNegocio }) },
+    { texto: `🎉 Feliz aniversário`, link: linkAniversario({ whatsapp: cliente.whatsapp, clienteNome: cliente.nome, nomeNegocio }) },
+    { texto: `💬 Abrir conversa (mensagem livre)`, link: linkMensagemLivre({ whatsapp: cliente.whatsapp }) }
+  );
 
-  $('wpp-cliente-nome').textContent = cliente.nome;
   $('wpp-opcoes').innerHTML = opcoes.map((o) => `
     <a class="btn-secundario" href="${o.link}" target="_blank" style="text-decoration:none;text-align:left;display:block">${o.texto}</a>
   `).join('');
@@ -982,6 +1053,108 @@ function abrirMenuWhatsapp(clienteId) {
 
 $('btn-fechar-whatsapp').addEventListener('click', () => {
   $('modal-whatsapp').style.display = 'none';
+});
+
+// ── Registrar pagamento avulso (fora do fluxo de sessão) ─────────
+function abrirModalRegistrarPagamento(clienteId) {
+  $('modal-whatsapp').style.display = 'none';
+  const cliente = clientesCache.find((c) => c.id === clienteId);
+  $('rp-cliente-nome').textContent = cliente?.nome || '';
+  $('rp-valor').value = '';
+  $('rp-forma').value = 'dinheiro';
+  $('rp-status').value = 'pago';
+  $('modal-registrar-pagamento').style.display = 'flex';
+}
+
+$('btn-cancelar-registrar-pagamento').addEventListener('click', () => {
+  $('modal-registrar-pagamento').style.display = 'none';
+});
+
+$('btn-confirmar-registrar-pagamento').addEventListener('click', async () => {
+  const valor = Number($('rp-valor').value);
+  if (!valor || valor <= 0) { toast('Informe um valor válido.', 'aviso'); return; }
+  const cliente = clientesCache.find((c) => c.id === clienteMenuAtualId);
+  const membroAtivo = equipeCache.find((m) => m.id === usuarioAtual.uid);
+  await registrarPagamento(usuarioAtual.negocioId, {
+    agendamentoId: null,
+    clienteId: clienteMenuAtualId,
+    clienteNome: cliente?.nome || '',
+    valorBruto: valor,
+    desconto: 0,
+    formaPagamento: $('rp-forma').value,
+    statusPagamento: $('rp-status').value,
+    esteticistaUid: usuarioAtual.uid,
+    percentualComissao: membroAtivo?.percentualComissao || 0
+  });
+  $('modal-registrar-pagamento').style.display = 'none';
+  toast('Pagamento registrado.', 'sucesso');
+});
+
+// ── Vender produto ao cliente ────────────────────────────
+function preencherSelectVenderProduto(produtos) {
+  const sel = $('venda-produto');
+  if (!sel) return;
+  const atual = sel.value;
+  sel.innerHTML = '<option value="">Selecione...</option>' +
+    produtos.map((p) => `<option value="${p.id}" data-preco="${p.precoVenda || 0}">${p.nome} (${p.quantidade}${p.unidade} em estoque)</option>`).join('');
+  sel.value = atual;
+}
+
+function abrirModalVenderProduto(clienteId) {
+  $('modal-whatsapp').style.display = 'none';
+  const cliente = clientesCache.find((c) => c.id === clienteId);
+  $('venda-cliente-nome').textContent = cliente?.nome || '';
+  $('venda-produto').value = '';
+  $('venda-quantidade').value = '1';
+  $('venda-valor').value = '';
+  $('venda-forma').value = 'dinheiro';
+  $('venda-status').value = 'pago';
+  $('modal-vender-produto').style.display = 'flex';
+}
+
+$('venda-produto').addEventListener('change', () => {
+  const opt = $('venda-produto').selectedOptions[0];
+  const preco = Number(opt?.dataset.preco || 0);
+  const qtd = Number($('venda-quantidade').value) || 1;
+  $('venda-valor').value = (preco * qtd).toFixed(2);
+});
+$('venda-quantidade').addEventListener('input', () => {
+  const opt = $('venda-produto').selectedOptions[0];
+  const preco = Number(opt?.dataset.preco || 0);
+  const qtd = Number($('venda-quantidade').value) || 1;
+  if (preco > 0) $('venda-valor').value = (preco * qtd).toFixed(2);
+});
+
+$('btn-cancelar-venda').addEventListener('click', () => {
+  $('modal-vender-produto').style.display = 'none';
+});
+
+$('btn-confirmar-venda').addEventListener('click', async () => {
+  const produtoId = $('venda-produto').value;
+  const quantidade = Number($('venda-quantidade').value);
+  const valor = Number($('venda-valor').value);
+  if (!produtoId || !quantidade || !valor) { toast('Selecione o produto, quantidade e valor.', 'aviso'); return; }
+  const produto = produtosCabineCache.find((p) => p.id === produtoId);
+  if (produto && quantidade > produto.quantidade) {
+    toast('Quantidade maior que o estoque disponível.', 'aviso');
+    return;
+  }
+  const cliente = clientesCache.find((c) => c.id === clienteMenuAtualId);
+  const membroAtivo = equipeCache.find((m) => m.id === usuarioAtual.uid);
+  await baixarEstoque(produtoId, quantidade);
+  await registrarPagamento(usuarioAtual.negocioId, {
+    agendamentoId: null,
+    clienteId: clienteMenuAtualId,
+    clienteNome: cliente?.nome || '',
+    valorBruto: valor,
+    desconto: 0,
+    formaPagamento: $('venda-forma').value,
+    statusPagamento: $('venda-status').value,
+    esteticistaUid: usuarioAtual.uid,
+    percentualComissao: membroAtivo?.percentualComissao || 0
+  });
+  $('modal-vender-produto').style.display = 'none';
+  toast('Venda registrada.', 'sucesso');
 });
 
 function renderServicos(servicos) {
@@ -1111,7 +1284,7 @@ function renderAgendaDia(lista) {
     return `
       <div class="agendamento-item">
         <div class="agendamento-info">
-          <div class="nome">${hora} · ${ag.clienteNome}</div>
+          <div class="nome nome-clicavel" data-abrir-menu-cliente="${ag.clienteId}">${hora} · ${ag.clienteNome}</div>
           <div class="detalhe">${servicos} · ${ag.tempoMin}min · ${ag.origem}</div>
         </div>
         <div style="display:flex;align-items:center;gap:.5rem">
@@ -1128,6 +1301,9 @@ function renderAgendaDia(lista) {
       btn.dataset.iniciar, btn.dataset.cabine, Number(btn.dataset.tempo), btn.dataset.cliente, Number(btn.dataset.valor)
     ));
   });
+  wrap.querySelectorAll('[data-abrir-menu-cliente]').forEach((el) => {
+    el.addEventListener('click', () => abrirMenuCliente(el.dataset.abrirMenuCliente));
+  });
 }
 
 function renderFila(lista) {
@@ -1142,7 +1318,7 @@ function renderFila(lista) {
     return `
       <div class="agendamento-item">
         <div class="agendamento-info">
-          <div class="nome">${hora} · ${ag.clienteNome}</div>
+          <div class="nome nome-clicavel" data-abrir-menu-cliente="${ag.clienteId}">${hora} · ${ag.clienteNome}</div>
           <div class="detalhe">${servicos} · ${ag.tempoMin}min · ${ag.origem}</div>
         </div>
         <div style="display:flex;align-items:center;gap:.5rem">
@@ -1156,6 +1332,9 @@ function renderFila(lista) {
     `;
   }).join('');
 
+  wrap.querySelectorAll('[data-abrir-menu-cliente]').forEach((el) => {
+    el.addEventListener('click', () => abrirMenuCliente(el.dataset.abrirMenuCliente));
+  });
   wrap.querySelectorAll('[data-falta]').forEach((btn) => {
     btn.addEventListener('click', async () => {
       if (!(await confirmar('Marcar esta cliente como falta?'))) return;
