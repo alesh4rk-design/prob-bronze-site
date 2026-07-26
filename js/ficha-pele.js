@@ -1,5 +1,5 @@
 // Pro'Bronze — Ficha de Pele (Fitzpatrick) e regras de segurança
-import { db } from "./firebase-config.js?v=20260727i";
+import { db } from "./firebase-config.js?v=20260727j";
 import {
   doc, getDoc, setDoc, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";

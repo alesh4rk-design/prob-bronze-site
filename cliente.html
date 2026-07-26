@@ -7,7 +7,7 @@
 <meta http-equiv="Expires" content="0">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Pro'Bronze — Área da Cliente</title>
-<link rel="stylesheet" href="css/theme.css?v=20260727i">
+<link rel="stylesheet" href="css/theme.css?v=20260727j">
 <style>
   * { box-sizing: border-box; }
   body { margin: 0; background: var(--bg); color: var(--text); font-family: var(--font); min-height: 100vh; }
@@ -81,7 +81,7 @@
       <div id="agendar-avisos"></div>
       <div class="input-group">
         <label>Serviços (selecione um ou mais)</label>
-        <div id="agendar-servicos" class="empty-state">Carregando...</div>
+        <div id="agendar-servicos"><div class="empty-state">Carregando...</div></div>
       </div>
       <div class="input-group"><label>Data e hora</label><input type="datetime-local" id="agendar-datahora"></div>
       <button class="btn-primario" id="btn-agendar-online">Confirmar Agendamento</button>
@@ -107,18 +107,18 @@
 </div>
 
 <script type="module">
-import { onAuthChange, login, logout } from './js/auth.js?v=20260727i';
-import { db } from './js/firebase-config.js?v=20260727i';
+import { onAuthChange, login, logout } from './js/auth.js?v=20260727j';
+import { db } from './js/firebase-config.js?v=20260727j';
 import {
   collection, query, where, onSnapshot
 } from 'https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js';
-import { escutarServicos, calcularCombo } from './js/servicos.js?v=20260727i';
-import { criarAgendamento, contarConflitosHorario } from './js/agenda.js?v=20260727i';
-import { checarElegibilidade } from './js/agenda.js?v=20260727i';
-import { escutarCabines } from './js/cabines.js?v=20260727i';
-import { escutarConfigNegocio } from './js/config-negocio.js?v=20260727i';
-import { escutarHorarios, validarHorarioFuncionamento } from './js/horarios.js?v=20260727i';
-import { toast } from './js/ui-feedback.js?v=20260727i';
+import { escutarServicos, calcularCombo } from './js/servicos.js?v=20260727j';
+import { criarAgendamento, contarConflitosHorario } from './js/agenda.js?v=20260727j';
+import { checarElegibilidade } from './js/agenda.js?v=20260727j';
+import { escutarCabines } from './js/cabines.js?v=20260727j';
+import { escutarConfigNegocio } from './js/config-negocio.js?v=20260727j';
+import { escutarHorarios, validarHorarioFuncionamento } from './js/horarios.js?v=20260727j';
+import { toast } from './js/ui-feedback.js?v=20260727j';
 
 window.addEventListener('unhandledrejection', (e) => {
   console.error(e.reason);
@@ -275,8 +275,8 @@ function renderServicosAgendar(servicos) {
   const wrap = $('agendar-servicos');
   if (servicos.length === 0) { wrap.innerHTML = '<div class="empty-state">Nenhum serviço disponível no momento.</div>'; return; }
   wrap.innerHTML = servicos.map((s) => `
-    <label style="display:flex;align-items:center;gap:.5rem;padding:.5rem 0;font-size:.85rem">
-      <input type="checkbox" data-combo="${s.id}"> ${s.nome} — R$${Number(s.preco).toFixed(2)} (${s.duracaoMin}min)
+    <label style="display:flex;align-items:flex-start;gap:.5rem;padding:.5rem 0;font-size:.85rem;text-align:left">
+      <input type="checkbox" data-combo="${s.id}" style="flex-shrink:0;margin-top:.2rem"> ${s.nome} — R$${Number(s.preco).toFixed(2)} (${s.duracaoMin}min)
     </label>
   `).join('');
   wrap.querySelectorAll('[data-combo]').forEach((chk) => {
