@@ -7,16 +7,78 @@
 <meta http-equiv="Expires" content="0">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Pro'Bronze — Criar Acesso de Funcionário(a)</title>
-<link rel="stylesheet" href="css/theme.css?v=20260727v">
+<link rel="stylesheet" href="css/theme.css?v=20260727w">
 <style>
   * { box-sizing: border-box; }
   body {
     margin: 0; background: var(--bg); color: var(--text); font-family: var(--font); min-height: 100vh;
     display: flex; align-items: center; justify-content: center; padding: 1.5rem;
+    background: radial-gradient(circle at 20% 20%, rgba(var(--accent-rgb),.20), transparent 55%), var(--bg);
+    position: relative; overflow: hidden;
+  }
+  /* Raios de luz gigantes girando atrás de toda a tela */
+  body::before {
+    content: '';
+    position: absolute; top: 50%; left: 50%;
+    width: 160vmax; height: 160vmax;
+    transform: translate(-50%, -50%) rotate(0deg);
+    background: repeating-conic-gradient(from 0deg, rgba(var(--accent-rgb),.16) 0deg 3deg, transparent 3deg 18deg);
+    -webkit-mask-image: radial-gradient(circle, transparent 8%, black 18%, black 38%, transparent 58%);
+    mask-image: radial-gradient(circle, transparent 8%, black 18%, black 38%, transparent 58%);
+    z-index: 0;
+    animation: raios-girar 26s linear infinite;
+    pointer-events: none;
+  }
+  @keyframes raios-girar {
+    to { transform: translate(-50%, -50%) rotate(360deg); }
+  }
+  .card-wrap { position: relative; width: 100%; max-width: 420px; z-index: 1; padding: 4px; border-radius: 24px; }
+  /* Néon contínuo ao redor de todo o card */
+  .card-wrap::before {
+    content: ''; position: absolute; inset: 0; border-radius: 24px;
+    border: 3px solid var(--accent-light);
+    box-shadow: 0 0 10px 2px rgba(var(--accent-rgb),.9), 0 0 22px 6px rgba(var(--accent-rgb),.6), inset 0 0 14px 2px rgba(var(--accent-rgb),.5);
+    animation: neon-pulsar 2.2s ease-in-out infinite;
+    pointer-events: none;
+  }
+  @keyframes neon-pulsar {
+    0%, 100% { box-shadow: 0 0 10px 2px rgba(var(--accent-rgb),.9), 0 0 22px 6px rgba(var(--accent-rgb),.6), inset 0 0 14px 2px rgba(var(--accent-rgb),.5); }
+    50% { box-shadow: 0 0 16px 4px rgba(var(--accent-rgb),1), 0 0 34px 10px rgba(var(--accent-rgb),.8), inset 0 0 20px 4px rgba(var(--accent-rgb),.7); }
   }
   .card {
-    width: 100%; max-width: 420px; background: rgba(36,28,22,.72); backdrop-filter: blur(18px);
-    border: 1.5px solid var(--card-border); border-radius: 20px; padding: 2.1rem 1.9rem;
+    width: 100%; background: rgba(36,28,22,.72); backdrop-filter: blur(18px);
+    border: 1.5px solid var(--card-border); border-radius: 20px; padding: 2.7rem 1.9rem 2.1rem;
+    position: relative;
+  }
+  /* Sol no topo do card — só o emoji brilhando, sem fundo redondo */
+  .login-sol {
+    position: absolute; top: -90px; left: 50%; transform: translateX(-50%);
+    display: flex; align-items: center; justify-content: center; font-size: 3.6rem;
+    filter: drop-shadow(0 0 18px rgba(var(--accent-rgb),.85)) drop-shadow(0 0 40px rgba(var(--accent-rgb),.5));
+    animation: sol-pulsar 3s ease-in-out infinite;
+    z-index: 2;
+  }
+  @keyframes sol-pulsar {
+    0%, 100% {
+      transform: translateX(-50%) scale(1);
+      filter: drop-shadow(0 0 18px rgba(var(--accent-rgb),.85)) drop-shadow(0 0 40px rgba(var(--accent-rgb),.5));
+    }
+    50% {
+      transform: translateX(-50%) scale(1.12);
+      filter: drop-shadow(0 0 26px rgba(var(--accent-rgb),1)) drop-shadow(0 0 56px rgba(var(--accent-rgb),.65));
+    }
+  }
+  .btn-primario {
+    letter-spacing: .03em; text-shadow: 0 0 10px rgba(255,255,255,.35);
+    animation: btn-neon-pulsar 2.2s ease-in-out infinite;
+    transition: transform .12s ease, filter .12s ease;
+  }
+  .btn-primario:hover:not(:disabled) { transform: translateY(-1px); filter: brightness(1.1); }
+  .btn-primario:active:not(:disabled) { transform: translateY(0) scale(.98); }
+  .btn-primario:disabled { animation: none; }
+  @keyframes btn-neon-pulsar {
+    0%, 100% { box-shadow: 0 0 10px 1px rgba(var(--accent-rgb),.5), 0 4px 14px rgba(var(--accent-rgb),.28); }
+    50% { box-shadow: 0 0 20px 4px rgba(var(--accent-rgb),.85), 0 4px 20px rgba(var(--accent-rgb),.5); }
   }
   h1 { font-size: 1.35rem; margin: 0 0 .3rem; color: var(--accent-light); text-align: center; }
   p.sub { color: var(--muted); font-size: .85rem; margin: 0 0 1.5rem; text-align: center; }
@@ -37,7 +99,9 @@
 </head>
 <body>
 
+<div class="card-wrap">
 <div class="card" id="tela-form">
+  <div class="login-sol">☀️</div>
   <h1><span class="marca-pro">Pro</span><span class="marca-apo">'</span>Bronze</h1>
   <p class="sub">Criar acesso de funcionário(a)</p>
 
@@ -52,9 +116,10 @@
 <div class="card" id="tela-sem-negocio" style="display:none">
   <div class="erro-link">Link inválido — peça ao dono da loja o link correto de cadastro.</div>
 </div>
+</div>
 
 <script type="module">
-import { cadastrarFuncionarioComLogin } from './js/equipe.js?v=20260727v';
+import { cadastrarFuncionarioComLogin } from './js/equipe.js?v=20260727w';
 
 const $ = (id) => document.getElementById(id);
 const params = new URLSearchParams(window.location.search);

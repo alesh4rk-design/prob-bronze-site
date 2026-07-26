@@ -7,7 +7,7 @@
 <meta http-equiv="Expires" content="0">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Pro'Bronze — Admin</title>
-<link rel="stylesheet" href="css/theme.css?v=20260727v">
+<link rel="stylesheet" href="css/theme.css?v=20260727w">
 <style>
   * { box-sizing: border-box; }
   body { margin: 0; background: var(--bg); color: var(--text); font-family: var(--font); }
@@ -102,11 +102,11 @@
 </div>
 
 <script type="module">
-import { auth, db } from './js/firebase-config.js?v=20260727v';
-import { ADMIN_UID } from './js/admin-config.js?v=20260727v';
+import { auth, db } from './js/firebase-config.js?v=20260727w';
+import { ADMIN_UID } from './js/admin-config.js?v=20260727w';
 import { signInWithEmailAndPassword, signOut, onAuthStateChanged, sendPasswordResetEmail } from 'https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js';
 import { collection, onSnapshot, doc, updateDoc } from 'https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js';
-import { toast, confirmar } from './js/ui-feedback.js?v=20260727v';
+import { toast, confirmar } from './js/ui-feedback.js?v=20260727w';
 
 window.addEventListener('unhandledrejection', (e) => {
   console.error(e.reason);
