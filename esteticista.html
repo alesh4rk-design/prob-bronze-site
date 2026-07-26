@@ -424,6 +424,26 @@
         <canvas id="grafico-formas-pagamento" height="200"></canvas>
       </div>
       <div class="card">
+        <div class="card-titulo">Faturamento por Serviço</div>
+        <div id="fin-grafico-servico-vazio" class="empty-state" style="display:none">Sem dados no período selecionado.</div>
+        <canvas id="grafico-servico" height="220"></canvas>
+      </div>
+      <div class="card">
+        <div class="card-titulo">Online vs Presencial</div>
+        <div id="fin-grafico-origem-vazio" class="empty-state" style="display:none">Sem dados no período selecionado.</div>
+        <canvas id="grafico-origem" height="200"></canvas>
+      </div>
+      <div class="card">
+        <div class="card-titulo">Comissão por Funcionário</div>
+        <div id="fin-grafico-comissao-vazio" class="empty-state" style="display:none">Sem dados no período selecionado.</div>
+        <canvas id="grafico-comissao-funcionario" height="200"></canvas>
+      </div>
+      <div class="card">
+        <div class="card-titulo">Evolução Mensal (últimos 6 meses)</div>
+        <div id="fin-grafico-evolucao-vazio" class="empty-state" style="display:none">Sem dados nos últimos 6 meses.</div>
+        <canvas id="grafico-evolucao-mensal" height="200"></canvas>
+      </div>
+      <div class="card">
         <div class="card-titulo">Pendências</div>
         <div id="lista-pendencias"><div class="empty-state">Carregando...</div></div>
       </div>
@@ -856,6 +876,7 @@ function iniciarPainel() {
   $('fin-de').value = inicioMes.toISOString().slice(0, 10);
   $('fin-ate').value = fimMes.toISOString().slice(0, 10);
   atualizarAnaliseFinanceira();
+  atualizarEvolucaoMensal();
 
   escutarProdutosCabine(negocioId, (produtos) => {
     produtosCabineCache = produtos;
@@ -934,7 +955,25 @@ $('btn-criar-cupom').addEventListener('click', async () => {
 // ── Financeiro: análise do período (gráficos) ────────────
 let graficoFaturamentoDia = null;
 let graficoFormasPagamento = null;
+let graficoServico = null;
+let graficoOrigem = null;
+let graficoComissaoFuncionario = null;
+let graficoEvolucaoMensal = null;
 const CORES_FORMA_PAGAMENTO = { dinheiro: '#7BA05B', pix: '#C68642', credito: '#D9A441', debito: '#E8B87D', cartao: '#D9A441' };
+
+async function buscarAgendamentosEntre(de, ate) {
+  const inicio = new Date(de + 'T00:00:00');
+  const fim = new Date(ate + 'T23:59:59');
+  const q = query(collection(db, 'agendamentos'), where('negocioId', '==', usuarioAtual.negocioId));
+  const snap = await getDocs(q);
+  const lista = [];
+  snap.forEach((d) => {
+    const ag = d.data();
+    const data = ag.dataHora?.toDate ? ag.dataHora.toDate() : null;
+    if (data && data >= inicio && data <= fim) lista.push({ id: d.id, ...ag });
+  });
+  return lista;
+}
 
 async function buscarFinanceiroEntre(de, ate) {
   // Filtra a data no próprio código (não no Firestore) pra não depender
@@ -1006,9 +1045,146 @@ async function atualizarAnaliseFinanceira() {
       options: { plugins: { legend: { position: 'bottom', labels: { color: '#F5E6D3' } } } }
     });
   }
+
+  // Precisa dos agendamentos do período pra saber serviço e origem de cada pagamento
+  const agendamentosPeriodo = await buscarAgendamentosEntre(de, ate);
+  const agendamentoPorId = new Map(agendamentosPeriodo.map((ag) => [ag.id, ag]));
+
+  // Faturamento por serviço (distribui o valor do combo proporcionalmente ao preço de cada serviço)
+  const porServico = {};
+  registros.forEach((r) => {
+    if (!r.agendamentoId) return;
+    const ag = agendamentoPorId.get(r.agendamentoId);
+    if (!ag || !ag.servicos || ag.servicos.length === 0) return;
+    const totalCombo = ag.servicos.reduce((s, x) => s + (x.preco || 0), 0) || 1;
+    ag.servicos.forEach((s) => {
+      const parte = (s.preco / totalCombo) * (r.valorLiquido || 0);
+      porServico[s.nome] = (porServico[s.nome] || 0) + parte;
+    });
+  });
+  const servicosOrdenados = Object.entries(porServico).sort((a, b) => b[1] - a[1]).slice(0, 8);
+  $('fin-grafico-servico-vazio').style.display = servicosOrdenados.length === 0 ? 'block' : 'none';
+  $('grafico-servico').style.display = servicosOrdenados.length === 0 ? 'none' : 'block';
+  if (graficoServico) graficoServico.destroy();
+  if (servicosOrdenados.length > 0) {
+    graficoServico = new Chart($('grafico-servico'), {
+      type: 'bar',
+      data: {
+        labels: servicosOrdenados.map((e) => e[0]),
+        datasets: [{ label: 'Faturamento (R$)', data: servicosOrdenados.map((e) => e[1]), backgroundColor: '#E8B87D', borderRadius: 4 }]
+      },
+      options: {
+        indexAxis: 'y',
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { ticks: { color: '#B8A48C' }, grid: { color: 'rgba(245,230,211,.06)' }, beginAtZero: true },
+          y: { ticks: { color: '#B8A48C' }, grid: { display: false } }
+        }
+      }
+    });
+  }
+
+  // Online vs Presencial vs Avulso (venda de produto/pagamento sem agendamento)
+  const porOrigem = {};
+  registros.forEach((r) => {
+    let origem = 'avulso';
+    if (r.agendamentoId) origem = agendamentoPorId.get(r.agendamentoId)?.origem || 'presencial';
+    porOrigem[origem] = (porOrigem[origem] || 0) + (r.valorLiquido || 0);
+  });
+  const rotuloOrigem = { online: 'Online', presencial: 'Presencial', avulso: 'Avulso/Produto' };
+  const labelsOrigem = Object.keys(porOrigem);
+  $('fin-grafico-origem-vazio').style.display = labelsOrigem.length === 0 ? 'block' : 'none';
+  $('grafico-origem').style.display = labelsOrigem.length === 0 ? 'none' : 'block';
+  if (graficoOrigem) graficoOrigem.destroy();
+  if (labelsOrigem.length > 0) {
+    graficoOrigem = new Chart($('grafico-origem'), {
+      type: 'doughnut',
+      data: {
+        labels: labelsOrigem.map((o) => rotuloOrigem[o] || o),
+        datasets: [{ data: Object.values(porOrigem), backgroundColor: ['#C68642', '#7BA05B', '#D9A441', '#B8A48C'] }]
+      },
+      options: { plugins: { legend: { position: 'bottom', labels: { color: '#F5E6D3' } } } }
+    });
+  }
+
+  // Comissão por funcionário
+  const porFuncionario = {};
+  registros.forEach((r) => {
+    if (!r.esteticistaUid || !r.comissao) return;
+    porFuncionario[r.esteticistaUid] = (porFuncionario[r.esteticistaUid] || 0) + r.comissao;
+  });
+  const funcionariosOrdenados = Object.entries(porFuncionario).sort((a, b) => b[1] - a[1]);
+  $('fin-grafico-comissao-vazio').style.display = funcionariosOrdenados.length === 0 ? 'block' : 'none';
+  $('grafico-comissao-funcionario').style.display = funcionariosOrdenados.length === 0 ? 'none' : 'block';
+  if (graficoComissaoFuncionario) graficoComissaoFuncionario.destroy();
+  if (funcionariosOrdenados.length > 0) {
+    graficoComissaoFuncionario = new Chart($('grafico-comissao-funcionario'), {
+      type: 'bar',
+      data: {
+        labels: funcionariosOrdenados.map((e) => equipeCache.find((m) => m.id === e[0])?.nome || 'Ex-funcionário(a)'),
+        datasets: [{ label: 'Comissão (R$)', data: funcionariosOrdenados.map((e) => e[1]), backgroundColor: '#7BA05B', borderRadius: 4 }]
+      },
+      options: {
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { ticks: { color: '#B8A48C' }, grid: { color: 'rgba(245,230,211,.06)' } },
+          y: { ticks: { color: '#B8A48C' }, grid: { color: 'rgba(245,230,211,.06)' }, beginAtZero: true }
+        }
+      }
+    });
+  }
 }
 
-$('btn-fin-aplicar').addEventListener('click', atualizarAnaliseFinanceira);
+async function atualizarEvolucaoMensal() {
+  const q = query(collection(db, 'financeiro'), where('negocioId', '==', usuarioAtual.negocioId));
+  const snap = await getDocs(q);
+
+  const labelsOrdenados = [];
+  const porMes = {};
+  for (let i = 5; i >= 0; i--) {
+    const d = new Date(); d.setDate(1); d.setMonth(d.getMonth() - i);
+    const chave = d.toLocaleDateString('pt-BR', { month: 'short', year: '2-digit' });
+    labelsOrdenados.push(chave);
+    porMes[chave] = 0;
+  }
+
+  snap.forEach((doc) => {
+    const r = doc.data();
+    const data = r.dataHora?.toDate ? r.dataHora.toDate() : null;
+    if (!data) return;
+    const chave = data.toLocaleDateString('pt-BR', { month: 'short', year: '2-digit' });
+    if (chave in porMes) porMes[chave] += (r.valorLiquido || 0);
+  });
+
+  const temDados = Object.values(porMes).some((v) => v > 0);
+  $('fin-grafico-evolucao-vazio').style.display = temDados ? 'none' : 'block';
+  $('grafico-evolucao-mensal').style.display = temDados ? 'block' : 'none';
+  if (graficoEvolucaoMensal) graficoEvolucaoMensal.destroy();
+  if (temDados) {
+    graficoEvolucaoMensal = new Chart($('grafico-evolucao-mensal'), {
+      type: 'line',
+      data: {
+        labels: labelsOrdenados,
+        datasets: [{
+          label: 'Faturamento líquido (R$)', data: labelsOrdenados.map((l) => porMes[l]),
+          borderColor: '#C68642', backgroundColor: 'rgba(198,134,66,.25)', fill: true, tension: .3
+        }]
+      },
+      options: {
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { ticks: { color: '#B8A48C' }, grid: { color: 'rgba(245,230,211,.06)' } },
+          y: { ticks: { color: '#B8A48C' }, grid: { color: 'rgba(245,230,211,.06)' }, beginAtZero: true }
+        }
+      }
+    });
+  }
+}
+
+$('btn-fin-aplicar').addEventListener('click', () => {
+  atualizarAnaliseFinanceira();
+  atualizarEvolucaoMensal();
+});
 
 // ── Relatórios ──────────────────────────────────────────
 async function buscarFinanceiroPeriodo() {
