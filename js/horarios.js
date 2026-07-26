@@ -1,7 +1,7 @@
 // Pro'Bronze — Horário de Funcionamento (configurado pelo dono, guardado no doc do negócio)
-import { db } from "./firebase-config.js?v=20260726x";
+import { db } from "./firebase-config.js?v=20260726y";
 import { doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
-import { notificarErroFirestore } from "./firestore-erro.js?v=20260726x";
+import { notificarErroFirestore } from "./firestore-erro.js?v=20260726y";
 
 export const DIAS_SEMANA = [
   { chave: "seg", nome: "Segunda-feira" },

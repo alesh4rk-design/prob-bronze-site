@@ -1,12 +1,12 @@
 // Pro'Bronze — Insumos (itens de uso interno: creme, papel toalha, água
 // oxigenada etc.) Diferente de "Produtos", não tem preço de venda nem é
 // pra vender — é só pra controlar o gasto necessário pro funcionamento.
-import { db } from "./firebase-config.js?v=20260726x";
+import { db } from "./firebase-config.js?v=20260726y";
 import {
   collection, doc, addDoc, updateDoc, deleteDoc, increment,
   onSnapshot, query, where, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
-import { notificarErroFirestore } from "./firestore-erro.js?v=20260726x";
+import { notificarErroFirestore } from "./firestore-erro.js?v=20260726y";
 
 export async function criarInsumo(negocioId, { nome, quantidade, unidade = "unidade", quantidadeMinima = null, custoUnitario = null }) {
   return addDoc(collection(db, "insumos"), {
