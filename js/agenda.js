@@ -1,14 +1,14 @@
 // Pro'Bronze — Agenda (online + presencial), combo de serviços,
 // integrando ficha de pele e regras de segurança
-import { db } from "./firebase-config.js?v=20260726o";
+import { db } from "./firebase-config.js?v=20260726p";
 import {
   collection, doc, addDoc, updateDoc, getDoc, getDocs,
   onSnapshot, query, where, orderBy, serverTimestamp, Timestamp
 } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
 import {
   verificarIntervaloMinimo, verificarLimiteMensal, tempoMaxRecomendado
-} from "./ficha-pele.js?v=20260726o";
-import { notificarErroFirestore } from "./firestore-erro.js?v=20260726o";
+} from "./ficha-pele.js?v=20260726p";
+import { notificarErroFirestore } from "./firestore-erro.js?v=20260726p";
 
 // status: "agendado" | "em_andamento" | "concluido" | "cancelado" | "faltou"
 // origem: "online" | "presencial"
