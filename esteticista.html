@@ -783,7 +783,10 @@ function iniciarPainel() {
 
   escutarAgendamentosDoDia(negocioId, new Date(), renderAgendaDia);
 
-  escutarFilaEspera(negocioId, renderFila);
+  escutarFilaEspera(negocioId, (fila) => {
+    renderFila(fila);
+    restaurarSessoesEmAndamento(fila);
+  });
 
   escutarHorarios(negocioId, renderHorarios);
 
@@ -1461,6 +1464,7 @@ function renderCabines(cabines) {
       abrirModalFinalizarSessao(btn.dataset.finalizarSessao);
     });
   });
+  renderTimersFlutuante();
   atualizarTimers();
 }
 
@@ -1622,6 +1626,38 @@ function renderFila(lista) {
 }
 
 // ── Timer visual de sessão (múltiplas sessões simultâneas, 1 por cabine) ──
+// Reconstrói sessoesAtivas a partir dos agendamentos "em_andamento" salvos
+// no Firestore — sem isso, um recarregamento de página (ex.: navegador
+// derruba a aba em segundo plano no celular) apagava o timer da memória
+// mesmo a cabine continuando "Ocupada" e a sessão real continuando rolando.
+function restaurarSessoesEmAndamento(fila) {
+  const cabineIdsEmAndamento = new Set(
+    fila.filter((ag) => ag.status === 'em_andamento' && ag.cabineId).map((ag) => ag.cabineId)
+  );
+  let mudou = false;
+
+  Array.from(sessoesAtivas.keys()).forEach((cabineId) => {
+    if (!cabineIdsEmAndamento.has(cabineId)) { sessoesAtivas.delete(cabineId); mudou = true; }
+  });
+
+  fila.forEach((ag) => {
+    if (ag.status === 'em_andamento' && ag.cabineId && !sessoesAtivas.has(ag.cabineId)) {
+      const valorBruto = (ag.servicos || []).reduce((s, x) => s + (x.preco || 0), 0);
+      const iniciadoEm = ag.iniciadoEm?.toMillis ? ag.iniciadoEm.toMillis() : Date.now();
+      sessoesAtivas.set(ag.cabineId, {
+        agendamentoId: ag.id, clienteId: ag.clienteId, tempoMin: ag.tempoMin, valorBruto, iniciadoEm, avisado: false
+      });
+      mudou = true;
+    }
+  });
+
+  if (mudou) {
+    if (sessoesAtivas.size > 0 && !timerIntervalGlobal) timerIntervalGlobal = setInterval(atualizarTimers, 1000);
+    if (sessoesAtivas.size === 0 && timerIntervalGlobal) { clearInterval(timerIntervalGlobal); timerIntervalGlobal = null; }
+    renderCabines(cabinesCache);
+  }
+}
+
 async function iniciarSessao(agendamentoId, cabineId, tempoMin, clienteId, valorBruto) {
   if (sessoesAtivas.has(cabineId)) { toast('Já existe uma sessão em andamento nessa cabine.', 'aviso'); return; }
   await atualizarStatusCabine(cabineId, 'ocupada');
