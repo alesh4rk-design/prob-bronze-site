@@ -155,6 +155,27 @@
   .forma-pagamento-btn span { font-size: 1.3rem; }
   .forma-pagamento-btn.ativa { border-color: var(--accent); color: var(--accent-light); background: rgba(var(--accent-rgb),.14); }
 
+  #btn-timers-flutuante {
+    position: fixed; bottom: 1.2rem; right: 1.2rem; z-index: 200; width: 56px; height: 56px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--accent), var(--accent-light)); border: none; color: var(--card-btn-text);
+    font-size: 1.5rem; cursor: pointer; box-shadow: 0 8px 24px rgba(0,0,0,.4); display: flex; align-items: center; justify-content: center;
+  }
+  .timers-flutuante-badge {
+    position: absolute; top: -4px; right: -4px; background: var(--red); color: #fff; font-size: .68rem; font-weight: 800;
+    border-radius: 50%; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center;
+  }
+  #painel-timers-flutuante {
+    position: fixed; bottom: 5.2rem; right: 1.2rem; z-index: 200; width: 260px; max-width: calc(100vw - 2.4rem);
+    background: var(--card); border: 1.5px solid var(--card-border); border-radius: 14px; padding: 1rem;
+    box-shadow: 0 12px 36px rgba(0,0,0,.45);
+  }
+  .timer-flutuante-item {
+    display: flex; justify-content: space-between; align-items: center; padding: .5rem 0;
+    border-bottom: 1px solid var(--card-border); cursor: pointer; font-size: .85rem;
+  }
+  .timer-flutuante-item:last-child { border-bottom: none; }
+  .timer-flutuante-item .timer-flutuante-tempo { font-weight: 800; font-variant-numeric: tabular-nums; }
+
   .horario-dia {
     display: flex; align-items: center; gap: .7rem; flex-wrap: wrap; padding: .6rem 0;
     border-bottom: 1px solid var(--card-border);
@@ -596,6 +617,15 @@
       <button class="btn-primario" id="btn-confirmar-venda">Confirmar Venda</button>
       <button class="btn-secundario" style="width:100%;margin-top:.5rem" id="btn-cancelar-venda">Cancelar</button>
     </div>
+  </div>
+
+  <!-- Botão flutuante de sessões ativas (visível em qualquer aba) -->
+  <button id="btn-timers-flutuante" style="display:none">
+    ⏱️<span id="timers-flutuante-contador" class="timers-flutuante-badge"></span>
+  </button>
+  <div id="painel-timers-flutuante" style="display:none">
+    <div class="card-titulo" style="margin-bottom:.6rem">Sessões em andamento</div>
+    <div id="timers-flutuante-lista"></div>
   </div>
 </div>
 
@@ -1595,25 +1625,69 @@ function renderFila(lista) {
 async function iniciarSessao(agendamentoId, cabineId, tempoMin, clienteId, valorBruto) {
   if (sessoesAtivas.has(cabineId)) { toast('Já existe uma sessão em andamento nessa cabine.', 'aviso'); return; }
   await atualizarStatusCabine(cabineId, 'ocupada');
-  sessoesAtivas.set(cabineId, { agendamentoId, clienteId, tempoMin, valorBruto: valorBruto || 0, iniciadoEm: Date.now() });
+  sessoesAtivas.set(cabineId, { agendamentoId, clienteId, tempoMin, valorBruto: valorBruto || 0, iniciadoEm: Date.now(), avisado: false });
   document.querySelector('[data-aba="cabines"]').click();
   renderCabines(cabinesCache);
+  renderTimersFlutuante();
   if (!timerIntervalGlobal) timerIntervalGlobal = setInterval(atualizarTimers, 1000);
 }
 
+function nomeDaCabine(cabineId) {
+  return cabinesCache.find((c) => c.id === cabineId)?.nome || 'Cabine';
+}
+
+function renderTimersFlutuante() {
+  const btn = $('btn-timers-flutuante');
+  const contador = $('timers-flutuante-contador');
+  const lista = $('timers-flutuante-lista');
+  if (sessoesAtivas.size === 0) {
+    btn.style.display = 'none';
+    $('painel-timers-flutuante').style.display = 'none';
+    return;
+  }
+  btn.style.display = 'flex';
+  contador.textContent = sessoesAtivas.size;
+  lista.innerHTML = Array.from(sessoesAtivas.keys()).map((cabineId) => `
+    <div class="timer-flutuante-item" data-ir-cabine="${cabineId}">
+      <span>${nomeDaCabine(cabineId)}</span>
+      <span class="timer-flutuante-tempo" id="timer-flutuante-num-${cabineId}">00:00</span>
+    </div>
+  `).join('');
+  lista.querySelectorAll('[data-ir-cabine]').forEach((el) => {
+    el.addEventListener('click', () => {
+      document.querySelector('[data-aba="cabines"]').click();
+      $('painel-timers-flutuante').style.display = 'none';
+    });
+  });
+}
+
+$('btn-timers-flutuante').addEventListener('click', () => {
+  const painel = $('painel-timers-flutuante');
+  painel.style.display = painel.style.display === 'block' ? 'none' : 'block';
+});
+
 function atualizarTimers() {
   sessoesAtivas.forEach((sessao, cabineId) => {
-    const elNum = $(`timer-num-${cabineId}`);
-    const elFill = $(`timer-fill-${cabineId}`);
-    if (!elNum || !elFill) return;
     const totalSeg = sessao.tempoMin * 60;
     const decorrido = Math.floor((Date.now() - sessao.iniciadoEm) / 1000);
     const restante = Math.max(totalSeg - decorrido, 0);
     const min = String(Math.floor(restante / 60)).padStart(2, '0');
     const seg = String(restante % 60).padStart(2, '0');
-    elNum.textContent = `${min}:${seg}`;
-    elFill.style.width = `${(restante / totalSeg) * 100}%`;
-    elNum.style.color = restante === 0 ? 'var(--red)' : 'var(--accent-light)';
+    const textoTempo = `${min}:${seg}`;
+    const cor = restante === 0 ? 'var(--red)' : 'var(--accent-light)';
+
+    const elNum = $(`timer-num-${cabineId}`);
+    if (elNum) { elNum.textContent = textoTempo; elNum.style.color = cor; }
+    const elFill = $(`timer-fill-${cabineId}`);
+    if (elFill) elFill.style.width = `${(restante / totalSeg) * 100}%`;
+    const elFlutuante = $(`timer-flutuante-num-${cabineId}`);
+    if (elFlutuante) { elFlutuante.textContent = textoTempo; elFlutuante.style.color = cor; }
+
+    if (restante === 0 && !sessao.avisado) {
+      sessao.avisado = true;
+      toast(`⏱️ Tempo esgotado na ${nomeDaCabine(cabineId)}!`, 'aviso');
+      if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
+    }
   });
 }
 
@@ -1680,6 +1754,7 @@ $('btn-confirmar-pagamento').addEventListener('click', async () => {
   sessaoEmFinalizacao = null;
   $('modal-pagamento').style.display = 'none';
   renderCabines(cabinesCache);
+  renderTimersFlutuante();
   toast('Sessão finalizada e pagamento registrado.', 'sucesso');
 });
 
