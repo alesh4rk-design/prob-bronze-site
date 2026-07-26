@@ -80,14 +80,16 @@ service cloud.firestore {
         (request.method == "create" && ehDoMeuNegocio(request.resource.data.negocioId));
     }
 
+    // Produtos e financeiro: qualquer um do negócio pode ler/escrever no
+    // dia a dia (recepcionista registra pagamento e baixa estoque também)
     match /produtosCabine/{id} {
-      allow read, write: if ehDono() &&
-        (resource == null || ehDoMeuNegocio(resource.data.negocioId));
+      allow read, write: if ehDoMeuNegocio(resource.data.negocioId) ||
+        (request.method == "create" && ehDoMeuNegocio(request.resource.data.negocioId));
     }
 
     match /financeiro/{id} {
-      allow read, write: if ehDono() &&
-        (resource == null || ehDoMeuNegocio(resource.data.negocioId));
+      allow read, write: if ehDoMeuNegocio(resource.data.negocioId) ||
+        (request.method == "create" && ehDoMeuNegocio(request.resource.data.negocioId));
     }
 
     match /servicos/{id} {
