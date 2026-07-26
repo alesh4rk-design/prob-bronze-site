@@ -49,15 +49,25 @@
     cursor: pointer; padding: .2rem .4rem; line-height: 1;
   }
 
+  #titulo-secao-atual {
+    padding: .7rem 1.25rem; font-size: .85rem; font-weight: 700; color: var(--accent-light);
+    border-bottom: 1.5px solid var(--card-border); background: var(--card);
+  }
+
   .layout { display: flex; align-items: flex-start; }
 
   .sidebar {
     width: 250px; max-width: 82vw; flex-shrink: 0; background: var(--card); border-right: 1.5px solid var(--card-border);
-    padding: 1.1rem .8rem; display: flex; flex-direction: column; gap: 1.1rem; overflow-y: auto;
+    padding: 0 .8rem 1.1rem; display: flex; flex-direction: column; gap: 1.1rem; overflow-y: auto;
     position: fixed; top: 0; left: 0; height: 100vh; z-index: 30;
     transform: translateX(-105%); transition: transform .25s ease; box-shadow: 0 0 30px rgba(0,0,0,.4);
   }
   .sidebar.aberta { transform: translateX(0); }
+  .sidebar-cabecalho {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 1.1rem .3rem 1rem; margin: 0 -.8rem; padding-left: 1.1rem; padding-right: 1.1rem;
+    border-bottom: 1.5px solid var(--card-border);
+  }
   .nav-secao { display: flex; flex-direction: column; gap: .25rem; }
   .nav-titulo {
     font-size: .68rem; font-weight: 800; text-transform: uppercase; letter-spacing: .04em;
@@ -150,30 +160,36 @@
     </div>
   </header>
 
+  <div id="titulo-secao-atual">🛏️ Cabines</div>
+
   <div class="layout">
     <div class="sidebar-overlay" id="sidebar-overlay"></div>
     <nav class="sidebar" id="sidebar">
+      <div class="sidebar-cabecalho">
+        <div class="marca">Pro'Bronze</div>
+        <button class="btn-menu" id="btn-fechar-menu" aria-label="Fechar menu">✕</button>
+      </div>
       <div class="nav-secao">
         <div class="nav-titulo">Operação do dia</div>
-        <button class="aba-btn ativa" data-aba="cabines"><span class="nav-icone">🛏️</span>Cabines</button>
-        <button class="aba-btn" data-aba="agenda"><span class="nav-icone">📅</span>Agenda do Dia</button>
-        <button class="aba-btn" data-aba="novo"><span class="nav-icone">➕</span>Novo Agendamento</button>
+        <button class="aba-btn ativa" data-aba="cabines" data-titulo="🛏️ Cabines"><span class="nav-icone">🛏️</span>Cabines</button>
+        <button class="aba-btn" data-aba="agenda" data-titulo="📅 Agenda do Dia"><span class="nav-icone">📅</span>Agenda do Dia</button>
+        <button class="aba-btn" data-aba="novo" data-titulo="➕ Novo Agendamento"><span class="nav-icone">➕</span>Novo Agendamento</button>
       </div>
       <div class="nav-secao">
         <div class="nav-titulo">Catálogo</div>
-        <button class="aba-btn" data-aba="servicos"><span class="nav-icone">✂️</span>Serviços</button>
-        <button class="aba-btn" data-aba="cupons"><span class="nav-icone">🏷️</span>Cupons</button>
+        <button class="aba-btn" data-aba="servicos" data-titulo="✂️ Serviços"><span class="nav-icone">✂️</span>Serviços</button>
+        <button class="aba-btn" data-aba="cupons" data-titulo="🏷️ Cupons"><span class="nav-icone">🏷️</span>Cupons</button>
       </div>
       <div class="nav-secao">
         <div class="nav-titulo">Pessoas</div>
-        <button class="aba-btn" data-aba="clientes"><span class="nav-icone">👥</span>Clientes</button>
+        <button class="aba-btn" data-aba="clientes" data-titulo="👥 Clientes"><span class="nav-icone">👥</span>Clientes</button>
       </div>
       <div class="nav-secao">
         <div class="nav-titulo">Negócio</div>
-        <button class="aba-btn" data-aba="financeiro"><span class="nav-icone">💰</span>Financeiro</button>
-        <button class="aba-btn" data-aba="pacotes"><span class="nav-icone">📦</span>Pacotes</button>
-        <button class="aba-btn" data-aba="produtos"><span class="nav-icone">🧴</span>Produtos</button>
-        <button class="aba-btn" data-aba="relatorios"><span class="nav-icone">📊</span>Relatórios</button>
+        <button class="aba-btn" data-aba="financeiro" data-titulo="💰 Financeiro"><span class="nav-icone">💰</span>Financeiro</button>
+        <button class="aba-btn" data-aba="pacotes" data-titulo="📦 Pacotes"><span class="nav-icone">📦</span>Pacotes</button>
+        <button class="aba-btn" data-aba="produtos" data-titulo="🧴 Produtos"><span class="nav-icone">🧴</span>Produtos</button>
+        <button class="aba-btn" data-aba="relatorios" data-titulo="📊 Relatórios"><span class="nav-icone">📊</span>Relatórios</button>
       </div>
     </nav>
 
@@ -480,6 +496,7 @@ function fecharMenu() {
   $('sidebar-overlay').classList.remove('ativa');
 }
 $('btn-abrir-menu').addEventListener('click', abrirMenu);
+$('btn-fechar-menu').addEventListener('click', fecharMenu);
 $('sidebar-overlay').addEventListener('click', fecharMenu);
 
 // ── Abas ──────────────────────────────────────────────
@@ -489,6 +506,7 @@ document.querySelectorAll('.aba-btn').forEach((btn) => {
     document.querySelectorAll('.aba-conteudo').forEach((c) => c.classList.remove('ativa'));
     btn.classList.add('ativa');
     $('aba-' + btn.dataset.aba).classList.add('ativa');
+    $('titulo-secao-atual').textContent = btn.dataset.titulo;
     fecharMenu();
   });
 });
