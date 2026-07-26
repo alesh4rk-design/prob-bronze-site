@@ -145,6 +145,16 @@
 
   .empty-state { text-align: center; color: var(--muted); padding: 2rem 1rem; font-size: .85rem; }
 
+  .forma-pagamento-grupo { display: grid; grid-template-columns: repeat(2, 1fr); gap: .5rem; }
+  .forma-pagamento-btn {
+    display: flex; flex-direction: column; align-items: center; gap: .25rem;
+    background: var(--card-inp-bg); border: 1.5px solid var(--card-inp-border); border-radius: 10px;
+    padding: .7rem .5rem; color: var(--muted); font-size: .78rem; font-weight: 700; font-family: var(--font);
+    cursor: pointer;
+  }
+  .forma-pagamento-btn span { font-size: 1.3rem; }
+  .forma-pagamento-btn.ativa { border-color: var(--accent); color: var(--accent-light); background: rgba(var(--accent-rgb),.14); }
+
   .horario-dia {
     display: flex; align-items: center; gap: .7rem; flex-wrap: wrap; padding: .6rem 0;
     border-bottom: 1px solid var(--card-border);
@@ -510,7 +520,12 @@
       <div class="input-group"><label>Desconto (R$)</label><input type="number" id="pag-desconto" value="0" step="0.01"></div>
       <div class="input-group">
         <label>Forma de pagamento</label>
-        <select id="pag-forma"><option value="dinheiro">Dinheiro</option><option value="pix">PIX</option><option value="cartao">Cartão</option></select>
+        <div class="forma-pagamento-grupo" id="pag-forma" data-valor="dinheiro">
+          <button type="button" class="forma-pagamento-btn ativa" data-valor="dinheiro"><span>💵</span>Dinheiro</button>
+          <button type="button" class="forma-pagamento-btn" data-valor="pix"><span>📱</span>PIX</button>
+          <button type="button" class="forma-pagamento-btn" data-valor="credito"><span>💳</span>Crédito</button>
+          <button type="button" class="forma-pagamento-btn" data-valor="debito"><span>🏧</span>Débito</button>
+        </div>
       </div>
       <div class="input-group">
         <label>Status</label>
@@ -538,7 +553,12 @@
       <div class="input-group"><label>Valor (R$)</label><input type="number" id="rp-valor" step="0.01"></div>
       <div class="input-group">
         <label>Forma de pagamento</label>
-        <select id="rp-forma"><option value="dinheiro">Dinheiro</option><option value="pix">PIX</option><option value="cartao">Cartão</option></select>
+        <div class="forma-pagamento-grupo" id="rp-forma" data-valor="dinheiro">
+          <button type="button" class="forma-pagamento-btn ativa" data-valor="dinheiro"><span>💵</span>Dinheiro</button>
+          <button type="button" class="forma-pagamento-btn" data-valor="pix"><span>📱</span>PIX</button>
+          <button type="button" class="forma-pagamento-btn" data-valor="credito"><span>💳</span>Crédito</button>
+          <button type="button" class="forma-pagamento-btn" data-valor="debito"><span>🏧</span>Débito</button>
+        </div>
       </div>
       <div class="input-group">
         <label>Status</label>
@@ -564,7 +584,12 @@
       <div class="input-group"><label>Valor total (R$)</label><input type="number" id="venda-valor" step="0.01"></div>
       <div class="input-group">
         <label>Forma de pagamento</label>
-        <select id="venda-forma"><option value="dinheiro">Dinheiro</option><option value="pix">PIX</option><option value="cartao">Cartão</option></select>
+        <div class="forma-pagamento-grupo" id="venda-forma" data-valor="dinheiro">
+          <button type="button" class="forma-pagamento-btn ativa" data-valor="dinheiro"><span>💵</span>Dinheiro</button>
+          <button type="button" class="forma-pagamento-btn" data-valor="pix"><span>📱</span>PIX</button>
+          <button type="button" class="forma-pagamento-btn" data-valor="credito"><span>💳</span>Crédito</button>
+          <button type="button" class="forma-pagamento-btn" data-valor="debito"><span>🏧</span>Débito</button>
+        </div>
       </div>
       <div class="input-group">
         <label>Status</label>
@@ -682,6 +707,22 @@ function fecharMenu() {
   $('sidebar').classList.remove('aberta');
   $('sidebar-overlay').classList.remove('ativa');
 }
+// ── Seletor visual de forma de pagamento (ícones clicáveis) ──
+document.querySelectorAll('.forma-pagamento-grupo').forEach((grupo) => {
+  grupo.querySelectorAll('.forma-pagamento-btn').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      grupo.querySelectorAll('.forma-pagamento-btn').forEach((b) => b.classList.remove('ativa'));
+      btn.classList.add('ativa');
+      grupo.dataset.valor = btn.dataset.valor;
+    });
+  });
+});
+function selecionarFormaPagamento(grupoId, valor) {
+  const grupo = $(grupoId);
+  grupo.dataset.valor = valor;
+  grupo.querySelectorAll('.forma-pagamento-btn').forEach((b) => b.classList.toggle('ativa', b.dataset.valor === valor));
+}
+
 $('btn-abrir-menu').addEventListener('click', abrirMenu);
 $('btn-fechar-menu').addEventListener('click', fecharMenu);
 $('sidebar-overlay').addEventListener('click', fecharMenu);
@@ -844,7 +885,7 @@ $('btn-criar-cupom').addEventListener('click', async () => {
 // ── Financeiro: análise do período (gráficos) ────────────
 let graficoFaturamentoDia = null;
 let graficoFormasPagamento = null;
-const CORES_FORMA_PAGAMENTO = { dinheiro: '#7BA05B', pix: '#C68642', cartao: '#D9A441' };
+const CORES_FORMA_PAGAMENTO = { dinheiro: '#7BA05B', pix: '#C68642', credito: '#D9A441', debito: '#E8B87D', cartao: '#D9A441' };
 
 async function buscarFinanceiroEntre(de, ate) {
   const inicio = Timestamp.fromDate(new Date(de + 'T00:00:00'));
@@ -1210,7 +1251,7 @@ function abrirModalRegistrarPagamento(clienteId) {
   const cliente = clientesCache.find((c) => c.id === clienteId);
   $('rp-cliente-nome').textContent = cliente?.nome || '';
   $('rp-valor').value = '';
-  $('rp-forma').value = 'dinheiro';
+  selecionarFormaPagamento('rp-forma', 'dinheiro');
   $('rp-status').value = 'pago';
   $('modal-registrar-pagamento').style.display = 'flex';
 }
@@ -1230,7 +1271,7 @@ $('btn-confirmar-registrar-pagamento').addEventListener('click', async () => {
     clienteNome: cliente?.nome || '',
     valorBruto: valor,
     desconto: 0,
-    formaPagamento: $('rp-forma').value,
+    formaPagamento: $('rp-forma').dataset.valor,
     statusPagamento: $('rp-status').value,
     esteticistaUid: usuarioAtual.uid,
     percentualComissao: membroAtivo?.percentualComissao || 0
@@ -1256,7 +1297,7 @@ function abrirModalVenderProduto(clienteId) {
   $('venda-produto').value = '';
   $('venda-quantidade').value = '1';
   $('venda-valor').value = '';
-  $('venda-forma').value = 'dinheiro';
+  selecionarFormaPagamento('venda-forma', 'dinheiro');
   $('venda-status').value = 'pago';
   $('modal-vender-produto').style.display = 'flex';
 }
@@ -1297,7 +1338,7 @@ $('btn-confirmar-venda').addEventListener('click', async () => {
     clienteNome: cliente?.nome || '',
     valorBruto: valor,
     desconto: 0,
-    formaPagamento: $('venda-forma').value,
+    formaPagamento: $('venda-forma').dataset.valor,
     statusPagamento: $('venda-status').value,
     esteticistaUid: usuarioAtual.uid,
     percentualComissao: membroAtivo?.percentualComissao || 0
@@ -1549,6 +1590,7 @@ $('btn-finalizar-sessao').addEventListener('click', () => {
   $('pag-valor-bruto').value = 'R$' + sessaoAtiva.valorBruto.toFixed(2);
   $('pag-desconto').value = 0;
   $('pag-cupom').value = '';
+  selecionarFormaPagamento('pag-forma', 'dinheiro');
   const pacotesDaCliente = pacotesCache.filter((p) => p.clienteId === sessaoAtiva.clienteId && p.status === 'ativo');
   $('pag-pacote').innerHTML = '<option value="">Nenhum — cobrar avulso</option>' +
     pacotesDaCliente.map((p) => `<option value="${p.id}">${p.totalSessoes - p.sessoesUsadas} sessões restantes</option>`).join('');
@@ -1565,7 +1607,7 @@ $('btn-confirmar-pagamento').addEventListener('click', async () => {
   if (!sessaoAtiva) return;
   const pacoteId = $('pag-pacote').value;
   const codigoCupom = $('pag-cupom').value.trim().toUpperCase();
-  const formaPagamento = $('pag-forma').value;
+  const formaPagamento = $('pag-forma').dataset.valor;
   const statusPagamento = $('pag-status').value;
 
   await atualizarStatusCabine(sessaoAtiva.cabineId, 'livre');
