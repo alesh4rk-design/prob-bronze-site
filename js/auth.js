@@ -3,12 +3,17 @@ import { auth, db } from "./firebase-config.js";
 import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
+  signInWithPopup,
+  GoogleAuthProvider,
+  sendPasswordResetEmail,
   onAuthStateChanged,
   signOut
 } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
 import {
   doc, getDoc, setDoc, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+
+const googleProvider = new GoogleAuthProvider();
 
 // papel: "dono" | "recepcionista"
 export async function login(email, senha) {
@@ -18,14 +23,28 @@ export async function login(email, senha) {
   return { uid: cred.user.uid, ...userDoc.data() };
 }
 
+// Login da equipe com Google — só funciona se a conta já existir
+// (cadastro precisa ter sido feito antes, por e-mail/senha ou Google)
+export async function loginComGoogle() {
+  const cred = await signInWithPopup(auth, googleProvider);
+  const userDoc = await getDoc(doc(db, "usuarios", cred.user.uid));
+  if (!userDoc.exists()) {
+    await signOut(auth);
+    throw new Error("Nenhuma conta encontrada para este Google. Cadastre-se primeiro.");
+  }
+  return { uid: cred.user.uid, ...userDoc.data() };
+}
+
 export function logout() {
   return signOut(auth);
 }
 
-// Cria negócio (trial 7 dias) + usuário dono — usado no cadastro público (index.html)
-export async function cadastrarNegocioComDono({ nomeNegocio, email, senha, nomeDono }) {
-  const cred = await createUserWithEmailAndPassword(auth, email, senha);
-  const negocioRef = doc(db, "negocios", cred.user.uid); // negocioId = uid do dono
+export function resetSenha(email) {
+  return sendPasswordResetEmail(auth, email);
+}
+
+async function criarNegocioEDono(uid, { nomeNegocio, nomeDono, email }) {
+  const negocioRef = doc(db, "negocios", uid); // negocioId = uid do dono
   const agora = new Date();
   const trialFim = new Date(agora.getTime() + 7 * 24 * 60 * 60 * 1000);
 
@@ -37,14 +56,30 @@ export async function cadastrarNegocioComDono({ nomeNegocio, email, senha, nomeD
     criadoEm: serverTimestamp()
   });
 
-  await setDoc(doc(db, "usuarios", cred.user.uid), {
+  await setDoc(doc(db, "usuarios", uid), {
     nome: nomeDono,
     email,
     papel: "dono",
-    negocioId: cred.user.uid,
+    negocioId: uid,
     criadoEm: serverTimestamp()
   });
+}
 
+// Cria negócio (trial 7 dias) + usuário dono — usado no cadastro público (index.html)
+export async function cadastrarNegocioComDono({ nomeNegocio, email, senha, nomeDono }) {
+  const cred = await createUserWithEmailAndPassword(auth, email, senha);
+  await criarNegocioEDono(cred.user.uid, { nomeNegocio, nomeDono, email });
+  return cred.user.uid;
+}
+
+// Cadastro público via Google — mesma lógica, sem senha
+export async function cadastrarNegocioComDonoGoogle({ nomeNegocio, nomeDono }) {
+  const cred = await signInWithPopup(auth, googleProvider);
+  const jaExiste = await getDoc(doc(db, "usuarios", cred.user.uid));
+  if (jaExiste.exists()) {
+    throw new Error("Este Google já tem uma conta cadastrada — faça login em vez de se cadastrar.");
+  }
+  await criarNegocioEDono(cred.user.uid, { nomeNegocio, nomeDono, email: cred.user.email });
   return cred.user.uid;
 }
 

@@ -200,7 +200,17 @@
     <div class="input-group"><label>E-mail</label><input type="email" id="login-email" autocomplete="username"></div>
     <div class="input-group"><label>Senha</label><input type="password" id="login-senha" autocomplete="current-password"></div>
     <button class="btn-primario" id="btn-login">Entrar</button>
+    <div style="text-align:right;margin-top:.4rem">
+      <a href="#" id="link-esqueci-senha" style="font-size:.78rem;color:var(--muted);text-decoration:none">Esqueci minha senha</a>
+    </div>
     <div id="login-erro"></div>
+    <div style="display:flex;align-items:center;gap:.6rem;margin:1.1rem 0;color:var(--muted);font-size:.75rem">
+      <div style="flex:1;height:1px;background:var(--card-border)"></div>ou<div style="flex:1;height:1px;background:var(--card-border)"></div>
+    </div>
+    <button class="btn-secundario" id="btn-login-google" style="width:100%">🔵 Entrar com Google</button>
+    <div style="text-align:center;margin-top:1.1rem;font-size:.82rem;color:var(--muted)">
+      Não tem conta? <a href="index.html" style="color:var(--accent-light);text-decoration:none">Cadastre-se</a>
+    </div>
   </div>
 </div>
 
@@ -686,7 +696,7 @@
 </div>
 
 <script type="module">
-import { onAuthChange, login, logout } from './js/auth.js';
+import { onAuthChange, login, logout, loginComGoogle, resetSenha } from './js/auth.js';
 import { escutarCabines, atualizarStatusCabine, criarCabine, excluirCabine } from './js/cabines.js';
 import {
   escutarAgendamentosDoDia, criarAgendamento, concluirAgendamento, escutarFilaEspera,
@@ -806,6 +816,27 @@ $('btn-login').addEventListener('click', async () => {
 });
 $('login-senha').addEventListener('keydown', (e) => { if (e.key === 'Enter') $('btn-login').click(); });
 $('btn-sair').addEventListener('click', () => logout());
+
+$('btn-login-google').addEventListener('click', async () => {
+  $('login-erro').textContent = '';
+  try {
+    await loginComGoogle();
+  } catch (err) {
+    $('login-erro').textContent = err.message || 'Não foi possível entrar com Google.';
+  }
+});
+
+$('link-esqueci-senha').addEventListener('click', async (e) => {
+  e.preventDefault();
+  const email = $('login-email').value.trim();
+  if (!email) { $('login-erro').textContent = 'Digite seu e-mail no campo acima primeiro.'; return; }
+  try {
+    await resetSenha(email);
+    toast('E-mail de recuperação enviado! Confira sua caixa de entrada.', 'sucesso');
+  } catch (err) {
+    toast('Não foi possível enviar o e-mail de recuperação. Confira se o e-mail está certo.', 'erro');
+  }
+});
 
 onAuthChange((usuario) => {
   if (!usuario) {

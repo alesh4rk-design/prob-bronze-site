@@ -54,11 +54,16 @@
   <button class="btn-primario" id="btn-cadastrar">Começar meu trial grátis</button>
   <div id="erro"></div>
 
+  <div style="display:flex;align-items:center;gap:.6rem;margin:1.1rem 0;color:var(--muted);font-size:.75rem">
+    <div style="flex:1;height:1px;background:var(--card-border)"></div>ou<div style="flex:1;height:1px;background:var(--card-border)"></div>
+  </div>
+  <button class="btn-secundario" id="btn-cadastrar-google" style="width:100%;background:transparent;border:1.5px solid var(--card-border);color:var(--text);border-radius:10px;padding:.7rem;font-size:.88rem;cursor:pointer">🔵 Cadastrar com Google</button>
+
   <div class="rodape">Já tem conta? <a href="esteticista.html">Entrar</a></div>
 </div>
 
 <script type="module">
-import { cadastrarNegocioComDono } from './js/auth.js';
+import { cadastrarNegocioComDono, cadastrarNegocioComDonoGoogle } from './js/auth.js';
 
 const $ = (id) => document.getElementById(id);
 
@@ -89,6 +94,26 @@ $('btn-cadastrar').addEventListener('click', async () => {
     } else {
       $('erro').textContent = 'Não foi possível criar sua conta. Tente novamente.';
     }
+  }
+});
+
+$('btn-cadastrar-google').addEventListener('click', async () => {
+  const nomeNegocio = $('f-negocio').value.trim();
+  const nomeDono = $('f-nome').value.trim();
+  $('erro').textContent = '';
+
+  if (!nomeNegocio || !nomeDono) {
+    $('erro').textContent = 'Preencha o nome do negócio e o seu nome antes de continuar com Google.';
+    return;
+  }
+
+  $('btn-cadastrar-google').disabled = true;
+  try {
+    await cadastrarNegocioComDonoGoogle({ nomeNegocio, nomeDono });
+    window.location.href = 'esteticista.html';
+  } catch (err) {
+    $('btn-cadastrar-google').disabled = false;
+    $('erro').textContent = err.message || 'Não foi possível cadastrar com Google. Tente novamente.';
   }
 });
 </script>
