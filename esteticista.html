@@ -137,6 +137,18 @@
   .aviso-atencao { background: rgba(217,164,65,.1); border: 1.5px solid var(--yellow); color: var(--yellow); border-radius: 10px; padding: .7rem; font-size: .8rem; margin-bottom: .8rem; }
 
   .empty-state { text-align: center; color: var(--muted); padding: 2rem 1rem; font-size: .85rem; }
+
+  .horario-dia {
+    display: flex; align-items: center; gap: .7rem; flex-wrap: wrap; padding: .6rem 0;
+    border-bottom: 1px solid var(--card-border);
+  }
+  .horario-dia:last-child { border-bottom: none; }
+  .horario-dia .horario-nome { font-weight: 700; font-size: .82rem; width: 110px; flex-shrink: 0; }
+  .horario-dia label.horario-check { display: flex; align-items: center; gap: .35rem; font-size: .78rem; color: var(--muted); }
+  .horario-dia input[type="time"] {
+    background: var(--card-inp-bg); border: 1.5px solid var(--card-inp-border); border-radius: 8px;
+    padding: .35rem .5rem; color: var(--text); font-size: .82rem; font-family: var(--font);
+  }
   button { font-family: var(--font); }
 </style>
 </head>
@@ -196,6 +208,7 @@
         <button class="aba-btn" data-aba="pacotes" data-titulo="📦 Pacotes"><span class="nav-icone">📦</span>Pacotes</button>
         <button class="aba-btn" data-aba="produtos" data-titulo="🧴 Produtos"><span class="nav-icone">🧴</span>Produtos</button>
         <button class="aba-btn" data-aba="relatorios" data-titulo="📊 Relatórios"><span class="nav-icone">📊</span>Relatórios</button>
+        <button class="aba-btn" data-aba="horarios" data-titulo="🕐 Horários de Funcionamento"><span class="nav-icone">🕐</span>Horários</button>
       </div>
     </nav>
 
@@ -392,6 +405,15 @@
         <button class="btn-secundario" style="width:100%;margin-top:.5rem" id="btn-exportar-pdf">Exportar PDF</button>
       </div>
     </div>
+
+    <!-- ABA HORÁRIOS DE FUNCIONAMENTO -->
+    <div class="aba-conteudo" id="aba-horarios">
+      <div class="card">
+        <div class="card-titulo">Horário de Funcionamento</div>
+        <div id="lista-horarios"><div class="empty-state">Carregando...</div></div>
+        <button class="btn-primario" id="btn-salvar-horarios" style="margin-top:.5rem">Salvar Horários</button>
+      </div>
+    </div>
     </main>
   </div>
 
@@ -437,6 +459,7 @@ import { criarCupom, escutarCupons, desativarCupom, calcularDescontoCupom } from
 import { exportarExcel, exportarPDF, montarRelatorioFinanceiro, COLUNAS_FINANCEIRO } from './js/relatorios.js';
 import { linkConfirmacaoAgendamento, linkCobrancaPendente } from './js/whatsapp.js';
 import { tutorialJaVisto, iniciarTutorial } from './js/tutorial.js';
+import { DIAS_SEMANA, escutarHorarios, salvarHorarios } from './js/horarios.js';
 import { toast, confirmar, confirmarForte, executar } from './js/ui-feedback.js';
 import { db } from './js/firebase-config.js';
 
@@ -544,6 +567,8 @@ function iniciarPainel() {
   });
 
   escutarAgendamentosDoDia(negocioId, new Date(), renderAgendaDia);
+
+  escutarHorarios(negocioId, renderHorarios);
 
   escutarServicos(negocioId, (servicos) => {
     servicosCache = servicos;
@@ -682,6 +707,46 @@ $('btn-exportar-pdf').addEventListener('click', async () => {
     `Relatório Financeiro — ${$('rel-de').value} a ${$('rel-ate').value}`,
     `probronze-financeiro-${$('rel-de').value}-a-${$('rel-ate').value}`
   );
+});
+
+// ── Horários de Funcionamento ────────────────────────────
+function renderHorarios(horarios) {
+  const wrap = $('lista-horarios');
+  wrap.innerHTML = DIAS_SEMANA.map(({ chave, nome }) => {
+    const h = horarios[chave] || { aberto: false, abre: '09:00', fecha: '18:00' };
+    return `
+      <div class="horario-dia" data-dia="${chave}">
+        <div class="horario-nome">${nome}</div>
+        <label class="horario-check">
+          <input type="checkbox" data-campo="aberto" ${h.aberto ? 'checked' : ''}> Aberto
+        </label>
+        <input type="time" data-campo="abre" value="${h.abre}" ${h.aberto ? '' : 'disabled'}>
+        <span style="color:var(--muted);font-size:.78rem">até</span>
+        <input type="time" data-campo="fecha" value="${h.fecha}" ${h.aberto ? '' : 'disabled'}>
+      </div>
+    `;
+  }).join('');
+
+  wrap.querySelectorAll('[data-campo="aberto"]').forEach((chk) => {
+    chk.addEventListener('change', () => {
+      const linha = chk.closest('.horario-dia');
+      linha.querySelectorAll('input[type="time"]').forEach((inp) => { inp.disabled = !chk.checked; });
+    });
+  });
+}
+
+$('btn-salvar-horarios').addEventListener('click', async () => {
+  const horarios = {};
+  $('lista-horarios').querySelectorAll('.horario-dia').forEach((linha) => {
+    const chave = linha.dataset.dia;
+    horarios[chave] = {
+      aberto: linha.querySelector('[data-campo="aberto"]').checked,
+      abre: linha.querySelector('[data-campo="abre"]').value,
+      fecha: linha.querySelector('[data-campo="fecha"]').value
+    };
+  });
+  await salvarHorarios(usuarioAtual.negocioId, horarios);
+  toast('Horários salvos.', 'sucesso');
 });
 
 function preencherSelectPacoteCliente(clientes) {
