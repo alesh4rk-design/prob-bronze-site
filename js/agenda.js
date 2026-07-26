@@ -92,6 +92,13 @@ export async function criarAgendamento(negocioId, {
   });
 }
 
+// Marca o agendamento como em andamento assim que a sessão é iniciada
+// na cabine — sem isso, o botão "Iniciar" continuava aparecendo na
+// Agenda/Fila mesmo com a sessão já rodando.
+export function marcarEmAndamento(agendamentoId) {
+  return updateDoc(doc(db, "agendamentos", agendamentoId), { status: "em_andamento" });
+}
+
 export async function concluirAgendamento(agendamentoId, clienteId) {
   await updateDoc(doc(db, "agendamentos", agendamentoId), { status: "concluido" });
   await updateDoc(doc(db, "clientes", clienteId), { ultimaSessaoEm: new Date().toISOString() });

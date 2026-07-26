@@ -634,7 +634,7 @@ import { onAuthChange, login, logout } from './js/auth.js';
 import { escutarCabines, atualizarStatusCabine, criarCabine, excluirCabine } from './js/cabines.js';
 import {
   escutarAgendamentosDoDia, criarAgendamento, concluirAgendamento, escutarFilaEspera,
-  cancelarAgendamento, marcarFalta, atribuirCabine, contarConflitosHorario
+  cancelarAgendamento, marcarFalta, atribuirCabine, contarConflitosHorario, marcarEmAndamento
 } from './js/agenda.js';
 import { checarElegibilidade } from './js/agenda.js';
 import { escutarServicos, criarServico, calcularCombo } from './js/servicos.js';
@@ -1625,6 +1625,7 @@ function renderFila(lista) {
 async function iniciarSessao(agendamentoId, cabineId, tempoMin, clienteId, valorBruto) {
   if (sessoesAtivas.has(cabineId)) { toast('Já existe uma sessão em andamento nessa cabine.', 'aviso'); return; }
   await atualizarStatusCabine(cabineId, 'ocupada');
+  await marcarEmAndamento(agendamentoId);
   sessoesAtivas.set(cabineId, { agendamentoId, clienteId, tempoMin, valorBruto: valorBruto || 0, iniciadoEm: Date.now(), avisado: false });
   document.querySelector('[data-aba="cabines"]').click();
   renderCabines(cabinesCache);
