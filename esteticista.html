@@ -7,7 +7,7 @@
 <meta http-equiv="Expires" content="0">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Pro'Bronze — Painel</title>
-<link rel="stylesheet" href="css/theme.css?v=20260726s">
+<link rel="stylesheet" href="css/theme.css?v=20260726t">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -489,6 +489,11 @@
         <div class="card-titulo">Link para a cliente criar a própria conta</div>
         <div class="input-group"><input type="text" id="link-cadastro-cliente" readonly></div>
         <button class="btn-secundario" style="width:100%" id="btn-copiar-link">Copiar link</button>
+        <button class="btn-secundario" style="width:100%;margin-top:.5rem" id="btn-gerar-qr">📱 Gerar QR Code</button>
+        <div id="qr-cadastro-wrap" style="display:none;text-align:center;margin-top:1rem">
+          <div id="qr-cadastro-container" style="display:inline-block;background:#fff;padding:10px;border-radius:8px"></div>
+          <button class="btn-primario" style="margin-top:.7rem" id="btn-baixar-qr-pdf">⬇️ Baixar QR Code em PDF</button>
+        </div>
       </div>
       <div class="card">
         <div class="card-titulo">Nova Cliente (cadastro presencial, sem login)</div>
@@ -932,38 +937,38 @@
 </div>
 
 <script type="module">
-import { onAuthChange, login, logout, iniciarLoginComGoogle, resetSenha } from './js/auth.js?v=20260726s';
-import { VALOR_MENSALIDADE, PIX_PLATAFORMA, WHATSAPP_SUPORTE } from './js/admin-config.js?v=20260726s';
-import { escutarCabines, atualizarStatusCabine, criarCabine, excluirCabine } from './js/cabines.js?v=20260726s';
+import { onAuthChange, login, logout, iniciarLoginComGoogle, resetSenha } from './js/auth.js?v=20260726t';
+import { VALOR_MENSALIDADE, PIX_PLATAFORMA, WHATSAPP_SUPORTE } from './js/admin-config.js?v=20260726t';
+import { escutarCabines, atualizarStatusCabine, criarCabine, excluirCabine } from './js/cabines.js?v=20260726t';
 import {
   escutarAgendamentosDoDia, criarAgendamento, concluirAgendamento, escutarFilaEspera,
   cancelarAgendamento, marcarFalta, atribuirCabine, contarConflitosHorario, marcarEmAndamento,
   salvarAvaliacaoSessao, estenderTempoSessao
-} from './js/agenda.js?v=20260726s';
-import { checarElegibilidade } from './js/agenda.js?v=20260726s';
-import { escutarServicos, criarServico, calcularCombo } from './js/servicos.js?v=20260726s';
-import { escutarClientes, criarCliente, ehAniversarioHoje } from './js/clientes.js?v=20260726s';
-import { criarMembroEquipe, escutarEquipe, excluirMembroEquipe } from './js/equipe.js?v=20260726s';
-import { tempoMaxRecomendado } from './js/ficha-pele.js?v=20260726s';
-import { registrarPagamento, escutarPendencias, quitarPendencia, resumoFinanceiro, escutarFinanceiroPeriodo } from './js/financeiro.js?v=20260726s';
-import { criarPacote, escutarPacotesDoNegocio, consumirSessaoDoPacote } from './js/pacotes-sessoes.js?v=20260726s';
-import { criarProdutoCabine, escutarProdutosCabine, produtosEmAlerta, baixarEstoque, somarEstoque, buscarPorCodigoBarras } from './js/produtos-cabine.js?v=20260726s';
-import { criarInsumo, escutarInsumos, reporInsumo, darBaixaInsumo, excluirInsumo, insumosEmAlerta } from './js/insumos.js?v=20260726s';
-import { criarCupom, escutarCupons, desativarCupom, calcularDescontoCupom } from './js/cupons.js?v=20260726s';
-import { exportarExcel, exportarPDF, montarRelatorioFinanceiro, COLUNAS_FINANCEIRO } from './js/relatorios.js?v=20260726s';
+} from './js/agenda.js?v=20260726t';
+import { checarElegibilidade } from './js/agenda.js?v=20260726t';
+import { escutarServicos, criarServico, calcularCombo } from './js/servicos.js?v=20260726t';
+import { escutarClientes, criarCliente, ehAniversarioHoje } from './js/clientes.js?v=20260726t';
+import { criarMembroEquipe, escutarEquipe, excluirMembroEquipe } from './js/equipe.js?v=20260726t';
+import { tempoMaxRecomendado } from './js/ficha-pele.js?v=20260726t';
+import { registrarPagamento, escutarPendencias, quitarPendencia, resumoFinanceiro, escutarFinanceiroPeriodo } from './js/financeiro.js?v=20260726t';
+import { criarPacote, escutarPacotesDoNegocio, consumirSessaoDoPacote } from './js/pacotes-sessoes.js?v=20260726t';
+import { criarProdutoCabine, escutarProdutosCabine, produtosEmAlerta, baixarEstoque, somarEstoque, buscarPorCodigoBarras } from './js/produtos-cabine.js?v=20260726t';
+import { criarInsumo, escutarInsumos, reporInsumo, darBaixaInsumo, excluirInsumo, insumosEmAlerta } from './js/insumos.js?v=20260726t';
+import { criarCupom, escutarCupons, desativarCupom, calcularDescontoCupom } from './js/cupons.js?v=20260726t';
+import { exportarExcel, exportarPDF, montarRelatorioFinanceiro, COLUNAS_FINANCEIRO } from './js/relatorios.js?v=20260726t';
 import {
   linkConfirmacaoAgendamento, linkCobrancaPendente, linkAtrasoAgendamento,
   linkClienteSumido, linkMensagemLivre, linkLembreteIntervalo,
   linkSuaVezChegando, linkPromocao, linkAniversario, linkAgradecimento,
   linkPacoteAcabando
-} from './js/whatsapp.js?v=20260726s';
-import { verificarIntervaloMinimo } from './js/ficha-pele.js?v=20260726s';
-import { tutorialJaVisto, iniciarTutorial } from './js/tutorial.js?v=20260726s';
-import { DIAS_SEMANA, escutarHorarios, salvarHorarios } from './js/horarios.js?v=20260726s';
-import { escutarConfigNegocio, salvarConfigNegocio } from './js/config-negocio.js?v=20260726s';
-import { CATEGORIAS_DESPESA, criarDespesa, excluirDespesa, escutarDespesas } from './js/despesas.js?v=20260726s';
-import { toast, confirmar, confirmarForte, executar } from './js/ui-feedback.js?v=20260726s';
-import { db } from './js/firebase-config.js?v=20260726s';
+} from './js/whatsapp.js?v=20260726t';
+import { verificarIntervaloMinimo } from './js/ficha-pele.js?v=20260726t';
+import { tutorialJaVisto, iniciarTutorial } from './js/tutorial.js?v=20260726t';
+import { DIAS_SEMANA, escutarHorarios, salvarHorarios } from './js/horarios.js?v=20260726t';
+import { escutarConfigNegocio, salvarConfigNegocio } from './js/config-negocio.js?v=20260726t';
+import { CATEGORIAS_DESPESA, criarDespesa, excluirDespesa, escutarDespesas } from './js/despesas.js?v=20260726t';
+import { toast, confirmar, confirmarForte, executar } from './js/ui-feedback.js?v=20260726t';
+import { db } from './js/firebase-config.js?v=20260726t';
 
 // Luzinhas douradas ao redor do card de login
 // Mostra o nome da loja usada da última vez que alguém logou neste aparelho
@@ -2394,6 +2399,52 @@ function abrirScannerCamera(aoLer) {
   script.onerror = () => toast('Não deu para carregar o leitor de câmera. Confira sua internet.', 'erro');
   document.head.appendChild(script);
 }
+
+// ── QR Code do link de cadastro da cliente (carrega a lib sob demanda) ──
+let qrCodeLibCarregada = false;
+function carregarQrCodeLib(aoCarregar) {
+  if (qrCodeLibCarregada) { aoCarregar(); return; }
+  const script = document.createElement('script');
+  script.src = 'https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js';
+  script.onload = () => { qrCodeLibCarregada = true; aoCarregar(); };
+  script.onerror = () => toast('Não deu para carregar o gerador de QR Code. Confira sua internet.', 'erro');
+  document.head.appendChild(script);
+}
+
+$('btn-gerar-qr').addEventListener('click', () => {
+  const link = $('link-cadastro-cliente').value;
+  if (!link) { toast('Link de cadastro ainda não disponível.', 'aviso'); return; }
+  carregarQrCodeLib(() => {
+    const container = $('qr-cadastro-container');
+    container.innerHTML = '';
+    new QRCode(container, { text: link, width: 220, height: 220, colorDark: '#000000', colorLight: '#ffffff' });
+    $('qr-cadastro-wrap').style.display = 'block';
+  });
+});
+
+function obterQrDataUrl() {
+  const container = $('qr-cadastro-container');
+  const canvas = container.querySelector('canvas');
+  if (canvas) return canvas.toDataURL('image/png');
+  const img = container.querySelector('img');
+  return img ? img.src : null;
+}
+
+$('btn-baixar-qr-pdf').addEventListener('click', () => {
+  const dataUrl = obterQrDataUrl();
+  if (!dataUrl) { toast('Gere o QR Code primeiro.', 'aviso'); return; }
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+  const nomeLoja = configNegocioCache?.nome || "Pro'Bronze";
+  doc.setFontSize(20);
+  doc.text(nomeLoja, 105, 35, { align: 'center' });
+  doc.setFontSize(13);
+  doc.text('Aponte a câmera do celular pra agendar sua sessão', 105, 46, { align: 'center' });
+  doc.addImage(dataUrl, 'PNG', 65, 60, 80, 80);
+  doc.setFontSize(9);
+  doc.text($('link-cadastro-cliente').value, 105, 150, { align: 'center', maxWidth: 170 });
+  doc.save(`qrcode-agendamento-${nomeLoja.replace(/\s+/g, '-')}.pdf`);
+});
 
 $('venda-produto').addEventListener('change', () => {
   const opt = $('venda-produto').selectedOptions[0];
