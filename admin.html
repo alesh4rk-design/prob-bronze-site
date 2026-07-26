@@ -7,7 +7,7 @@
 <meta http-equiv="Expires" content="0">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Pro'Bronze — Admin</title>
-<link rel="stylesheet" href="css/theme.css?v=20260726f">
+<link rel="stylesheet" href="css/theme.css?v=20260726g">
 <style>
   * { box-sizing: border-box; }
   body { margin: 0; background: var(--bg); color: var(--text); font-family: var(--font); }
@@ -77,6 +77,7 @@
     <div class="input-group"><label>E-mail</label><input type="email" id="login-email" autocomplete="username"></div>
     <div class="input-group"><label>Senha</label><input type="password" id="login-senha" autocomplete="current-password"></div>
     <button class="btn-primario" id="btn-login">Entrar</button>
+    <p style="text-align:center;margin-top:.8rem"><a href="#" id="link-esqueci-senha" style="font-size:.82rem;color:var(--accent-light)">Esqueci minha senha</a></p>
     <div id="login-erro"></div>
   </div>
 </div>
@@ -98,11 +99,11 @@
 </div>
 
 <script type="module">
-import { auth, db } from './js/firebase-config.js?v=20260726f';
-import { ADMIN_UID } from './js/admin-config.js?v=20260726f';
-import { signInWithEmailAndPassword, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js';
+import { auth, db } from './js/firebase-config.js?v=20260726g';
+import { ADMIN_UID } from './js/admin-config.js?v=20260726g';
+import { signInWithEmailAndPassword, signOut, onAuthStateChanged, sendPasswordResetEmail } from 'https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js';
 import { collection, onSnapshot, doc, updateDoc } from 'https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js';
-import { toast, confirmar } from './js/ui-feedback.js?v=20260726f';
+import { toast, confirmar } from './js/ui-feedback.js?v=20260726g';
 
 window.addEventListener('unhandledrejection', (e) => {
   console.error(e.reason);
@@ -125,6 +126,18 @@ $('btn-login').addEventListener('click', async () => {
 });
 $('login-senha').addEventListener('keydown', (e) => { if (e.key === 'Enter') $('btn-login').click(); });
 $('btn-sair').addEventListener('click', () => signOut(auth));
+
+$('link-esqueci-senha').addEventListener('click', async (e) => {
+  e.preventDefault();
+  const email = $('login-email').value.trim();
+  if (!email) { $('login-erro').textContent = 'Digite seu e-mail no campo acima e clique em "Esqueci minha senha" de novo.'; return; }
+  try {
+    await sendPasswordResetEmail(auth, email);
+    toast(`Enviamos um link de redefinição de senha pra ${email}.`);
+  } catch (err) {
+    $('login-erro').textContent = 'Não foi possível enviar o e-mail de redefinição.';
+  }
+});
 
 onAuthStateChanged(auth, (user) => {
   // A checagem real de permissão acontece nas regras do Firestore
