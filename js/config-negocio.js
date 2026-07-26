@@ -1,8 +1,8 @@
 // Pro'Bronze — Configurações do negócio (nome, contato, regras de segurança)
-import { db } from "./firebase-config.js";
+import { db } from "./firebase-config.js?v=20260726a";
 import { doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
-import { notificarErroFirestore } from "./firestore-erro.js";
-import { INTERVALO_MINIMO_HORAS_PADRAO, LIMITE_SESSOES_MES_PADRAO } from "./ficha-pele.js";
+import { notificarErroFirestore } from "./firestore-erro.js?v=20260726a";
+import { INTERVALO_MINIMO_HORAS_PADRAO, LIMITE_SESSOES_MES_PADRAO } from "./ficha-pele.js?v=20260726a";
 
 export function configPadrao() {
   return {

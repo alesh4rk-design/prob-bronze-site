@@ -1,14 +1,19 @@
 // Pro'Bronze — Tutorial guiado do painel (roda uma vez por usuário, no navegador dele)
 const PASSOS = [
-  { aba: "cabines", titulo: "Cabines", texto: "Aqui você vê o status de cada cabine/cama em tempo real. Clique numa cabine livre para colocá-la em manutenção, se precisar." },
-  { aba: "agenda", titulo: "Agenda do Dia", texto: "Veja todos os agendamentos de hoje. Clique em 'Iniciar' para começar o timer da sessão." },
-  { aba: "novo", titulo: "Novo Agendamento", texto: "Monte o combo de serviços, escolha a cabine e o tempo — o sistema já avisa se a cliente não pode agendar (intervalo mínimo ou limite mensal)." },
-  { aba: "clientes", titulo: "Clientes", texto: "Cadastre clientes com a ficha de pele (Fitzpatrick), ou compartilhe o link para elas mesmas criarem a conta." },
-  { aba: "servicos", titulo: "Serviços", texto: "Cadastre os serviços oferecidos — eles aparecem como opções de combo no agendamento." },
-  { aba: "financeiro", titulo: "Financeiro", texto: "Acompanhe o resumo do mês e quite pendências de pagamento." },
-  { aba: "pacotes", titulo: "Pacotes", texto: "Crie pacotes de sessões (ex: 10 sessões) — eles são descontados automaticamente no pagamento." },
-  { aba: "produtos", titulo: "Produtos de Cabine", texto: "Controle o estoque de bronzeador, protetor e óleo, com alerta de estoque baixo." },
-  { aba: "cupons", titulo: "Cupons", texto: "Crie cupons de desconto para usar no pagamento das sessões." }
+  { aba: "cabines", titulo: "🛏️ Cabines", texto: "Aqui você vê cada cabine/cama: verde é livre, vermelho é ocupada, amarelo é manutenção. Toque numa cabine livre pra colocá-la em manutenção, se precisar." },
+  { aba: "agenda", titulo: "📅 Agenda do Dia", texto: "Mostra tudo que está marcado pra hoje. Toque em 'Iniciar' pra começar o cronômetro da sessão daquela cliente." },
+  { aba: "fila", titulo: "🪑 Fila de Espera", texto: "Lista de quem está esperando ou em sessão agora. Dá pra marcar falta ou cancelar um agendamento por aqui." },
+  { aba: "novo", titulo: "➕ Novo Agendamento", texto: "Marque uma sessão presencial: escolha a cliente, o(s) serviço(s), a cabine e o horário. O sistema avisa sozinho se não puder (intervalo mínimo, limite do mês, cabines cheias)." },
+  { aba: "servicos", titulo: "✂️ Serviços", texto: "Cadastre os serviços que você oferece (nome, preço, duração) — eles aparecem pra escolher na hora de agendar." },
+  { aba: "produtos", titulo: "🧴 Produtos", texto: "Controle o estoque de bronzeador, protetor, óleo etc. O sistema avisa quando algo está acabando." },
+  { aba: "cupons", titulo: "🏷️ Cupons", texto: "Crie códigos de desconto pra usar na hora de fechar o pagamento de uma cliente." },
+  { aba: "equipe", titulo: "🧑‍💼 Equipe", texto: "Cadastre as pessoas que trabalham com você (recepcionista, outro dono) e defina a comissão de cada uma." },
+  { aba: "clientes", titulo: "👥 Clientes", texto: "Cadastre suas clientes ou compartilhe o link pra elas criarem a própria conta e agendar sozinhas pelo celular. Toque no nome de uma cliente pra ver opções de cobrança, venda e mensagens de WhatsApp prontas." },
+  { aba: "financeiro", titulo: "💰 Financeiro", texto: "Aqui você vê tudo sobre o dinheiro do negócio: quanto entrou, quanto ainda falta receber, suas despesas (aluguel, salário, contas) e o lucro real, além de gráficos pra te ajudar a decidir." },
+  { aba: "pacotes", titulo: "📦 Pacotes", texto: "Venda pacotes de várias sessões de uma vez (ex: 10 sessões) — o sistema desconta uma sessão automaticamente a cada atendimento." },
+  { aba: "relatorios", titulo: "📊 Relatórios", texto: "Exporte um relatório em Excel ou PDF de qualquer período que você escolher." },
+  { aba: "horarios", titulo: "🕐 Horários", texto: "Defina os dias e horários em que seu negócio funciona." },
+  { aba: "configuracoes", titulo: "⚙️ Configurações", texto: "Coloque o nome da sua loja, WhatsApp, chave PIX e ajuste as regras de segurança (intervalo entre sessões, limite mensal)." }
 ];
 
 export function tutorialJaVisto(usuarioUid) {
