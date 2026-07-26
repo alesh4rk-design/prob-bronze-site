@@ -1,10 +1,10 @@
 // Pro'Bronze — Pacotes de Sessões (adaptação de "Acordos com Cliente" do Pro'B)
-import { db } from "./firebase-config.js?v=20260727q";
+import { db } from "./firebase-config.js?v=20260727r";
 import {
-  collection, doc, addDoc, updateDoc, getDoc,
+  collection, doc, addDoc, updateDoc, deleteDoc, getDoc,
   onSnapshot, query, where, serverTimestamp, arrayUnion
 } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
-import { notificarErroFirestore } from "./firestore-erro.js?v=20260727q";
+import { notificarErroFirestore } from "./firestore-erro.js?v=20260727r";
 
 export const VALIDADE_DIAS_PADRAO = 90;
 export const DIAS_PARADO_ALERTA = 20; // sem baixa há mais tempo que isso = "parado"
@@ -44,6 +44,10 @@ export async function consumirSessaoDoPacote(pacoteId) {
     historicoBaixas: arrayUnion(agora)
   });
   return { sessoesRestantes: pacote.totalSessoes - usadas, status };
+}
+
+export function excluirPacote(pacoteId) {
+  return deleteDoc(doc(db, "pacotesSessoes", pacoteId));
 }
 
 // Verifica se o pacote já passou da data de validade

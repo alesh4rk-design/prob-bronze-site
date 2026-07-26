@@ -1,9 +1,9 @@
 // Pro'Bronze — Despesas do negócio (salário, aluguel, contas, manutenção, obra etc.)
-import { db } from "./firebase-config.js?v=20260727q";
+import { db } from "./firebase-config.js?v=20260727r";
 import {
   collection, doc, addDoc, deleteDoc, onSnapshot, query, where, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
-import { notificarErroFirestore } from "./firestore-erro.js?v=20260727q";
+import { notificarErroFirestore } from "./firestore-erro.js?v=20260727r";
 
 export const CATEGORIAS_DESPESA = [
   "Salário", "Aluguel", "Água", "Luz", "Internet", "Manutenção", "Obra/Reforma", "Produtos/Insumos", "Outros"
