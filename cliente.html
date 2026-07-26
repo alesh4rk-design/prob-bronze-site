@@ -116,6 +116,17 @@ import { escutarCabines } from './js/cabines.js';
 import { escutarConfigNegocio } from './js/config-negocio.js';
 import { toast } from './js/ui-feedback.js';
 
+window.addEventListener('unhandledrejection', (e) => {
+  console.error(e.reason);
+  const detalhe = e.reason?.code || e.reason?.message || '';
+  toast(`Algo deu errado. Tente novamente.${detalhe ? ' [' + detalhe + ']' : ''}`, 'erro');
+});
+window.addEventListener('firestore-erro', (e) => {
+  const err = e.detail;
+  const detalhe = err?.code || err?.message || 'erro desconhecido';
+  toast(`Não foi possível carregar alguns dados. [${detalhe}]`, 'erro');
+});
+
 const $ = (id) => document.getElementById(id);
 let servicosCache = [];
 let combosSelecionados = new Set();

@@ -681,10 +681,13 @@ import { db } from './js/firebase-config.js';
 
 window.addEventListener('unhandledrejection', (e) => {
   console.error(e.reason);
-  toast('Algo deu errado. Tente novamente.', 'erro');
+  const detalhe = e.reason?.code || e.reason?.message || '';
+  toast(`Algo deu errado. Tente novamente.${detalhe ? ' [' + detalhe + ']' : ''}`, 'erro');
 });
-window.addEventListener('firestore-erro', () => {
-  toast('Não foi possível carregar alguns dados. Verifique sua conexão e recarregue a página.', 'erro');
+window.addEventListener('firestore-erro', (e) => {
+  const err = e.detail;
+  const detalhe = err?.code || err?.message || 'erro desconhecido';
+  toast(`Não foi possível carregar alguns dados. [${detalhe}]`, 'erro');
 });
 import { collection, query, where, getDocs } from 'https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js';
 let pacotesCache = [];

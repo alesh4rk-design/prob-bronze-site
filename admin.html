@@ -103,7 +103,8 @@ import { toast, confirmar } from './js/ui-feedback.js';
 
 window.addEventListener('unhandledrejection', (e) => {
   console.error(e.reason);
-  toast('Algo deu errado. Tente novamente.', 'erro');
+  const detalhe = e.reason?.code || e.reason?.message || '';
+  toast(`Algo deu errado. Tente novamente.${detalhe ? ' [' + detalhe + ']' : ''}`, 'erro');
 });
 
 const $ = (id) => document.getElementById(id);
