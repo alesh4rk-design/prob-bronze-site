@@ -1744,17 +1744,10 @@ $('btn-criar-produto').addEventListener('click', async () => {
     await criarProdutoCabine(usuarioAtual.negocioId, { nome, quantidade, unidade, estoqueMinimo, precoVenda, codigoBarras, custo, tamanhoEmbalagem });
     toast('Produto cadastrado.', 'sucesso');
   }
-  // Reposição de estoque é um gasto real da loja — lança automaticamente
-  // como despesa (categoria "Produtos/Insumos") quando o custo é conhecido
-  if (custoUnitario != null && custoUnitario > 0) {
-    await criarDespesa(usuarioAtual.negocioId, {
-      categoria: 'Produtos/Insumos',
-      descricao: `Reposição de estoque: ${existente?.nome || nome} (${quantidade}${unidade})`,
-      valor: custoUnitario * quantidade,
-      data: new Date().toISOString().slice(0, 10),
-      recorrente: false
-    });
-  }
+  // Produto é estoque para revenda, não uma despesa — o custo dele já é
+  // descontado do preço de venda quando o produto é vendido. Diferente do
+  // insumo (consumido internamente), a compra de produto não entra em
+  // "Despesas" no Financeiro.
   $('prod-nome').value = ''; $('prod-qtd').value = ''; $('prod-minimo').value = '0'; $('prod-preco-venda').value = '0';
   $('prod-codigo').value = ''; $('prod-custo').value = ''; $('prod-tamanho').value = '';
   $('prod-codigo-aviso').style.display = 'none';
@@ -2873,15 +2866,6 @@ async function reporEstoquePorCodigoBarras(codigo) {
   const n = parseFloat(qtd);
   if (!qtd || isNaN(n) || n <= 0) return;
   await somarEstoque(produto.id, n);
-  if (produto.custo != null && produto.custo > 0) {
-    await criarDespesa(usuarioAtual.negocioId, {
-      categoria: 'Produtos/Insumos',
-      descricao: `Reposição de estoque: ${produto.nome} (${n}${produto.unidade})`,
-      valor: produto.custo * n,
-      data: new Date().toISOString().slice(0, 10),
-      recorrente: false
-    });
-  }
   toast(`+${n}${produto.unidade} adicionado a "${produto.nome}".`, 'sucesso');
 }
 $('repor-estoque-codigo').addEventListener('keydown', (e) => {
