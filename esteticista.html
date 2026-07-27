@@ -231,6 +231,18 @@
   .badge.concluido { background: rgba(123,160,91,.15); color: var(--green); }
   .badge.cancelado, .badge.faltou { background: rgba(193,85,74,.15); color: var(--red); }
 
+  .despesa-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: .7rem; }
+  .despesa-card {
+    border: 1.5px solid var(--card-border); border-radius: 12px; padding: .9rem;
+    display: flex; flex-direction: column; gap: .3rem;
+    transition: border-color .15s ease, background .15s ease;
+  }
+  .despesa-card:hover { border-color: rgba(245,230,211,.22); background: rgba(245,230,211,.02); }
+  .despesa-card .despesa-categoria { font-size: .72rem; text-transform: uppercase; letter-spacing: .03em; color: var(--muted); }
+  .despesa-card .despesa-valor { font-size: 1.15rem; font-weight: 800; color: var(--accent-light); }
+  .despesa-card .despesa-detalhe { font-size: .74rem; color: var(--muted); line-height: 1.4; flex: 1; }
+  .despesa-card .btn-secundario { margin-top: .3rem; align-self: flex-start; padding: .35rem .7rem; font-size: .72rem; }
+
   .aviso-bloqueio { background: rgba(193,85,74,.1); border: 1.5px solid var(--red); color: var(--red); border-radius: 10px; padding: .7rem; font-size: .8rem; margin-bottom: .8rem; }
   .aviso-atencao { background: rgba(217,164,65,.1); border: 1.5px solid var(--yellow); color: var(--yellow); border-radius: 10px; padding: .7rem; font-size: .8rem; margin-bottom: .8rem; }
 
@@ -1219,15 +1231,14 @@ $('desp-categoria').innerHTML = CATEGORIAS_DESPESA.map((c) => `<option value="${
 function renderDespesas(despesas) {
   const wrap = $('lista-despesas');
   if (despesas.length === 0) { wrap.innerHTML = '<div class="empty-state">Nenhuma despesa cadastrada.</div>'; return; }
-  wrap.innerHTML = despesas.map((d) => `
-    <div class="agendamento-item">
-      <div class="agendamento-info">
-        <div class="nome">${d.categoria}${d.recorrente ? ' 🔁' : ''} — R$${Number(d.valor).toFixed(2)}</div>
-        <div class="detalhe">${d.descricao ? d.descricao + ' · ' : ''}${new Date(d.data + 'T00:00:00').toLocaleDateString('pt-BR')}</div>
-      </div>
+  wrap.innerHTML = `<div class="despesa-grid">${despesas.map((d) => `
+    <div class="despesa-card">
+      <div class="despesa-categoria">${d.categoria}${d.recorrente ? ' 🔁' : ''}</div>
+      <div class="despesa-valor">R$${Number(d.valor).toFixed(2)}</div>
+      <div class="despesa-detalhe">${d.descricao ? d.descricao + ' · ' : ''}${new Date(d.data + 'T00:00:00').toLocaleDateString('pt-BR')}</div>
       <button class="btn-secundario" data-excluir-despesa="${d.id}">Excluir</button>
     </div>
-  `).join('');
+  `).join('')}</div>`;
   wrap.querySelectorAll('[data-excluir-despesa]').forEach((btn) => {
     btn.addEventListener('click', async () => {
       if (!(await confirmar('Excluir esta despesa?'))) return;
