@@ -455,12 +455,13 @@
           <div class="card-titulo" style="margin-bottom:0">Agenda</div>
           <button class="btn-primario" style="width:auto" id="btn-abrir-novo-agendamento-agenda">+ Agendar / Colocar na fila</button>
         </div>
-        <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.8rem">
+        <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.3rem">
           <button type="button" class="btn-secundario" style="width:auto;padding:.5rem .8rem" id="btn-agenda-dia-anterior">←</button>
           <input type="date" id="agenda-data-selecionada" style="flex:1;background:var(--card-inp-bg);border:1.5px solid var(--card-inp-border);border-radius:10px;padding:.6rem .8rem;color:var(--text);font-family:var(--font)">
           <button type="button" class="btn-secundario" style="width:auto;padding:.5rem .8rem" id="btn-agenda-dia-hoje">Hoje</button>
           <button type="button" class="btn-secundario" style="width:auto;padding:.5rem .8rem" id="btn-agenda-dia-proximo">→</button>
         </div>
+        <div id="agenda-dia-semana" style="text-align:center;font-size:.8rem;color:var(--muted);text-transform:capitalize;margin-bottom:.8rem"></div>
         <div style="display:flex;gap:.4rem;flex-wrap:wrap;margin-bottom:.8rem" id="agenda-filtros">
           <button class="btn-secundario agenda-filtro-btn ativo" data-filtro-agenda="todos">Todos</button>
           <button class="btn-secundario agenda-filtro-btn" data-filtro-agenda="agendado">Aguardando</button>
@@ -1436,6 +1437,8 @@ function pararTodosOsListeners() {
 // dias (passados ou futuros) nunca apareciam na tela.
 function assinarAgendaDoDia(negocioId, data) {
   if (unsubAgendaDia) { try { unsubAgendaDia(); } catch (e) { /* ignora */ } }
+  const labelSemana = $('agenda-dia-semana');
+  if (labelSemana) labelSemana.textContent = data.toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric' });
   unsubAgendaDia = escutarAgendamentosDoDia(negocioId, data, (lista) => {
     agendaDiaCache = lista;
     aplicarFiltroAgenda();
@@ -3461,7 +3464,22 @@ function aplicarFiltroAgenda() {
   renderAgendaDia(lista);
 }
 
-function renderAgendaDia(lista) {
+// Concluídos (e cancelados/faltas) vão pro final da lista — o que importa
+// olhar primeiro é quem ainda está por vir ou em andamento agora.
+const ORDEM_STATUS_AGENDA = { agendado: 0, em_andamento: 0, concluido: 1, cancelado: 1, faltou: 1 };
+function ordenarAgendaDia(lista) {
+  return [...lista].sort((a, b) => {
+    const ordemA = ORDEM_STATUS_AGENDA[a.status] ?? 0;
+    const ordemB = ORDEM_STATUS_AGENDA[b.status] ?? 0;
+    if (ordemA !== ordemB) return ordemA - ordemB;
+    const dataA = a.dataHora?.toDate ? a.dataHora.toDate().getTime() : 0;
+    const dataB = b.dataHora?.toDate ? b.dataHora.toDate().getTime() : 0;
+    return dataA - dataB;
+  });
+}
+
+function renderAgendaDia(listaOriginal) {
+  const lista = ordenarAgendaDia(listaOriginal);
   const wrap = $('lista-agenda-dia');
   if (lista.length === 0) {
     wrap.innerHTML = '<div class="empty-state">Nenhum agendamento nesse filtro.</div>';
