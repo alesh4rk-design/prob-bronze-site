@@ -607,14 +607,14 @@
     <div class="aba-conteudo" id="aba-financeiro">
       <div class="card">
         <div class="card-titulo com-ajuda">Resumo do Mês</div>
-        <div class="ajuda-inline">Bruto = tudo que entrou. Líquido = depois dos descontos. Comissão = o que a equipe ganhou. Pendente = o que falta receber. Lucro = Líquido menos Despesas.</div>
+        <div class="ajuda-inline">Faturamento = tudo que entrou (já com desconto aplicado, se houver). Comissão = o que a equipe ganhou. Pendente = o que falta receber. Lucro = Faturamento menos Despesas.</div>
         <div class="cabines-grid">
-          <div class="cabine-card livre"><div class="cabine-nome" id="fin-bruto">R$0</div><div class="cabine-status">Bruto</div></div>
-          <div class="cabine-card livre"><div class="cabine-nome" id="fin-liquido">R$0</div><div class="cabine-status">Líquido</div></div>
+          <div class="cabine-card livre"><div class="cabine-nome" id="fin-bruto">R$0</div><div class="cabine-status">Faturamento</div></div>
           <div class="cabine-card manutencao"><div class="cabine-nome" id="fin-comissao">R$0</div><div class="cabine-status">Comissão</div></div>
           <div class="cabine-card ocupada"><div class="cabine-nome" id="fin-pendente">R$0</div><div class="cabine-status">Pendente</div></div>
           <div class="cabine-card livre"><div class="cabine-nome" id="fin-vendas-produtos">R$0</div><div class="cabine-status">Vendas de Produtos</div></div>
           <div class="cabine-card manutencao"><div class="cabine-nome" id="fin-despesas-mes">R$0</div><div class="cabine-status">Despesas</div></div>
+          <div class="cabine-card manutencao"><div class="cabine-nome" id="fin-gasto-insumos">R$0</div><div class="cabine-status">Gasto com Insumos</div></div>
           <div class="cabine-card livre"><div class="cabine-nome" id="fin-lucro">R$0</div><div class="cabine-status">Lucro</div></div>
         </div>
         <div id="meta-mensal-wrap" style="display:none;margin-top:1rem">
@@ -641,9 +641,6 @@
       </div>
       <div class="card">
         <div class="card-titulo">Despesas</div>
-        <div class="cabines-grid" style="margin-bottom:1rem">
-          <div class="cabine-card manutencao"><div class="cabine-nome" id="fin-total-insumos">R$0</div><div class="cabine-status">Total em Insumos</div></div>
-        </div>
         <div id="lista-despesas"><div class="empty-state">Carregando...</div></div>
       </div>
       <div class="card">
@@ -1232,11 +1229,6 @@ function atualizarLucroMes() {
 $('desp-categoria').innerHTML = CATEGORIAS_DESPESA.map((c) => `<option value="${c}">${c}</option>`).join('');
 
 function renderDespesas(despesas) {
-  const totalInsumos = despesas
-    .filter((d) => d.categoria === 'Produtos/Insumos')
-    .reduce((s, d) => s + Number(d.valor || 0), 0);
-  $('fin-total-insumos').textContent = `R$${totalInsumos.toFixed(2)}`;
-
   const wrap = $('lista-despesas');
   const despesasSemInsumos = despesas.filter((d) => d.categoria !== 'Produtos/Insumos');
   if (despesasSemInsumos.length === 0) { wrap.innerHTML = '<div class="empty-state">Nenhuma despesa cadastrada.</div>'; return; }
@@ -1548,8 +1540,7 @@ function iniciarPainel() {
     const fimMes = new Date();
     listenersAtivos.push(escutarFinanceiroPeriodo(negocioId, inicioMes, fimMes, (registros) => {
       const resumo = resumoFinanceiro(registros);
-      $('fin-bruto').textContent = 'R$' + resumo.totalBruto.toFixed(2);
-      $('fin-liquido').textContent = 'R$' + resumo.totalLiquido.toFixed(2);
+      $('fin-bruto').textContent = 'R$' + resumo.totalLiquido.toFixed(2);
       $('fin-comissao').textContent = 'R$' + resumo.totalComissao.toFixed(2);
       const totalVendasProdutos = registros.filter((r) => !r.agendamentoId).reduce((s, r) => s + (r.valorLiquido || 0), 0);
       $('fin-vendas-produtos').textContent = 'R$' + totalVendasProdutos.toFixed(2);
@@ -1561,9 +1552,12 @@ function iniciarPainel() {
     listenersAtivos.push(escutarDespesas(negocioId, (despesas) => {
       despesasCache = despesas;
       renderDespesas(despesas);
-      despesasMesCache = despesas
-        .filter((d) => { const dt = new Date(d.data + 'T00:00:00'); return dt >= inicioMes && dt <= fimMes; })
+      const despesasMes = despesas.filter((d) => { const dt = new Date(d.data + 'T00:00:00'); return dt >= inicioMes && dt <= fimMes; });
+      despesasMesCache = despesasMes.reduce((s, d) => s + (d.valor || 0), 0);
+      const gastoInsumosMes = despesasMes
+        .filter((d) => d.categoria === 'Produtos/Insumos')
         .reduce((s, d) => s + (d.valor || 0), 0);
+      $('fin-gasto-insumos').textContent = 'R$' + gastoInsumosMes.toFixed(2);
       atualizarLucroMes();
       atualizarAnaliseFinanceira();
     }));
