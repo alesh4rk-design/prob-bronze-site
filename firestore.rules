@@ -43,7 +43,13 @@ service cloud.firestore {
       allow create: if logado() && request.resource.data.status == 'pendente';
       allow get: if ehDoMeuNegocio(negocioId) || logado();
       allow list: if ehDoMeuNegocio(negocioId) || ehAdmin();
-      allow update: if ehDoMeuNegocio(negocioId) || ehAdmin();
+      // O dono edita o próprio negócio livremente, mas NÃO pode mexer em
+      // status/trialInicio/trialFim — antes dava pra chamar updateDoc direto
+      // e virar "ativo" sozinho, pulando aprovação e pagamento. Só o admin
+      // mexe nesses três campos.
+      allow update: if ehAdmin() ||
+        (ehDoMeuNegocio(negocioId) &&
+         !request.resource.data.diff(resource.data).affectedKeys().hasAny(['status', 'trialInicio', 'trialFim']));
       allow delete: if ehAdmin();
     }
 
@@ -97,9 +103,13 @@ service cloud.firestore {
       // Leitura aberta a qualquer logado: a cliente precisa contar quantos
       // horários já estão ocupados (capacidade de cabines) antes de agendar
       allow read: if ehDoMeuNegocio(resource.data.negocioId) || logado();
+      // No caminho da cliente, também confere que o negocioId do agendamento
+      // bate com o negocioId real do cadastro dela — sem isso, dava pra
+      // apontar um agendamento pra outro negócio usando o próprio clienteId.
       allow create: if ehDoMeuNegocio(request.resource.data.negocioId) ||
         (logado() && request.resource.data.clienteId != null &&
-         get(/databases/$(database)/documents/clientes/$(request.resource.data.clienteId)).data.clienteUid == request.auth.uid);
+         get(/databases/$(database)/documents/clientes/$(request.resource.data.clienteId)).data.clienteUid == request.auth.uid &&
+         get(/databases/$(database)/documents/clientes/$(request.resource.data.clienteId)).data.negocioId == request.resource.data.negocioId);
       allow update, delete: if ehDoMeuNegocio(resource.data.negocioId);
     }
 
