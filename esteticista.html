@@ -1228,6 +1228,25 @@ import { collection, query, where, getDocs } from 'https://www.gstatic.com/fireb
 
 if (window.Chart && window.ChartDataLabels) Chart.register(ChartDataLabels);
 const formatoDataLabelRS = (v) => 'R$' + Number(v || 0).toFixed(0);
+// Chart.js corta com "..." rótulos de eixo longos que não cabem no espaço
+// reservado — quebrar em várias linhas (array de strings) evita o corte,
+// já que cada string do array vira uma linha do tick.
+function quebrarLinhasRotulo(texto, maxCharsPorLinha = 16) {
+  const palavras = String(texto).split(' ');
+  const linhas = [];
+  let linhaAtual = '';
+  palavras.forEach((p) => {
+    const tentativa = linhaAtual ? linhaAtual + ' ' + p : p;
+    if (tentativa.length > maxCharsPorLinha && linhaAtual) {
+      linhas.push(linhaAtual);
+      linhaAtual = p;
+    } else {
+      linhaAtual = tentativa;
+    }
+  });
+  if (linhaAtual) linhas.push(linhaAtual);
+  return linhas;
+}
 let pacotesCache = [];
 let cuponsCache = [];
 
@@ -2041,18 +2060,19 @@ async function atualizarAnaliseFinanceira() {
     graficoServico = new Chart($('grafico-servico'), {
       type: 'bar',
       data: {
-        labels: servicosOrdenados.map((e) => e[0]),
+        labels: servicosOrdenados.map((e) => quebrarLinhasRotulo(e[0])),
         datasets: [{ label: 'Faturamento (R$)', data: servicosOrdenados.map((e) => e[1]), backgroundColor: '#E8B87D', borderRadius: 4 }]
       },
       options: {
         indexAxis: 'y',
+        layout: { padding: { right: 42 } },
         plugins: {
           legend: { display: false },
-          datalabels: { color: '#F5E6D3', anchor: 'end', align: 'end', font: { weight: 'bold', size: 10 }, formatter: formatoDataLabelRS }
+          datalabels: { color: '#F5E6D3', anchor: 'end', align: 'end', clamp: true, font: { weight: 'bold', size: 10 }, formatter: formatoDataLabelRS }
         },
         scales: {
           x: { ticks: { color: '#B8A48C' }, grid: { color: 'rgba(245,230,211,.06)' }, beginAtZero: true },
-          y: { ticks: { color: '#B8A48C' }, grid: { display: false } }
+          y: { ticks: { color: '#B8A48C', autoSkip: false }, grid: { display: false } }
         }
       }
     });
