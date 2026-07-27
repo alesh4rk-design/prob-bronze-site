@@ -4077,7 +4077,7 @@ $('btn-criar-agendamento').addEventListener('click', async () => {
       clienteNome = nomeNovaCliente;
     }
 
-    const elegibilidade = await checarElegibilidade(clienteId, { intervaloHoras: configNegocioCache.intervaloMinimoHoras, limiteMes: configNegocioCache.limiteSessoesMes });
+    const elegibilidade = await checarElegibilidade(usuarioAtual.negocioId, clienteId, { intervaloHoras: configNegocioCache.intervaloMinimoHoras, limiteMes: configNegocioCache.limiteSessoesMes });
     if (!elegibilidade.podeAgendar) {
       avisosWrap.innerHTML = elegibilidade.avisos.map((a) => `<div class="aviso-bloqueio">${a}</div>`).join('');
       return;

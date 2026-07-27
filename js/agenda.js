@@ -16,7 +16,7 @@ import { notificarErroFirestore } from "./firestore-erro.js?v=20260728d";
 // Checa se o cliente pode agendar (intervalo mínimo + limite mensal).
 // opcoes.intervaloHoras e opcoes.limiteMes vêm da Configuração do negócio;
 // se não informados, usam os padrões de ficha-pele.js.
-export async function checarElegibilidade(clienteId, opcoes = {}) {
+export async function checarElegibilidade(negocioId, clienteId, opcoes = {}) {
   const clienteSnap = await getDoc(doc(db, "clientes", clienteId));
   if (!clienteSnap.exists()) return { podeAgendar: true, avisos: [] };
   const cliente = clienteSnap.data();
@@ -28,8 +28,14 @@ export async function checarElegibilidade(clienteId, opcoes = {}) {
   }
 
   const inicioMes = new Date(); inicioMes.setDate(1); inicioMes.setHours(0, 0, 0, 0);
+  // Precisa filtrar por negocioId também: sem isso, as regras do Firestore
+  // rejeitam a lista inteira com permission-denied, porque não conseguem
+  // garantir que todo documento retornável pertence ao negócio certo — a
+  // regra de leitura de "agendamentos" exige resource.data.negocioId ==
+  // meuNegocioId(), e uma query sem esse filtro deixa isso indeterminado.
   const q = query(
     collection(db, "agendamentos"),
+    where("negocioId", "==", negocioId),
     where("clienteId", "==", clienteId),
     where("status", "==", "concluido"),
     where("dataHora", ">=", Timestamp.fromDate(inicioMes))

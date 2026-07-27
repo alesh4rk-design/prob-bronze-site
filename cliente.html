@@ -440,7 +440,7 @@ $('btn-agendar-online').addEventListener('click', async () => {
   btn.textContent = 'Agendando...';
 
   try {
-    const elegibilidade = await checarElegibilidade(clienteAtual.id, { intervaloHoras: configNegocioCache.intervaloMinimoHoras, limiteMes: configNegocioCache.limiteSessoesMes });
+    const elegibilidade = await checarElegibilidade(clienteAtual.negocioId, clienteAtual.id, { intervaloHoras: configNegocioCache.intervaloMinimoHoras, limiteMes: configNegocioCache.limiteSessoesMes });
     if (!elegibilidade.podeAgendar) {
       avisosWrap.innerHTML = elegibilidade.avisos.map((a) => `<div class="empty-state" style="color:var(--red)">${a}</div>`).join('');
       return;
