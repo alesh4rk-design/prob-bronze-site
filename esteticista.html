@@ -200,6 +200,17 @@
   .ajuda-inline { font-size: .76rem; color: var(--muted); margin-bottom: .8rem; line-height: 1.4; }
 
   .cabines-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: .8rem; }
+  /* Cards do Resumo do Mês: sempre lado a lado, mesmo em tela estreita —
+     160px mínimo forçava 1 coluna só em celulares pequenos. */
+  .resumo-mes-grid { grid-template-columns: repeat(2, 1fr) !important; }
+  .resumo-mes-grid .cabine-card { padding: .8rem .5rem; }
+  .resumo-mes-grid .cabine-nome { font-size: .95rem; }
+  @media (min-width: 640px) {
+    .resumo-mes-grid { grid-template-columns: repeat(3, 1fr) !important; }
+  }
+  @media (min-width: 900px) {
+    .resumo-mes-grid { grid-template-columns: repeat(6, 1fr) !important; }
+  }
   .cabine-card {
     border: 1.5px solid var(--card-border); border-radius: 12px; padding: 1rem; text-align: center; cursor: pointer;
     transition: transform .12s ease, box-shadow .12s ease, border-color .15s ease; background: rgba(245,230,211,.02);
@@ -625,7 +636,7 @@
       <div class="card">
         <div class="card-titulo com-ajuda">Resumo do Mês</div>
         <div class="ajuda-inline">Faturamento = tudo que entrou (já com desconto aplicado, se houver). Pendente = o que falta receber. Lucro = Faturamento menos Despesas.</div>
-        <div class="cabines-grid">
+        <div class="cabines-grid resumo-mes-grid">
           <div class="cabine-card livre"><div class="cabine-nome" id="fin-bruto">R$0</div><div class="cabine-status">Faturamento</div></div>
           <div class="cabine-card ocupada"><div class="cabine-nome" id="fin-pendente">R$0</div><div class="cabine-status">Pendente</div></div>
           <div class="cabine-card livre"><div class="cabine-nome" id="fin-vendas-produtos">R$0</div><div class="cabine-status">Vendas de Produtos</div></div>
