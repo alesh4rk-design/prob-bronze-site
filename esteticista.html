@@ -644,6 +644,26 @@
         </div>
       </div>
       <div class="card">
+        <div class="card-titulo com-ajuda">Ponto de Equilíbrio</div>
+        <div class="ajuda-inline">Quantas sessões de bronzeamento (pelo ticket médio já pago no mês) cobrem as despesas do mês antes do lucro ficar positivo.</div>
+        <div style="display:flex;align-items:center;gap:1.2rem;flex-wrap:wrap">
+          <div style="flex:1;min-width:160px">
+            <div style="font-size:.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:.3rem">Sessões necessárias no mês</div>
+            <div style="font-family:monospace;font-size:1.8rem;font-weight:900;color:var(--accent-light)" id="be-sessoes-necessarias">0</div>
+          </div>
+          <div style="flex:1;min-width:160px">
+            <div style="font-size:.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:.3rem">Já pagas este mês</div>
+            <div style="font-family:monospace;font-size:1.8rem;font-weight:900" id="be-sessoes-feitas">0</div>
+          </div>
+        </div>
+        <div style="margin-top:1rem">
+          <div style="background:var(--card-inp-bg);border-radius:8px;height:10px;overflow:hidden;position:relative">
+            <div id="be-progress-bar" style="height:100%;width:0%;background:linear-gradient(90deg,var(--yellow,#D9A441),var(--accent-light));transition:width .6s"></div>
+          </div>
+          <div style="font-size:.75rem;color:var(--muted);margin-top:.5rem;text-align:center" id="be-status-msg">Calculando...</div>
+        </div>
+      </div>
+      <div class="card">
         <div class="card-titulo com-ajuda">Nova Despesa</div>
         <div class="ajuda-inline">Registre tudo que sai do caixa: aluguel, salário, água, luz, manutenção etc. Isso é descontado do faturamento pra mostrar o lucro real.</div>
         <div class="input-group">
@@ -1258,6 +1278,34 @@ let insumosCache = [];
 let despesasCache = [];
 let liquidoMesCache = 0;
 let despesasMesCache = 0;
+let sessoesPagasMesCache = 0;
+
+// Ponto de equilíbrio: quantas sessões de bronzeamento (pelo ticket médio
+// já pago no mês) cobrem os gastos do mês antes do lucro ficar positivo.
+function atualizarPontoEquilibrio() {
+  const elNec = $('be-sessoes-necessarias');
+  const elFeitas = $('be-sessoes-feitas');
+  const elBar = $('be-progress-bar');
+  const elMsg = $('be-status-msg');
+  if (!elNec) return;
+  const ticketMedio = sessoesPagasMesCache > 0 ? liquidoMesCache / sessoesPagasMesCache : 0;
+  const sessoesNecessarias = ticketMedio > 0 ? Math.ceil(despesasMesCache / ticketMedio) : 0;
+  elNec.textContent = sessoesNecessarias;
+  elFeitas.textContent = sessoesPagasMesCache;
+  const pct = sessoesNecessarias > 0 ? Math.min(100, Math.round((sessoesPagasMesCache / sessoesNecessarias) * 100)) : 100;
+  elBar.style.width = pct + '%';
+  if (despesasMesCache === 0) {
+    elMsg.textContent = 'Sem despesas cadastradas este mês — tudo é lucro!';
+  } else if (ticketMedio === 0) {
+    elMsg.textContent = 'Registre pagamentos de sessões pra calcular o ticket médio.';
+  } else if (sessoesPagasMesCache >= sessoesNecessarias) {
+    const sobra = sessoesPagasMesCache - sessoesNecessarias;
+    elMsg.textContent = `✓ Meta batida! Já são ${sobra} sessões além do ponto de equilíbrio.`;
+  } else {
+    const falta = sessoesNecessarias - sessoesPagasMesCache;
+    elMsg.textContent = `Faltam ${falta} sessões pra cobrir as despesas do mês.`;
+  }
+}
 
 function atualizarLucroMes() {
   $('fin-despesas-mes').textContent = 'R$' + despesasMesCache.toFixed(2);
@@ -1595,8 +1643,10 @@ function iniciarPainel() {
       const totalVendasProdutos = registros.filter((r) => !r.agendamentoId).reduce((s, r) => s + (r.valorLiquido || 0), 0);
       $('fin-vendas-produtos').textContent = 'R$' + totalVendasProdutos.toFixed(2);
       liquidoMesCache = resumo.totalLiquido;
+      sessoesPagasMesCache = registros.filter((r) => r.statusPagamento === 'pago' && r.agendamentoId).length;
       atualizarLucroMes();
       atualizarMetaMensal();
+      atualizarPontoEquilibrio();
     }));
 
     listenersAtivos.push(escutarDespesas(negocioId, (despesas) => {
@@ -1609,6 +1659,7 @@ function iniciarPainel() {
         .reduce((s, d) => s + (d.valor || 0), 0);
       $('fin-gasto-insumos').textContent = 'R$' + gastoInsumosMes.toFixed(2);
       atualizarLucroMes();
+      atualizarPontoEquilibrio();
       atualizarAnaliseFinanceira();
     }));
 
