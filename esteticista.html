@@ -214,6 +214,7 @@
   .cabine-card {
     border: 1.5px solid var(--card-border); border-radius: 12px; padding: 1rem; text-align: center; cursor: pointer;
     transition: transform .12s ease, box-shadow .12s ease, border-color .15s ease; background: rgba(245,230,211,.02);
+    user-select: none; -webkit-user-select: none; -webkit-tap-highlight-color: transparent;
   }
   .cabine-card:hover { transform: translateY(-2px); box-shadow: 0 6px 16px rgba(0,0,0,.25); }
   .cabine-card.livre { border-color: var(--green); }
@@ -234,7 +235,10 @@
   }
   .agendamento-item:hover { border-color: rgba(245,230,211,.22); background: rgba(245,230,211,.02); }
   .agendamento-info .nome { font-weight: 700; font-size: .88rem; }
-  .nome-clicavel { cursor: pointer; color: var(--accent-light); }
+  .nome-clicavel {
+    cursor: pointer; color: var(--accent-light);
+    user-select: none; -webkit-user-select: none; -webkit-tap-highlight-color: transparent;
+  }
   .nome-clicavel:hover { text-decoration: underline; }
   .agendamento-info .detalhe { font-size: .74rem; color: var(--muted); margin-top: .15rem; }
   .badge { font-size: .68rem; font-weight: 700; padding: .28rem .65rem; border-radius: 20px; white-space: nowrap; text-transform: uppercase; letter-spacing: .02em; }
