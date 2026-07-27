@@ -17,6 +17,7 @@
 <meta name="apple-mobile-web-app-title" content="Pro'Bronze">
 <link rel="stylesheet" href="css/theme.css?v=20260728d">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
@@ -230,6 +231,15 @@
   .badge.em_andamento { background: rgba(var(--accent-rgb),.15); color: var(--accent-light); }
   .badge.concluido { background: rgba(123,160,91,.15); color: var(--green); }
   .badge.cancelado, .badge.faltou { background: rgba(193,85,74,.15); color: var(--red); }
+
+  .financeiro-grafico-grid { display: grid; grid-template-columns: 1fr; gap: .8rem; }
+  .financeiro-grafico-grid .card { margin-bottom: 0; min-width: 0; }
+  @media (min-width: 640px) {
+    .financeiro-grafico-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+  @media (min-width: 1100px) {
+    .financeiro-grafico-grid { grid-template-columns: repeat(3, 1fr); }
+  }
 
   .despesa-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: .7rem; }
   .despesa-card {
@@ -607,10 +617,9 @@
     <div class="aba-conteudo" id="aba-financeiro">
       <div class="card">
         <div class="card-titulo com-ajuda">Resumo do Mês</div>
-        <div class="ajuda-inline">Faturamento = tudo que entrou (já com desconto aplicado, se houver). Comissão = o que a equipe ganhou. Pendente = o que falta receber. Lucro = Faturamento menos Despesas.</div>
+        <div class="ajuda-inline">Faturamento = tudo que entrou (já com desconto aplicado, se houver). Pendente = o que falta receber. Lucro = Faturamento menos Despesas.</div>
         <div class="cabines-grid">
           <div class="cabine-card livre"><div class="cabine-nome" id="fin-bruto">R$0</div><div class="cabine-status">Faturamento</div></div>
-          <div class="cabine-card manutencao"><div class="cabine-nome" id="fin-comissao">R$0</div><div class="cabine-status">Comissão</div></div>
           <div class="cabine-card ocupada"><div class="cabine-nome" id="fin-pendente">R$0</div><div class="cabine-status">Pendente</div></div>
           <div class="cabine-card livre"><div class="cabine-nome" id="fin-vendas-produtos">R$0</div><div class="cabine-status">Vendas de Produtos</div></div>
           <div class="cabine-card manutencao"><div class="cabine-nome" id="fin-despesas-mes">R$0</div><div class="cabine-status">Despesas</div></div>
@@ -652,50 +661,52 @@
           <button class="btn-primario" id="btn-fin-aplicar" style="width:auto;padding:.7rem 1.2rem">Aplicar</button>
         </div>
       </div>
-      <div class="card">
-        <div class="card-titulo">Faturamento por Dia</div>
-        <div id="fin-grafico-dia-vazio" class="empty-state" style="display:none">Sem dados no período selecionado.</div>
-        <canvas id="grafico-faturamento-dia" height="200"></canvas>
-      </div>
-      <div class="card">
-        <div class="card-titulo">Formas de Pagamento</div>
-        <div id="fin-grafico-formas-vazio" class="empty-state" style="display:none">Sem dados no período selecionado.</div>
-        <canvas id="grafico-formas-pagamento" height="200"></canvas>
-      </div>
-      <div class="card">
-        <div class="card-titulo">Faturamento por Serviço</div>
-        <div id="fin-grafico-servico-vazio" class="empty-state" style="display:none">Sem dados no período selecionado.</div>
-        <canvas id="grafico-servico" height="220"></canvas>
-      </div>
-      <div class="card">
-        <div class="card-titulo">Online vs Presencial</div>
-        <div id="fin-grafico-origem-vazio" class="empty-state" style="display:none">Sem dados no período selecionado.</div>
-        <canvas id="grafico-origem" height="200"></canvas>
-      </div>
-      <div class="card">
-        <div class="card-titulo">Comissão por Funcionário</div>
-        <div id="fin-grafico-comissao-vazio" class="empty-state" style="display:none">Sem dados no período selecionado.</div>
-        <canvas id="grafico-comissao-funcionario" height="200"></canvas>
-      </div>
-      <div class="card">
-        <div class="card-titulo">Evolução Semanal (últimas 8 semanas)</div>
-        <div id="fin-grafico-semanal-vazio" class="empty-state" style="display:none">Sem dados nas últimas 8 semanas.</div>
-        <canvas id="grafico-evolucao-semanal" height="200"></canvas>
-      </div>
-      <div class="card">
-        <div class="card-titulo">Evolução Mensal (últimos 6 meses)</div>
-        <div id="fin-grafico-evolucao-vazio" class="empty-state" style="display:none">Sem dados nos últimos 6 meses.</div>
-        <canvas id="grafico-evolucao-mensal" height="200"></canvas>
-      </div>
-      <div class="card">
-        <div class="card-titulo">Receita vs Despesas (período selecionado)</div>
-        <div id="fin-grafico-receita-despesa-vazio" class="empty-state" style="display:none">Sem dados no período selecionado.</div>
-        <canvas id="grafico-receita-despesa" height="200"></canvas>
-      </div>
-      <div class="card">
-        <div class="card-titulo">Despesas por Categoria (período selecionado)</div>
-        <div id="fin-grafico-despesa-categoria-vazio" class="empty-state" style="display:none">Sem despesas no período selecionado.</div>
-        <canvas id="grafico-despesa-categoria" height="200"></canvas>
+      <div class="financeiro-grafico-grid">
+        <div class="card">
+          <div class="card-titulo">Faturamento por Dia</div>
+          <div id="fin-grafico-dia-vazio" class="empty-state" style="display:none">Sem dados no período selecionado.</div>
+          <canvas id="grafico-faturamento-dia" height="200"></canvas>
+        </div>
+        <div class="card">
+          <div class="card-titulo">Formas de Pagamento</div>
+          <div id="fin-grafico-formas-vazio" class="empty-state" style="display:none">Sem dados no período selecionado.</div>
+          <canvas id="grafico-formas-pagamento" height="200"></canvas>
+        </div>
+        <div class="card">
+          <div class="card-titulo">Faturamento por Serviço</div>
+          <div id="fin-grafico-servico-vazio" class="empty-state" style="display:none">Sem dados no período selecionado.</div>
+          <canvas id="grafico-servico" height="220"></canvas>
+        </div>
+        <div class="card">
+          <div class="card-titulo">Online vs Presencial</div>
+          <div id="fin-grafico-origem-vazio" class="empty-state" style="display:none">Sem dados no período selecionado.</div>
+          <canvas id="grafico-origem" height="200"></canvas>
+        </div>
+        <div class="card">
+          <div class="card-titulo">Comissão por Funcionário</div>
+          <div id="fin-grafico-comissao-vazio" class="empty-state" style="display:none">Sem dados no período selecionado.</div>
+          <canvas id="grafico-comissao-funcionario" height="200"></canvas>
+        </div>
+        <div class="card">
+          <div class="card-titulo">Evolução Semanal (últimas 8 semanas)</div>
+          <div id="fin-grafico-semanal-vazio" class="empty-state" style="display:none">Sem dados nas últimas 8 semanas.</div>
+          <canvas id="grafico-evolucao-semanal" height="200"></canvas>
+        </div>
+        <div class="card">
+          <div class="card-titulo">Evolução Mensal (últimos 6 meses)</div>
+          <div id="fin-grafico-evolucao-vazio" class="empty-state" style="display:none">Sem dados nos últimos 6 meses.</div>
+          <canvas id="grafico-evolucao-mensal" height="200"></canvas>
+        </div>
+        <div class="card">
+          <div class="card-titulo">Receita vs Despesas (período selecionado)</div>
+          <div id="fin-grafico-receita-despesa-vazio" class="empty-state" style="display:none">Sem dados no período selecionado.</div>
+          <canvas id="grafico-receita-despesa" height="200"></canvas>
+        </div>
+        <div class="card">
+          <div class="card-titulo">Despesas por Categoria (período selecionado)</div>
+          <div id="fin-grafico-despesa-categoria-vazio" class="empty-state" style="display:none">Sem despesas no período selecionado.</div>
+          <canvas id="grafico-despesa-categoria" height="200"></canvas>
+        </div>
       </div>
       <div class="card">
         <div class="card-titulo">Pendências</div>
@@ -1196,6 +1207,9 @@ window.addEventListener('firestore-erro', (e) => {
   toast(`Não foi possível carregar alguns dados. [${detalhe}]`, 'erro');
 });
 import { collection, query, where, getDocs } from 'https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js';
+
+if (window.Chart && window.ChartDataLabels) Chart.register(ChartDataLabels);
+const formatoDataLabelRS = (v) => 'R$' + Number(v || 0).toFixed(0);
 let pacotesCache = [];
 let cuponsCache = [];
 
@@ -1541,7 +1555,6 @@ function iniciarPainel() {
     listenersAtivos.push(escutarFinanceiroPeriodo(negocioId, inicioMes, fimMes, (registros) => {
       const resumo = resumoFinanceiro(registros);
       $('fin-bruto').textContent = 'R$' + resumo.totalLiquido.toFixed(2);
-      $('fin-comissao').textContent = 'R$' + resumo.totalComissao.toFixed(2);
       const totalVendasProdutos = registros.filter((r) => !r.agendamentoId).reduce((s, r) => s + (r.valorLiquido || 0), 0);
       $('fin-vendas-produtos').textContent = 'R$' + totalVendasProdutos.toFixed(2);
       liquidoMesCache = resumo.totalLiquido;
@@ -1936,7 +1949,10 @@ async function atualizarAnaliseFinanceira() {
       type: 'bar',
       data: { labels: labelsDia, datasets: [{ label: 'Faturamento líquido (R$)', data: Object.values(porDia), backgroundColor: '#C68642', borderRadius: 4 }] },
       options: {
-        plugins: { legend: { display: false } },
+        plugins: {
+          legend: { display: false },
+          datalabels: { color: '#F5E6D3', anchor: 'end', align: 'top', font: { weight: 'bold', size: 10 }, formatter: formatoDataLabelRS }
+        },
         scales: {
           x: { ticks: { color: '#B8A48C' }, grid: { color: 'rgba(245,230,211,.06)' } },
           y: { ticks: { color: '#B8A48C' }, grid: { color: 'rgba(245,230,211,.06)' }, beginAtZero: true }
@@ -1961,7 +1977,12 @@ async function atualizarAnaliseFinanceira() {
         labels: labelsForma,
         datasets: [{ data: Object.values(porForma), backgroundColor: labelsForma.map((f) => CORES_FORMA_PAGAMENTO[f] || '#B8A48C') }]
       },
-      options: { plugins: { legend: { position: 'bottom', labels: { color: '#F5E6D3' } } } }
+      options: {
+        plugins: {
+          legend: { position: 'bottom', labels: { color: '#F5E6D3' } },
+          datalabels: { color: '#fff', font: { weight: 'bold', size: 10 }, formatter: formatoDataLabelRS }
+        }
+      }
     });
   }
 
@@ -1994,7 +2015,10 @@ async function atualizarAnaliseFinanceira() {
       },
       options: {
         indexAxis: 'y',
-        plugins: { legend: { display: false } },
+        plugins: {
+          legend: { display: false },
+          datalabels: { color: '#F5E6D3', anchor: 'end', align: 'end', font: { weight: 'bold', size: 10 }, formatter: formatoDataLabelRS }
+        },
         scales: {
           x: { ticks: { color: '#B8A48C' }, grid: { color: 'rgba(245,230,211,.06)' }, beginAtZero: true },
           y: { ticks: { color: '#B8A48C' }, grid: { display: false } }
@@ -2022,7 +2046,12 @@ async function atualizarAnaliseFinanceira() {
         labels: labelsOrigem.map((o) => rotuloOrigem[o] || o),
         datasets: [{ data: Object.values(porOrigem), backgroundColor: ['#C68642', '#7BA05B', '#D9A441', '#B8A48C'] }]
       },
-      options: { plugins: { legend: { position: 'bottom', labels: { color: '#F5E6D3' } } } }
+      options: {
+        plugins: {
+          legend: { position: 'bottom', labels: { color: '#F5E6D3' } },
+          datalabels: { color: '#fff', font: { weight: 'bold', size: 10 }, formatter: formatoDataLabelRS }
+        }
+      }
     });
   }
 
@@ -2044,7 +2073,10 @@ async function atualizarAnaliseFinanceira() {
         datasets: [{ label: 'Comissão (R$)', data: funcionariosOrdenados.map((e) => e[1]), backgroundColor: '#7BA05B', borderRadius: 4 }]
       },
       options: {
-        plugins: { legend: { display: false } },
+        plugins: {
+          legend: { display: false },
+          datalabels: { color: '#F5E6D3', anchor: 'end', align: 'top', font: { weight: 'bold', size: 10 }, formatter: formatoDataLabelRS }
+        },
         scales: {
           x: { ticks: { color: '#B8A48C' }, grid: { color: 'rgba(245,230,211,.06)' } },
           y: { ticks: { color: '#B8A48C' }, grid: { color: 'rgba(245,230,211,.06)' }, beginAtZero: true }
@@ -2072,7 +2104,10 @@ async function atualizarAnaliseFinanceira() {
         }]
       },
       options: {
-        plugins: { legend: { display: false } },
+        plugins: {
+          legend: { display: false },
+          datalabels: { color: '#F5E6D3', anchor: 'end', align: 'top', font: { weight: 'bold', size: 10 }, formatter: formatoDataLabelRS }
+        },
         scales: {
           x: { ticks: { color: '#B8A48C' }, grid: { color: 'rgba(245,230,211,.06)' } },
           y: { ticks: { color: '#B8A48C' }, grid: { color: 'rgba(245,230,211,.06)' } }
@@ -2100,7 +2135,12 @@ async function atualizarAnaliseFinanceira() {
           backgroundColor: ['#C1554A', '#D9A441', '#C68642', '#E8B87D', '#7BA05B', '#B8A48C', '#8A6D3B', '#A85C32', '#5C4632']
         }]
       },
-      options: { plugins: { legend: { position: 'bottom', labels: { color: '#F5E6D3' } } } }
+      options: {
+        plugins: {
+          legend: { position: 'bottom', labels: { color: '#F5E6D3' } },
+          datalabels: { color: '#fff', font: { weight: 'bold', size: 10 }, formatter: formatoDataLabelRS }
+        }
+      }
     });
   }
 }
@@ -2156,7 +2196,10 @@ async function atualizarEvolucaoMensal() {
         }]
       },
       options: {
-        plugins: { legend: { display: false } },
+        plugins: {
+          legend: { display: false },
+          datalabels: { color: '#F5E6D3', anchor: 'end', align: 'top', font: { weight: 'bold', size: 10 }, formatter: formatoDataLabelRS }
+        },
         scales: {
           x: { ticks: { color: '#B8A48C' }, grid: { color: 'rgba(245,230,211,.06)' } },
           y: { ticks: { color: '#B8A48C' }, grid: { color: 'rgba(245,230,211,.06)' }, beginAtZero: true }
@@ -2195,7 +2238,10 @@ async function atualizarEvolucaoMensal() {
         datasets: [{ label: 'Faturamento líquido (R$) — semana de', data: labelsSemana.map((l) => porSemana[l]), backgroundColor: '#D9A441', borderRadius: 4 }]
       },
       options: {
-        plugins: { legend: { display: false } },
+        plugins: {
+          legend: { display: false },
+          datalabels: { color: '#F5E6D3', anchor: 'end', align: 'top', font: { weight: 'bold', size: 10 }, formatter: formatoDataLabelRS }
+        },
         scales: {
           x: { ticks: { color: '#B8A48C' }, grid: { color: 'rgba(245,230,211,.06)' } },
           y: { ticks: { color: '#B8A48C' }, grid: { color: 'rgba(245,230,211,.06)' }, beginAtZero: true }
