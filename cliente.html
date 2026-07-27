@@ -15,7 +15,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Pro'Bronze">
-<link rel="stylesheet" href="css/theme.css?v=20260728b">
+<link rel="stylesheet" href="css/theme.css?v=20260728c">
 <style>
   * { box-sizing: border-box; }
   body { margin: 0; background: var(--bg); color: var(--text); font-family: var(--font); min-height: 100vh; }
@@ -149,6 +149,7 @@
 <div id="painel-cliente">
   <main>
     <header class="topo-cliente">
+      <div id="vitrine-logo" style="font-size:2.2rem;margin-bottom:.3rem;line-height:1">☀️</div>
       <h1 id="vitrine-titulo">Pro'Bronze</h1>
       <p id="vitrine-subtitulo">Olá! Acompanhe suas sessões por aqui.</p>
       <div id="contato-estabelecimento" style="margin-top:.4rem"></div>
@@ -185,18 +186,18 @@
 </div>
 
 <script type="module">
-import { onAuthChange, login, logout } from './js/auth.js?v=20260728b';
-import { db } from './js/firebase-config.js?v=20260728b';
+import { onAuthChange, login, logout } from './js/auth.js?v=20260728c';
+import { db } from './js/firebase-config.js?v=20260728c';
 import {
   collection, query, where, onSnapshot
 } from 'https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js';
-import { escutarServicos, calcularCombo } from './js/servicos.js?v=20260728b';
-import { criarAgendamento, contarConflitosHorario } from './js/agenda.js?v=20260728b';
-import { checarElegibilidade } from './js/agenda.js?v=20260728b';
-import { escutarCabines } from './js/cabines.js?v=20260728b';
-import { escutarConfigNegocio } from './js/config-negocio.js?v=20260728b';
-import { escutarHorarios, validarHorarioFuncionamento } from './js/horarios.js?v=20260728b';
-import { toast } from './js/ui-feedback.js?v=20260728b';
+import { escutarServicos, calcularCombo } from './js/servicos.js?v=20260728c';
+import { criarAgendamento, contarConflitosHorario } from './js/agenda.js?v=20260728c';
+import { checarElegibilidade } from './js/agenda.js?v=20260728c';
+import { escutarCabines } from './js/cabines.js?v=20260728c';
+import { escutarConfigNegocio } from './js/config-negocio.js?v=20260728c';
+import { escutarHorarios, validarHorarioFuncionamento } from './js/horarios.js?v=20260728c';
+import { toast } from './js/ui-feedback.js?v=20260728c';
 
 window.addEventListener('unhandledrejection', (e) => {
   console.error(e.reason);
@@ -274,11 +275,39 @@ $('btn-sair-cliente').addEventListener('click', async () => {
         $('vitrine-titulo').textContent = config.nome;
         $('vitrine-subtitulo').textContent = config.vitrineSubtitulo;
         renderContatoEstabelecimento(config);
+        aplicarPersonalizacao(config);
       });
       escutarHorarios(cliente.negocioId, (horarios) => { horariosCache = horarios; });
     });
   });
 })();
+
+// Aplica a personalização visual do estúdio (cor + logo/ícone) só na área
+// já logada da cliente — a tela de login é anterior a sabermos de qual
+// negócio se trata, então continua com a marca padrão do Pro'Bronze.
+function hexParaRgb(hex) {
+  const limpo = (hex || '').replace('#', '');
+  if (limpo.length !== 6) return null;
+  const r = parseInt(limpo.slice(0, 2), 16), g = parseInt(limpo.slice(2, 4), 16), b = parseInt(limpo.slice(4, 6), 16);
+  if ([r, g, b].some(Number.isNaN)) return null;
+  return `${r},${g},${b}`;
+}
+
+function aplicarPersonalizacao(config) {
+  const painel = $('painel-cliente');
+  if (config.corDestaque) {
+    painel.style.setProperty('--accent', config.corDestaque);
+    painel.style.setProperty('--accent-light', config.corDestaque);
+    const rgb = hexParaRgb(config.corDestaque);
+    if (rgb) painel.style.setProperty('--accent-rgb', rgb);
+  }
+  const logoEl = $('vitrine-logo');
+  if (config.logoUrl) {
+    logoEl.innerHTML = `<img src="${config.logoUrl}" alt="Logo" style="max-width:56px;max-height:56px;border-radius:10px;display:inline-block" onerror="this.replaceWith(document.createTextNode('${config.logoEmoji || '☀️'}'))">`;
+  } else {
+    logoEl.textContent = config.logoEmoji || '☀️';
+  }
+}
 
 function renderContatoEstabelecimento(config) {
   const wrap = $('contato-estabelecimento');

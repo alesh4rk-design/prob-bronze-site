@@ -15,7 +15,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Pro'Bronze">
-<link rel="stylesheet" href="css/theme.css?v=20260728b">
+<link rel="stylesheet" href="css/theme.css?v=20260728c">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -900,6 +900,40 @@
         <div class="input-group"><label>Subtítulo da tela da cliente</label><input type="text" id="cfg-subtitulo"></div>
       </div>
       <div class="card">
+        <div class="card-titulo com-ajuda">Personalizar Área da Cliente</div>
+        <div class="ajuda-inline">A cor e o ícone escolhidos aqui aparecem na tela onde sua cliente agenda (login, botões e destaques) — deixe com a cara do seu estúdio.</div>
+
+        <div class="input-group">
+          <label>Cor de destaque</label>
+          <div style="display:flex;gap:.4rem;flex-wrap:wrap;margin-bottom:.5rem">
+            <button type="button" class="cfg-cor-btn" data-cor="#C68642" style="width:30px;height:30px;border-radius:8px;border:2px solid transparent;background:#C68642;cursor:pointer"></button>
+            <button type="button" class="cfg-cor-btn" data-cor="#D9A441" style="width:30px;height:30px;border-radius:8px;border:2px solid transparent;background:#D9A441;cursor:pointer"></button>
+            <button type="button" class="cfg-cor-btn" data-cor="#E07B54" style="width:30px;height:30px;border-radius:8px;border:2px solid transparent;background:#E07B54;cursor:pointer"></button>
+            <button type="button" class="cfg-cor-btn" data-cor="#7BA05B" style="width:30px;height:30px;border-radius:8px;border:2px solid transparent;background:#7BA05B;cursor:pointer"></button>
+            <button type="button" class="cfg-cor-btn" data-cor="#4FA3C4" style="width:30px;height:30px;border-radius:8px;border:2px solid transparent;background:#4FA3C4;cursor:pointer"></button>
+            <button type="button" class="cfg-cor-btn" data-cor="#B25FA8" style="width:30px;height:30px;border-radius:8px;border:2px solid transparent;background:#B25FA8;cursor:pointer"></button>
+            <input type="color" id="cfg-cor-custom" value="#C68642" style="width:30px;height:30px;border:none;background:none;cursor:pointer;padding:0">
+          </div>
+        </div>
+
+        <div class="input-group">
+          <label>Ícone/logo (emoji, ex: ☀️ 🌴 ✨)</label>
+          <input type="text" id="cfg-logo-emoji" maxlength="4" placeholder="☀️" style="width:70px;text-align:center;font-size:1.3rem">
+        </div>
+        <div class="input-group">
+          <label>Ou logo em imagem (link direto pra um .png/.jpg — opcional, substitui o emoji)</label>
+          <input type="text" id="cfg-logo-url" placeholder="https://...">
+        </div>
+
+        <div style="display:flex;justify-content:center;padding:.6rem 0">
+          <div style="width:200px;background:#1a1410;border:1.5px solid rgba(245,230,211,.15);border-radius:14px;padding:1.2rem 1rem;text-align:center">
+            <div id="cfg-preview-logo" style="font-size:2rem;margin-bottom:.4rem;line-height:1">☀️</div>
+            <div id="cfg-preview-nome" style="font-weight:800;font-size:.85rem;color:#E8B87D">Pro'Bronze</div>
+            <div style="margin-top:.6rem;padding:.4rem;border-radius:6px;font-size:.7rem;font-weight:700;color:#1a1410" id="cfg-preview-btn">Entrar</div>
+          </div>
+        </div>
+      </div>
+      <div class="card">
         <div class="card-titulo com-ajuda">Regras de Segurança</div>
         <div class="ajuda-inline">Controla de quanto em quanto tempo uma cliente pode agendar de novo, e quantas sessões ela pode fazer por mês — protege a pele dela.</div>
         <div class="input-group"><label>Intervalo mínimo entre sessões (horas)</label><input type="number" id="cfg-intervalo" min="1"></div>
@@ -1091,25 +1125,25 @@
 </div>
 
 <script type="module">
-import { onAuthChange, login, logout, iniciarLoginComGoogle, resetSenha } from './js/auth.js?v=20260728b';
-import { VALOR_MENSALIDADE, PIX_PLATAFORMA, WHATSAPP_SUPORTE } from './js/admin-config.js?v=20260728b';
-import { escutarCabines, atualizarStatusCabine, criarCabine, excluirCabine } from './js/cabines.js?v=20260728b';
+import { onAuthChange, login, logout, iniciarLoginComGoogle, resetSenha } from './js/auth.js?v=20260728c';
+import { VALOR_MENSALIDADE, PIX_PLATAFORMA, WHATSAPP_SUPORTE } from './js/admin-config.js?v=20260728c';
+import { escutarCabines, atualizarStatusCabine, criarCabine, excluirCabine } from './js/cabines.js?v=20260728c';
 import {
   escutarAgendamentosDoDia, criarAgendamento, concluirAgendamento,
   cancelarAgendamento, marcarFalta, atribuirCabine, contarConflitosHorario, marcarEmAndamento,
   salvarAvaliacaoSessao, estenderTempoSessao
-} from './js/agenda.js?v=20260728b';
-import { checarElegibilidade } from './js/agenda.js?v=20260728b';
-import { escutarServicos, criarServico, excluirServico, calcularCombo } from './js/servicos.js?v=20260728b';
-import { escutarClientes, criarCliente, ehAniversarioHoje, excluirCliente, editarCliente } from './js/clientes.js?v=20260728b';
-import { criarMembroEquipe, escutarEquipe, excluirMembroEquipe, editarMembroEquipe } from './js/equipe.js?v=20260728b';
-import { tempoMaxRecomendado, descricaoTipoPele } from './js/ficha-pele.js?v=20260728b';
-import { registrarPagamento, escutarPendencias, quitarPendencia, resumoFinanceiro, escutarFinanceiroPeriodo } from './js/financeiro.js?v=20260728b';
-import { criarPacote, escutarPacotesDoNegocio, consumirSessaoDoPacote, excluirPacote, pacoteVencido, diasParado, DIAS_PARADO_ALERTA } from './js/pacotes-sessoes.js?v=20260728b';
-import { criarProdutoCabine, escutarProdutosCabine, produtosEmAlerta, baixarEstoque, somarEstoque, buscarPorCodigoBarras, excluirProdutoCabine } from './js/produtos-cabine.js?v=20260728b';
-import { criarInsumo, escutarInsumos, reporInsumo, darBaixaInsumo, excluirInsumo, insumosEmAlerta, buscarInsumoPorCodigoBarras } from './js/insumos.js?v=20260728b';
-import { criarCupom, escutarCupons, desativarCupom, calcularDescontoCupom } from './js/cupons.js?v=20260728b';
-import { exportarExcel, exportarPDF, montarRelatorioFinanceiro, COLUNAS_FINANCEIRO } from './js/relatorios.js?v=20260728b';
+} from './js/agenda.js?v=20260728c';
+import { checarElegibilidade } from './js/agenda.js?v=20260728c';
+import { escutarServicos, criarServico, excluirServico, calcularCombo } from './js/servicos.js?v=20260728c';
+import { escutarClientes, criarCliente, ehAniversarioHoje, excluirCliente, editarCliente } from './js/clientes.js?v=20260728c';
+import { criarMembroEquipe, escutarEquipe, excluirMembroEquipe, editarMembroEquipe } from './js/equipe.js?v=20260728c';
+import { tempoMaxRecomendado, descricaoTipoPele } from './js/ficha-pele.js?v=20260728c';
+import { registrarPagamento, escutarPendencias, quitarPendencia, resumoFinanceiro, escutarFinanceiroPeriodo } from './js/financeiro.js?v=20260728c';
+import { criarPacote, escutarPacotesDoNegocio, consumirSessaoDoPacote, excluirPacote, pacoteVencido, diasParado, DIAS_PARADO_ALERTA } from './js/pacotes-sessoes.js?v=20260728c';
+import { criarProdutoCabine, escutarProdutosCabine, produtosEmAlerta, baixarEstoque, somarEstoque, buscarPorCodigoBarras, excluirProdutoCabine } from './js/produtos-cabine.js?v=20260728c';
+import { criarInsumo, escutarInsumos, reporInsumo, darBaixaInsumo, excluirInsumo, insumosEmAlerta, buscarInsumoPorCodigoBarras } from './js/insumos.js?v=20260728c';
+import { criarCupom, escutarCupons, desativarCupom, calcularDescontoCupom } from './js/cupons.js?v=20260728c';
+import { exportarExcel, exportarPDF, montarRelatorioFinanceiro, COLUNAS_FINANCEIRO } from './js/relatorios.js?v=20260728c';
 import {
   linkConfirmacaoAgendamento, linkCobrancaPendente, linkAtrasoAgendamento,
   linkClienteSumido, linkMensagemLivre, linkLembreteIntervalo,
@@ -1117,14 +1151,14 @@ import {
   linkPacoteAcabando,
   linkSessaoPacoteAtendida,
   linkPacoteParado
-} from './js/whatsapp.js?v=20260728b';
-import { verificarIntervaloMinimo } from './js/ficha-pele.js?v=20260728b';
-import { tutorialJaVisto, iniciarTutorial } from './js/tutorial.js?v=20260728b';
-import { DIAS_SEMANA, escutarHorarios, salvarHorarios, validarHorarioFuncionamento } from './js/horarios.js?v=20260728b';
-import { escutarConfigNegocio, salvarConfigNegocio } from './js/config-negocio.js?v=20260728b';
-import { CATEGORIAS_DESPESA, criarDespesa, excluirDespesa, escutarDespesas } from './js/despesas.js?v=20260728b';
-import { toast, confirmar, confirmarForte, executar } from './js/ui-feedback.js?v=20260728b';
-import { db } from './js/firebase-config.js?v=20260728b';
+} from './js/whatsapp.js?v=20260728c';
+import { verificarIntervaloMinimo } from './js/ficha-pele.js?v=20260728c';
+import { tutorialJaVisto, iniciarTutorial } from './js/tutorial.js?v=20260728c';
+import { DIAS_SEMANA, escutarHorarios, salvarHorarios, validarHorarioFuncionamento } from './js/horarios.js?v=20260728c';
+import { escutarConfigNegocio, salvarConfigNegocio } from './js/config-negocio.js?v=20260728c';
+import { CATEGORIAS_DESPESA, criarDespesa, excluirDespesa, escutarDespesas } from './js/despesas.js?v=20260728c';
+import { toast, confirmar, confirmarForte, executar } from './js/ui-feedback.js?v=20260728c';
+import { db } from './js/firebase-config.js?v=20260728c';
 
 // Luzinhas douradas ao redor do card de login
 // Mostra o nome da loja usada da última vez que alguém logou neste aparelho
@@ -2244,8 +2278,33 @@ function renderConfiguracoes(config) {
   $('cfg-intervalo').value = config.intervaloMinimoHoras;
   $('cfg-limite-mes').value = config.limiteSessoesMes;
   $('cfg-meta-mensal').value = config.metaMensal || '';
+  $('cfg-cor-custom').value = config.corDestaque || '#C68642';
+  $('cfg-logo-emoji').value = config.logoEmoji || '☀️';
+  $('cfg-logo-url').value = config.logoUrl || '';
+  atualizarPreviewPersonalizacao();
   atualizarMetaMensal();
 }
+
+function atualizarPreviewPersonalizacao() {
+  const cor = $('cfg-cor-custom').value || '#C68642';
+  const logoUrl = $('cfg-logo-url').value.trim();
+  const logoEmoji = $('cfg-logo-emoji').value.trim() || '☀️';
+  $('cfg-preview-nome').style.color = cor;
+  $('cfg-preview-btn').style.background = cor;
+  $('cfg-preview-logo').innerHTML = logoUrl
+    ? `<img src="${logoUrl}" style="max-width:44px;max-height:44px;border-radius:8px;display:inline-block" onerror="this.replaceWith(document.createTextNode('${logoEmoji}'))">`
+    : logoEmoji;
+}
+
+document.querySelectorAll('.cfg-cor-btn').forEach((btn) => {
+  btn.addEventListener('click', () => {
+    $('cfg-cor-custom').value = btn.dataset.cor;
+    atualizarPreviewPersonalizacao();
+  });
+});
+$('cfg-cor-custom').addEventListener('input', atualizarPreviewPersonalizacao);
+$('cfg-logo-emoji').addEventListener('input', atualizarPreviewPersonalizacao);
+$('cfg-logo-url').addEventListener('input', atualizarPreviewPersonalizacao);
 
 $('btn-salvar-configuracoes').addEventListener('click', async () => {
   const nome = $('cfg-nome').value.trim();
@@ -2257,7 +2316,10 @@ $('btn-salvar-configuracoes').addEventListener('click', async () => {
     vitrineSubtitulo: $('cfg-subtitulo').value.trim(),
     intervaloMinimoHoras: Number($('cfg-intervalo').value) || 24,
     limiteSessoesMes: Number($('cfg-limite-mes').value) || 12,
-    metaMensal: Number($('cfg-meta-mensal').value) || 0
+    metaMensal: Number($('cfg-meta-mensal').value) || 0,
+    corDestaque: $('cfg-cor-custom').value || '#C68642',
+    logoEmoji: $('cfg-logo-emoji').value.trim() || '☀️',
+    logoUrl: $('cfg-logo-url').value.trim()
   });
   toast('Configurações salvas.', 'sucesso');
 });
