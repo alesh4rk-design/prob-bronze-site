@@ -321,9 +321,24 @@ function renderContatoEstabelecimento(config) {
   const wrap = $('contato-estabelecimento');
   if (!wrap) return;
   const linhas = [];
-  if (config.whatsappNegocio) linhas.push(`<div class="detalhe">📱 WhatsApp: ${config.whatsappNegocio}</div>`);
-  if (config.chavePix) linhas.push(`<div class="detalhe">💳 PIX: ${config.chavePix}</div>`);
+  if (config.whatsappNegocio) {
+    const numero = String(config.whatsappNegocio).replace(/\D/g, '');
+    const msg = encodeURIComponent(`Olá! Sou cliente da ${config.nome || 'Pro\'Bronze'} e gostaria de falar com você.`);
+    linhas.push(`<a href="https://wa.me/55${numero}?text=${msg}" target="_blank" class="detalhe" style="display:block;text-decoration:none;color:inherit">📱 Chamar no WhatsApp</a>`);
+  }
+  if (config.chavePix) {
+    linhas.push(`<div class="detalhe" style="display:flex;align-items:center;gap:.4rem;justify-content:center;flex-wrap:wrap">
+      💳 PIX: <span id="contato-pix-key">${config.chavePix}</span>
+      <button type="button" id="btn-copiar-pix-contato" style="border:none;background:transparent;color:inherit;text-decoration:underline;cursor:pointer;font-size:.85em;padding:0">copiar</button>
+    </div>`);
+  }
   wrap.innerHTML = linhas.join('');
+  const btnCopiar = $('btn-copiar-pix-contato');
+  if (btnCopiar) {
+    btnCopiar.addEventListener('click', () => {
+      navigator.clipboard.writeText($('contato-pix-key').textContent).then(() => toast('PIX copiado!', 'sucesso'));
+    });
+  }
 }
 
 function escutarMeusPacotes(clienteId) {
