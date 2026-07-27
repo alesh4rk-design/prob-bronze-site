@@ -15,7 +15,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Pro'Bronze">
-<link rel="stylesheet" href="css/theme.css?v=20260727z">
+<link rel="stylesheet" href="css/theme.css?v=20260728a">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -1084,25 +1084,25 @@
 </div>
 
 <script type="module">
-import { onAuthChange, login, logout, iniciarLoginComGoogle, resetSenha } from './js/auth.js?v=20260727z';
-import { VALOR_MENSALIDADE, PIX_PLATAFORMA, WHATSAPP_SUPORTE } from './js/admin-config.js?v=20260727z';
-import { escutarCabines, atualizarStatusCabine, criarCabine, excluirCabine } from './js/cabines.js?v=20260727z';
+import { onAuthChange, login, logout, iniciarLoginComGoogle, resetSenha } from './js/auth.js?v=20260728a';
+import { VALOR_MENSALIDADE, PIX_PLATAFORMA, WHATSAPP_SUPORTE } from './js/admin-config.js?v=20260728a';
+import { escutarCabines, atualizarStatusCabine, criarCabine, excluirCabine } from './js/cabines.js?v=20260728a';
 import {
   escutarAgendamentosDoDia, criarAgendamento, concluirAgendamento,
   cancelarAgendamento, marcarFalta, atribuirCabine, contarConflitosHorario, marcarEmAndamento,
   salvarAvaliacaoSessao, estenderTempoSessao
-} from './js/agenda.js?v=20260727z';
-import { checarElegibilidade } from './js/agenda.js?v=20260727z';
-import { escutarServicos, criarServico, excluirServico, calcularCombo } from './js/servicos.js?v=20260727z';
-import { escutarClientes, criarCliente, ehAniversarioHoje } from './js/clientes.js?v=20260727z';
-import { criarMembroEquipe, escutarEquipe, excluirMembroEquipe, editarMembroEquipe } from './js/equipe.js?v=20260727z';
-import { tempoMaxRecomendado, descricaoTipoPele } from './js/ficha-pele.js?v=20260727z';
-import { registrarPagamento, escutarPendencias, quitarPendencia, resumoFinanceiro, escutarFinanceiroPeriodo } from './js/financeiro.js?v=20260727z';
-import { criarPacote, escutarPacotesDoNegocio, consumirSessaoDoPacote, excluirPacote, pacoteVencido, diasParado, DIAS_PARADO_ALERTA } from './js/pacotes-sessoes.js?v=20260727z';
-import { criarProdutoCabine, escutarProdutosCabine, produtosEmAlerta, baixarEstoque, somarEstoque, buscarPorCodigoBarras, excluirProdutoCabine } from './js/produtos-cabine.js?v=20260727z';
-import { criarInsumo, escutarInsumos, reporInsumo, darBaixaInsumo, excluirInsumo, insumosEmAlerta, buscarInsumoPorCodigoBarras } from './js/insumos.js?v=20260727z';
-import { criarCupom, escutarCupons, desativarCupom, calcularDescontoCupom } from './js/cupons.js?v=20260727z';
-import { exportarExcel, exportarPDF, montarRelatorioFinanceiro, COLUNAS_FINANCEIRO } from './js/relatorios.js?v=20260727z';
+} from './js/agenda.js?v=20260728a';
+import { checarElegibilidade } from './js/agenda.js?v=20260728a';
+import { escutarServicos, criarServico, excluirServico, calcularCombo } from './js/servicos.js?v=20260728a';
+import { escutarClientes, criarCliente, ehAniversarioHoje, excluirCliente } from './js/clientes.js?v=20260728a';
+import { criarMembroEquipe, escutarEquipe, excluirMembroEquipe, editarMembroEquipe } from './js/equipe.js?v=20260728a';
+import { tempoMaxRecomendado, descricaoTipoPele } from './js/ficha-pele.js?v=20260728a';
+import { registrarPagamento, escutarPendencias, quitarPendencia, resumoFinanceiro, escutarFinanceiroPeriodo } from './js/financeiro.js?v=20260728a';
+import { criarPacote, escutarPacotesDoNegocio, consumirSessaoDoPacote, excluirPacote, pacoteVencido, diasParado, DIAS_PARADO_ALERTA } from './js/pacotes-sessoes.js?v=20260728a';
+import { criarProdutoCabine, escutarProdutosCabine, produtosEmAlerta, baixarEstoque, somarEstoque, buscarPorCodigoBarras, excluirProdutoCabine } from './js/produtos-cabine.js?v=20260728a';
+import { criarInsumo, escutarInsumos, reporInsumo, darBaixaInsumo, excluirInsumo, insumosEmAlerta, buscarInsumoPorCodigoBarras } from './js/insumos.js?v=20260728a';
+import { criarCupom, escutarCupons, desativarCupom, calcularDescontoCupom } from './js/cupons.js?v=20260728a';
+import { exportarExcel, exportarPDF, montarRelatorioFinanceiro, COLUNAS_FINANCEIRO } from './js/relatorios.js?v=20260728a';
 import {
   linkConfirmacaoAgendamento, linkCobrancaPendente, linkAtrasoAgendamento,
   linkClienteSumido, linkMensagemLivre, linkLembreteIntervalo,
@@ -1110,14 +1110,14 @@ import {
   linkPacoteAcabando,
   linkSessaoPacoteAtendida,
   linkPacoteParado
-} from './js/whatsapp.js?v=20260727z';
-import { verificarIntervaloMinimo } from './js/ficha-pele.js?v=20260727z';
-import { tutorialJaVisto, iniciarTutorial } from './js/tutorial.js?v=20260727z';
-import { DIAS_SEMANA, escutarHorarios, salvarHorarios, validarHorarioFuncionamento } from './js/horarios.js?v=20260727z';
-import { escutarConfigNegocio, salvarConfigNegocio } from './js/config-negocio.js?v=20260727z';
-import { CATEGORIAS_DESPESA, criarDespesa, excluirDespesa, escutarDespesas } from './js/despesas.js?v=20260727z';
-import { toast, confirmar, confirmarForte, executar } from './js/ui-feedback.js?v=20260727z';
-import { db } from './js/firebase-config.js?v=20260727z';
+} from './js/whatsapp.js?v=20260728a';
+import { verificarIntervaloMinimo } from './js/ficha-pele.js?v=20260728a';
+import { tutorialJaVisto, iniciarTutorial } from './js/tutorial.js?v=20260728a';
+import { DIAS_SEMANA, escutarHorarios, salvarHorarios, validarHorarioFuncionamento } from './js/horarios.js?v=20260728a';
+import { escutarConfigNegocio, salvarConfigNegocio } from './js/config-negocio.js?v=20260728a';
+import { CATEGORIAS_DESPESA, criarDespesa, excluirDespesa, escutarDespesas } from './js/despesas.js?v=20260728a';
+import { toast, confirmar, confirmarForte, executar } from './js/ui-feedback.js?v=20260728a';
+import { db } from './js/firebase-config.js?v=20260728a';
 
 // Luzinhas douradas ao redor do card de login
 // Mostra o nome da loja usada da última vez que alguém logou neste aparelho
@@ -2401,6 +2401,8 @@ function renderPacotes(pacotes) {
 }
 
 $('btn-criar-pacote').addEventListener('click', async () => {
+  const btn = $('btn-criar-pacote');
+  if (btn.disabled) return;
   let clienteId = $('pac-cliente').value;
   let clienteNome = $('pac-cliente').selectedOptions[0]?.textContent;
   const totalSessoes = Number($('pac-total').value);
@@ -2408,23 +2410,32 @@ $('btn-criar-pacote').addEventListener('click', async () => {
   const validadeDias = Number($('pac-validade-dias').value) || 90;
   if (!clienteId || !totalSessoes || !valorTotal) { toast('Preencha cliente, total de sessões e valor.', 'aviso'); return; }
 
-  if (clienteId === '__novo__') {
-    const nomeNovaCliente = $('pac-cliente-novo-nome').value.trim();
-    if (!nomeNovaCliente) { toast('Digite o nome da cliente nova.', 'aviso'); return; }
-    const ref = await criarCliente(usuarioAtual.negocioId, {
-      nome: nomeNovaCliente,
-      whatsapp: $('pac-cliente-novo-wpp').value.trim()
-    });
-    clienteId = ref.id;
-    clienteNome = nomeNovaCliente;
-  }
+  btn.disabled = true;
+  const textoOriginal = btn.textContent;
+  btn.textContent = 'Criando...';
 
-  await criarPacote(usuarioAtual.negocioId, { clienteId, clienteNome, totalSessoes, valorTotal, validadeDias });
-  $('pac-cliente').value = ''; $('pac-total').value = ''; $('pac-valor').value = ''; $('pac-validade-dias').value = '90';
-  $('pac-cliente-form-novo').style.display = 'none';
-  $('pac-cliente-novo-nome').value = ''; $('pac-cliente-novo-wpp').value = '';
-  $('modal-cadastro-pacote').style.display = 'none';
-  toast('Pacote criado.', 'sucesso');
+  try {
+    if (clienteId === '__novo__') {
+      const nomeNovaCliente = $('pac-cliente-novo-nome').value.trim();
+      if (!nomeNovaCliente) { toast('Digite o nome da cliente nova.', 'aviso'); return; }
+      const ref = await criarCliente(usuarioAtual.negocioId, {
+        nome: nomeNovaCliente,
+        whatsapp: $('pac-cliente-novo-wpp').value.trim()
+      });
+      clienteId = ref.id;
+      clienteNome = nomeNovaCliente;
+    }
+
+    await criarPacote(usuarioAtual.negocioId, { clienteId, clienteNome, totalSessoes, valorTotal, validadeDias });
+    $('pac-cliente').value = ''; $('pac-total').value = ''; $('pac-valor').value = ''; $('pac-validade-dias').value = '90';
+    $('pac-cliente-form-novo').style.display = 'none';
+    $('pac-cliente-novo-nome').value = ''; $('pac-cliente-novo-wpp').value = '';
+    $('modal-cadastro-pacote').style.display = 'none';
+    toast('Pacote criado.', 'sucesso');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = textoOriginal;
+  }
 });
 
 $('btn-abrir-cadastro-pacote').addEventListener('click', () => {
@@ -2578,9 +2589,21 @@ function abrirMenuCliente(clienteId) {
   $('wpp-acoes').innerHTML = `
     <button class="btn-primario" id="btn-ir-registrar-pagamento" style="text-align:left">💳 Registrar Pagamento</button>
     <button class="btn-primario" id="btn-ir-vender-produto" style="text-align:left">🛍️ Vender Produto</button>
+    <button class="btn-secundario" id="btn-ir-excluir-cliente" style="text-align:left;color:#ff4b2b;border-color:#ff4b2b">🗑️ Excluir cliente da base</button>
   `;
   $('btn-ir-registrar-pagamento').addEventListener('click', () => abrirModalRegistrarPagamento(clienteId));
   $('btn-ir-vender-produto').addEventListener('click', () => abrirModalVenderProduto(clienteId));
+  $('btn-ir-excluir-cliente').addEventListener('click', async () => {
+    if (!confirm(`Apagar ${cliente.nome} da sua base de clientes?\n\nIsso não apaga agendamentos ou histórico já feitos, só remove o cadastro dela. Não tem como desfazer.`)) return;
+    try {
+      await excluirCliente(clienteId);
+      $('modal-whatsapp').style.display = 'none';
+      toast('Cliente apagada da base.', 'sucesso');
+    } catch (e) {
+      console.error('excluirCliente:', e);
+      toast(`Erro ao apagar: ${e.message}`, 'erro');
+    }
+  });
 
   if (!cliente.whatsapp) {
     $('wpp-opcoes').innerHTML = '<div class="empty-state">Sem WhatsApp cadastrado — mensagens indisponíveis.</div>';
@@ -3191,17 +3214,27 @@ function preencherSelectCabines(cabines) {
 }
 
 $('btn-criar-cliente').addEventListener('click', async () => {
+  const btn = $('btn-criar-cliente');
+  if (btn.disabled) return;
   const nome = $('cli-nome').value.trim();
   if (!nome) { toast('Informe o nome da cliente.', 'aviso'); return; }
-  await criarCliente(usuarioAtual.negocioId, {
-    nome,
-    whatsapp: $('cli-wpp').value.trim(),
-    tipoFitzpatrick: $('cli-fitzpatrick').value || null,
-    observacoesPele: $('cli-obs-pele').value.trim(),
-    dataNascimento: $('cli-nascimento').value || null
-  });
-  $('cli-nome').value = ''; $('cli-wpp').value = ''; $('cli-fitzpatrick').value = ''; $('cli-obs-pele').value = ''; $('cli-nascimento').value = '';
-  toast('Cliente cadastrada.', 'sucesso');
+  btn.disabled = true;
+  const textoOriginal = btn.textContent;
+  btn.textContent = 'Cadastrando...';
+  try {
+    await criarCliente(usuarioAtual.negocioId, {
+      nome,
+      whatsapp: $('cli-wpp').value.trim(),
+      tipoFitzpatrick: $('cli-fitzpatrick').value || null,
+      observacoesPele: $('cli-obs-pele').value.trim(),
+      dataNascimento: $('cli-nascimento').value || null
+    });
+    $('cli-nome').value = ''; $('cli-wpp').value = ''; $('cli-fitzpatrick').value = ''; $('cli-obs-pele').value = ''; $('cli-nascimento').value = '';
+    toast('Cliente cadastrada.', 'sucesso');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = textoOriginal;
+  }
 });
 
 $('btn-criar-servico').addEventListener('click', async () => {
@@ -3865,6 +3898,8 @@ $('btn-enviar-comprovante-wpp').addEventListener('click', async () => {
 
 // ── Novo agendamento ──────────────────────────────────────
 $('btn-criar-agendamento').addEventListener('click', async () => {
+  const btn = $('btn-criar-agendamento');
+  if (btn.disabled) return;
   let clienteId = $('novo-cliente').value;
   let clienteNome = $('novo-cliente').selectedOptions[0]?.textContent;
   const cabineId = $('novo-cabine').value || null;
@@ -3889,50 +3924,59 @@ $('btn-criar-agendamento').addEventListener('click', async () => {
     }
   }
 
-  if (clienteId === '__novo__') {
-    const nomeNovaCliente = $('novo-cliente-novo-nome').value.trim();
-    if (!nomeNovaCliente) {
-      avisosWrap.innerHTML = '<div class="aviso-bloqueio">Digite o nome da cliente nova.</div>';
+  btn.disabled = true;
+  const textoOriginal = btn.textContent;
+  btn.textContent = 'Criando...';
+
+  try {
+    if (clienteId === '__novo__') {
+      const nomeNovaCliente = $('novo-cliente-novo-nome').value.trim();
+      if (!nomeNovaCliente) {
+        avisosWrap.innerHTML = '<div class="aviso-bloqueio">Digite o nome da cliente nova.</div>';
+        return;
+      }
+      const ref = await criarCliente(usuarioAtual.negocioId, {
+        nome: nomeNovaCliente,
+        whatsapp: $('novo-cliente-novo-wpp').value.trim(),
+        tipoFitzpatrick: $('novo-cliente-novo-fitzpatrick').value || null
+      });
+      clienteId = ref.id;
+      clienteNome = nomeNovaCliente;
+    }
+
+    const elegibilidade = await checarElegibilidade(clienteId, { intervaloHoras: configNegocioCache.intervaloMinimoHoras, limiteMes: configNegocioCache.limiteSessoesMes });
+    if (!elegibilidade.podeAgendar) {
+      avisosWrap.innerHTML = elegibilidade.avisos.map((a) => `<div class="aviso-bloqueio">${a}</div>`).join('');
       return;
     }
-    const ref = await criarCliente(usuarioAtual.negocioId, {
-      nome: nomeNovaCliente,
-      whatsapp: $('novo-cliente-novo-wpp').value.trim(),
-      tipoFitzpatrick: $('novo-cliente-novo-fitzpatrick').value || null
+    if (elegibilidade.avisos.length > 0) {
+      avisosWrap.innerHTML = elegibilidade.avisos.map((a) => `<div class="aviso-atencao">${a}</div>`).join('');
+    }
+
+    if (cabineId) {
+      const conflitos = await contarConflitosHorario(usuarioAtual.negocioId, dataHora, tempoMin);
+      if (conflitos >= cabinesCache.length) {
+        avisosWrap.innerHTML = `<div class="aviso-bloqueio">Todas as ${cabinesCache.length} cabines já estão ocupadas nesse horário. Escolha outro horário.</div>`;
+        return;
+      }
+    }
+
+    const servicosDoCombo = servicosCache.filter((s) => combosSelecionados.has(s.id));
+
+    await criarAgendamento(usuarioAtual.negocioId, {
+      clienteId, clienteNome, cabineId,
+      servicos: servicosDoCombo,
+      dataHora, origem: 'presencial', tempoMin
     });
-    clienteId = ref.id;
-    clienteNome = nomeNovaCliente;
+
+    combosSelecionados.clear();
+    document.querySelectorAll('[data-combo]').forEach((chk) => { chk.checked = false; });
+    $('modal-novo-agendamento').style.display = 'none';
+    toast(cabineId ? 'Agendamento criado.' : 'Cliente colocada na fila de espera.', 'sucesso');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = textoOriginal;
   }
-
-  const elegibilidade = await checarElegibilidade(clienteId, { intervaloHoras: configNegocioCache.intervaloMinimoHoras, limiteMes: configNegocioCache.limiteSessoesMes });
-  if (!elegibilidade.podeAgendar) {
-    avisosWrap.innerHTML = elegibilidade.avisos.map((a) => `<div class="aviso-bloqueio">${a}</div>`).join('');
-    return;
-  }
-  if (elegibilidade.avisos.length > 0) {
-    avisosWrap.innerHTML = elegibilidade.avisos.map((a) => `<div class="aviso-atencao">${a}</div>`).join('');
-  }
-
-  if (cabineId) {
-    const conflitos = await contarConflitosHorario(usuarioAtual.negocioId, dataHora, tempoMin);
-    if (conflitos >= cabinesCache.length) {
-      avisosWrap.innerHTML = `<div class="aviso-bloqueio">Todas as ${cabinesCache.length} cabines já estão ocupadas nesse horário. Escolha outro horário.</div>`;
-      return;
-    }
-  }
-
-  const servicosDoCombo = servicosCache.filter((s) => combosSelecionados.has(s.id));
-
-  await criarAgendamento(usuarioAtual.negocioId, {
-    clienteId, clienteNome, cabineId,
-    servicos: servicosDoCombo,
-    dataHora, origem: 'presencial', tempoMin
-  });
-
-  combosSelecionados.clear();
-  document.querySelectorAll('[data-combo]').forEach((chk) => { chk.checked = false; });
-  $('modal-novo-agendamento').style.display = 'none';
-  toast(cabineId ? 'Agendamento criado.' : 'Cliente colocada na fila de espera.', 'sucesso');
 });
 </script>
 </body>
