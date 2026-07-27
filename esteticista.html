@@ -701,11 +701,6 @@
           <canvas id="grafico-origem" height="200"></canvas>
         </div>
         <div class="card">
-          <div class="card-titulo">Comissão por Funcionário</div>
-          <div id="fin-grafico-comissao-vazio" class="empty-state" style="display:none">Sem dados no período selecionado.</div>
-          <canvas id="grafico-comissao-funcionario" height="200"></canvas>
-        </div>
-        <div class="card">
           <div class="card-titulo">Evolução Semanal (últimas 8 semanas)</div>
           <div id="fin-grafico-semanal-vazio" class="empty-state" style="display:none">Sem dados nas últimas 8 semanas.</div>
           <canvas id="grafico-evolucao-semanal" height="200"></canvas>
@@ -1927,7 +1922,6 @@ let graficoFaturamentoDia = null;
 let graficoFormasPagamento = null;
 let graficoServico = null;
 let graficoOrigem = null;
-let graficoComissaoFuncionario = null;
 let graficoReceitaDespesa = null;
 let graficoDespesaCategoria = null;
 let graficoEvolucaoMensal = null;
@@ -2101,36 +2095,6 @@ async function atualizarAnaliseFinanceira() {
         plugins: {
           legend: { position: 'bottom', labels: { color: '#F5E6D3' } },
           datalabels: { color: '#fff', font: { weight: 'bold', size: 10 }, formatter: formatoDataLabelRS }
-        }
-      }
-    });
-  }
-
-  // Comissão por funcionário
-  const porFuncionario = {};
-  registros.forEach((r) => {
-    if (!r.esteticistaUid || !r.comissao) return;
-    porFuncionario[r.esteticistaUid] = (porFuncionario[r.esteticistaUid] || 0) + r.comissao;
-  });
-  const funcionariosOrdenados = Object.entries(porFuncionario).sort((a, b) => b[1] - a[1]);
-  $('fin-grafico-comissao-vazio').style.display = funcionariosOrdenados.length === 0 ? 'block' : 'none';
-  $('grafico-comissao-funcionario').style.display = funcionariosOrdenados.length === 0 ? 'none' : 'block';
-  if (graficoComissaoFuncionario) graficoComissaoFuncionario.destroy();
-  if (funcionariosOrdenados.length > 0) {
-    graficoComissaoFuncionario = new Chart($('grafico-comissao-funcionario'), {
-      type: 'bar',
-      data: {
-        labels: funcionariosOrdenados.map((e) => equipeCache.find((m) => m.id === e[0])?.nome || 'Ex-funcionário(a)'),
-        datasets: [{ label: 'Comissão (R$)', data: funcionariosOrdenados.map((e) => e[1]), backgroundColor: '#7BA05B', borderRadius: 4 }]
-      },
-      options: {
-        plugins: {
-          legend: { display: false },
-          datalabels: { color: '#F5E6D3', anchor: 'end', align: 'top', font: { weight: 'bold', size: 10 }, formatter: formatoDataLabelRS }
-        },
-        scales: {
-          x: { ticks: { color: '#B8A48C' }, grid: { color: 'rgba(245,230,211,.06)' } },
-          y: { ticks: { color: '#B8A48C' }, grid: { color: 'rgba(245,230,211,.06)' }, beginAtZero: true }
         }
       }
     });
