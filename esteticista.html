@@ -3508,9 +3508,14 @@ function renderAgendaDia(listaOriginal) {
     const servicos = (ag.servicos || []).map((s) => s.nome).join(' + ');
     const cliente = clientesCache.find((c) => c.id === ag.clienteId);
     const dataHoraTexto = ag.dataHora?.toDate ? ag.dataHora.toDate().toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' }) : '';
-    const linkWpp = (cliente?.whatsapp && ag.status === 'agendado') ? linkConfirmacaoAgendamento({
-      whatsapp: cliente.whatsapp, clienteNome: ag.clienteNome, servicos: servicos || 'sessão', dataHoraTexto, nomeNegocio: configNegocioCache.nome
-    }) : null;
+    // WhatsApp fica disponível pra qualquer status, não só "agendado" —
+    // só a mensagem pré-pronta muda (confirmação faz sentido antes da
+    // sessão; depois, abre a conversa em branco pra falar livremente).
+    const linkWpp = cliente?.whatsapp
+      ? (ag.status === 'agendado'
+          ? linkConfirmacaoAgendamento({ whatsapp: cliente.whatsapp, clienteNome: ag.clienteNome, servicos: servicos || 'sessão', dataHoraTexto, nomeNegocio: configNegocioCache.nome })
+          : `https://wa.me/55${String(cliente.whatsapp).replace(/\D/g, '')}`)
+      : null;
     const cabinesLivres = cabinesCache.filter((c) => c.status === 'livre');
     const semCabine = !ag.cabineId;
     const cabineAtual = cabinesCache.find((c) => c.id === ag.cabineId);
