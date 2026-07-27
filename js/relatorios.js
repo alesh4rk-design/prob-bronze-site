@@ -36,7 +36,6 @@ export function montarRelatorioFinanceiro(registros) {
     valorBruto: Number(r.valorBruto).toFixed(2),
     desconto: Number(r.desconto).toFixed(2),
     valorLiquido: Number(r.valorLiquido).toFixed(2),
-    comissao: Number(r.comissao || 0).toFixed(2),
     forma: r.formaPagamento,
     status: r.statusPagamento
   }));
@@ -48,7 +47,6 @@ export const COLUNAS_FINANCEIRO = [
   { chave: 'valorBruto', titulo: 'Bruto (R$)' },
   { chave: 'desconto', titulo: 'Desconto (R$)' },
   { chave: 'valorLiquido', titulo: 'Líquido (R$)' },
-  { chave: 'comissao', titulo: 'Comissão (R$)' },
   { chave: 'forma', titulo: 'Forma' },
   { chave: 'status', titulo: 'Status' }
 ];

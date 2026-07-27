@@ -545,7 +545,7 @@
       </div>
       <div class="card" id="card-nova-equipe">
         <div class="card-titulo com-ajuda">Adicionar Funcionário(a) manualmente</div>
-        <div class="ajuda-inline">Cadastre você mesmo o login da pessoa (funcionário ou outro dono). Cada pessoa ganha seu próprio login e uma % de comissão sobre o que atender.</div>
+        <div class="ajuda-inline">Cadastre você mesmo o login da pessoa (funcionário ou outro dono). Cada pessoa ganha seu próprio login.</div>
         <div class="input-group"><label>Nome</label><input type="text" id="eq-nome"></div>
         <div class="input-group"><label>E-mail</label><input type="email" id="eq-email"></div>
         <div class="input-group"><label>Senha</label><input type="password" id="eq-senha" placeholder="mínimo 6 caracteres"></div>
@@ -556,15 +556,7 @@
             <option value="dono">Dono</option>
           </select>
         </div>
-        <div class="input-group">
-          <label>Forma de pagamento</label>
-          <select id="eq-tipo-remuneracao">
-            <option value="comissao">Comissão (% sobre o que atender)</option>
-            <option value="diaria">Diária (valor fixo por dia trabalhado)</option>
-          </select>
-        </div>
-        <div class="input-group" id="eq-comissao-wrap"><label>Comissão (%)</label><input type="number" id="eq-comissao" value="0" min="0" max="100"></div>
-        <div class="input-group" id="eq-diaria-wrap" style="display:none"><label>Valor da diária (R$)</label><input type="number" id="eq-diaria" value="0" min="0" step="0.01"></div>
+        <div class="input-group"><label>Diária (R$, opcional)</label><input type="number" id="eq-diaria" value="0" min="0" step="0.01"></div>
         <button class="btn-primario" id="btn-criar-equipe">Adicionar</button>
       </div>
       <div class="card">
@@ -1172,14 +1164,14 @@ import {
 import { checarElegibilidade } from './js/agenda.js?v=20260728e';
 import { escutarServicos, criarServico, excluirServico, calcularCombo } from './js/servicos.js?v=20260728d';
 import { escutarClientes, criarCliente, ehAniversarioHoje, excluirCliente, editarCliente } from './js/clientes.js?v=20260728d';
-import { criarMembroEquipe, escutarEquipe, excluirMembroEquipe, editarMembroEquipe } from './js/equipe.js?v=20260728d';
+import { criarMembroEquipe, escutarEquipe, excluirMembroEquipe, editarMembroEquipe } from './js/equipe.js?v=20260728f';
 import { tempoMaxRecomendado, descricaoTipoPele } from './js/ficha-pele.js?v=20260728d';
-import { registrarPagamento, escutarPendencias, quitarPendencia, resumoFinanceiro, escutarFinanceiroPeriodo } from './js/financeiro.js?v=20260728d';
+import { registrarPagamento, escutarPendencias, quitarPendencia, resumoFinanceiro, escutarFinanceiroPeriodo } from './js/financeiro.js?v=20260728f';
 import { criarPacote, escutarPacotesDoNegocio, consumirSessaoDoPacote, excluirPacote, pacoteVencido, diasParado, DIAS_PARADO_ALERTA } from './js/pacotes-sessoes.js?v=20260728d';
 import { criarProdutoCabine, escutarProdutosCabine, produtosEmAlerta, baixarEstoque, somarEstoque, buscarPorCodigoBarras, excluirProdutoCabine } from './js/produtos-cabine.js?v=20260728d';
 import { criarInsumo, escutarInsumos, reporInsumo, darBaixaInsumo, excluirInsumo, insumosEmAlerta, buscarInsumoPorCodigoBarras } from './js/insumos.js?v=20260728d';
 import { criarCupom, escutarCupons, desativarCupom, calcularDescontoCupom } from './js/cupons.js?v=20260728d';
-import { exportarExcel, exportarPDF, montarRelatorioFinanceiro, COLUNAS_FINANCEIRO } from './js/relatorios.js?v=20260728d';
+import { exportarExcel, exportarPDF, montarRelatorioFinanceiro, COLUNAS_FINANCEIRO } from './js/relatorios.js?v=20260728f';
 import {
   linkConfirmacaoAgendamento, linkCobrancaPendente, linkAtrasoAgendamento,
   linkClienteSumido, linkMensagemLivre, linkLembreteIntervalo,
@@ -1189,7 +1181,7 @@ import {
   linkPacoteParado
 } from './js/whatsapp.js?v=20260728d';
 import { verificarIntervaloMinimo } from './js/ficha-pele.js?v=20260728d';
-import { tutorialJaVisto, iniciarTutorial } from './js/tutorial.js?v=20260728d';
+import { tutorialJaVisto, iniciarTutorial } from './js/tutorial.js?v=20260728f';
 import { DIAS_SEMANA, escutarHorarios, salvarHorarios, validarHorarioFuncionamento } from './js/horarios.js?v=20260728d';
 import { escutarConfigNegocio, salvarConfigNegocio } from './js/config-negocio.js?v=20260728d';
 import { CATEGORIAS_DESPESA, criarDespesa, excluirDespesa, escutarDespesas } from './js/despesas.js?v=20260728d';
@@ -1937,17 +1929,17 @@ function buscarDespesasEntre(de, ate) {
   });
 }
 
-async function buscarAgendamentosEntre(de, ate) {
-  const inicio = new Date(de + 'T00:00:00');
-  const fim = new Date(ate + 'T23:59:59');
+// Busca TODOS os agendamentos do negócio (sem filtrar por data) — usado
+// pra montar o mapa id -> agendamento nos gráficos de Faturamento por
+// Serviço / Online vs Presencial. Não dá pra usar buscarAgendamentosEntre
+// ali: o pagamento pode ter sido registrado num dia diferente do
+// agendamento (ex: pagou depois), então filtrar por data deixava
+// pagamentos de fora do mapa e sumia com a receita deles nesses gráficos.
+async function buscarTodosAgendamentos() {
   const q = query(collection(db, 'agendamentos'), where('negocioId', '==', usuarioAtual.negocioId));
   const snap = await getDocs(q);
   const lista = [];
-  snap.forEach((d) => {
-    const ag = d.data();
-    const data = ag.dataHora?.toDate ? ag.dataHora.toDate() : null;
-    if (data && data >= inicio && data <= fim) lista.push({ id: d.id, ...ag });
-  });
+  snap.forEach((d) => lista.push({ id: d.id, ...d.data() }));
   return lista;
 }
 
@@ -1975,7 +1967,11 @@ async function atualizarAnaliseFinanceira() {
     toast('Não foi possível carregar os gráficos. Verifique sua conexão e recarregue a página.', 'erro');
     return;
   }
-  const registros = await buscarFinanceiroEntre(de, ate);
+  // Só pagamentos já recebidos entram nos gráficos de faturamento — senão
+  // pendência (que já tem card próprio) contava como dinheiro que já
+  // entrou, inflando Faturamento por Dia, Formas de Pagamento, Faturamento
+  // por Serviço, Online vs Presencial e Receita vs Despesas.
+  const registros = (await buscarFinanceiroEntre(de, ate)).filter((r) => r.statusPagamento === 'pago');
 
   // Faturamento por dia (valor líquido)
   const porDia = {};
@@ -2031,8 +2027,8 @@ async function atualizarAnaliseFinanceira() {
   }
 
   // Precisa dos agendamentos do período pra saber serviço e origem de cada pagamento
-  const agendamentosPeriodo = await buscarAgendamentosEntre(de, ate);
-  const agendamentoPorId = new Map(agendamentosPeriodo.map((ag) => [ag.id, ag]));
+  const todosAgendamentos = await buscarTodosAgendamentos();
+  const agendamentoPorId = new Map(todosAgendamentos.map((ag) => [ag.id, ag]));
 
   // Faturamento por serviço (distribui o valor do combo proporcionalmente ao preço de cada serviço)
   const porServico = {};
@@ -2179,7 +2175,7 @@ function inicioDaSemana(data) {
 }
 
 async function atualizarEvolucaoMensal() {
-  const registros = await buscarTodoFinanceiro();
+  const registros = (await buscarTodoFinanceiro()).filter((r) => r.statusPagamento === 'pago');
 
   const labelsOrdenados = [];
   const porMes = {};
@@ -2599,16 +2595,15 @@ function renderEquipe(equipe) {
   $('card-link-equipe').style.display = usuarioAtual.papel === 'dono' ? 'block' : 'none';
   if (equipe.length === 0) { wrap.innerHTML = '<div class="empty-state">Nenhum membro cadastrado.</div>'; return; }
   wrap.innerHTML = equipe.map((m) => {
-    const remuneracao = m.papel === 'dono' ? '' :
-      (m.tipoRemuneracao === 'diaria' ? ` · diária R$${Number(m.valorDiaria || 0).toFixed(2)}` : ` · comissão ${m.percentualComissao || 0}%`);
-    const podeRegistrarDiaria = usuarioAtual.papel === 'dono' && m.papel !== 'dono' && m.tipoRemuneracao === 'diaria';
+    const remuneracao = (m.papel === 'dono' || !m.valorDiaria) ? '' : ` · diária R$${Number(m.valorDiaria || 0).toFixed(2)}`;
+    const podeRegistrarDiaria = usuarioAtual.papel === 'dono' && m.papel !== 'dono' && m.valorDiaria > 0;
     return `
     <div class="agendamento-item">
       <div class="agendamento-info">
         <div class="nome">${m.nome}</div>
         <div class="detalhe">${ROTULO_PAPEL[m.papel] || m.papel} · ${m.email}${remuneracao}</div>
       </div>
-      ${(usuarioAtual.papel === 'dono' && m.papel !== 'dono') ? `<button class="btn-secundario" data-editar-remuneracao="${m.id}">✏️ Pagamento</button>` : ''}
+      ${(usuarioAtual.papel === 'dono' && m.papel !== 'dono') ? `<button class="btn-secundario" data-editar-remuneracao="${m.id}">✏️ Diária</button>` : ''}
       ${podeRegistrarDiaria ? `<button class="btn-secundario" data-registrar-diaria="${m.id}">📅 Registrar diária</button>` : ''}
       ${(usuarioAtual.papel === 'dono' && m.id !== usuarioAtual.uid) ? `<button class="btn-secundario" data-excluir-membro="${m.id}">Remover</button>` : ''}
     </div>
@@ -2618,19 +2613,10 @@ function renderEquipe(equipe) {
     btn.addEventListener('click', async () => {
       const membro = equipeCache.find((m) => m.id === btn.dataset.editarRemuneracao);
       if (!membro) return;
-      const escolha = prompt(`Forma de pagamento de "${membro.nome}" — digite "comissao" ou "diaria":`, membro.tipoRemuneracao || 'comissao');
-      if (!escolha) return;
-      const tipoRemuneracao = escolha.trim().toLowerCase() === 'diaria' ? 'diaria' : 'comissao';
-      if (tipoRemuneracao === 'diaria') {
-        const valorStr = prompt('Valor da diária (R$):', String(membro.valorDiaria || 0));
-        if (valorStr == null) return;
-        await editarMembroEquipe(membro.id, { tipoRemuneracao: 'diaria', valorDiaria: Number(valorStr) || 0 });
-      } else {
-        const percStr = prompt('Comissão (%):', String(membro.percentualComissao || 0));
-        if (percStr == null) return;
-        await editarMembroEquipe(membro.id, { tipoRemuneracao: 'comissao', percentualComissao: Number(percStr) || 0 });
-      }
-      toast('Forma de pagamento atualizada.', 'sucesso');
+      const valorStr = prompt(`Valor da diária de "${membro.nome}" (R$, 0 pra não usar):`, String(membro.valorDiaria || 0));
+      if (valorStr == null) return;
+      await editarMembroEquipe(membro.id, { valorDiaria: Number(valorStr) || 0 });
+      toast('Diária atualizada.', 'sucesso');
     });
   });
   wrap.querySelectorAll('[data-registrar-diaria]').forEach((btn) => {
@@ -2658,24 +2644,16 @@ function renderEquipe(equipe) {
   });
 }
 
-$('eq-tipo-remuneracao').addEventListener('change', () => {
-  const diaria = $('eq-tipo-remuneracao').value === 'diaria';
-  $('eq-comissao-wrap').style.display = diaria ? 'none' : 'block';
-  $('eq-diaria-wrap').style.display = diaria ? 'block' : 'none';
-});
-
 $('btn-criar-equipe').addEventListener('click', async () => {
   const nome = $('eq-nome').value.trim();
   const email = $('eq-email').value.trim();
   const senha = $('eq-senha').value;
   const papel = $('eq-papel').value;
-  const tipoRemuneracao = $('eq-tipo-remuneracao').value;
-  const percentualComissao = Number($('eq-comissao').value) || 0;
   const valorDiaria = Number($('eq-diaria').value) || 0;
   if (!nome || !email || !senha) { toast('Preencha nome, e-mail e senha.', 'aviso'); return; }
   if (senha.length < 6) { toast('A senha precisa ter pelo menos 6 caracteres.', 'aviso'); return; }
-  await criarMembroEquipe(usuarioAtual.negocioId, { nome, email, senha, papel, tipoRemuneracao, percentualComissao, valorDiaria });
-  $('eq-nome').value = ''; $('eq-email').value = ''; $('eq-senha').value = ''; $('eq-comissao').value = '0'; $('eq-diaria').value = '0';
+  await criarMembroEquipe(usuarioAtual.negocioId, { nome, email, senha, papel, valorDiaria });
+  $('eq-nome').value = ''; $('eq-email').value = ''; $('eq-senha').value = ''; $('eq-diaria').value = '0';
   toast('Membro da equipe adicionado.', 'sucesso');
 });
 
@@ -2850,7 +2828,6 @@ $('btn-confirmar-registrar-pagamento').addEventListener('click', async () => {
   const valor = Number($('rp-valor').value);
   if (!valor || valor <= 0) { toast('Informe um valor válido.', 'aviso'); return; }
   const cliente = clientesCache.find((c) => c.id === clienteMenuAtualId);
-  const membroAtivo = equipeCache.find((m) => m.id === usuarioAtual.uid);
   await registrarPagamento(usuarioAtual.negocioId, {
     agendamentoId: null,
     clienteId: clienteMenuAtualId,
@@ -2858,9 +2835,7 @@ $('btn-confirmar-registrar-pagamento').addEventListener('click', async () => {
     valorBruto: valor,
     desconto: 0,
     formaPagamento: $('rp-forma').dataset.valor,
-    statusPagamento: $('rp-status').value,
-    esteticistaUid: usuarioAtual.uid,
-    percentualComissao: membroAtivo?.percentualComissao || 0
+    statusPagamento: $('rp-status').value
   });
   travarPagamento('modal-registrar-pagamento', 'btn-confirmar-registrar-pagamento');
   toast('Pagamento registrado.', 'sucesso');
@@ -3207,7 +3182,6 @@ $('btn-confirmar-venda').addEventListener('click', async () => {
   }
   const clienteVendaId = clienteMenuAtualId || $('venda-cliente-select').value || null;
   const cliente = clientesCache.find((c) => c.id === clienteVendaId);
-  const membroAtivo = equipeCache.find((m) => m.id === usuarioAtual.uid);
   await baixarEstoque(produtoId, quantidade);
   await registrarPagamento(usuarioAtual.negocioId, {
     agendamentoId: null,
@@ -3216,9 +3190,7 @@ $('btn-confirmar-venda').addEventListener('click', async () => {
     valorBruto: valor,
     desconto: 0,
     formaPagamento: $('venda-forma').dataset.valor,
-    statusPagamento: $('venda-status').value,
-    esteticistaUid: usuarioAtual.uid,
-    percentualComissao: membroAtivo?.percentualComissao || 0
+    statusPagamento: $('venda-status').value
   });
   travarPagamento('modal-vender-produto', 'btn-confirmar-venda');
   toast('Venda registrada.', 'sucesso');
@@ -3859,7 +3831,6 @@ $('btn-confirmar-pagamento').addEventListener('click', async () => {
       if (cupom) desconto += calcularDescontoCupom(cupom, sessao.valorBruto);
       else toast('Cupom não encontrado ou inválido — desconto manual aplicado normalmente.', 'aviso');
     }
-    const membroAtivo = equipeCache.find((m) => m.id === usuarioAtual.uid);
     await registrarPagamento(usuarioAtual.negocioId, {
       agendamentoId: sessao.agendamentoId,
       clienteId: sessao.clienteId,
@@ -3867,9 +3838,7 @@ $('btn-confirmar-pagamento').addEventListener('click', async () => {
       valorBruto: sessao.valorBruto,
       desconto,
       formaPagamento,
-      statusPagamento,
-      esteticistaUid: usuarioAtual.uid,
-      percentualComissao: membroAtivo?.percentualComissao || 0
+      statusPagamento
     });
     comprovantePendente = {
       nomeLoja: configNegocioCache?.nome || "Pro'Bronze",

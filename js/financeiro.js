@@ -1,4 +1,4 @@
-// Pro'Bronze — Financeiro: pagamentos, pendências, desconto, comissão
+// Pro'Bronze — Financeiro: pagamentos, pendências, desconto
 import { db } from "./firebase-config.js?v=20260728d";
 import {
   collection, doc, addDoc, updateDoc, getDocs,
@@ -10,10 +10,9 @@ import { notificarErroFirestore } from "./firestore-erro.js?v=20260728d";
 // Registra o pagamento de um agendamento concluído
 export async function registrarPagamento(negocioId, {
   agendamentoId, clienteId, clienteNome, valorBruto, desconto = 0,
-  formaPagamento, statusPagamento, percentualComissao = 0, esteticistaUid = null
+  formaPagamento, statusPagamento
 }) {
   const valorLiquido = valorBruto - desconto;
-  const comissao = esteticistaUid ? valorLiquido * (percentualComissao / 100) : 0;
 
   return addDoc(collection(db, "financeiro"), {
     negocioId,
@@ -25,9 +24,6 @@ export async function registrarPagamento(negocioId, {
     valorLiquido,
     formaPagamento,       // "dinheiro" | "pix" | "cartao" | ...
     statusPagamento,      // "pago" | "pendente"
-    esteticistaUid,
-    percentualComissao,
-    comissao,
     dataHora: serverTimestamp(),
     criadoEm: serverTimestamp()
   });
@@ -66,12 +62,13 @@ export function escutarPendencias(negocioId, callback) {
   }, notificarErroFirestore);
 }
 
-// Resumo simples: total bruto, líquido, comissões, pendências
+// Resumo simples: total bruto, líquido (só o que já foi pago de verdade —
+// pendências entram à parte, pra não contar como faturamento algo que
+// ainda não entrou no caixa) e pendências.
 export function resumoFinanceiro(lista) {
   return lista.reduce((acc, r) => ({
-    totalBruto: acc.totalBruto + (r.valorBruto || 0),
-    totalLiquido: acc.totalLiquido + (r.valorLiquido || 0),
-    totalComissao: acc.totalComissao + (r.comissao || 0),
+    totalBruto: acc.totalBruto + (r.statusPagamento === "pago" ? (r.valorBruto || 0) : 0),
+    totalLiquido: acc.totalLiquido + (r.statusPagamento === "pago" ? (r.valorLiquido || 0) : 0),
     totalPendente: acc.totalPendente + (r.statusPagamento === "pendente" ? r.valorLiquido : 0)
-  }), { totalBruto: 0, totalLiquido: 0, totalComissao: 0, totalPendente: 0 });
+  }), { totalBruto: 0, totalLiquido: 0, totalPendente: 0 });
 }
