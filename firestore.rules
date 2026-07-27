@@ -33,6 +33,16 @@ service cloud.firestore {
       return logado() && !exists(/databases/$(database)/documents/usuarios/$(request.auth.uid));
     }
 
+    // negocioId da cliente autenticada, se ela tiver o mapeamento em
+    // "clienteNegocios" (ver match abaixo) — usado pra restringir leitura de
+    // "negocios" e "agendamentos" só ao próprio negócio da cliente, em vez
+    // de abrir pra qualquer usuário logado da plataforma inteira.
+    function meuNegocioComoCliente() {
+      return (logado() && exists(/databases/$(database)/documents/clienteNegocios/$(request.auth.uid)))
+        ? get(/databases/$(database)/documents/clienteNegocios/$(request.auth.uid)).data.negocioId
+        : null;
+    }
+
     // Negócios: qualquer visitante logado pode criar (cadastro trial);
     // leitura de UM negócio (vitrine da cliente) é aberta a qualquer logado,
     // mas LISTAR todos só é permitido ao dono do próprio negócio ou ao admin geral.
@@ -41,7 +51,10 @@ service cloud.firestore {
       // (ver update abaixo). Sem essa checagem, dava pra criar direto com
       // status "ativo" e pular a aprovação/pagamento.
       allow create: if logado() && request.resource.data.status == 'pendente';
-      allow get: if ehDoMeuNegocio(negocioId) || logado();
+      // Antes era "|| logado()" — qualquer cliente de qualquer negócio
+      // conseguia ler o negócio de outra pessoa (meta de faturamento, PIX).
+      // Agora só quem é do negócio ou uma cliente cadastrada NESSE negócio.
+      allow get: if ehDoMeuNegocio(negocioId) || meuNegocioComoCliente() == negocioId || ehAdmin();
       allow list: if ehDoMeuNegocio(negocioId) || ehAdmin();
       // O dono edita o próprio negócio livremente, mas NÃO pode mexer em
       // status/trialInicio/trialFim — antes dava pra chamar updateDoc direto
@@ -80,6 +93,12 @@ service cloud.firestore {
       allow delete: if ehDono() || ehAdmin();
     }
 
+    // Mapeamento uid -> negocioId de clientes (ver função meuNegocioComoCliente
+    // acima) — só a própria cliente lê/cria o próprio, ninguém mais.
+    match /clienteNegocios/{uid} {
+      allow read, create: if request.auth.uid == uid;
+    }
+
     // Coleções operacionais: isoladas por negocioId, dono e recepcionista têm acesso
     match /clientes/{id} {
       allow read: if ehDoMeuNegocio(resource.data.negocioId) ||
@@ -100,9 +119,11 @@ service cloud.firestore {
     }
 
     match /agendamentos/{id} {
-      // Leitura aberta a qualquer logado: a cliente precisa contar quantos
-      // horários já estão ocupados (capacidade de cabines) antes de agendar
-      allow read: if ehDoMeuNegocio(resource.data.negocioId) || logado();
+      // A cliente precisa contar quantos horários já estão ocupados
+      // (capacidade de cabines) antes de agendar, mas só do PRÓPRIO negócio
+      // — antes "|| logado()" deixava qualquer cliente logada ler nome e
+      // WhatsApp de clientes de QUALQUER negócio da plataforma.
+      allow read: if ehDoMeuNegocio(resource.data.negocioId) || meuNegocioComoCliente() == resource.data.negocioId;
       // No caminho da cliente, também confere que o negocioId do agendamento
       // bate com o negocioId real do cadastro dela — sem isso, dava pra
       // apontar um agendamento pra outro negócio usando o próprio clienteId.

@@ -15,7 +15,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Pro'Bronze">
-<link rel="stylesheet" href="css/theme.css?v=20260728c">
+<link rel="stylesheet" href="css/theme.css?v=20260728d">
 <style>
   * { box-sizing: border-box; }
   body { margin: 0; background: var(--bg); color: var(--text); font-family: var(--font); min-height: 100vh; }
@@ -186,18 +186,18 @@
 </div>
 
 <script type="module">
-import { onAuthChange, login, logout } from './js/auth.js?v=20260728c';
-import { db } from './js/firebase-config.js?v=20260728c';
+import { onAuthChange, login, logout } from './js/auth.js?v=20260728d';
+import { db } from './js/firebase-config.js?v=20260728d';
 import {
-  collection, query, where, onSnapshot
+  collection, doc, setDoc, query, where, onSnapshot
 } from 'https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js';
-import { escutarServicos, calcularCombo } from './js/servicos.js?v=20260728c';
-import { criarAgendamento, contarConflitosHorario } from './js/agenda.js?v=20260728c';
-import { checarElegibilidade } from './js/agenda.js?v=20260728c';
-import { escutarCabines } from './js/cabines.js?v=20260728c';
-import { escutarConfigNegocio } from './js/config-negocio.js?v=20260728c';
-import { escutarHorarios, validarHorarioFuncionamento } from './js/horarios.js?v=20260728c';
-import { toast } from './js/ui-feedback.js?v=20260728c';
+import { escutarServicos, calcularCombo } from './js/servicos.js?v=20260728d';
+import { criarAgendamento, contarConflitosHorario } from './js/agenda.js?v=20260728d';
+import { checarElegibilidade } from './js/agenda.js?v=20260728d';
+import { escutarCabines } from './js/cabines.js?v=20260728d';
+import { escutarConfigNegocio } from './js/config-negocio.js?v=20260728d';
+import { escutarHorarios, validarHorarioFuncionamento } from './js/horarios.js?v=20260728d';
+import { toast } from './js/ui-feedback.js?v=20260728d';
 
 window.addEventListener('unhandledrejection', (e) => {
   console.error(e.reason);
@@ -253,7 +253,7 @@ $('btn-sair-cliente').addEventListener('click', async () => {
     }
     // Busca o doc do cliente vinculado a este login (campo clienteUid)
     const q = query(collection(db, 'clientes'), where('clienteUid', '==', user.uid));
-    const unsub = onSnapshot(q, (snap) => {
+    const unsub = onSnapshot(q, async (snap) => {
       if (snap.empty) {
         $('login-erro').textContent = 'Esta conta ainda não está vinculada a um cadastro de cliente.';
         return;
@@ -263,6 +263,14 @@ $('btn-sair-cliente').addEventListener('click', async () => {
       clienteAtual = cliente;
       $('tela-login').style.display = 'none';
       $('painel-cliente').style.display = 'block';
+      // Autocorreção pra contas criadas antes desse mapeamento existir —
+      // sem isso, clientes antigas perderiam acesso aos próprios dados do
+      // negócio ao qual pertencem. Espera terminar antes de ler qualquer
+      // coisa que dependa dele, senão a primeira leitura pode cair antes
+      // do mapeamento existir.
+      try {
+        await setDoc(doc(db, 'clienteNegocios', user.uid), { negocioId: cliente.negocioId });
+      } catch (e) { console.error('clienteNegocios:', e); }
       escutarMeusPacotes(cliente.id);
       escutarMinhasSessoes(cliente.negocioId, cliente.id);
       escutarServicos(cliente.negocioId, (servicos) => {
