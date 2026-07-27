@@ -452,8 +452,14 @@
     <div class="aba-conteudo" id="aba-agenda">
       <div class="card">
         <div style="display:flex;justify-content:space-between;align-items:center;gap:.6rem;flex-wrap:wrap;margin-bottom:.8rem">
-          <div class="card-titulo" style="margin-bottom:0">Hoje</div>
+          <div class="card-titulo" style="margin-bottom:0">Agenda</div>
           <button class="btn-primario" style="width:auto" id="btn-abrir-novo-agendamento-agenda">+ Agendar / Colocar na fila</button>
+        </div>
+        <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.8rem">
+          <button type="button" class="btn-secundario" style="width:auto;padding:.5rem .8rem" id="btn-agenda-dia-anterior">←</button>
+          <input type="date" id="agenda-data-selecionada" style="flex:1;background:var(--card-inp-bg);border:1.5px solid var(--card-inp-border);border-radius:10px;padding:.6rem .8rem;color:var(--text);font-family:var(--font)">
+          <button type="button" class="btn-secundario" style="width:auto;padding:.5rem .8rem" id="btn-agenda-dia-hoje">Hoje</button>
+          <button type="button" class="btn-secundario" style="width:auto;padding:.5rem .8rem" id="btn-agenda-dia-proximo">→</button>
         </div>
         <div style="display:flex;gap:.4rem;flex-wrap:wrap;margin-bottom:.8rem" id="agenda-filtros">
           <button class="btn-secundario agenda-filtro-btn ativo" data-filtro-agenda="todos">Todos</button>
@@ -1417,10 +1423,25 @@ document.querySelectorAll('.aba-btn').forEach((btn) => {
 
 // ── Painel ──────────────────────────────────────────────
 let listenersAtivos = [];
+let unsubAgendaDia = null;
 
 function pararTodosOsListeners() {
   listenersAtivos.forEach((cancelar) => { try { cancelar(); } catch (e) { /* ignora */ } });
   listenersAtivos = [];
+  if (unsubAgendaDia) { try { unsubAgendaDia(); } catch (e) { /* ignora */ } unsubAgendaDia = null; }
+}
+
+// Re-inscreve a Agenda do Dia pra uma data específica — antes ficava
+// travada sempre em "hoje" (new Date()), então agendamentos de outros
+// dias (passados ou futuros) nunca apareciam na tela.
+function assinarAgendaDoDia(negocioId, data) {
+  if (unsubAgendaDia) { try { unsubAgendaDia(); } catch (e) { /* ignora */ } }
+  unsubAgendaDia = escutarAgendamentosDoDia(negocioId, data, (lista) => {
+    agendaDiaCache = lista;
+    aplicarFiltroAgenda();
+    restaurarSessoesEmAndamento(lista);
+    atualizarCentralAvisos();
+  });
 }
 
 // Verifica se o negócio ainda tem acesso (trial válido ou assinatura ativa).
@@ -1488,12 +1509,8 @@ function iniciarPainel() {
     preencherSelectCabines(cabines);
   }));
 
-  listenersAtivos.push(escutarAgendamentosDoDia(negocioId, new Date(), (lista) => {
-    agendaDiaCache = lista;
-    aplicarFiltroAgenda();
-    restaurarSessoesEmAndamento(lista);
-    atualizarCentralAvisos();
-  }));
+  $('agenda-data-selecionada').value = new Date().toISOString().slice(0, 10);
+  assinarAgendaDoDia(negocioId, new Date());
 
   // Horários e Financeiro/Despesas são abas estratégicas — as regras do
   // Firestore já bloqueiam a leitura pra quem não é dono, então nem tenta
@@ -3405,6 +3422,29 @@ function abrirModalNovoAgendamento() {
 }
 $('btn-abrir-novo-agendamento-agenda').addEventListener('click', abrirModalNovoAgendamento);
 $('btn-cancelar-novo-agendamento').addEventListener('click', () => { $('modal-novo-agendamento').style.display = 'none'; });
+
+function dataSelecionadaAgenda() {
+  const v = $('agenda-data-selecionada').value;
+  return v ? new Date(v + 'T00:00:00') : new Date();
+}
+$('agenda-data-selecionada').addEventListener('change', () => {
+  assinarAgendaDoDia(usuarioAtual.negocioId, dataSelecionadaAgenda());
+});
+$('btn-agenda-dia-anterior').addEventListener('click', () => {
+  const d = dataSelecionadaAgenda(); d.setDate(d.getDate() - 1);
+  $('agenda-data-selecionada').value = d.toISOString().slice(0, 10);
+  assinarAgendaDoDia(usuarioAtual.negocioId, d);
+});
+$('btn-agenda-dia-proximo').addEventListener('click', () => {
+  const d = dataSelecionadaAgenda(); d.setDate(d.getDate() + 1);
+  $('agenda-data-selecionada').value = d.toISOString().slice(0, 10);
+  assinarAgendaDoDia(usuarioAtual.negocioId, d);
+});
+$('btn-agenda-dia-hoje').addEventListener('click', () => {
+  const hoje = new Date();
+  $('agenda-data-selecionada').value = hoje.toISOString().slice(0, 10);
+  assinarAgendaDoDia(usuarioAtual.negocioId, hoje);
+});
 
 document.querySelectorAll('.agenda-filtro-btn').forEach((btn) => {
   btn.addEventListener('click', () => {
