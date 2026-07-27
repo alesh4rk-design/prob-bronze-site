@@ -1238,8 +1238,9 @@ function renderDespesas(despesas) {
   $('fin-total-insumos').textContent = `R$${totalInsumos.toFixed(2)}`;
 
   const wrap = $('lista-despesas');
-  if (despesas.length === 0) { wrap.innerHTML = '<div class="empty-state">Nenhuma despesa cadastrada.</div>'; return; }
-  wrap.innerHTML = `<div class="despesa-grid">${despesas.map((d) => `
+  const despesasSemInsumos = despesas.filter((d) => d.categoria !== 'Produtos/Insumos');
+  if (despesasSemInsumos.length === 0) { wrap.innerHTML = '<div class="empty-state">Nenhuma despesa cadastrada.</div>'; return; }
+  wrap.innerHTML = `<div class="despesa-grid">${despesasSemInsumos.map((d) => `
     <div class="despesa-card">
       <div class="despesa-categoria">${d.categoria}${d.recorrente ? ' 🔁' : ''}</div>
       <div class="despesa-valor">R$${Number(d.valor).toFixed(2)}</div>
