@@ -1,10 +1,10 @@
 // Pro'Bronze — Pacotes de Sessões (adaptação de "Acordos com Cliente" do Pro'B)
-import { db } from "./firebase-config.js?v=20260728a";
+import { db } from "./firebase-config.js?v=20260728b";
 import {
   collection, doc, addDoc, updateDoc, deleteDoc, getDoc,
   onSnapshot, query, where, serverTimestamp, arrayUnion
 } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
-import { notificarErroFirestore } from "./firestore-erro.js?v=20260728a";
+import { notificarErroFirestore } from "./firestore-erro.js?v=20260728b";
 
 export const VALIDADE_DIAS_PADRAO = 90;
 export const DIAS_PARADO_ALERTA = 20; // sem baixa há mais tempo que isso = "parado"

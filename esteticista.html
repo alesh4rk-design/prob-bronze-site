@@ -15,7 +15,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Pro'Bronze">
-<link rel="stylesheet" href="css/theme.css?v=20260728a">
+<link rel="stylesheet" href="css/theme.css?v=20260728b">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -991,8 +991,15 @@
 
   <!-- Modal de mensagens rápidas de WhatsApp -->
   <div id="modal-whatsapp" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:50;align-items:center;justify-content:center;padding:1rem">
-    <div class="card" style="max-width:380px;width:100%">
+    <div class="card" style="max-width:380px;width:100%;max-height:90vh;overflow-y:auto">
       <div class="card-titulo">Cliente — <span id="wpp-cliente-nome"></span></div>
+
+      <div class="input-group" style="margin-bottom:.9rem">
+        <label>📝 Observações</label>
+        <textarea id="wpp-observacoes" rows="2" placeholder="Ex: prefere não usar acelerador, sensível na sessão longa..." style="width:100%;background:var(--card-inp-bg);border:1.5px solid var(--card-inp-border);border-radius:10px;padding:.6rem .75rem;color:var(--text);font-size:.82rem;font-family:var(--font);resize:vertical;min-height:2.6rem;line-height:1.4"></textarea>
+        <button class="btn-secundario" id="btn-salvar-obs-cliente" style="width:100%;margin-top:.45rem;font-size:.78rem;padding:.5rem">Salvar observações</button>
+      </div>
+
       <div id="wpp-acoes" style="display:flex;flex-direction:column;gap:.5rem;margin-bottom:.6rem"></div>
       <div id="wpp-opcoes" style="display:flex;flex-direction:column;gap:.5rem"></div>
       <button class="btn-secundario" style="width:100%;margin-top:.8rem" id="btn-fechar-whatsapp">Fechar</button>
@@ -1084,25 +1091,25 @@
 </div>
 
 <script type="module">
-import { onAuthChange, login, logout, iniciarLoginComGoogle, resetSenha } from './js/auth.js?v=20260728a';
-import { VALOR_MENSALIDADE, PIX_PLATAFORMA, WHATSAPP_SUPORTE } from './js/admin-config.js?v=20260728a';
-import { escutarCabines, atualizarStatusCabine, criarCabine, excluirCabine } from './js/cabines.js?v=20260728a';
+import { onAuthChange, login, logout, iniciarLoginComGoogle, resetSenha } from './js/auth.js?v=20260728b';
+import { VALOR_MENSALIDADE, PIX_PLATAFORMA, WHATSAPP_SUPORTE } from './js/admin-config.js?v=20260728b';
+import { escutarCabines, atualizarStatusCabine, criarCabine, excluirCabine } from './js/cabines.js?v=20260728b';
 import {
   escutarAgendamentosDoDia, criarAgendamento, concluirAgendamento,
   cancelarAgendamento, marcarFalta, atribuirCabine, contarConflitosHorario, marcarEmAndamento,
   salvarAvaliacaoSessao, estenderTempoSessao
-} from './js/agenda.js?v=20260728a';
-import { checarElegibilidade } from './js/agenda.js?v=20260728a';
-import { escutarServicos, criarServico, excluirServico, calcularCombo } from './js/servicos.js?v=20260728a';
-import { escutarClientes, criarCliente, ehAniversarioHoje, excluirCliente } from './js/clientes.js?v=20260728a';
-import { criarMembroEquipe, escutarEquipe, excluirMembroEquipe, editarMembroEquipe } from './js/equipe.js?v=20260728a';
-import { tempoMaxRecomendado, descricaoTipoPele } from './js/ficha-pele.js?v=20260728a';
-import { registrarPagamento, escutarPendencias, quitarPendencia, resumoFinanceiro, escutarFinanceiroPeriodo } from './js/financeiro.js?v=20260728a';
-import { criarPacote, escutarPacotesDoNegocio, consumirSessaoDoPacote, excluirPacote, pacoteVencido, diasParado, DIAS_PARADO_ALERTA } from './js/pacotes-sessoes.js?v=20260728a';
-import { criarProdutoCabine, escutarProdutosCabine, produtosEmAlerta, baixarEstoque, somarEstoque, buscarPorCodigoBarras, excluirProdutoCabine } from './js/produtos-cabine.js?v=20260728a';
-import { criarInsumo, escutarInsumos, reporInsumo, darBaixaInsumo, excluirInsumo, insumosEmAlerta, buscarInsumoPorCodigoBarras } from './js/insumos.js?v=20260728a';
-import { criarCupom, escutarCupons, desativarCupom, calcularDescontoCupom } from './js/cupons.js?v=20260728a';
-import { exportarExcel, exportarPDF, montarRelatorioFinanceiro, COLUNAS_FINANCEIRO } from './js/relatorios.js?v=20260728a';
+} from './js/agenda.js?v=20260728b';
+import { checarElegibilidade } from './js/agenda.js?v=20260728b';
+import { escutarServicos, criarServico, excluirServico, calcularCombo } from './js/servicos.js?v=20260728b';
+import { escutarClientes, criarCliente, ehAniversarioHoje, excluirCliente, editarCliente } from './js/clientes.js?v=20260728b';
+import { criarMembroEquipe, escutarEquipe, excluirMembroEquipe, editarMembroEquipe } from './js/equipe.js?v=20260728b';
+import { tempoMaxRecomendado, descricaoTipoPele } from './js/ficha-pele.js?v=20260728b';
+import { registrarPagamento, escutarPendencias, quitarPendencia, resumoFinanceiro, escutarFinanceiroPeriodo } from './js/financeiro.js?v=20260728b';
+import { criarPacote, escutarPacotesDoNegocio, consumirSessaoDoPacote, excluirPacote, pacoteVencido, diasParado, DIAS_PARADO_ALERTA } from './js/pacotes-sessoes.js?v=20260728b';
+import { criarProdutoCabine, escutarProdutosCabine, produtosEmAlerta, baixarEstoque, somarEstoque, buscarPorCodigoBarras, excluirProdutoCabine } from './js/produtos-cabine.js?v=20260728b';
+import { criarInsumo, escutarInsumos, reporInsumo, darBaixaInsumo, excluirInsumo, insumosEmAlerta, buscarInsumoPorCodigoBarras } from './js/insumos.js?v=20260728b';
+import { criarCupom, escutarCupons, desativarCupom, calcularDescontoCupom } from './js/cupons.js?v=20260728b';
+import { exportarExcel, exportarPDF, montarRelatorioFinanceiro, COLUNAS_FINANCEIRO } from './js/relatorios.js?v=20260728b';
 import {
   linkConfirmacaoAgendamento, linkCobrancaPendente, linkAtrasoAgendamento,
   linkClienteSumido, linkMensagemLivre, linkLembreteIntervalo,
@@ -1110,14 +1117,14 @@ import {
   linkPacoteAcabando,
   linkSessaoPacoteAtendida,
   linkPacoteParado
-} from './js/whatsapp.js?v=20260728a';
-import { verificarIntervaloMinimo } from './js/ficha-pele.js?v=20260728a';
-import { tutorialJaVisto, iniciarTutorial } from './js/tutorial.js?v=20260728a';
-import { DIAS_SEMANA, escutarHorarios, salvarHorarios, validarHorarioFuncionamento } from './js/horarios.js?v=20260728a';
-import { escutarConfigNegocio, salvarConfigNegocio } from './js/config-negocio.js?v=20260728a';
-import { CATEGORIAS_DESPESA, criarDespesa, excluirDespesa, escutarDespesas } from './js/despesas.js?v=20260728a';
-import { toast, confirmar, confirmarForte, executar } from './js/ui-feedback.js?v=20260728a';
-import { db } from './js/firebase-config.js?v=20260728a';
+} from './js/whatsapp.js?v=20260728b';
+import { verificarIntervaloMinimo } from './js/ficha-pele.js?v=20260728b';
+import { tutorialJaVisto, iniciarTutorial } from './js/tutorial.js?v=20260728b';
+import { DIAS_SEMANA, escutarHorarios, salvarHorarios, validarHorarioFuncionamento } from './js/horarios.js?v=20260728b';
+import { escutarConfigNegocio, salvarConfigNegocio } from './js/config-negocio.js?v=20260728b';
+import { CATEGORIAS_DESPESA, criarDespesa, excluirDespesa, escutarDespesas } from './js/despesas.js?v=20260728b';
+import { toast, confirmar, confirmarForte, executar } from './js/ui-feedback.js?v=20260728b';
+import { db } from './js/firebase-config.js?v=20260728b';
 
 // Luzinhas douradas ao redor do card de login
 // Mostra o nome da loja usada da última vez que alguém logou neste aparelho
@@ -2564,9 +2571,10 @@ function renderClientes(clientes) {
   if (clientes.length === 0) { wrap.innerHTML = '<div class="empty-state">Nenhuma cliente cadastrada.</div>'; return; }
   wrap.innerHTML = clientes.map((c) => `
     <div class="agendamento-item nome-clicavel" data-abrir-menu-cliente="${c.id}">
-      <div class="agendamento-info">
+      <div class="agendamento-info" style="min-width:0;flex:1">
         <div class="nome">${c.nome} 💬</div>
         <div class="detalhe">${c.whatsapp || 'sem WhatsApp'}${c.fichaPele ? ' · ' + (descricaoTipoPele(c.fichaPele.tipoFitzpatrick) || 'ficha de pele preenchida') : ' · sem ficha de pele'}</div>
+        ${c.observacoes ? `<div class="detalhe" style="margin-top:.25rem;color:var(--accent-light);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">📝 ${c.observacoes}</div>` : ''}
       </div>
     </div>
   `).join('');
@@ -2585,6 +2593,7 @@ function abrirMenuCliente(clienteId) {
   const nomeNegocio = configNegocioCache.nome;
 
   $('wpp-cliente-nome').textContent = cliente.nome;
+  $('wpp-observacoes').value = cliente.observacoes || '';
 
   $('wpp-acoes').innerHTML = `
     <button class="btn-primario" id="btn-ir-registrar-pagamento" style="text-align:left">💳 Registrar Pagamento</button>
@@ -2654,6 +2663,24 @@ function abrirMenuCliente(clienteId) {
 
 $('btn-fechar-whatsapp').addEventListener('click', () => {
   $('modal-whatsapp').style.display = 'none';
+});
+
+$('btn-salvar-obs-cliente').addEventListener('click', async () => {
+  if (!clienteMenuAtualId) return;
+  const btn = $('btn-salvar-obs-cliente');
+  const textoOriginal = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = 'Salvando...';
+  try {
+    await editarCliente(clienteMenuAtualId, { observacoes: $('wpp-observacoes').value.trim() });
+    toast('Observações salvas.', 'sucesso');
+  } catch (e) {
+    console.error('salvarObservacoes:', e);
+    toast(`Erro ao salvar: ${e.message}`, 'erro');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = textoOriginal;
+  }
 });
 
 // ── Registrar pagamento avulso (fora do fluxo de sessão) ─────────
