@@ -641,6 +641,9 @@
       </div>
       <div class="card">
         <div class="card-titulo">Despesas</div>
+        <div class="cabines-grid" style="margin-bottom:1rem">
+          <div class="cabine-card manutencao"><div class="cabine-nome" id="fin-total-insumos">R$0</div><div class="cabine-status">Total em Insumos</div></div>
+        </div>
         <div id="lista-despesas"><div class="empty-state">Carregando...</div></div>
       </div>
       <div class="card">
@@ -1229,6 +1232,11 @@ function atualizarLucroMes() {
 $('desp-categoria').innerHTML = CATEGORIAS_DESPESA.map((c) => `<option value="${c}">${c}</option>`).join('');
 
 function renderDespesas(despesas) {
+  const totalInsumos = despesas
+    .filter((d) => d.categoria === 'Produtos/Insumos')
+    .reduce((s, d) => s + Number(d.valor || 0), 0);
+  $('fin-total-insumos').textContent = `R$${totalInsumos.toFixed(2)}`;
+
   const wrap = $('lista-despesas');
   if (despesas.length === 0) { wrap.innerHTML = '<div class="empty-state">Nenhuma despesa cadastrada.</div>'; return; }
   wrap.innerHTML = `<div class="despesa-grid">${despesas.map((d) => `
