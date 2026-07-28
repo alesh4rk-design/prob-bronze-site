@@ -3331,8 +3331,19 @@ function renderCabines(cabines) {
     el.addEventListener('click', (e) => {
       if (e.target.closest('button')) return;
       const cabine = cabinesCache.find((c) => c.id === el.dataset.id);
-      if (cabine?.status === 'ocupada' && sessoesAtivas.has(el.dataset.id)) {
-        abrirModalDetalheCabine(el.dataset.id);
+      if (!cabine) return;
+      if (cabine.status === 'ocupada') {
+        if (sessoesAtivas.has(el.dataset.id)) {
+          abrirModalDetalheCabine(el.dataset.id);
+        } else {
+          // Cabine marcada "ocupada" no banco mas sem sessão ativa de verdade
+          // (ex: agendamento cancelado/excluído sem passar por "Finalizar
+          // Sessão") — sem isso, ficava travada pra sempre, sem jeito de
+          // liberar pela tela.
+          liberarCabineTravada(el.dataset.id);
+        }
+      } else if (cabine.status === 'livre') {
+        iniciarPrimeiroDaFilaNaCabine(el.dataset.id);
       } else {
         cicloStatusCabine(el.dataset.id);
       }
@@ -3378,6 +3389,30 @@ async function cicloStatusCabine(cabineId) {
     await atualizarStatusCabine(cabineId, 'livre');
   }
   // "ocupada" só libera finalizando a sessão pelo timer
+}
+
+async function liberarCabineTravada(cabineId) {
+  if (!(await confirmar('Essa cabine está marcada como ocupada mas não tem sessão ativa (provavelmente um agendamento cancelado ou excluído no meio da sessão). Liberar a cabine?'))) return;
+  await atualizarStatusCabine(cabineId, 'livre');
+  toast('Cabine liberada.', 'sucesso');
+}
+
+// Clicar numa cabine livre já coloca direto a primeira pessoa aguardando
+// (sem cabine definida ainda) pra atender ali, sem precisar ir na Agenda
+// escolher manualmente. Se não tem ninguém esperando, mantém o
+// comportamento antigo de ciclar pra "manutenção".
+async function iniciarPrimeiroDaFilaNaCabine(cabineId) {
+  const primeiro = (agendaDiaCache || [])
+    .filter((ag) => ag.status === 'agendado' && !ag.cabineId)
+    .sort((a, b) => (a.dataHora?.toMillis ? a.dataHora.toMillis() : 0) - (b.dataHora?.toMillis ? b.dataHora.toMillis() : 0))[0];
+  if (!primeiro) {
+    cicloStatusCabine(cabineId);
+    return;
+  }
+  const valorBruto = (primeiro.servicos || []).reduce((s, x) => s + (x.preco || 0), 0);
+  await atribuirCabine(primeiro.id, cabineId);
+  await iniciarSessao(primeiro.id, cabineId, primeiro.tempoMin, primeiro.clienteId, valorBruto);
+  toast(`${primeiro.clienteNome} iniciado nessa cabine.`, 'sucesso');
 }
 
 function preencherSelectCabines(cabines) {
