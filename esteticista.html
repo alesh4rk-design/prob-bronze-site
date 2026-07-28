@@ -3038,7 +3038,7 @@ function abrirScannerCamera(aoLer) {
     scanner.start(
       { facingMode: 'environment' },
       { fps: 15, qrbox: { width: 280, height: 130 }, aspectRatio: 1.6, experimentalFeatures: { useBarCodeDetectorIfSupported: true } },
-      (codigo) => { parar(); aoLer(codigo); },
+      (codigo) => { parar(); aoLer(String(codigo || '').trim()); },
       () => {}
     ).catch((e) => { toast('Não deu para acessar a câmera: ' + e.message, 'erro'); overlay.remove(); });
   };
