@@ -27,15 +27,20 @@ export function marcarTutorialVisto(usuarioUid) {
 export function iniciarTutorial(usuarioUid, onIrParaAba) {
   let passoAtual = 0;
 
+  // Sem fundo escurecido cobrindo a tela — o objetivo é a pessoa ver a aba
+  // de verdade (com os dados/botões reais) enquanto lê a explicação, não
+  // ficar olhando pra um cartão flutuando por cima de tudo escurecido.
+  // Por isso o overlay em si tem pointer-events:none (deixa tocar na aba
+  // por baixo) e só o cartãozinho no rodapé captura clique.
   const overlay = document.createElement("div");
   overlay.id = "tutorial-overlay";
-  overlay.style.cssText = "position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:100;display:flex;align-items:center;justify-content:center;padding:1.5rem;";
+  overlay.style.cssText = "position:fixed;inset:0;z-index:100;display:flex;align-items:flex-end;justify-content:center;padding:.8rem;pointer-events:none;";
   overlay.innerHTML = `
-    <div style="max-width:380px;width:100%;background:var(--card);border:1.5px solid var(--card-border);border-radius:16px;padding:1.5rem;">
-      <div id="tut-titulo" style="font-weight:800;font-size:1.05rem;color:var(--accent-light);margin-bottom:.5rem;"></div>
-      <div id="tut-texto" style="font-size:.88rem;color:var(--text);line-height:1.5;margin-bottom:1.2rem;"></div>
+    <div style="pointer-events:auto;max-width:480px;width:100%;background:var(--card);border:1.5px solid var(--accent);border-radius:16px;padding:1.1rem 1.3rem;box-shadow:0 -8px 32px rgba(0,0,0,.5);">
+      <div id="tut-titulo" style="font-weight:800;font-size:1rem;color:var(--accent-light);margin-bottom:.4rem;"></div>
+      <div id="tut-texto" style="font-size:.85rem;color:var(--text);line-height:1.5;margin-bottom:1rem;"></div>
       <div style="display:flex;justify-content:space-between;align-items:center;">
-        <button id="tut-pular" style="background:transparent;border:none;color:var(--muted);font-size:.8rem;cursor:pointer;">Pular tutorial</button>
+        <button id="tut-pular" style="background:transparent;border:none;color:var(--muted);font-size:.8rem;cursor:pointer;padding:.4rem 0;">Pular tutorial</button>
         <button id="tut-proximo" style="background:linear-gradient(135deg,var(--accent),var(--accent-light));color:var(--card-btn-text);border:none;border-radius:8px;padding:.6rem 1.2rem;font-weight:700;font-size:.85rem;cursor:pointer;">Próximo</button>
       </div>
     </div>
@@ -48,6 +53,10 @@ export function iniciarTutorial(usuarioUid, onIrParaAba) {
     overlay.querySelector("#tut-texto").textContent = passo.texto;
     overlay.querySelector("#tut-proximo").textContent = passoAtual === PASSOS.length - 1 ? "Concluir" : "Próximo";
     onIrParaAba(passo.aba);
+    // Sobe a aba pro topo, assim a explicação sempre bate com o que aparece
+    // primeiro na tela (sem precisar rolar pra achar o que está descrito).
+    document.querySelector("main")?.scrollTo({ top: 0, behavior: "instant" });
+    window.scrollTo({ top: 0, behavior: "instant" });
   }
 
   function encerrar() {
