@@ -163,7 +163,14 @@
     <div class="input-group"><label>E-mail</label><input type="email" id="login-email" autocomplete="username"></div>
     <div class="input-group"><label>Senha</label><input type="password" id="login-senha" autocomplete="current-password"></div>
     <button class="btn-primario" id="btn-login">Entrar</button>
+    <div style="text-align:right;margin-top:.4rem">
+      <a href="#" id="link-esqueci-senha" style="font-size:.78rem;color:var(--muted);text-decoration:none">Esqueci minha senha</a>
+    </div>
     <div id="login-erro"></div>
+    <div style="display:flex;align-items:center;gap:.6rem;margin:1.1rem 0;color:var(--muted);font-size:.75rem">
+      <div style="flex:1;height:1px;background:var(--card-border)"></div>ou<div style="flex:1;height:1px;background:var(--card-border)"></div>
+    </div>
+    <button class="btn-secundario" id="btn-login-google-cliente" style="width:100%">🔵 Entrar com Google</button>
   </div>
   </div>
 </div>
@@ -215,7 +222,7 @@
 </div>
 
 <script type="module">
-import { onAuthChange, login, logout } from './js/auth.js?v=20260728d';
+import { onAuthChange, login, logout, iniciarLoginComGoogle, resetSenha } from './js/auth.js?v=20260728d';
 import { db } from './js/firebase-config.js?v=20260728d';
 import {
   collection, doc, setDoc, query, where, onSnapshot
@@ -279,6 +286,29 @@ $('btn-login').addEventListener('click', async () => {
   }
 });
 $('login-senha').addEventListener('keydown', (e) => { if (e.key === 'Enter') $('btn-login').click(); });
+
+$('link-esqueci-senha').addEventListener('click', async (e) => {
+  e.preventDefault();
+  const email = $('login-email').value.trim();
+  if (!email) { $('login-erro').textContent = 'Digite seu e-mail no campo acima primeiro.'; return; }
+  try {
+    await resetSenha(email);
+    toast('E-mail de recuperação enviado! Confira sua caixa de entrada.', 'sucesso');
+  } catch (err) {
+    toast('Não foi possível enviar o e-mail de recuperação. Confira se o e-mail está certo.', 'erro');
+  }
+});
+
+$('btn-login-google-cliente').addEventListener('click', async () => {
+  $('login-erro').textContent = '';
+  try {
+    await iniciarLoginComGoogle();
+  } catch (err) {
+    if (err.code !== 'auth/popup-closed-by-user' && err.code !== 'auth/cancelled-popup-request') {
+      $('login-erro').textContent = 'Não foi possível entrar com Google. Tente novamente.';
+    }
+  }
+});
 
 $('btn-sair-cliente').addEventListener('click', async () => {
   const { getAuth, signOut } = await import('https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js');
