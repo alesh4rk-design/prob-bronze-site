@@ -500,12 +500,12 @@
       </div>
       <div class="nav-secao">
         <div class="nav-titulo">Financeiro</div>
-        <button class="aba-btn aba-estrategica" data-aba="financeiro" data-titulo="💰 Financeiro"><span class="nav-icone">💰</span>Financeiro</button>
+        <button class="aba-btn" data-aba="financeiro" data-titulo="💰 Financeiro"><span class="nav-icone">💰</span>Financeiro</button>
         <button class="aba-btn" data-aba="relatorios" data-titulo="📊 Relatórios"><span class="nav-icone">📊</span>Relatórios</button>
       </div>
       <div class="nav-secao">
         <div class="nav-titulo">Negócio</div>
-        <button class="aba-btn aba-estrategica" data-aba="horarios" data-titulo="🕐 Horários de Funcionamento"><span class="nav-icone">🕐</span>Horários</button>
+        <button class="aba-btn" data-aba="horarios" data-titulo="🕐 Horários de Funcionamento"><span class="nav-icone">🕐</span>Horários</button>
         <button class="aba-btn" data-aba="configuracoes" data-titulo="⚙️ Configurações"><span class="nav-icone">⚙️</span>Configurações</button>
       </div>
     </nav>
@@ -657,6 +657,17 @@
       <div class="card">
         <div class="card-titulo">Equipe</div>
         <div id="lista-equipe"><div class="empty-state">Carregando...</div></div>
+      </div>
+    </div>
+
+    <!-- Modal de permissões de aba por funcionário(a) — aberto pelo botão "🔐 Abas liberadas" da Equipe -->
+    <div id="modal-permissoes-equipe" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:55;align-items:center;justify-content:center;padding:1rem">
+      <div class="card" style="max-width:400px;width:100%;max-height:90vh;overflow-y:auto">
+        <div class="card-titulo com-ajuda">Abas que <span id="perm-nome-membro"></span> pode acessar</div>
+        <div class="ajuda-inline">Desmarque as abas que essa pessoa não deve ver nem usar. A aba Equipe fica sempre restrita ao dono.</div>
+        <div id="perm-lista-abas"></div>
+        <button class="btn-primario" id="btn-salvar-permissoes" style="margin-top:.8rem">Salvar</button>
+        <button class="btn-secundario" id="btn-cancelar-permissoes">Cancelar</button>
       </div>
     </div>
 
@@ -1759,13 +1770,30 @@ function verificarAssinatura(config) {
 $('btn-vencida-verificar').addEventListener('click', () => verificarAssinatura(configNegocioCache));
 $('btn-vencida-sair').addEventListener('click', () => logout());
 
+// Esconde do menu as abas que o funcionário(a) logado não tem permissão de
+// ver (configurado pelo dono na aba Equipe). O dono sempre vê tudo.
+function aplicarPermissoesNav() {
+  if (usuarioAtual.papel === 'dono') return;
+  const permitidas = Array.isArray(usuarioAtual.abasPermitidas) ? usuarioAtual.abasPermitidas : ABAS_PADRAO_FUNCIONARIO;
+  document.querySelectorAll('.aba-btn[data-aba]').forEach((btn) => {
+    // Equipe é sempre exclusiva do dono, nunca liberável.
+    if (btn.dataset.aba === 'equipe' || !permitidas.includes(btn.dataset.aba)) btn.remove();
+  });
+  // Esconde o título de seção do menu que ficou sem nenhuma aba visível.
+  document.querySelectorAll('.nav-secao').forEach((sec) => {
+    sec.style.display = sec.querySelector('.aba-btn') ? '' : 'none';
+  });
+  // Se a aba que estava ativa (padrão: Cabines) foi removida, abre a
+  // primeira aba que sobrou pra não deixar a tela numa aba escondida.
+  if (!document.querySelector('.aba-btn.ativa')) {
+    document.querySelector('.aba-btn')?.click();
+  }
+}
+
 function iniciarPainel() {
   const negocioId = usuarioAtual.negocioId;
 
-  // Abas estratégicas (Financeiro, Horários) só pro dono — funcionário(a) não vê
-  if (usuarioAtual.papel !== 'dono') {
-    document.querySelectorAll('.aba-estrategica').forEach((btn) => btn.remove());
-  }
+  aplicarPermissoesNav();
 
   $('link-cadastro-cliente').value = `${window.location.origin}${window.location.pathname.replace('esteticista.html', '')}cadastro-cliente.html?negocio=${negocioId}`;
   // iniciarPainel() roda de novo a cada login (sem recarregar a página) —
@@ -2997,6 +3025,29 @@ function preencherSelectClientes(clientes) {
 // ── Equipe ────────────────────────────────────────────
 const ROTULO_PAPEL = { dono: 'Dono', recepcionista: 'Funcionário(a)' };
 
+// Abas que o dono pode liberar/restringir por funcionário(a) — a aba
+// Equipe fica de fora de propósito, sempre exclusiva do dono (evita que
+// um funcionário ganhe permissão pra gerenciar login de outros).
+const ABAS_CONFIGURAVEIS = [
+  { chave: 'cabines', titulo: '🛏️ Cabines' },
+  { chave: 'agenda', titulo: '📅 Agenda do Dia' },
+  { chave: 'servicos', titulo: '🎀 Meus Serviços' },
+  { chave: 'produtos', titulo: '🧴 Venda de Produtos' },
+  { chave: 'insumos', titulo: '🧪 Insumos' },
+  { chave: 'pacotes', titulo: '📦 Pacotes' },
+  { chave: 'cupons', titulo: '🏷️ Cupons' },
+  { chave: 'clientes', titulo: '👥 Clientes' },
+  { chave: 'financeiro', titulo: '💰 Financeiro' },
+  { chave: 'relatorios', titulo: '📊 Relatórios' },
+  { chave: 'horarios', titulo: '🕐 Horários de Funcionamento' },
+  { chave: 'configuracoes', titulo: '⚙️ Configurações' }
+];
+// Acesso padrão de quem ainda não teve as permissões customizadas pelo
+// dono — igual ao que todo funcionário(a) sempre teve antes desse recurso
+// existir (só Financeiro e Horários eram travados), pra ninguém perder
+// acesso a nada sem o dono mexer explicitamente.
+const ABAS_PADRAO_FUNCIONARIO = ABAS_CONFIGURAVEIS.map((a) => a.chave).filter((c) => c !== 'financeiro' && c !== 'horarios');
+
 function renderEquipe(equipe) {
   const wrap = $('lista-equipe');
   $('card-nova-equipe').style.display = usuarioAtual.papel === 'dono' ? 'block' : 'none';
@@ -3014,6 +3065,7 @@ function renderEquipe(equipe) {
       <div class="agendamento-acoes">
         ${(usuarioAtual.papel === 'dono' && m.papel !== 'dono') ? `<button class="btn-secundario" data-editar-remuneracao="${m.id}">✏️ Diária</button>` : ''}
         ${podeRegistrarDiaria ? `<button class="btn-secundario" data-registrar-diaria="${m.id}">📅 Registrar diária</button>` : ''}
+        ${(usuarioAtual.papel === 'dono' && m.papel !== 'dono') ? `<button class="btn-secundario" data-permissoes-membro="${m.id}">🔐 Abas liberadas</button>` : ''}
         ${(usuarioAtual.papel === 'dono' && m.id !== usuarioAtual.uid) ? `<button class="btn-secundario" data-excluir-membro="${m.id}">Remover</button>` : ''}
       </div>
     </div>
@@ -3052,7 +3104,37 @@ function renderEquipe(equipe) {
       toast('Membro removido.', 'sucesso');
     });
   });
+  wrap.querySelectorAll('[data-permissoes-membro]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const membro = equipeCache.find((m) => m.id === btn.dataset.permissoesMembro);
+      if (membro) abrirModalPermissoes(membro);
+    });
+  });
 }
+
+// ── Permissões de abas por funcionário(a) ──────────────
+let membroPermissoesAtual = null;
+
+function abrirModalPermissoes(membro) {
+  membroPermissoesAtual = membro;
+  $('perm-nome-membro').textContent = membro.nome;
+  const permitidas = Array.isArray(membro.abasPermitidas) ? membro.abasPermitidas : ABAS_PADRAO_FUNCIONARIO;
+  $('perm-lista-abas').innerHTML = ABAS_CONFIGURAVEIS.map((a) => `
+    <label style="display:flex;align-items:center;gap:.5rem;padding:.5rem 0;font-size:.87rem">
+      <input type="checkbox" data-perm-aba="${a.chave}" ${permitidas.includes(a.chave) ? 'checked' : ''}> ${a.titulo}
+    </label>
+  `).join('');
+  $('modal-permissoes-equipe').style.display = 'flex';
+}
+
+$('btn-cancelar-permissoes').addEventListener('click', () => { $('modal-permissoes-equipe').style.display = 'none'; });
+$('btn-salvar-permissoes').addEventListener('click', async () => {
+  if (!membroPermissoesAtual) return;
+  const abasPermitidas = Array.from($('perm-lista-abas').querySelectorAll('[data-perm-aba]:checked')).map((chk) => chk.dataset.permAba);
+  await editarMembroEquipe(membroPermissoesAtual.id, { abasPermitidas });
+  $('modal-permissoes-equipe').style.display = 'none';
+  toast('Permissões atualizadas.', 'sucesso');
+});
 
 $('btn-criar-equipe').addEventListener('click', async () => {
   const btn = $('btn-criar-equipe');
