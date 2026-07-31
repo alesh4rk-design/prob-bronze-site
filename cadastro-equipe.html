@@ -123,13 +123,14 @@
 </div>
 
 <script type="module">
-import { cadastrarFuncionarioComLogin } from './js/equipe.js?v=20260728f';
+import { cadastrarFuncionarioComLogin } from './js/equipe.js?v=20260729a';
 
 const $ = (id) => document.getElementById(id);
 const params = new URLSearchParams(window.location.search);
 const negocioId = params.get('negocio');
+const codigo = params.get('codigo');
 
-if (!negocioId) {
+if (!negocioId || !codigo) {
   $('tela-form').style.display = 'none';
   $('tela-sem-negocio').style.display = 'block';
 } else {
@@ -150,7 +151,7 @@ if (!negocioId) {
 
     $('btn-criar-conta').disabled = true;
     try {
-      await cadastrarFuncionarioComLogin(negocioId, { nome, email, senha });
+      await cadastrarFuncionarioComLogin(negocioId, { nome, email, senha, codigo });
       window.location.href = 'esteticista.html';
     } catch (err) {
       $('btn-criar-conta').disabled = false;

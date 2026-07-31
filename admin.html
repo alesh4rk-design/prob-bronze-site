@@ -151,7 +151,7 @@
 import { auth, db } from './js/firebase-config.js?v=20260728d';
 import { ADMIN_UID } from './js/admin-config.js?v=20260728d';
 import { signInWithEmailAndPassword, signOut, onAuthStateChanged, sendPasswordResetEmail } from 'https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js';
-import { collection, onSnapshot, doc, updateDoc } from 'https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js';
+import { collection, onSnapshot, doc, updateDoc, getDoc } from 'https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js';
 import { toast, confirmar } from './js/ui-feedback.js?v=20260728d';
 
 window.addEventListener('unhandledrejection', (e) => {
@@ -290,9 +290,16 @@ async function executarAcao(id, acao) {
     await updateDoc(doc(db, 'negocios', id), { status: 'expirado' });
     toast('Acesso expirado.', 'sucesso');
   } else if (acao === 'estender') {
-    const novaData = new Date(); novaData.setDate(novaData.getDate() + 7);
+    // Soma 7 dias em cima do trialFim que já existe (se ainda estiver no
+    // futuro) — antes sempre zerava pra "hoje + 7", o que ENCURTAVA o
+    // trial de quem ainda tinha mais de 7 dias restantes.
+    const snap = await getDoc(doc(db, 'negocios', id));
+    const atual = snap.data() || {};
+    const trialFimAtual = atual.trialFim?.toDate ? atual.trialFim.toDate() : (atual.trialFim ? new Date(atual.trialFim) : null);
+    const base = trialFimAtual && trialFimAtual > new Date() ? trialFimAtual : new Date();
+    const novaData = new Date(base); novaData.setDate(novaData.getDate() + 7);
     await updateDoc(doc(db, 'negocios', id), { status: 'trial', trialFim: novaData.toISOString() });
-    toast('Trial estendido por 7 dias.', 'sucesso');
+    toast('Trial estendido por mais 7 dias.', 'sucesso');
   }
 }
 </script>

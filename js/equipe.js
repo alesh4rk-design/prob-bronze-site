@@ -38,10 +38,16 @@ export async function criarMembroEquipe(negocioId, { nome, email, senha, papel =
 // auth principal porque, diferente do dono cadastrando alguém, aqui é a
 // própria pessoa se cadastrando (não precisa preservar sessão de ninguém).
 // Papel sempre "recepcionista", sem depender de nenhum valor vindo da URL.
-export async function cadastrarFuncionarioComLogin(negocioId, { nome, email, senha }) {
+// "codigo" é o código secreto do convite (ver esteticista.html) — as regras
+// do Firestore conferem que ele bate com o codigoConviteEquipe salvo no
+// negócio; sem isso, bastava saber o negocioId (que é público, vai
+// impresso no QR Code do link da cliente) pra virar recepcionista de
+// qualquer loja.
+export async function cadastrarFuncionarioComLogin(negocioId, { nome, email, senha, codigo }) {
   const cred = await createUserWithEmailAndPassword(auth, email, senha);
   await setDoc(doc(db, "usuarios", cred.user.uid), {
     nome, email, papel: "recepcionista", negocioId, valorDiaria: 0,
+    codigoConviteUsado: codigo,
     criadoEm: serverTimestamp()
   });
   return cred.user.uid;

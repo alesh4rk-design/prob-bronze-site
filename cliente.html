@@ -195,7 +195,7 @@ import { escutarServicos, calcularCombo } from './js/servicos.js?v=20260728d';
 import { criarAgendamento, contarConflitosHorario } from './js/agenda.js?v=20260728e';
 import { checarElegibilidade } from './js/agenda.js?v=20260728e';
 import { escutarCabines } from './js/cabines.js?v=20260728d';
-import { escutarConfigNegocio } from './js/config-negocio.js?v=20260728d';
+import { escutarConfigNegocio } from './js/config-negocio.js?v=20260729a';
 import { escutarHorarios, validarHorarioFuncionamento } from './js/horarios.js?v=20260728d';
 import { toast } from './js/ui-feedback.js?v=20260728d';
 
@@ -211,6 +211,17 @@ window.addEventListener('firestore-erro', (e) => {
 });
 
 const $ = (id) => document.getElementById(id);
+
+// Escapa dado escrito pelo dono do negócio (logo, PIX, nome etc.) antes de
+// jogar cru num innerHTML — o dono edita esses campos livremente nas
+// Configurações, e sem escapar eles executavam na sessão autenticada de
+// TODAS as clientes daquele negócio (XSS armazenado).
+function escapeHtml(str) {
+  return String(str ?? '').replace(/[&<>"']/g, (c) => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+  }[c]));
+}
+
 let servicosCache = [];
 let combosSelecionados = new Set();
 let clienteAtual = null;
@@ -253,6 +264,14 @@ $('btn-sair-cliente').addEventListener('click', async () => {
     }
     // Busca o doc do cliente vinculado a este login (campo clienteUid)
     const q = query(collection(db, 'clientes'), where('clienteUid', '==', user.uid));
+    // As assinaturas de servicos/cabines/config/horarios/pacotes/sessões só
+    // precisam ser feitas UMA vez por login — antes rodavam de novo a cada
+    // atualização do próprio doc da cliente (ex.: o dono grava
+    // ultimaSessaoEm a cada sessão concluída), empilhando um conjunto novo
+    // de listeners do Firestore a cada disparo, sem nunca cancelar os
+    // antigos (vazamento de listeners) — e cada disparo também reconstruía
+    // a lista de serviços do zero, sem limpar a seleção já feita.
+    let assinado = false;
     const unsub = onSnapshot(q, async (snap) => {
       if (snap.empty) {
         $('login-erro').textContent = 'Esta conta ainda não está vinculada a um cadastro de cliente.';
@@ -263,6 +282,8 @@ $('btn-sair-cliente').addEventListener('click', async () => {
       clienteAtual = cliente;
       $('tela-login').style.display = 'none';
       $('painel-cliente').style.display = 'block';
+      if (assinado) return;
+      assinado = true;
       // Autocorreção pra contas criadas antes desse mapeamento existir —
       // sem isso, clientes antigas perderiam acesso aos próprios dados do
       // negócio ao qual pertencem. Espera terminar antes de ler qualquer
@@ -310,8 +331,19 @@ function aplicarPersonalizacao(config) {
     if (rgb) painel.style.setProperty('--accent-rgb', rgb);
   }
   const logoEl = $('vitrine-logo');
+  // Monta o <img> via DOM em vez de innerHTML com string interpolada — o
+  // logoUrl/logoEmoji vêm de campo livre que o dono preenche nas
+  // Configurações, e iam parar cru num atributo/JS inline antes (dava pra
+  // quebrar o onerror="..." com aspas e rodar script na sessão de toda
+  // cliente que abrisse essa loja).
+  logoEl.textContent = '';
   if (config.logoUrl) {
-    logoEl.innerHTML = `<img src="${config.logoUrl}" alt="Logo" style="max-width:56px;max-height:56px;border-radius:10px;display:inline-block" onerror="this.replaceWith(document.createTextNode('${config.logoEmoji || '☀️'}'))">`;
+    const img = document.createElement('img');
+    img.src = config.logoUrl;
+    img.alt = 'Logo';
+    img.style.cssText = 'max-width:56px;max-height:56px;border-radius:10px;display:inline-block';
+    img.onerror = () => { img.replaceWith(document.createTextNode(config.logoEmoji || '☀️')); };
+    logoEl.appendChild(img);
   } else {
     logoEl.textContent = config.logoEmoji || '☀️';
   }
@@ -328,7 +360,7 @@ function renderContatoEstabelecimento(config) {
   }
   if (config.chavePix) {
     linhas.push(`<div class="detalhe" style="display:flex;align-items:center;gap:.4rem;justify-content:center;flex-wrap:wrap">
-      💳 PIX: <span id="contato-pix-key">${config.chavePix}</span>
+      💳 PIX: <span id="contato-pix-key">${escapeHtml(config.chavePix)}</span>
       <button type="button" id="btn-copiar-pix-contato" style="border:none;background:transparent;color:inherit;text-decoration:underline;cursor:pointer;font-size:.85em;padding:0">copiar</button>
     </div>`);
   }
@@ -373,8 +405,11 @@ function escutarMinhasSessoes(negocioId, clienteId) {
       if (ag.status === 'agendado') proximas.push(ag);
       else historico.push(ag);
     });
-    proximas.sort((a, b) => a.dataHora.toMillis() - b.dataHora.toMillis());
-    historico.sort((a, b) => b.dataHora.toMillis() - a.dataHora.toMillis());
+    // Defensivo: um agendamento sem dataHora válida (documento malformado)
+    // não deve travar a tela inteira com um TypeError dentro do listener.
+    const millis = (ag) => ag.dataHora?.toMillis ? ag.dataHora.toMillis() : 0;
+    proximas.sort((a, b) => millis(a) - millis(b));
+    historico.sort((a, b) => millis(b) - millis(a));
     renderLista('lista-proximas', proximas, true);
     renderLista('lista-historico', historico.slice(0, 10), false);
   });

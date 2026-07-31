@@ -546,6 +546,7 @@
         <div class="input-group"><input type="text" id="link-cadastro-equipe" readonly></div>
         <button class="btn-secundario" style="width:100%" id="btn-copiar-link-equipe">Copiar link</button>
         <a class="btn-primario" id="btn-enviar-link-equipe-whatsapp" href="#" target="_blank" style="display:block;text-align:center;text-decoration:none;margin-top:.5rem">📱 Enviar link por WhatsApp</a>
+        <button class="btn-secundario" style="width:100%;margin-top:.5rem" id="btn-gerar-novo-link-equipe" title="Invalida qualquer link antigo que tenha vazado ou sido compartilhado indevidamente">🔄 Gerar novo link (invalida o anterior)</button>
       </div>
       <div class="card" id="card-nova-equipe">
         <div class="card-titulo com-ajuda">Adicionar Funcionário(a) manualmente</div>
@@ -914,6 +915,10 @@
           <select id="cup-tipo"><option value="percentual">Percentual (%)</option><option value="fixo">Valor fixo (R$)</option></select>
         </div>
         <div class="input-group"><label>Valor</label><input type="number" id="cup-valor" step="0.01"></div>
+        <div class="input-group"><label>Validade (opcional)</label><input type="date" id="cup-validade"></div>
+        <label style="display:flex;align-items:center;gap:.5rem;font-size:.85rem;margin:.5rem 0 1rem;cursor:pointer">
+          <input type="checkbox" id="cup-uso-unico" style="width:auto"> Uso único (só pode ser resgatado uma vez no total, depois desativa sozinho)
+        </label>
         <button class="btn-primario" id="btn-criar-cupom">Criar Cupom</button>
         <button class="btn-secundario" style="width:100%;margin-top:.5rem" id="btn-cancelar-cadastro-cupom">Cancelar</button>
       </div>
@@ -1188,13 +1193,13 @@ import {
 import { checarElegibilidade } from './js/agenda.js?v=20260728e';
 import { escutarServicos, criarServico, excluirServico, calcularCombo } from './js/servicos.js?v=20260728d';
 import { escutarClientes, criarCliente, ehAniversarioHoje, excluirCliente, editarCliente } from './js/clientes.js?v=20260728d';
-import { criarMembroEquipe, escutarEquipe, excluirMembroEquipe, editarMembroEquipe } from './js/equipe.js?v=20260728f';
+import { criarMembroEquipe, escutarEquipe, excluirMembroEquipe, editarMembroEquipe } from './js/equipe.js?v=20260729a';
 import { tempoMaxRecomendado, descricaoTipoPele } from './js/ficha-pele.js?v=20260728d';
-import { registrarPagamento, escutarPendencias, quitarPendencia, resumoFinanceiro, escutarFinanceiroPeriodo } from './js/financeiro.js?v=20260728f';
+import { registrarPagamento, escutarPendencias, quitarPendencia, resumoFinanceiro, escutarFinanceiroPeriodo } from './js/financeiro.js?v=20260729a';
 import { criarPacote, escutarPacotesDoNegocio, consumirSessaoDoPacote, excluirPacote, pacoteVencido, diasParado, DIAS_PARADO_ALERTA } from './js/pacotes-sessoes.js?v=20260728d';
 import { criarProdutoCabine, escutarProdutosCabine, produtosEmAlerta, baixarEstoque, somarEstoque, buscarPorCodigoBarras, excluirProdutoCabine } from './js/produtos-cabine.js?v=20260728d';
 import { criarInsumo, escutarInsumos, reporInsumo, darBaixaInsumo, excluirInsumo, insumosEmAlerta, buscarInsumoPorCodigoBarras } from './js/insumos.js?v=20260728d';
-import { criarCupom, escutarCupons, desativarCupom, calcularDescontoCupom } from './js/cupons.js?v=20260728d';
+import { criarCupom, escutarCupons, desativarCupom, calcularDescontoCupom, registrarUsoCupom } from './js/cupons.js?v=20260729a';
 import { exportarExcel, exportarPDF, montarRelatorioFinanceiro, COLUNAS_FINANCEIRO } from './js/relatorios.js?v=20260728f';
 import {
   linkConfirmacaoAgendamento, linkCobrancaPendente, linkAtrasoAgendamento,
@@ -1207,7 +1212,7 @@ import {
 import { verificarIntervaloMinimo } from './js/ficha-pele.js?v=20260728d';
 import { tutorialJaVisto, iniciarTutorial } from './js/tutorial.js?v=20260728f';
 import { DIAS_SEMANA, escutarHorarios, salvarHorarios, validarHorarioFuncionamento } from './js/horarios.js?v=20260728d';
-import { escutarConfigNegocio, salvarConfigNegocio } from './js/config-negocio.js?v=20260728d';
+import { escutarConfigNegocio, salvarConfigNegocio } from './js/config-negocio.js?v=20260729a';
 import { CATEGORIAS_DESPESA, criarDespesa, excluirDespesa, escutarDespesas } from './js/despesas.js?v=20260728d';
 import { toast, confirmar, confirmarForte, executar } from './js/ui-feedback.js?v=20260728d';
 import { db } from './js/firebase-config.js?v=20260728d';
@@ -1262,6 +1267,18 @@ let pacotesCache = [];
 let cuponsCache = [];
 
 const $ = (id) => document.getElementById(id);
+
+// Escapa dado de cliente/equipe antes de jogar cru num innerHTML — nome,
+// WhatsApp e observações vêm de um caminho de escrita público (autocadastro
+// da cliente, sem revisão do dono) e iam direto pro innerHTML em vários
+// lugares do painel sem passar por isso, abrindo XSS armazenado: um nome
+// tipo "<img src=x onerror=...>" executava na sessão autenticada do dono.
+function escapeHtml(str) {
+  return String(str ?? '').replace(/[&<>"']/g, (c) => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+  }[c]));
+}
+
 let usuarioAtual = null;
 let cabinesCache = [];
 let servicosCache = [];
@@ -1340,15 +1357,20 @@ function renderDespesas(despesas) {
 }
 
 $('btn-criar-despesa').addEventListener('click', async () => {
+  const btn = $('btn-criar-despesa');
+  if (btn.disabled) return;
   const categoria = $('desp-categoria').value;
   const descricao = $('desp-descricao').value.trim();
   const valor = Number($('desp-valor').value);
   const data = $('desp-data').value;
   const recorrente = $('desp-recorrente').checked;
   if (!valor || valor <= 0 || !data) { toast('Preencha o valor e a data.', 'aviso'); return; }
-  await criarDespesa(usuarioAtual.negocioId, { categoria, descricao, valor, data, recorrente });
-  $('desp-descricao').value = ''; $('desp-valor').value = ''; $('desp-recorrente').checked = false;
-  toast('Despesa registrada.', 'sucesso');
+  btn.disabled = true;
+  try {
+    await criarDespesa(usuarioAtual.negocioId, { categoria, descricao, valor, data, recorrente });
+    $('desp-descricao').value = ''; $('desp-valor').value = ''; $('desp-recorrente').checked = false;
+    toast('Despesa registrada.', 'sucesso');
+  } finally { btn.disabled = false; }
 });
 let configNegocioCache = { nome: "Pro'Bronze", whatsappNegocio: '', chavePix: '', vitrineSubtitulo: '', intervaloMinimoHoras: 24, limiteSessoesMes: 12 };
 
@@ -1562,18 +1584,54 @@ function iniciarPainel() {
   }
 
   $('link-cadastro-cliente').value = `${window.location.origin}${window.location.pathname.replace('esteticista.html', '')}cadastro-cliente.html?negocio=${negocioId}`;
-  $('btn-copiar-link').addEventListener('click', () => {
-    $('link-cadastro-cliente').select();
-    document.execCommand('copy');
-  });
+  // iniciarPainel() roda de novo a cada login (sem recarregar a página) —
+  // sem esse "dataset.bound", um logout seguido de login na mesma aba
+  // duplicava esse clique (2x copiar, 2x toast, e assim por diante a cada
+  // ciclo de login).
+  if (!$('btn-copiar-link').dataset.bound) {
+    $('btn-copiar-link').dataset.bound = '1';
+    $('btn-copiar-link').addEventListener('click', () => {
+      $('link-cadastro-cliente').select();
+      document.execCommand('copy');
+    });
+  }
 
-  const linkCadastroEquipe = `${window.location.origin}${window.location.pathname.replace('esteticista.html', '')}cadastro-equipe.html?negocio=${negocioId}`;
-  $('link-cadastro-equipe').value = linkCadastroEquipe;
-  $('btn-copiar-link-equipe').addEventListener('click', () => {
-    $('link-cadastro-equipe').select();
-    document.execCommand('copy');
-    toast('Link copiado.', 'sucesso');
-  });
+  // Código secreto do convite de equipe — gerado na hora, se essa loja
+  // ainda não tiver um (lojas antigas, criadas antes dessa proteção
+  // existir). Sem esse código, o link de convite usava só o negocioId,
+  // que é o MESMO valor público impresso no QR Code que a cliente usa
+  // pra se cadastrar — qualquer um que fotografasse o cartaz da recepção
+  // conseguia virar recepcionista da loja.
+  function gerarCodigoConvite() {
+    return Array.from(crypto.getRandomValues(new Uint8Array(12)))
+      .map((b) => b.toString(36)).join('').slice(0, 16);
+  }
+  let linkCadastroEquipe = '';
+  function montarLinkEquipe(codigo) {
+    linkCadastroEquipe = `${window.location.origin}${window.location.pathname.replace('esteticista.html', '')}cadastro-equipe.html?negocio=${negocioId}&codigo=${codigo}`;
+    $('link-cadastro-equipe').value = linkCadastroEquipe;
+    const nomeLoja = configNegocioCache?.nome || '';
+    const textoWppEquipe = `Oi! Segue o link pra você criar seu acesso de funcionário(a) no Pro'Bronze da loja "${nomeLoja}":\n${linkCadastroEquipe}`;
+    $('btn-enviar-link-equipe-whatsapp').href = `https://wa.me/?text=${encodeURIComponent(textoWppEquipe)}`;
+  }
+  if (!$('btn-copiar-link-equipe').dataset.bound) {
+    $('btn-copiar-link-equipe').dataset.bound = '1';
+    $('btn-copiar-link-equipe').addEventListener('click', () => {
+      $('link-cadastro-equipe').select();
+      document.execCommand('copy');
+      toast('Link copiado.', 'sucesso');
+    });
+  }
+  if (!$('btn-gerar-novo-link-equipe').dataset.bound) {
+    $('btn-gerar-novo-link-equipe').dataset.bound = '1';
+    $('btn-gerar-novo-link-equipe').addEventListener('click', async () => {
+      if (!confirm('Gerar um novo link invalida imediatamente o anterior — quem ainda não usou o link antigo não vai mais conseguir se cadastrar com ele. Continuar?')) return;
+      const novoCodigo = gerarCodigoConvite();
+      await salvarConfigNegocio(negocioId, { codigoConviteEquipe: novoCodigo });
+      montarLinkEquipe(novoCodigo);
+      toast('Novo link gerado — o anterior não funciona mais.', 'sucesso');
+    });
+  }
 
   listenersAtivos.push(escutarCabines(negocioId, (cabines) => {
     cabinesCache = cabines;
@@ -1594,13 +1652,24 @@ function iniciarPainel() {
     }));
   }
 
+  let codigoConviteGerandoAgora = false;
   listenersAtivos.push(escutarConfigNegocio(negocioId, (config) => {
     configNegocioCache = config;
     renderConfiguracoes(config);
     localStorage.setItem('probronze_nome_loja', config.nome);
     verificarAssinatura(config);
-    const textoWppEquipe = `Oi! Segue o link pra você criar seu acesso de funcionário(a) no Pro'Bronze da loja "${config.nome || ''}":\n${linkCadastroEquipe}`;
-    $('btn-enviar-link-equipe-whatsapp').href = `https://wa.me/?text=${encodeURIComponent(textoWppEquipe)}`;
+    if (usuarioAtual.papel === 'dono') {
+      if (config.codigoConviteEquipe) {
+        montarLinkEquipe(config.codigoConviteEquipe);
+      } else if (!codigoConviteGerandoAgora) {
+        // Loja antiga, cadastrada antes do código de convite existir —
+        // gera na hora, uma vez só.
+        codigoConviteGerandoAgora = true;
+        const codigo = gerarCodigoConvite();
+        salvarConfigNegocio(negocioId, { codigoConviteEquipe: codigo }).catch(() => {});
+        montarLinkEquipe(codigo);
+      }
+    }
     atualizarCentralAvisos();
   }));
 
@@ -1752,6 +1821,7 @@ function renderInsumos(insumos) {
   wrap.querySelectorAll('[data-repor-insumo]').forEach((btn) => {
     btn.addEventListener('click', async () => {
       const item = insumosCache.find((i) => i.id === btn.dataset.reporInsumo);
+      if (!item) { toast('Insumo não encontrado — atualize a página.', 'aviso'); return; }
       const qtd = prompt(`Quanto de "${item.nome}" chegou?`, '10');
       const n = parseFloat(qtd);
       if (!qtd || isNaN(n) || n <= 0) return;
@@ -1771,6 +1841,7 @@ function renderInsumos(insumos) {
   wrap.querySelectorAll('[data-baixa-insumo]').forEach((btn) => {
     btn.addEventListener('click', async () => {
       const item = insumosCache.find((i) => i.id === btn.dataset.baixaInsumo);
+      if (!item) { toast('Insumo não encontrado — atualize a página.', 'aviso'); return; }
       const qtd = prompt(`Quanto de "${item.nome}" foi usado? (em estoque: ${item.quantidade})`, '1');
       const n = parseFloat(qtd);
       if (!qtd || isNaN(n) || n <= 0) return;
@@ -1782,6 +1853,7 @@ function renderInsumos(insumos) {
   wrap.querySelectorAll('[data-excluir-insumo]').forEach((btn) => {
     btn.addEventListener('click', async () => {
       const item = insumosCache.find((i) => i.id === btn.dataset.excluirInsumo);
+      if (!item) { toast('Insumo não encontrado — atualize a página.', 'aviso'); return; }
       if (!(await confirmar(`Remover "${item.nome}" do controle de insumos?`))) return;
       await excluirInsumo(item.id);
       toast('Insumo removido.', 'sucesso');
@@ -1790,6 +1862,8 @@ function renderInsumos(insumos) {
 }
 
 $('btn-criar-insumo').addEventListener('click', async () => {
+  const btn = $('btn-criar-insumo');
+  if (btn.disabled) return;
   const nome = $('ins-nome').value.trim();
   const quantidade = Number($('ins-qtd').value);
   const unidade = $('ins-unidade').value;
@@ -1799,32 +1873,34 @@ $('btn-criar-insumo').addEventListener('click', async () => {
   const tamanhoEmbalagem = $('ins-tamanho').value.trim();
   if (!nome) { toast('Digite o nome do insumo.', 'aviso'); return; }
   if (isNaN(quantidade) || quantidade < 0) { toast('Informe a quantidade.', 'aviso'); return; }
-
-  // Se tem código de barras, casa por código (cada tamanho é um cadastro
-  // separado); senão cai no comportamento antigo de casar só pelo nome.
-  const existente = codigoBarras
-    ? buscarInsumoPorCodigoBarras(insumosCache, codigoBarras)
-    : insumosCache.find((i) => (i.nome || '').toLowerCase() === nome.toLowerCase() && !i.tamanhoEmbalagem && !tamanhoEmbalagem);
-  if (existente) {
-    await reporInsumo(existente.id, quantidade);
-    toast(`+${quantidade} adicionado a "${existente.nome}${existente.tamanhoEmbalagem ? ` (${existente.tamanhoEmbalagem})` : ''}" (já cadastrado).`, 'sucesso');
-  } else {
-    await criarInsumo(usuarioAtual.negocioId, { nome, quantidade, unidade, quantidadeMinima, custoUnitario, codigoBarras, tamanhoEmbalagem });
-    toast('Insumo cadastrado.', 'sucesso');
-  }
-  const custoParaDespesa = existente ? existente.custoUnitario : custoUnitario;
-  if (custoParaDespesa != null && custoParaDespesa > 0) {
-    await criarDespesa(usuarioAtual.negocioId, {
-      categoria: 'Produtos/Insumos',
-      descricao: `Reposição de insumo: ${existente?.nome || nome} (${quantidade}${UNIDADE_ABREV_INSUMO[unidade] || unidade})`,
-      valor: custoParaDespesa * quantidade,
-      data: new Date().toISOString().slice(0, 10),
-      recorrente: false
-    });
-  }
-  $('ins-nome').value = ''; $('ins-qtd').value = ''; $('ins-qtd-min').value = ''; $('ins-custo').value = '';
-  $('ins-codigo').value = ''; $('ins-tamanho').value = '';
-  $('modal-cadastro-insumo').style.display = 'none';
+  btn.disabled = true;
+  try {
+    // Se tem código de barras, casa por código (cada tamanho é um cadastro
+    // separado); senão cai no comportamento antigo de casar só pelo nome.
+    const existente = codigoBarras
+      ? buscarInsumoPorCodigoBarras(insumosCache, codigoBarras)
+      : insumosCache.find((i) => (i.nome || '').toLowerCase() === nome.toLowerCase() && !i.tamanhoEmbalagem && !tamanhoEmbalagem);
+    if (existente) {
+      await reporInsumo(existente.id, quantidade);
+      toast(`+${quantidade} adicionado a "${existente.nome}${existente.tamanhoEmbalagem ? ` (${existente.tamanhoEmbalagem})` : ''}" (já cadastrado).`, 'sucesso');
+    } else {
+      await criarInsumo(usuarioAtual.negocioId, { nome, quantidade, unidade, quantidadeMinima, custoUnitario, codigoBarras, tamanhoEmbalagem });
+      toast('Insumo cadastrado.', 'sucesso');
+    }
+    const custoParaDespesa = existente ? existente.custoUnitario : custoUnitario;
+    if (custoParaDespesa != null && custoParaDespesa > 0) {
+      await criarDespesa(usuarioAtual.negocioId, {
+        categoria: 'Produtos/Insumos',
+        descricao: `Reposição de insumo: ${existente?.nome || nome} (${quantidade}${UNIDADE_ABREV_INSUMO[unidade] || unidade})`,
+        valor: custoParaDespesa * quantidade,
+        data: new Date().toISOString().slice(0, 10),
+        recorrente: false
+      });
+    }
+    $('ins-nome').value = ''; $('ins-qtd').value = ''; $('ins-qtd-min').value = ''; $('ins-custo').value = '';
+    $('ins-codigo').value = ''; $('ins-tamanho').value = '';
+    $('modal-cadastro-insumo').style.display = 'none';
+  } finally { btn.disabled = false; }
 });
 
 $('btn-abrir-cadastro-insumo').addEventListener('click', () => {
@@ -1835,15 +1911,22 @@ $('btn-cancelar-cadastro-insumo').addEventListener('click', () => {
 });
 
 $('btn-criar-cabine').addEventListener('click', async () => {
+  const btn = $('btn-criar-cabine');
+  if (btn.disabled) return;
   const nome = $('cab-nome').value.trim();
   const tempoPadraoMin = Number($('cab-tempo').value) || 15;
   if (!nome) { toast('Informe o nome da cabine.', 'aviso'); return; }
-  await criarCabine(usuarioAtual.negocioId, { nome, tempoPadraoMin });
-  $('cab-nome').value = ''; $('cab-tempo').value = '15';
-  toast('Cabine cadastrada.', 'sucesso');
+  btn.disabled = true;
+  try {
+    await criarCabine(usuarioAtual.negocioId, { nome, tempoPadraoMin });
+    $('cab-nome').value = ''; $('cab-tempo').value = '15';
+    toast('Cabine cadastrada.', 'sucesso');
+  } finally { btn.disabled = false; }
 });
 
 $('btn-criar-produto').addEventListener('click', async () => {
+  const btn = $('btn-criar-produto');
+  if (btn.disabled) return;
   const nome = $('prod-nome').value.trim();
   const quantidade = Number($('prod-qtd').value);
   const unidade = $('prod-unidade').value.trim() || 'ml';
@@ -1853,28 +1936,29 @@ $('btn-criar-produto').addEventListener('click', async () => {
   const custo = $('prod-custo').value ? Number($('prod-custo').value) : null;
   const tamanhoEmbalagem = $('prod-tamanho').value.trim();
   if (!nome || !quantidade) { toast('Preencha nome e quantidade.', 'aviso'); return; }
-
-  const existente = buscarPorCodigoBarras(produtosCabineCache, codigoBarras);
-  const custoUnitario = existente ? existente.custo : custo;
-  if (existente) {
-    await somarEstoque(existente.id, quantidade);
-    toast(`+${quantidade}${unidade} adicionado ao estoque de "${existente.nome}".`, 'sucesso');
-  } else {
-    await criarProdutoCabine(usuarioAtual.negocioId, { nome, quantidade, unidade, estoqueMinimo, precoVenda, codigoBarras, custo, tamanhoEmbalagem });
-    toast('Produto cadastrado.', 'sucesso');
-  }
-  // Produto é estoque para revenda, não uma despesa — o custo dele já é
-  // descontado do preço de venda quando o produto é vendido. Diferente do
-  // insumo (consumido internamente), a compra de produto não entra em
-  // "Despesas" no Financeiro.
-  $('prod-nome').value = ''; $('prod-qtd').value = ''; $('prod-minimo').value = '0'; $('prod-preco-venda').value = '0';
-  $('prod-codigo').value = ''; $('prod-custo').value = ''; $('prod-tamanho').value = '';
-  $('prod-codigo-aviso').style.display = 'none';
-  $('prod-margem-aviso').style.display = 'none';
-  $('prod-nome-label').textContent = 'Nome';
-  $('prod-estoque-label').textContent = 'Quantidade';
-  $('btn-criar-produto').textContent = 'Adicionar Produto';
-  $('modal-cadastro-produto').style.display = 'none';
+  btn.disabled = true;
+  try {
+    const existente = buscarPorCodigoBarras(produtosCabineCache, codigoBarras);
+    const custoUnitario = existente ? existente.custo : custo;
+    if (existente) {
+      await somarEstoque(existente.id, quantidade);
+      toast(`+${quantidade}${unidade} adicionado ao estoque de "${existente.nome}".`, 'sucesso');
+    } else {
+      await criarProdutoCabine(usuarioAtual.negocioId, { nome, quantidade, unidade, estoqueMinimo, precoVenda, codigoBarras, custo, tamanhoEmbalagem });
+      toast('Produto cadastrado.', 'sucesso');
+    }
+    // Produto é estoque para revenda, não uma despesa — o custo dele já é
+    // descontado do preço de venda quando o produto é vendido. Diferente do
+    // insumo (consumido internamente), a compra de produto não entra em
+    // "Despesas" no Financeiro.
+    $('prod-nome').value = ''; $('prod-qtd').value = ''; $('prod-minimo').value = '0'; $('prod-preco-venda').value = '0';
+    $('prod-codigo').value = ''; $('prod-custo').value = ''; $('prod-tamanho').value = '';
+    $('prod-codigo-aviso').style.display = 'none';
+    $('prod-margem-aviso').style.display = 'none';
+    $('prod-nome-label').textContent = 'Nome';
+    $('prod-estoque-label').textContent = 'Quantidade';
+    $('modal-cadastro-produto').style.display = 'none';
+  } finally { btn.disabled = false; btn.textContent = 'Adicionar Produto'; }
 });
 
 $('btn-abrir-cadastro-produto').addEventListener('click', () => {
@@ -1932,28 +2016,37 @@ function renderCupons(cupons) {
   const wrap = $('lista-cupons');
   const ativos = cupons.filter((c) => c.ativo);
   if (ativos.length === 0) { wrap.innerHTML = '<div class="empty-state">Nenhum cupom ativo.</div>'; return; }
-  wrap.innerHTML = ativos.map((c) => `
+  wrap.innerHTML = ativos.map((c) => {
+    const vencido = c.validade && new Date(c.validade) < new Date();
+    const esgotado = c.usoUnico && (c.usos || 0) >= 1;
+    return `
     <div class="agendamento-item">
       <div class="agendamento-info">
-        <div class="nome">${c.codigo}</div>
-        <div class="detalhe">${c.tipoDesconto === 'percentual' ? c.valor + '%' : 'R$' + c.valor} de desconto · ${c.usos} usos</div>
+        <div class="nome">${escapeHtml(c.codigo)}${vencido ? ' <span class="badge cancelado">vencido</span>' : ''}${esgotado ? ' <span class="badge cancelado">já usado</span>' : ''}</div>
+        <div class="detalhe">${c.tipoDesconto === 'percentual' ? c.valor + '%' : 'R$' + c.valor} de desconto · ${c.usos || 0} uso(s)${c.usoUnico ? ' · uso único' : ''}${c.validade ? ' · válido até ' + new Date(c.validade).toLocaleDateString('pt-BR') : ''}</div>
       </div>
       <button class="btn-secundario" data-desativar="${c.id}">Desativar</button>
     </div>
-  `).join('');
+  `;
+  }).join('');
   wrap.querySelectorAll('[data-desativar]').forEach((btn) => {
     btn.addEventListener('click', () => desativarCupom(btn.dataset.desativar));
   });
 }
 
 $('btn-criar-cupom').addEventListener('click', async () => {
+  if ($('btn-criar-cupom').disabled) return;
+  $('btn-criar-cupom').disabled = true;
   const codigo = $('cup-codigo').value.trim();
   const tipoDesconto = $('cup-tipo').value;
   const valor = Number($('cup-valor').value);
-  if (!codigo || !valor) { toast('Preencha código e valor.', 'aviso'); return; }
-  await criarCupom(usuarioAtual.negocioId, { codigo, tipoDesconto, valor });
-  $('cup-codigo').value = ''; $('cup-valor').value = '';
+  const validade = $('cup-validade').value || null;
+  const usoUnico = $('cup-uso-unico').checked;
+  if (!codigo || !valor) { toast('Preencha código e valor.', 'aviso'); $('btn-criar-cupom').disabled = false; return; }
+  await criarCupom(usuarioAtual.negocioId, { codigo, tipoDesconto, valor, validade, usoUnico });
+  $('cup-codigo').value = ''; $('cup-valor').value = ''; $('cup-validade').value = ''; $('cup-uso-unico').checked = false;
   $('modal-cadastro-cupom').style.display = 'none';
+  $('btn-criar-cupom').disabled = false;
   toast('Cupom criado.', 'sucesso');
 });
 
@@ -2410,9 +2503,17 @@ function atualizarPreviewPersonalizacao() {
   const logoEmoji = $('cfg-logo-emoji').value.trim() || '☀️';
   $('cfg-preview-nome').style.color = cor;
   $('cfg-preview-btn').style.background = cor;
-  $('cfg-preview-logo').innerHTML = logoUrl
-    ? `<img src="${logoUrl}" style="max-width:44px;max-height:44px;border-radius:8px;display:inline-block" onerror="this.replaceWith(document.createTextNode('${logoEmoji}'))">`
-    : logoEmoji;
+  const previewLogo = $('cfg-preview-logo');
+  previewLogo.textContent = '';
+  if (logoUrl) {
+    const img = document.createElement('img');
+    img.src = logoUrl;
+    img.style.cssText = 'max-width:44px;max-height:44px;border-radius:8px;display:inline-block';
+    img.onerror = () => { img.replaceWith(document.createTextNode(logoEmoji)); };
+    previewLogo.appendChild(img);
+  } else {
+    previewLogo.textContent = logoEmoji;
+  }
 }
 
 document.querySelectorAll('.cfg-cor-btn').forEach((btn) => {
@@ -2477,8 +2578,8 @@ function renderPendencias(pendencias) {
     return `
     <div class="agendamento-item">
       <div class="agendamento-info">
-        <div class="nome">${p.clienteNome}</div>
-        <div class="detalhe">R$${Number(p.valorLiquido).toFixed(2)} · ${p.formaPagamento}</div>
+        <div class="nome">${escapeHtml(p.clienteNome)}</div>
+        <div class="detalhe">R$${Number(p.valorLiquido).toFixed(2)} · ${escapeHtml(p.formaPagamento)}</div>
       </div>
       <div style="display:flex;gap:.4rem">
         ${linkWpp ? `<a class="btn-secundario" href="${linkWpp}" target="_blank" style="text-decoration:none">WhatsApp</a>` : ''}
@@ -2514,7 +2615,7 @@ function renderPacotes(pacotes) {
     return `
     <div class="agendamento-item ${vencido ? '' : 'nome-clicavel'}" ${vencido ? '' : `data-baixa-pacote="${p.id}"`}>
       <div class="agendamento-info">
-        <div class="nome">${p.clienteNome} ${acabando ? '<span class="badge cancelado">acabando</span>' : ''}${validadeTexto}</div>
+        <div class="nome">${escapeHtml(p.clienteNome)} ${acabando ? '<span class="badge cancelado">acabando</span>' : ''}${validadeTexto}</div>
         <div class="detalhe">${p.sessoesUsadas}/${p.totalSessoes} sessões usadas · R$${Number(p.valorTotal).toFixed(2)}</div>
         <div class="detalhe">${historicoTexto}</div>
       </div>
@@ -2700,6 +2801,8 @@ function renderEquipe(equipe) {
 }
 
 $('btn-criar-equipe').addEventListener('click', async () => {
+  const btn = $('btn-criar-equipe');
+  if (btn.disabled) return;
   const nome = $('eq-nome').value.trim();
   const email = $('eq-email').value.trim();
   const senha = $('eq-senha').value;
@@ -2707,9 +2810,12 @@ $('btn-criar-equipe').addEventListener('click', async () => {
   const valorDiaria = Number($('eq-diaria').value) || 0;
   if (!nome || !email || !senha) { toast('Preencha nome, e-mail e senha.', 'aviso'); return; }
   if (senha.length < 6) { toast('A senha precisa ter pelo menos 6 caracteres.', 'aviso'); return; }
-  await criarMembroEquipe(usuarioAtual.negocioId, { nome, email, senha, papel, valorDiaria });
-  $('eq-nome').value = ''; $('eq-email').value = ''; $('eq-senha').value = ''; $('eq-diaria').value = '0';
-  toast('Membro da equipe adicionado.', 'sucesso');
+  btn.disabled = true;
+  try {
+    await criarMembroEquipe(usuarioAtual.negocioId, { nome, email, senha, papel, valorDiaria });
+    $('eq-nome').value = ''; $('eq-email').value = ''; $('eq-senha').value = ''; $('eq-diaria').value = '0';
+    toast('Membro da equipe adicionado.', 'sucesso');
+  } finally { btn.disabled = false; }
 });
 
 function renderAniversariantes(clientes) {
@@ -2721,7 +2827,7 @@ function renderAniversariantes(clientes) {
   $('lista-aniversariantes').innerHTML = aniversariantes.map((c) => `
     <div class="agendamento-item">
       <div class="agendamento-info">
-        <div class="nome">${c.nome} 🎉</div>
+        <div class="nome">${escapeHtml(c.nome)} 🎉</div>
       </div>
       ${c.whatsapp ? `<a class="btn-primario" href="${linkAniversario({ whatsapp: c.whatsapp, clienteNome: c.nome, nomeNegocio })}" target="_blank" style="text-decoration:none">Enviar parabéns</a>` : ''}
     </div>
@@ -2735,9 +2841,9 @@ function renderClientes(clientes) {
   wrap.innerHTML = clientes.map((c) => `
     <div class="agendamento-item nome-clicavel" data-abrir-menu-cliente="${c.id}">
       <div class="agendamento-info" style="min-width:0;flex:1">
-        <div class="nome">${c.nome} 💬</div>
-        <div class="detalhe">${c.whatsapp || 'sem WhatsApp'}${c.fichaPele ? ' · ' + (descricaoTipoPele(c.fichaPele.tipoFitzpatrick) || 'ficha de pele preenchida') : ' · sem ficha de pele'}</div>
-        ${c.observacoes ? `<div class="detalhe" style="margin-top:.25rem;color:var(--accent-light);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">📝 ${c.observacoes}</div>` : ''}
+        <div class="nome">${escapeHtml(c.nome)} 💬</div>
+        <div class="detalhe">${escapeHtml(c.whatsapp) || 'sem WhatsApp'}${c.fichaPele ? ' · ' + (descricaoTipoPele(c.fichaPele.tipoFitzpatrick) || 'ficha de pele preenchida') : ' · sem ficha de pele'}</div>
+        ${c.observacoes ? `<div class="detalhe" style="margin-top:.25rem;color:var(--accent-light);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">📝 ${escapeHtml(c.observacoes)}</div>` : ''}
       </div>
     </div>
   `).join('');
@@ -2880,8 +2986,10 @@ $('btn-cancelar-registrar-pagamento').addEventListener('click', () => {
 });
 
 $('btn-confirmar-registrar-pagamento').addEventListener('click', async () => {
+  if ($('btn-confirmar-registrar-pagamento').disabled) return;
   const valor = Number($('rp-valor').value);
   if (!valor || valor <= 0) { toast('Informe um valor válido.', 'aviso'); return; }
+  $('btn-confirmar-registrar-pagamento').disabled = true;
   const cliente = clientesCache.find((c) => c.id === clienteMenuAtualId);
   await registrarPagamento(usuarioAtual.negocioId, {
     agendamentoId: null,
@@ -3226,15 +3334,20 @@ $('btn-cancelar-venda').addEventListener('click', () => {
 });
 
 $('btn-confirmar-venda').addEventListener('click', async () => {
+  // Trava antes de qualquer await — clique duplo baixava o estoque e
+  // lançava o pagamento duas vezes.
+  if ($('btn-confirmar-venda').disabled) return;
   const produtoId = $('venda-produto').value;
   const quantidade = Number($('venda-quantidade').value);
   const valor = Number($('venda-valor').value);
   if (!produtoId || !quantidade || !valor) { toast('Selecione o produto, quantidade e valor.', 'aviso'); return; }
   const produto = produtosCabineCache.find((p) => p.id === produtoId);
-  if (produto && quantidade > produto.quantidade) {
+  if (!produto) { toast('Produto não encontrado — atualize a página e tente de novo.', 'aviso'); return; }
+  if (quantidade > produto.quantidade) {
     toast('Quantidade maior que o estoque disponível.', 'aviso');
     return;
   }
+  $('btn-confirmar-venda').disabled = true;
   const clienteVendaId = clienteMenuAtualId || $('venda-cliente-select').value || null;
   const cliente = clientesCache.find((c) => c.id === clienteVendaId);
   await baixarEstoque(produtoId, quantidade);
@@ -3448,13 +3561,18 @@ $('btn-criar-cliente').addEventListener('click', async () => {
 });
 
 $('btn-criar-servico').addEventListener('click', async () => {
+  const btn = $('btn-criar-servico');
+  if (btn.disabled) return;
   const nome = $('serv-nome').value.trim();
   const preco = Number($('serv-preco').value);
   const duracaoMin = Number($('serv-duracao').value);
   if (!nome || !preco || !duracaoMin) { toast('Preencha nome, preço e duração.', 'aviso'); return; }
-  await criarServico(usuarioAtual.negocioId, { nome, preco, duracaoMin });
-  $('serv-nome').value = ''; $('serv-preco').value = ''; $('serv-duracao').value = '';
-  toast('Serviço cadastrado.', 'sucesso');
+  btn.disabled = true;
+  try {
+    await criarServico(usuarioAtual.negocioId, { nome, preco, duracaoMin });
+    $('serv-nome').value = ''; $('serv-preco').value = ''; $('serv-duracao').value = '';
+    toast('Serviço cadastrado.', 'sucesso');
+  } finally { btn.disabled = false; }
 });
 
 // Sugere tempo de cabine com base na ficha de pele da cliente selecionada
@@ -3564,7 +3682,7 @@ function renderAgendaDia(listaOriginal) {
     return `
       <div class="agendamento-item nome-clicavel" data-abrir-menu-cliente="${ag.clienteId}">
         <div class="agendamento-info">
-          <div class="nome">${hora} · ${ag.clienteNome}</div>
+          <div class="nome">${hora} · ${escapeHtml(ag.clienteNome)}</div>
           <div class="detalhe">${servicos} · ${ag.tempoMin}min · ${ag.origem}${semCabine && ag.status === 'agendado' ? ' · sem cabine definida' : ''}${tipoPeleTexto ? ' · ' + tipoPeleTexto : ''}</div>
           ${sugerirRealocacao ? `<div class="aviso-bloqueio">⏰ Atrasado — cabine ${cabineAtual?.nome || ''} ocupada. <button class="btn-secundario" data-mover-agendamento="${ag.id}" data-mover-destino="${cabinesLivres[0].id}" style="margin-left:.4rem">Mover pra ${cabinesLivres[0].nome} (livre)</button></div>` : ''}
         </div>
@@ -3771,7 +3889,7 @@ function atualizarCentralAvisos() {
   contador.textContent = visiveis.length;
   lista.innerHTML = visiveis.map((a) => `
     <div class="aviso-persistente-item">
-      <span data-ir-aba="${a.aba}" style="cursor:pointer;flex:1">${a.texto}</span>
+      <span data-ir-aba="${a.aba}" style="cursor:pointer;flex:1">${escapeHtml(a.texto)}</span>
       <button class="btn-secundario" data-dispensar-aviso="${a.id}" style="flex-shrink:0">Dispensar</button>
     </div>
   `).join('');
@@ -3902,8 +4020,12 @@ $('btn-cancelar-pagamento').addEventListener('click', () => {
 });
 
 $('btn-confirmar-pagamento').addEventListener('click', async () => {
+  // Trava antes de qualquer await — clique duplo numa conexão lenta
+  // registrava o pagamento e concluía o agendamento duas vezes.
+  if ($('btn-confirmar-pagamento').disabled) return;
+  $('btn-confirmar-pagamento').disabled = true;
   const sessao = sessoesAtivas.get(sessaoEmFinalizacao);
-  if (!sessao) return;
+  if (!sessao) { $('btn-confirmar-pagamento').disabled = false; return; }
   const cabineId = sessaoEmFinalizacao;
   const pacoteId = $('pag-pacote').value;
   const codigoCupom = $('pag-cupom').value.trim().toUpperCase();
@@ -3923,8 +4045,15 @@ $('btn-confirmar-pagamento').addEventListener('click', async () => {
     let desconto = Number($('pag-desconto').value) || 0;
     if (codigoCupom) {
       const cupom = cuponsCache.find((c) => c.codigo === codigoCupom);
-      if (cupom) desconto += calcularDescontoCupom(cupom, sessao.valorBruto);
-      else toast('Cupom não encontrado ou inválido — desconto manual aplicado normalmente.', 'aviso');
+      const descontoCupom = cupom ? calcularDescontoCupom(cupom, sessao.valorBruto) : 0;
+      if (cupom && descontoCupom > 0) {
+        desconto += descontoCupom;
+        await registrarUsoCupom(cupom.id);
+      } else if (!cupom) {
+        toast('Cupom não encontrado ou inválido — desconto manual aplicado normalmente.', 'aviso');
+      } else {
+        toast('Cupom vencido, desativado ou já usado (uso único) — desconto manual aplicado normalmente.', 'aviso');
+      }
     }
     await registrarPagamento(usuarioAtual.negocioId, {
       agendamentoId: sessao.agendamentoId,

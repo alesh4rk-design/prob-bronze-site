@@ -15,7 +15,13 @@ export function configPadrao() {
     metaMensal: 0,
     corDestaque: "#C68642",
     logoEmoji: "☀️",
-    logoUrl: ""
+    logoUrl: "",
+    // Código secreto do link de autocadastro de equipe — diferente do
+    // negocioId (que é público, vai impresso no QR Code do link da
+    // cliente), pra ninguém conseguir virar recepcionista só de saber o
+    // negocioId. Ver esteticista.html (gera/regenera) e firestore.rules
+    // (valida no create de "usuarios").
+    codigoConviteEquipe: ""
   };
 }
 

@@ -33,6 +33,12 @@ export function quitarPendencia(financeiroId) {
   return updateDoc(doc(db, "financeiro", financeiroId), { statusPagamento: "pago" });
 }
 
+// "fim" é opcional — se omitido, não tem teto (inclui pagamentos
+// registrados a qualquer momento depois da assinatura, mesmo que a página
+// já esteja aberta há um tempo). Antes "fim" vinha travado num "new Date()"
+// calculado só na hora de abrir a página, e um pagamento registrado depois
+// disso na mesma sessão ficava de fora do "Faturamento do mês" — o dono
+// via o toast de sucesso, mas o total não se mexia até recarregar a página.
 export function escutarFinanceiroPeriodo(negocioId, inicio, fim, callback) {
   const q = query(
     collection(db, "financeiro"),
@@ -40,10 +46,11 @@ export function escutarFinanceiroPeriodo(negocioId, inicio, fim, callback) {
   );
   return onSnapshot(q, (snap) => {
     const lista = [];
+    const agora = new Date();
     snap.forEach((d) => {
       const dado = d.data();
       const data = dado.dataHora?.toDate ? dado.dataHora.toDate() : null;
-      if (!data || (data >= inicio && data <= fim)) lista.push({ id: d.id, ...dado });
+      if (!data || (data >= inicio && (!fim || data <= agora))) lista.push({ id: d.id, ...dado });
     });
     callback(lista);
   }, notificarErroFirestore);
