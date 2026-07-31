@@ -969,13 +969,18 @@
     <div class="aba-conteudo" id="aba-relatorios">
       <div class="card">
         <div class="card-titulo com-ajuda">Relatório Financeiro</div>
-        <div class="ajuda-inline">Baixe um arquivo (Excel ou PDF) com todos os pagamentos de um período — útil pra contabilidade ou pra guardar.</div>
+        <div class="ajuda-inline">O PDF é um relatório executivo (resumo + gráficos) pra apresentar — em banco, contador etc. O Excel traz o detalhamento completo, transação por transação, pra uso interno.</div>
         <div class="input-group"><label>De</label><input type="date" id="rel-de"></div>
         <div class="input-group"><label>Até</label><input type="date" id="rel-ate"></div>
-        <button class="btn-primario" id="btn-exportar-excel">Exportar Excel</button>
-        <button class="btn-secundario" style="width:100%;margin-top:.5rem" id="btn-exportar-pdf">Exportar PDF</button>
+        <button class="btn-primario" id="btn-exportar-excel">Exportar Excel (detalhado)</button>
+        <button class="btn-secundario" style="width:100%;margin-top:.5rem" id="btn-exportar-pdf">Exportar PDF (executivo)</button>
       </div>
     </div>
+    <!-- Canvases usados só pra desenhar os gráficos do PDF (Chart.js precisa
+         de um <canvas> real no DOM) — ficam fora da tela, nunca aparecem
+         pro usuário, servem só de "papel" pro gráfico virar imagem no PDF. -->
+    <canvas id="rel-chart-linha" width="900" height="380" style="position:fixed;left:-9999px;top:-9999px"></canvas>
+    <canvas id="rel-chart-pizza" width="500" height="500" style="position:fixed;left:-9999px;top:-9999px"></canvas>
 
     <!-- ABA HORÁRIOS DE FUNCIONAMENTO -->
     <div class="aba-conteudo" id="aba-horarios">
@@ -1241,7 +1246,7 @@ import { criarPacote, escutarPacotesDoNegocio, consumirSessaoDoPacote, excluirPa
 import { criarProdutoCabine, escutarProdutosCabine, produtosEmAlerta, baixarEstoque, somarEstoque, buscarPorCodigoBarras, excluirProdutoCabine, registrarMovimentoProduto, escutarMovimentosProdutos } from './js/produtos-cabine.js?v=20260729a';
 import { criarInsumo, escutarInsumos, reporInsumo, darBaixaInsumo, excluirInsumo, insumosEmAlerta, buscarInsumoPorCodigoBarras, registrarMovimentoInsumo, escutarMovimentosInsumos } from './js/insumos.js?v=20260729a';
 import { criarCupom, escutarCupons, desativarCupom, calcularDescontoCupom, registrarUsoCupom } from './js/cupons.js?v=20260729a';
-import { exportarExcel, exportarPDF, montarRelatorioFinanceiro, COLUNAS_FINANCEIRO } from './js/relatorios.js?v=20260729a';
+import { exportarExcel, exportarPDF, montarRelatorioFinanceiro, COLUNAS_FINANCEIRO } from './js/relatorios.js?v=20260729b';
 import {
   linkConfirmacaoAgendamento, linkCobrancaPendente, linkAtrasoAgendamento,
   linkClienteSumido, linkMensagemLivre, linkLembreteIntervalo,
@@ -2591,7 +2596,7 @@ $('btn-exportar-pdf').addEventListener('click', async () => {
   if (registros.length === 0) { toast('Nenhum registro no período selecionado.', 'aviso'); return; }
   const periodoTexto = `${new Date($('rel-de').value + 'T00:00:00').toLocaleDateString('pt-BR')} a ${new Date($('rel-ate').value + 'T00:00:00').toLocaleDateString('pt-BR')}`;
   exportarPDF(
-    montarRelatorioFinanceiro(registros), COLUNAS_FINANCEIRO,
+    registros,
     `Relatório Financeiro — ${periodoTexto}`,
     `probronze-financeiro-${$('rel-de').value}-a-${$('rel-ate').value}`,
     { nomeLoja: configNegocioCache?.nome || "Pro'Bronze", periodoTexto }
