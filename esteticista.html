@@ -1242,7 +1242,7 @@ import { criarPacote, escutarPacotesDoNegocio, consumirSessaoDoPacote, excluirPa
 import { criarProdutoCabine, escutarProdutosCabine, produtosEmAlerta, baixarEstoque, somarEstoque, buscarPorCodigoBarras, excluirProdutoCabine, registrarMovimentoProduto, escutarMovimentosProdutos } from './js/produtos-cabine.js?v=20260729a';
 import { criarInsumo, escutarInsumos, reporInsumo, darBaixaInsumo, excluirInsumo, insumosEmAlerta, buscarInsumoPorCodigoBarras, registrarMovimentoInsumo, escutarMovimentosInsumos } from './js/insumos.js?v=20260729a';
 import { criarCupom, escutarCupons, desativarCupom, calcularDescontoCupom, registrarUsoCupom } from './js/cupons.js?v=20260729a';
-import { exportarExcel, exportarPDF, montarRelatorioFinanceiro, COLUNAS_FINANCEIRO } from './js/relatorios.js?v=20260728f';
+import { exportarExcel, exportarPDF, montarRelatorioFinanceiro, COLUNAS_FINANCEIRO } from './js/relatorios.js?v=20260729a';
 import {
   linkConfirmacaoAgendamento, linkCobrancaPendente, linkAtrasoAgendamento,
   linkClienteSumido, linkMensagemLivre, linkLembreteIntervalo,
@@ -2578,17 +2578,24 @@ $('btn-exportar-excel').addEventListener('click', async () => {
   const registros = await buscarFinanceiroPeriodo();
   if (!registros) return;
   if (registros.length === 0) { toast('Nenhum registro no período selecionado.', 'aviso'); return; }
-  exportarExcel(montarRelatorioFinanceiro(registros), COLUNAS_FINANCEIRO, `probronze-financeiro-${$('rel-de').value}-a-${$('rel-ate').value}`);
+  const periodoTexto = `${new Date($('rel-de').value + 'T00:00:00').toLocaleDateString('pt-BR')} a ${new Date($('rel-ate').value + 'T00:00:00').toLocaleDateString('pt-BR')}`;
+  exportarExcel(
+    montarRelatorioFinanceiro(registros), COLUNAS_FINANCEIRO,
+    `probronze-financeiro-${$('rel-de').value}-a-${$('rel-ate').value}`,
+    { nomeLoja: configNegocioCache?.nome || "Pro'Bronze", periodoTexto }
+  );
 });
 
 $('btn-exportar-pdf').addEventListener('click', async () => {
   const registros = await buscarFinanceiroPeriodo();
   if (!registros) return;
   if (registros.length === 0) { toast('Nenhum registro no período selecionado.', 'aviso'); return; }
+  const periodoTexto = `${new Date($('rel-de').value + 'T00:00:00').toLocaleDateString('pt-BR')} a ${new Date($('rel-ate').value + 'T00:00:00').toLocaleDateString('pt-BR')}`;
   exportarPDF(
     montarRelatorioFinanceiro(registros), COLUNAS_FINANCEIRO,
-    `Relatório Financeiro — ${$('rel-de').value} a ${$('rel-ate').value}`,
-    `probronze-financeiro-${$('rel-de').value}-a-${$('rel-ate').value}`
+    `Relatório Financeiro — ${periodoTexto}`,
+    `probronze-financeiro-${$('rel-de').value}-a-${$('rel-ate').value}`,
+    { nomeLoja: configNegocioCache?.nome || "Pro'Bronze", periodoTexto }
   );
 });
 
