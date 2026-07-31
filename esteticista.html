@@ -25,6 +25,17 @@
   * { box-sizing: border-box; }
   body { margin: 0; background: var(--bg); color: var(--text); font-family: var(--font); }
 
+  #tela-carregando {
+    position: fixed; inset: 0; z-index: 9999; display: flex; align-items: center; justify-content: center;
+    background: var(--bg);
+  }
+  .spinner {
+    width: 44px; height: 44px; border-radius: 50%;
+    border: 4px solid rgba(245,230,211,.12); border-top-color: var(--accent);
+    animation: spinner-girar .8s linear infinite;
+  }
+  @keyframes spinner-girar { to { transform: rotate(360deg); } }
+
   #tela-login {
     min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 1.5rem;
     background: radial-gradient(circle at 20% 20%, rgba(var(--accent-rgb),.20), transparent 55%), var(--bg);
@@ -376,6 +387,13 @@
 </style>
 </head>
 <body>
+
+<!-- Tela de carregamento — cobre tudo enquanto o Firebase confere se a
+     pessoa já está logada. Sem isso, quem já tinha sessão aberta via um
+     pisca rápido da tela de login antes de cair direto no painel. -->
+<div id="tela-carregando">
+  <div class="spinner"></div>
+</div>
 
 <div id="tela-login">
   <div id="tela-login-raios"></div>
@@ -1507,6 +1525,7 @@ function ativarConfirmacaoAoSair() {
 }
 
 onAuthChange((usuario, motivo) => {
+  $('tela-carregando').style.display = 'none';
   if (!usuario) {
     pararTodosOsListeners();
     $('tela-login').style.display = 'flex';
