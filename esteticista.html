@@ -251,6 +251,7 @@
     .agendamento-acoes > .btn-secundario, .agendamento-acoes > .btn-primario, .agendamento-acoes > a {
       flex: 1 1 auto; min-width: 130px; text-align: center;
     }
+    .agendamento-acoes > select { flex: 1 1 100%; }
   }
   .nome-clicavel {
     cursor: pointer; color: var(--accent-light);
@@ -1955,7 +1956,7 @@ function renderInsumos(insumos) {
         <div class="detalhe">${i.codigoBarras ? `código ${i.codigoBarras} · ` : ''}${i.quantidade}${un}${i.quantidadeMinima != null ? ` · mínimo ${i.quantidadeMinima}${un}` : ''}</div>
         ${datasTexto ? `<div class="detalhe" style="margin-top:.2rem;font-size:.72rem">${datasTexto}</div>` : ''}
       </div>
-      <div style="display:flex;gap:.4rem;flex-wrap:wrap">
+      <div class="agendamento-acoes">
         <button class="btn-secundario" data-repor-insumo="${i.id}">+ Repor</button>
         <button class="btn-secundario" data-baixa-insumo="${i.id}">− Dar baixa</button>
         <button class="btn-secundario" data-excluir-insumo="${i.id}">Remover</button>
@@ -2741,7 +2742,7 @@ function renderPendencias(pendencias) {
         <div class="nome">${escapeHtml(p.clienteNome)}</div>
         <div class="detalhe">R$${Number(p.valorLiquido).toFixed(2)} · ${escapeHtml(p.formaPagamento)}</div>
       </div>
-      <div style="display:flex;gap:.4rem">
+      <div class="agendamento-acoes">
         ${linkWpp ? `<a class="btn-secundario" href="${linkWpp}" target="_blank" style="text-decoration:none">WhatsApp</a>` : ''}
         <button class="btn-secundario" data-quitar="${p.id}">Quitar</button>
       </div>
@@ -3880,7 +3881,7 @@ function renderAgendaDia(listaOriginal) {
           <div class="detalhe">${servicos} · ${ag.tempoMin}min · ${ag.origem}${semCabine && ag.status === 'agendado' ? ' · sem cabine definida' : ''}${tipoPeleTexto ? ' · ' + tipoPeleTexto : ''}</div>
           ${sugerirRealocacao ? `<div class="aviso-bloqueio">⏰ Atrasado — cabine ${cabineAtual?.nome || ''} ocupada. <button class="btn-secundario" data-mover-agendamento="${ag.id}" data-mover-destino="${cabinesLivres[0].id}" style="margin-left:.4rem">Mover pra ${cabinesLivres[0].nome} (livre)</button></div>` : ''}
         </div>
-        <div style="display:flex;align-items:center;gap:.5rem;flex-wrap:wrap">
+        <div class="agendamento-acoes">
           <span class="badge ${ag.status}">${rotuloStatusAgendamento(ag)}</span>
           ${linkWpp ? `<a class="btn-secundario" href="${linkWpp}" target="_blank" style="text-decoration:none">WhatsApp</a>` : ''}
           ${ag.status === 'agendado' && semCabine ? `
