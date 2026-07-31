@@ -16,6 +16,29 @@ export async function criarProdutoCabine(negocioId, { nome, quantidade, unidade 
   });
 }
 
+// Histórico de entrada e saída de produtos de cabine (cadastro, reposição,
+// venda) — mesma lógica usada em insumos.js.
+function hojeISO() {
+  return new Date().toISOString().slice(0, 10);
+}
+
+export async function registrarMovimentoProduto(negocioId, { produtoId, produtoNome, tipo, quantidade, motivo = "", data = null }) {
+  return addDoc(collection(db, "movimentosProdutosCabine"), {
+    negocioId, produtoId, produtoNome, tipo, quantidade, motivo,
+    data: data || hojeISO(),
+    criadoEm: serverTimestamp()
+  });
+}
+
+export function escutarMovimentosProdutos(negocioId, callback) {
+  const q = query(collection(db, "movimentosProdutosCabine"), where("negocioId", "==", negocioId));
+  return onSnapshot(q, (snap) => {
+    const movimentos = [];
+    snap.forEach((d) => movimentos.push({ id: d.id, ...d.data() }));
+    callback(movimentos.sort((a, b) => (b.criadoEm?.toMillis ? b.criadoEm.toMillis() : 0) - (a.criadoEm?.toMillis ? a.criadoEm.toMillis() : 0)));
+  }, notificarErroFirestore);
+}
+
 export function editarProdutoCabine(produtoId, dados) {
   return updateDoc(doc(db, "produtosCabine", produtoId), dados);
 }

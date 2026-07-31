@@ -833,6 +833,11 @@
         <div class="card-titulo">Estoque</div>
         <div id="lista-produtos"><div class="empty-state">Carregando...</div></div>
       </div>
+      <div class="card">
+        <div class="card-titulo">📜 Histórico de Entrada e Saída</div>
+        <div class="ajuda-inline">Toda entrada (cadastro, reposição) e saída (venda, baixa) de produto fica registrada aqui, com a data.</div>
+        <div id="lista-movimentos-produtos"><div class="empty-state">Nenhuma movimentação registrada ainda.</div></div>
+      </div>
     </div>
 
     <!-- Modal Cadastrar Produto -->
@@ -868,6 +873,7 @@
         <div class="input-group"><label>Estoque mínimo (alerta)</label><input type="number" id="prod-minimo" value="0"></div>
         <div class="input-group"><label>Custo (R$, opcional — calcula a margem)</label><input type="number" id="prod-custo" step="0.01"></div>
         <div class="input-group"><label>Preço de venda (R$, se vender pra cliente)</label><input type="number" id="prod-preco-venda" step="0.01" value="0"></div>
+        <div class="input-group"><label>Data de entrada (opcional — hoje se deixar em branco)</label><input type="date" id="prod-data-entrada"></div>
         <div id="prod-margem-aviso" style="display:none;font-size:.78rem;border-radius:8px;padding:.5rem .7rem;margin-bottom:1rem"></div>
         <button class="btn-primario" id="btn-criar-produto">Adicionar Produto</button>
         <button class="btn-secundario" style="width:100%;margin-top:.5rem" id="btn-cancelar-cadastro-produto">Cancelar</button>
@@ -887,6 +893,11 @@
           <div style="color:var(--red)">Acabando: <strong id="ins-kpi-baixo">0</strong></div>
         </div>
         <div id="lista-insumos"><div class="empty-state">Carregando...</div></div>
+      </div>
+      <div class="card">
+        <div class="card-titulo">📜 Histórico de Entrada e Saída</div>
+        <div class="ajuda-inline">Toda entrada (cadastro, reposição) e saída (uso, baixa) de insumo fica registrada aqui, com a data.</div>
+        <div id="lista-movimentos-insumos"><div class="empty-state">Nenhuma movimentação registrada ainda.</div></div>
       </div>
     </div>
 
@@ -917,6 +928,7 @@
         </div>
         <div class="input-group"><label>Quantidade mínima (alerta)</label><input type="number" id="ins-qtd-min"></div>
         <div class="input-group"><label>Custo unitário (R$, opcional — lança como despesa automática)</label><input type="number" id="ins-custo" step="0.01"></div>
+        <div class="input-group"><label>Data de entrada (opcional — hoje se deixar em branco)</label><input type="date" id="ins-data-entrada"></div>
         <button class="btn-primario" id="btn-criar-insumo">Adicionar Insumo</button>
         <button class="btn-secundario" style="width:100%;margin-top:.5rem" id="btn-cancelar-cadastro-insumo">Cancelar</button>
       </div>
@@ -1227,8 +1239,8 @@ import { criarMembroEquipe, escutarEquipe, excluirMembroEquipe, editarMembroEqui
 import { tempoMaxRecomendado, descricaoTipoPele } from './js/ficha-pele.js?v=20260728d';
 import { registrarPagamento, escutarPendencias, quitarPendencia, resumoFinanceiro, escutarFinanceiroPeriodo } from './js/financeiro.js?v=20260729a';
 import { criarPacote, escutarPacotesDoNegocio, consumirSessaoDoPacote, excluirPacote, pacoteVencido, diasParado, DIAS_PARADO_ALERTA } from './js/pacotes-sessoes.js?v=20260728d';
-import { criarProdutoCabine, escutarProdutosCabine, produtosEmAlerta, baixarEstoque, somarEstoque, buscarPorCodigoBarras, excluirProdutoCabine } from './js/produtos-cabine.js?v=20260728d';
-import { criarInsumo, escutarInsumos, reporInsumo, darBaixaInsumo, excluirInsumo, insumosEmAlerta, buscarInsumoPorCodigoBarras } from './js/insumos.js?v=20260728d';
+import { criarProdutoCabine, escutarProdutosCabine, produtosEmAlerta, baixarEstoque, somarEstoque, buscarPorCodigoBarras, excluirProdutoCabine, registrarMovimentoProduto, escutarMovimentosProdutos } from './js/produtos-cabine.js?v=20260729a';
+import { criarInsumo, escutarInsumos, reporInsumo, darBaixaInsumo, excluirInsumo, insumosEmAlerta, buscarInsumoPorCodigoBarras, registrarMovimentoInsumo, escutarMovimentosInsumos } from './js/insumos.js?v=20260729a';
 import { criarCupom, escutarCupons, desativarCupom, calcularDescontoCupom, registrarUsoCupom } from './js/cupons.js?v=20260729a';
 import { exportarExcel, exportarPDF, montarRelatorioFinanceiro, COLUNAS_FINANCEIRO } from './js/relatorios.js?v=20260728f';
 import {
@@ -1326,6 +1338,8 @@ let pendenciasCache = [];
 let equipeCache = [];
 let produtosCabineCache = [];
 let insumosCache = [];
+let movimentosProdutosCache = [];
+let movimentosInsumosCache = [];
 let despesasCache = [];
 let liquidoMesCache = 0;
 let despesasMesCache = 0;
@@ -1794,10 +1808,27 @@ function iniciarPainel() {
     renderInsumos(insumos);
     atualizarCentralAvisos();
   }));
+  listenersAtivos.push(escutarMovimentosProdutos(negocioId, (movimentos) => {
+    movimentosProdutosCache = movimentos;
+    renderMovimentosProdutos();
+    renderProdutos(produtosCabineCache);
+  }));
+  listenersAtivos.push(escutarMovimentosInsumos(negocioId, (movimentos) => {
+    movimentosInsumosCache = movimentos;
+    renderMovimentosInsumos();
+    renderInsumos(insumosCache);
+  }));
   listenersAtivos.push(escutarCupons(negocioId, (cupons) => {
     cuponsCache = cupons;
     renderCupons(cupons);
   }));
+}
+
+// dd/mm/aaaa a partir de uma data ISO (YYYY-MM-DD)
+function fmtDataMovimento(dataIso) {
+  if (!dataIso) return '';
+  const [y, m, d] = dataIso.split('-');
+  return `${d}/${m}/${y}`;
 }
 
 function renderProdutos(produtos) {
@@ -1811,11 +1842,19 @@ function renderProdutos(produtos) {
       const margemPct = (margem / p.precoVenda) * 100;
       margemTexto = ` · margem R$${margem.toFixed(2)} (${margemPct.toFixed(0)}%)`;
     }
+    // Última entrada/saída desse produto, achada no histórico já
+    // carregado (mais recente primeiro).
+    const ultimaEntrada = movimentosProdutosCache.find((m) => m.produtoId === p.id && m.tipo === 'entrada');
+    const ultimaSaida = movimentosProdutosCache.find((m) => m.produtoId === p.id && m.tipo === 'saida');
+    let datasTexto = '';
+    if (ultimaEntrada) datasTexto += `<span style="color:var(--accent-light)">↓ entrou ${fmtDataMovimento(ultimaEntrada.data)}</span>`;
+    if (ultimaSaida) datasTexto += `${ultimaEntrada ? ' · ' : ''}<span style="color:var(--red)">↑ saiu ${fmtDataMovimento(ultimaSaida.data)}</span>`;
     return `
     <div class="agendamento-item">
       <div class="agendamento-info">
         <div class="nome">${p.nome}${p.tamanhoEmbalagem ? ` (${p.tamanhoEmbalagem})` : ''} ${emAlerta.has(p.id) ? '<span class="badge cancelado">estoque baixo</span>' : ''}</div>
         <div class="detalhe">${p.codigoBarras ? `código ${p.codigoBarras} · ` : ''}${p.quantidade}${p.unidade} · mínimo ${p.estoqueMinimo}${p.unidade}${margemTexto}</div>
+        ${datasTexto ? `<div class="detalhe" style="margin-top:.2rem;font-size:.72rem">${datasTexto}</div>` : ''}
       </div>
       <button class="btn-secundario" data-excluir-produto="${p.id}">Excluir</button>
     </div>
@@ -1832,6 +1871,29 @@ function renderProdutos(produtos) {
   });
 }
 
+function renderMovimentosProdutos() {
+  const wrap = $('lista-movimentos-produtos');
+  if (!wrap) return;
+  if (!movimentosProdutosCache.length) {
+    wrap.innerHTML = '<div class="empty-state">Nenhuma movimentação registrada ainda.</div>';
+    return;
+  }
+  wrap.innerHTML = movimentosProdutosCache.slice(0, 40).map((m) => {
+    const ehEntrada = m.tipo === 'entrada';
+    const cor = ehEntrada ? 'var(--accent-light)' : 'var(--red)';
+    const sinal = ehEntrada ? '+' : '−';
+    return `
+    <div class="agendamento-item">
+      <div class="agendamento-info">
+        <div class="nome">${m.produtoNome || '—'}</div>
+        <div class="detalhe">${fmtDataMovimento(m.data)}${m.motivo ? ' · ' + m.motivo : ''}</div>
+      </div>
+      <div style="font-weight:800;color:${cor}">${sinal}${m.quantidade}</div>
+    </div>
+  `;
+  }).join('');
+}
+
 // ── Insumos (uso interno, sem venda) ──────────────────────
 const UNIDADE_ABREV_INSUMO = { unidade: 'un', pacote: 'pct', caixa: 'cx', litro: 'L', ml: 'ml', kg: 'kg', g: 'g', rolo: 'rl' };
 
@@ -1843,11 +1905,17 @@ function renderInsumos(insumos) {
   const emAlerta = new Set(insumosEmAlerta(insumos).map((i) => i.id));
   wrap.innerHTML = insumos.map((i) => {
     const un = UNIDADE_ABREV_INSUMO[i.unidade] || i.unidade || 'un';
+    const ultimaEntrada = movimentosInsumosCache.find((m) => m.insumoId === i.id && m.tipo === 'entrada');
+    const ultimaSaida = movimentosInsumosCache.find((m) => m.insumoId === i.id && m.tipo === 'saida');
+    let datasTexto = '';
+    if (ultimaEntrada) datasTexto += `<span style="color:var(--accent-light)">↓ entrou ${fmtDataMovimento(ultimaEntrada.data)}</span>`;
+    if (ultimaSaida) datasTexto += `${ultimaEntrada ? ' · ' : ''}<span style="color:var(--red)">↑ saiu ${fmtDataMovimento(ultimaSaida.data)}</span>`;
     return `
     <div class="agendamento-item">
       <div class="agendamento-info">
         <div class="nome">${i.nome}${i.tamanhoEmbalagem ? ` (${i.tamanhoEmbalagem})` : ''} ${emAlerta.has(i.id) ? '<span class="badge cancelado">acabando</span>' : ''}</div>
         <div class="detalhe">${i.codigoBarras ? `código ${i.codigoBarras} · ` : ''}${i.quantidade}${un}${i.quantidadeMinima != null ? ` · mínimo ${i.quantidadeMinima}${un}` : ''}</div>
+        ${datasTexto ? `<div class="detalhe" style="margin-top:.2rem;font-size:.72rem">${datasTexto}</div>` : ''}
       </div>
       <div style="display:flex;gap:.4rem;flex-wrap:wrap">
         <button class="btn-secundario" data-repor-insumo="${i.id}">+ Repor</button>
@@ -1866,6 +1934,7 @@ function renderInsumos(insumos) {
       const n = parseFloat(qtd);
       if (!qtd || isNaN(n) || n <= 0) return;
       await reporInsumo(item.id, n);
+      await registrarMovimentoInsumo(usuarioAtual.negocioId, { insumoId: item.id, insumoNome: item.nome, tipo: 'entrada', quantidade: n, motivo: 'Reposição' });
       if (item.custoUnitario != null && item.custoUnitario > 0) {
         await criarDespesa(usuarioAtual.negocioId, {
           categoria: 'Produtos/Insumos',
@@ -1887,6 +1956,7 @@ function renderInsumos(insumos) {
       if (!qtd || isNaN(n) || n <= 0) return;
       if (n > item.quantidade) { toast('Não tem tanto assim em estoque.', 'aviso'); return; }
       await darBaixaInsumo(item.id, n);
+      await registrarMovimentoInsumo(usuarioAtual.negocioId, { insumoId: item.id, insumoNome: item.nome, tipo: 'saida', quantidade: n, motivo: 'Uso/baixa' });
       toast(`Baixa de ${n} em "${item.nome}".`, 'sucesso');
     });
   });
@@ -1901,6 +1971,29 @@ function renderInsumos(insumos) {
   });
 }
 
+function renderMovimentosInsumos() {
+  const wrap = $('lista-movimentos-insumos');
+  if (!wrap) return;
+  if (!movimentosInsumosCache.length) {
+    wrap.innerHTML = '<div class="empty-state">Nenhuma movimentação registrada ainda.</div>';
+    return;
+  }
+  wrap.innerHTML = movimentosInsumosCache.slice(0, 40).map((m) => {
+    const ehEntrada = m.tipo === 'entrada';
+    const cor = ehEntrada ? 'var(--accent-light)' : 'var(--red)';
+    const sinal = ehEntrada ? '+' : '−';
+    return `
+    <div class="agendamento-item">
+      <div class="agendamento-info">
+        <div class="nome">${m.insumoNome || '—'}</div>
+        <div class="detalhe">${fmtDataMovimento(m.data)}${m.motivo ? ' · ' + m.motivo : ''}</div>
+      </div>
+      <div style="font-weight:800;color:${cor}">${sinal}${m.quantidade}</div>
+    </div>
+  `;
+  }).join('');
+}
+
 $('btn-criar-insumo').addEventListener('click', async () => {
   const btn = $('btn-criar-insumo');
   if (btn.disabled) return;
@@ -1911,6 +2004,8 @@ $('btn-criar-insumo').addEventListener('click', async () => {
   const custoUnitario = $('ins-custo').value ? Number($('ins-custo').value) : null;
   const codigoBarras = $('ins-codigo').value.trim() || null;
   const tamanhoEmbalagem = $('ins-tamanho').value.trim();
+  const dataEntradaEl = $('ins-data-entrada');
+  const dataEntrada = dataEntradaEl && dataEntradaEl.value ? dataEntradaEl.value : null;
   if (!nome) { toast('Digite o nome do insumo.', 'aviso'); return; }
   if (isNaN(quantidade) || quantidade < 0) { toast('Informe a quantidade.', 'aviso'); return; }
   btn.disabled = true;
@@ -1922,9 +2017,11 @@ $('btn-criar-insumo').addEventListener('click', async () => {
       : insumosCache.find((i) => (i.nome || '').toLowerCase() === nome.toLowerCase() && !i.tamanhoEmbalagem && !tamanhoEmbalagem);
     if (existente) {
       await reporInsumo(existente.id, quantidade);
+      await registrarMovimentoInsumo(usuarioAtual.negocioId, { insumoId: existente.id, insumoNome: existente.nome, tipo: 'entrada', quantidade, motivo: 'Reposição', data: dataEntrada });
       toast(`+${quantidade} adicionado a "${existente.nome}${existente.tamanhoEmbalagem ? ` (${existente.tamanhoEmbalagem})` : ''}" (já cadastrado).`, 'sucesso');
     } else {
-      await criarInsumo(usuarioAtual.negocioId, { nome, quantidade, unidade, quantidadeMinima, custoUnitario, codigoBarras, tamanhoEmbalagem });
+      const novoRef = await criarInsumo(usuarioAtual.negocioId, { nome, quantidade, unidade, quantidadeMinima, custoUnitario, codigoBarras, tamanhoEmbalagem });
+      await registrarMovimentoInsumo(usuarioAtual.negocioId, { insumoId: novoRef.id, insumoNome: nome, tipo: 'entrada', quantidade, motivo: 'Cadastro inicial', data: dataEntrada });
       toast('Insumo cadastrado.', 'sucesso');
     }
     const custoParaDespesa = existente ? existente.custoUnitario : custoUnitario;
@@ -1938,7 +2035,7 @@ $('btn-criar-insumo').addEventListener('click', async () => {
       });
     }
     $('ins-nome').value = ''; $('ins-qtd').value = ''; $('ins-qtd-min').value = ''; $('ins-custo').value = '';
-    $('ins-codigo').value = ''; $('ins-tamanho').value = '';
+    $('ins-codigo').value = ''; $('ins-tamanho').value = ''; if (dataEntradaEl) dataEntradaEl.value = '';
     $('modal-cadastro-insumo').style.display = 'none';
   } finally { btn.disabled = false; }
 });
@@ -1985,6 +2082,8 @@ $('btn-criar-produto').addEventListener('click', async () => {
   const codigoBarras = $('prod-codigo').value.trim() || null;
   const custo = $('prod-custo').value ? Number($('prod-custo').value) : null;
   const tamanhoEmbalagem = $('prod-tamanho').value.trim();
+  const dataEntradaEl = $('prod-data-entrada');
+  const dataEntrada = dataEntradaEl && dataEntradaEl.value ? dataEntradaEl.value : null;
   if (!nome || !quantidade) { toast('Preencha nome e quantidade.', 'aviso'); return; }
   btn.disabled = true;
   try {
@@ -1992,9 +2091,11 @@ $('btn-criar-produto').addEventListener('click', async () => {
     const custoUnitario = existente ? existente.custo : custo;
     if (existente) {
       await somarEstoque(existente.id, quantidade);
+      await registrarMovimentoProduto(usuarioAtual.negocioId, { produtoId: existente.id, produtoNome: existente.nome, tipo: 'entrada', quantidade, motivo: 'Reposição', data: dataEntrada });
       toast(`+${quantidade}${unidade} adicionado ao estoque de "${existente.nome}".`, 'sucesso');
     } else {
-      await criarProdutoCabine(usuarioAtual.negocioId, { nome, quantidade, unidade, estoqueMinimo, precoVenda, codigoBarras, custo, tamanhoEmbalagem });
+      const novoRef = await criarProdutoCabine(usuarioAtual.negocioId, { nome, quantidade, unidade, estoqueMinimo, precoVenda, codigoBarras, custo, tamanhoEmbalagem });
+      await registrarMovimentoProduto(usuarioAtual.negocioId, { produtoId: novoRef.id, produtoNome: nome, tipo: 'entrada', quantidade, motivo: 'Cadastro inicial', data: dataEntrada });
       toast('Produto cadastrado.', 'sucesso');
     }
     // Produto é estoque para revenda, não uma despesa — o custo dele já é
@@ -2002,7 +2103,7 @@ $('btn-criar-produto').addEventListener('click', async () => {
     // insumo (consumido internamente), a compra de produto não entra em
     // "Despesas" no Financeiro.
     $('prod-nome').value = ''; $('prod-qtd').value = ''; $('prod-minimo').value = '0'; $('prod-preco-venda').value = '0';
-    $('prod-codigo').value = ''; $('prod-custo').value = ''; $('prod-tamanho').value = '';
+    $('prod-codigo').value = ''; $('prod-custo').value = ''; $('prod-tamanho').value = ''; if (dataEntradaEl) dataEntradaEl.value = '';
     $('prod-codigo-aviso').style.display = 'none';
     $('prod-margem-aviso').style.display = 'none';
     $('prod-nome-label').textContent = 'Nome';
@@ -3139,6 +3240,7 @@ async function reporEstoquePorCodigoBarras(codigo) {
   const n = parseFloat(qtd);
   if (!qtd || isNaN(n) || n <= 0) return;
   await somarEstoque(produto.id, n);
+  await registrarMovimentoProduto(usuarioAtual.negocioId, { produtoId: produto.id, produtoNome: produto.nome, tipo: 'entrada', quantidade: n, motivo: 'Reposição (código de barras)' });
   toast(`+${n}${produto.unidade} adicionado a "${produto.nome}".`, 'sucesso');
 }
 $('repor-estoque-codigo').addEventListener('keydown', (e) => {
@@ -3411,6 +3513,7 @@ $('btn-confirmar-venda').addEventListener('click', async () => {
   const clienteVendaId = clienteMenuAtualId || $('venda-cliente-select').value || null;
   const cliente = clientesCache.find((c) => c.id === clienteVendaId);
   await baixarEstoque(produtoId, quantidade);
+  await registrarMovimentoProduto(usuarioAtual.negocioId, { produtoId, produtoNome: produto.nome, tipo: 'saida', quantidade, motivo: cliente?.nome ? `Venda — ${cliente.nome}` : 'Venda' });
   await registrarPagamento(usuarioAtual.negocioId, {
     agendamentoId: null,
     clienteId: clienteVendaId,

@@ -198,6 +198,18 @@ service cloud.firestore {
         (request.method == "create" && ehDoMeuNegocio(request.resource.data.negocioId));
     }
 
+    // Histórico de entrada/saída — mesmo isolamento por negócio de
+    // produtos/insumos, só que sem update/delete (é um log, não se edita).
+    match /movimentosProdutosCabine/{id} {
+      allow read: if ehDoMeuNegocio(resource.data.negocioId);
+      allow create: if ehDoMeuNegocio(request.resource.data.negocioId);
+    }
+
+    match /movimentosInsumos/{id} {
+      allow read: if ehDoMeuNegocio(resource.data.negocioId);
+      allow create: if ehDoMeuNegocio(request.resource.data.negocioId);
+    }
+
     // Financeiro/Despesas: qualquer um do negócio pode CRIAR (recepcionista
     // registra pagamento na venda, e o restoque de produto/insumo lança
     // despesa automática) — mas só o dono pode LER/editar, já que são

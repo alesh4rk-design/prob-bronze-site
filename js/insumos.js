@@ -19,6 +19,31 @@ export async function criarInsumo(negocioId, { nome, quantidade, unidade = "unid
   });
 }
 
+// Histórico de entrada e saída de insumos — cada cadastro, reposição ou
+// baixa vira um registro aqui, com a data (a mesma lógica já usada pra
+// Produtos de Cabine, ver produtos-cabine.js). "data" é opcional: se quem
+// chamar não informar, usa a data de hoje.
+function hojeISO() {
+  return new Date().toISOString().slice(0, 10);
+}
+
+export async function registrarMovimentoInsumo(negocioId, { insumoId, insumoNome, tipo, quantidade, motivo = "", data = null }) {
+  return addDoc(collection(db, "movimentosInsumos"), {
+    negocioId, insumoId, insumoNome, tipo, quantidade, motivo,
+    data: data || hojeISO(),
+    criadoEm: serverTimestamp()
+  });
+}
+
+export function escutarMovimentosInsumos(negocioId, callback) {
+  const q = query(collection(db, "movimentosInsumos"), where("negocioId", "==", negocioId));
+  return onSnapshot(q, (snap) => {
+    const movimentos = [];
+    snap.forEach((d) => movimentos.push({ id: d.id, ...d.data() }));
+    callback(movimentos.sort((a, b) => (b.criadoEm?.toMillis ? b.criadoEm.toMillis() : 0) - (a.criadoEm?.toMillis ? a.criadoEm.toMillis() : 0)));
+  }, notificarErroFirestore);
+}
+
 // Acha um insumo já cadastrado pelo código de barras (mesmo padrão de
 // Produtos) — cada tamanho de embalagem (ex: acetona 120ml vs 500ml) tem
 // seu próprio código, então isso soma no tamanho certo em vez de duplicar.
