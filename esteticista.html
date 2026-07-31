@@ -1462,7 +1462,10 @@ $('btn-login').addEventListener('click', async () => {
   }
 });
 $('login-senha').addEventListener('keydown', (e) => { if (e.key === 'Enter') $('btn-login').click(); });
-$('btn-sair').addEventListener('click', () => logout());
+$('btn-sair').addEventListener('click', async () => {
+  if (!(await confirmar('Sair do sistema?'))) return;
+  logout();
+});
 
 $('btn-login-google').addEventListener('click', async () => {
   $('login-erro').textContent = '';
@@ -1490,9 +1493,8 @@ $('link-esqueci-senha').addEventListener('click', async (e) => {
 // Confirmação nativa do navegador antes de recarregar/fechar a aba —
 // protege contra um F5, Ctrl+R ou fechar sem querer no meio de um
 // cadastro/pagamento. Só fica ativa DEPOIS do login (na tela de login não
-// tem nada em andamento pra perder), e os navegadores não deixam customizar
-// o texto do aviso por segurança — mesmo assim, o "Sair"/logout tira essa
-// trava de propósito, senão o próprio botão de sair passaria a confirmar.
+// tem nada em andamento pra perder). Os navegadores não deixam customizar
+// o texto do aviso por segurança.
 let confirmarSairAtiva = false;
 function ativarConfirmacaoAoSair() {
   if (confirmarSairAtiva) return;
@@ -1522,6 +1524,7 @@ onAuthChange((usuario, motivo) => {
   $('painel').style.display = 'block';
   iniciarPainel();
   initNovidades();
+  ativarConfirmacaoAoSair();
   ativarConfirmacaoAoSair();
 
   if (!tutorialJaVisto(usuario.uid)) {
@@ -4074,14 +4077,16 @@ function initNovidades() {
   if (NOVIDADES.length && NOVIDADES[0].id > ultimaVista()) badge.style.display = 'flex';
 
   btn.addEventListener('click', () => {
-    const aberto = painel.style.display === 'block';
-    painel.style.display = aberto ? 'none' : 'block';
-    if (!aberto) marcarComoVista();
+    painel.style.display = 'block';
+    marcarComoVista();
+    // Some assim que é clicada — só volta a aparecer numa sessão nova
+    // (recarregar a página/entrar de novo), não precisa fechar o painel
+    // primeiro pra ela sumir.
+    esconderNestaSessao();
   });
   document.addEventListener('click', (e) => {
     if (painel.style.display === 'block' && !painel.contains(e.target) && e.target !== btn) {
       painel.style.display = 'none';
-      esconderNestaSessao();
     }
   });
 }
