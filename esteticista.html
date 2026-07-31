@@ -4030,7 +4030,10 @@ $('btn-timers-flutuante').addEventListener('click', () => {
 // ── Novidades do sistema — botão flutuante (⭐) empilhado acima do relógio
 // de sessões. Pra adicionar uma novidade nova: acrescente um item no topo
 // do array abaixo (mais recente primeiro), com um "id" único e crescente
-// (data serve bem). Nunca precisa apagar item antigo daqui.
+// (data serve bem). Nunca precisa apagar item antigo daqui — só as
+// NOVIDADES_MAX_VISIVEIS mais recentes aparecem no painel (o resto fica
+// guardado no código, como histórico, mas não é exibido).
+const NOVIDADES_MAX_VISIVEIS = 6;
 const NOVIDADES = [
   {
     id: '2026-07-31-01',
@@ -4052,7 +4055,7 @@ function initNovidades() {
   if (!btn || !painel || !lista || btn.dataset.bound) return;
   btn.dataset.bound = '1';
 
-  lista.innerHTML = NOVIDADES.map((n) => `
+  lista.innerHTML = NOVIDADES.slice(0, NOVIDADES_MAX_VISIVEIS).map((n) => `
     <div class="novidade-item">
       <div class="novidade-data">${n.data}</div>
       <div class="novidade-titulo">${n.titulo}</div>
