@@ -318,16 +318,35 @@
   .timer-flutuante-item:last-child { border-bottom: none; }
   .timer-flutuante-item .timer-flutuante-tempo { font-weight: 800; font-variant-numeric: tabular-nums; }
 
-  /* Central de Avisos — fica junto do botão flutuante de timers, mas
+  /* Novidades do sistema — empilhado acima do relógio de sessões (nunca no
+     topo da página). Some depois de visto/fechado e só volta a aparecer
+     numa sessão nova (ver lógica em initNovidades()). */
+  #btn-novidades {
+    position: fixed; bottom: 8.6rem; right: 1.2rem; z-index: 199; width: 52px; height: 52px; border-radius: 50%;
+    background: var(--card); border: 1.5px solid var(--card-border); color: var(--yellow);
+    font-size: 1.3rem; cursor: pointer; box-shadow: 0 8px 24px rgba(0,0,0,.4); align-items: center; justify-content: center;
+  }
+  #painel-novidades {
+    position: fixed; bottom: 12.6rem; right: 1.2rem; z-index: 200; width: 280px; max-width: calc(100vw - 2.4rem);
+    background: var(--card); border: 1.5px solid var(--card-border); border-radius: 14px; padding: 1rem;
+    box-shadow: 0 12px 36px rgba(0,0,0,.45); max-height: 60vh; overflow-y: auto;
+  }
+  .novidade-item { border-left: 2.5px solid var(--yellow); padding-left: .6rem; margin-bottom: .8rem; }
+  .novidade-item:last-child { margin-bottom: 0; }
+  .novidade-item .novidade-data { font-size: .68rem; color: var(--muted); margin-bottom: .15rem; }
+  .novidade-item .novidade-titulo { font-size: .85rem; font-weight: 800; margin-bottom: .3rem; }
+  .novidade-item ul { margin: 0; padding-left: 1.1rem; font-size: .78rem; color: var(--muted); line-height: 1.5; }
+
+  /* Central de Avisos — fica acima do botão de Novidades (empilhado),
      os avisos aqui só somem quando a pessoa clica em "Dispensar",
      diferente do toast normal que desaparece sozinho */
   #btn-central-avisos {
-    position: fixed; bottom: 8.6rem; right: 1.2rem; z-index: 199; width: 52px; height: 52px; border-radius: 50%;
+    position: fixed; bottom: 16rem; right: 1.2rem; z-index: 199; width: 52px; height: 52px; border-radius: 50%;
     background: var(--card); border: 1.5px solid var(--card-border); color: var(--accent-light);
     font-size: 1.3rem; cursor: pointer; box-shadow: 0 8px 24px rgba(0,0,0,.4); display: flex; align-items: center; justify-content: center;
   }
   #painel-central-avisos {
-    position: fixed; bottom: 12rem; right: 1.2rem; z-index: 200; width: 280px; max-width: calc(100vw - 2.4rem);
+    position: fixed; bottom: 20rem; right: 1.2rem; z-index: 200; width: 280px; max-width: calc(100vw - 2.4rem);
     background: var(--card); border: 1.5px solid var(--card-border); border-radius: 14px; padding: 1rem;
     box-shadow: 0 12px 36px rgba(0,0,0,.45); max-height: 60vh; overflow-y: auto;
   }
@@ -410,8 +429,7 @@
       <div class="marca"><span class="marca-pro">Pro</span><span class="marca-apo">'</span>Bronze</div>
     </div>
     <div style="display:flex;align-items:center;gap:.6rem">
-      <div class="avatar-iniciais" id="avatar-iniciais"></div>
-      <span id="usuario-nome" style="font-size:.8rem;color:var(--muted)"></span>
+      <div class="avatar-iniciais" id="avatar-iniciais" title=""></div>
       <button class="btn-secundario" id="btn-ajuda" title="Rever o tutorial">❓ Ajuda</button>
       <button class="btn-secundario" id="btn-sair">Sair</button>
     </div>
@@ -1016,40 +1034,6 @@
         <div class="input-group"><label>Subtítulo da tela da cliente</label><input type="text" id="cfg-subtitulo"></div>
       </div>
       <div class="card">
-        <div class="card-titulo com-ajuda">Personalizar Área da Cliente</div>
-        <div class="ajuda-inline">A cor e o ícone escolhidos aqui aparecem na tela onde sua cliente agenda (login, botões e destaques) — deixe com a cara do seu estúdio.</div>
-
-        <div class="input-group">
-          <label>Cor de destaque</label>
-          <div style="display:flex;gap:.4rem;flex-wrap:wrap;margin-bottom:.5rem">
-            <button type="button" class="cfg-cor-btn" data-cor="#C68642" style="width:30px;height:30px;border-radius:8px;border:2px solid transparent;background:#C68642;cursor:pointer"></button>
-            <button type="button" class="cfg-cor-btn" data-cor="#D9A441" style="width:30px;height:30px;border-radius:8px;border:2px solid transparent;background:#D9A441;cursor:pointer"></button>
-            <button type="button" class="cfg-cor-btn" data-cor="#E07B54" style="width:30px;height:30px;border-radius:8px;border:2px solid transparent;background:#E07B54;cursor:pointer"></button>
-            <button type="button" class="cfg-cor-btn" data-cor="#7BA05B" style="width:30px;height:30px;border-radius:8px;border:2px solid transparent;background:#7BA05B;cursor:pointer"></button>
-            <button type="button" class="cfg-cor-btn" data-cor="#4FA3C4" style="width:30px;height:30px;border-radius:8px;border:2px solid transparent;background:#4FA3C4;cursor:pointer"></button>
-            <button type="button" class="cfg-cor-btn" data-cor="#B25FA8" style="width:30px;height:30px;border-radius:8px;border:2px solid transparent;background:#B25FA8;cursor:pointer"></button>
-            <input type="color" id="cfg-cor-custom" value="#C68642" style="width:30px;height:30px;border:none;background:none;cursor:pointer;padding:0">
-          </div>
-        </div>
-
-        <div class="input-group">
-          <label>Ícone/logo (emoji, ex: ☀️ 🌴 ✨)</label>
-          <input type="text" id="cfg-logo-emoji" maxlength="4" placeholder="☀️" style="width:70px;text-align:center;font-size:1.3rem">
-        </div>
-        <div class="input-group">
-          <label>Ou logo em imagem (link direto pra um .png/.jpg — opcional, substitui o emoji)</label>
-          <input type="text" id="cfg-logo-url" placeholder="https://...">
-        </div>
-
-        <div style="display:flex;justify-content:center;padding:.6rem 0">
-          <div style="width:200px;background:#1a1410;border:1.5px solid rgba(245,230,211,.15);border-radius:14px;padding:1.2rem 1rem;text-align:center">
-            <div id="cfg-preview-logo" style="font-size:2rem;margin-bottom:.4rem;line-height:1">☀️</div>
-            <div id="cfg-preview-nome" style="font-weight:800;font-size:.85rem;color:#E8B87D">Pro'Bronze</div>
-            <div style="margin-top:.6rem;padding:.4rem;border-radius:6px;font-size:.7rem;font-weight:700;color:#1a1410" id="cfg-preview-btn">Entrar</div>
-          </div>
-        </div>
-      </div>
-      <div class="card">
         <div class="card-titulo com-ajuda">Regras de Segurança</div>
         <div class="ajuda-inline">Controla de quanto em quanto tempo uma cliente pode agendar de novo, e quantas sessões ela pode fazer por mês — protege a pele dela.</div>
         <div class="input-group"><label>Intervalo mínimo entre sessões (horas)</label><input type="number" id="cfg-intervalo" min="1"></div>
@@ -1228,6 +1212,16 @@
   <div id="painel-timers-flutuante" style="display:none">
     <div class="card-titulo" style="margin-bottom:.6rem">Sessões em andamento</div>
     <div id="timers-flutuante-lista"></div>
+  </div>
+
+  <!-- Novidades do sistema — botão flutuante empilhado acima do relógio de
+       sessões, some depois de visto (só volta na próxima sessão/recarregar) -->
+  <button id="btn-novidades" style="display:none">
+    ⭐<span id="novidades-badge" class="timers-flutuante-badge" style="display:none">•</span>
+  </button>
+  <div id="painel-novidades" style="display:none">
+    <div class="card-titulo" style="margin-bottom:.6rem">⭐ Novidades</div>
+    <div id="novidades-lista"></div>
   </div>
 
   <!-- Central de Avisos — persistente, só some ao clicar em Dispensar -->
@@ -1500,11 +1494,14 @@ onAuthChange((usuario, motivo) => {
     return;
   }
   usuarioAtual = usuario;
-  $('usuario-nome').textContent = `${usuario.nome} · ${usuario.papel}`;
+  // Nome fica só no title (aparece passando o mouse) — o topo mostra
+  // apenas o ícone de login, sem o nome escrito ao lado.
+  $('avatar-iniciais').title = `${usuario.nome} · ${usuario.papel}`;
   $('avatar-iniciais').textContent = iniciaisDoNome(usuario.nome);
   $('tela-login').style.display = 'none';
   $('painel').style.display = 'block';
   iniciarPainel();
+  initNovidades();
 
   if (!tutorialJaVisto(usuario.uid)) {
     iniciarTutorial(usuario.uid, (abaId) => {
@@ -2665,41 +2662,8 @@ function renderConfiguracoes(config) {
   $('cfg-intervalo').value = config.intervaloMinimoHoras;
   $('cfg-limite-mes').value = config.limiteSessoesMes;
   $('cfg-meta-mensal').value = config.metaMensal || '';
-  $('cfg-cor-custom').value = config.corDestaque || '#C68642';
-  $('cfg-logo-emoji').value = config.logoEmoji || '☀️';
-  $('cfg-logo-url').value = config.logoUrl || '';
-  atualizarPreviewPersonalizacao();
   atualizarMetaMensal();
 }
-
-function atualizarPreviewPersonalizacao() {
-  const cor = $('cfg-cor-custom').value || '#C68642';
-  const logoUrl = $('cfg-logo-url').value.trim();
-  const logoEmoji = $('cfg-logo-emoji').value.trim() || '☀️';
-  $('cfg-preview-nome').style.color = cor;
-  $('cfg-preview-btn').style.background = cor;
-  const previewLogo = $('cfg-preview-logo');
-  previewLogo.textContent = '';
-  if (logoUrl) {
-    const img = document.createElement('img');
-    img.src = logoUrl;
-    img.style.cssText = 'max-width:44px;max-height:44px;border-radius:8px;display:inline-block';
-    img.onerror = () => { img.replaceWith(document.createTextNode(logoEmoji)); };
-    previewLogo.appendChild(img);
-  } else {
-    previewLogo.textContent = logoEmoji;
-  }
-}
-
-document.querySelectorAll('.cfg-cor-btn').forEach((btn) => {
-  btn.addEventListener('click', () => {
-    $('cfg-cor-custom').value = btn.dataset.cor;
-    atualizarPreviewPersonalizacao();
-  });
-});
-$('cfg-cor-custom').addEventListener('input', atualizarPreviewPersonalizacao);
-$('cfg-logo-emoji').addEventListener('input', atualizarPreviewPersonalizacao);
-$('cfg-logo-url').addEventListener('input', atualizarPreviewPersonalizacao);
 
 $('btn-salvar-configuracoes').addEventListener('click', async () => {
   const nome = $('cfg-nome').value.trim();
@@ -2711,10 +2675,7 @@ $('btn-salvar-configuracoes').addEventListener('click', async () => {
     vitrineSubtitulo: $('cfg-subtitulo').value.trim(),
     intervaloMinimoHoras: Number($('cfg-intervalo').value) || 24,
     limiteSessoesMes: Number($('cfg-limite-mes').value) || 12,
-    metaMensal: Number($('cfg-meta-mensal').value) || 0,
-    corDestaque: $('cfg-cor-custom').value || '#C68642',
-    logoEmoji: $('cfg-logo-emoji').value.trim() || '☀️',
-    logoUrl: $('cfg-logo-url').value.trim()
+    metaMensal: Number($('cfg-meta-mensal').value) || 0
   });
   toast('Configurações salvas.', 'sucesso');
 });
@@ -4041,6 +4002,68 @@ $('btn-timers-flutuante').addEventListener('click', () => {
   const painel = $('painel-timers-flutuante');
   painel.style.display = painel.style.display === 'block' ? 'none' : 'block';
 });
+
+// ── Novidades do sistema — botão flutuante (⭐) empilhado acima do relógio
+// de sessões. Pra adicionar uma novidade nova: acrescente um item no topo
+// do array abaixo (mais recente primeiro), com um "id" único e crescente
+// (data serve bem). Nunca precisa apagar item antigo daqui.
+const NOVIDADES = [
+  {
+    id: '2026-07-31-01',
+    data: '31/07/2026',
+    titulo: 'Layout mais confortável no celular e tablet',
+    itens: [
+      'Cards de Serviços, Pacotes e Equipe com vários botões de ação agora empilham direitinho em telas estreitas.',
+      'Relatório em PDF virou um resumo executivo com gráficos (faturamento por dia, formas de pagamento) — sem listar cliente por cliente, ideal pra apresentar em banco/contador.',
+      'Planilha Excel ganhou aba de Resumo, além do detalhamento completo.'
+    ]
+  }
+];
+
+function initNovidades() {
+  const btn = $('btn-novidades');
+  const badge = $('novidades-badge');
+  const painel = $('painel-novidades');
+  const lista = $('novidades-lista');
+  if (!btn || !painel || !lista || btn.dataset.bound) return;
+  btn.dataset.bound = '1';
+
+  lista.innerHTML = NOVIDADES.map((n) => `
+    <div class="novidade-item">
+      <div class="novidade-data">${n.data}</div>
+      <div class="novidade-titulo">${n.titulo}</div>
+      <ul>${n.itens.map((i) => `<li>${i}</li>`).join('')}</ul>
+    </div>
+  `).join('');
+
+  const ultimaVista = () => { try { return localStorage.getItem('probronze_novidades_vista') || ''; } catch (e) { return ''; } };
+  const marcarComoVista = () => {
+    try { localStorage.setItem('probronze_novidades_vista', NOVIDADES[0]?.id || ''); } catch (e) {}
+    badge.style.display = 'none';
+  };
+  // Some pro resto da sessão depois de fechado — só volta a aparecer
+  // quando a página for recarregada/reaberta (mesmo padrão do Pro'B).
+  const jaEscondidaNestaSessao = () => { try { return sessionStorage.getItem('probronze_novidades_escondida') === '1'; } catch (e) { return false; } };
+  const esconderNestaSessao = () => {
+    try { sessionStorage.setItem('probronze_novidades_escondida', '1'); } catch (e) {}
+    btn.style.display = 'none';
+  };
+
+  btn.style.display = jaEscondidaNestaSessao() ? 'none' : 'flex';
+  if (NOVIDADES.length && NOVIDADES[0].id > ultimaVista()) badge.style.display = 'flex';
+
+  btn.addEventListener('click', () => {
+    const aberto = painel.style.display === 'block';
+    painel.style.display = aberto ? 'none' : 'block';
+    if (!aberto) marcarComoVista();
+  });
+  document.addEventListener('click', (e) => {
+    if (painel.style.display === 'block' && !painel.contains(e.target) && e.target !== btn) {
+      painel.style.display = 'none';
+      esconderNestaSessao();
+    }
+  });
+}
 
 // ── Central de Avisos — persistente, só some quando a pessoa clica em
 // "Dispensar" (diferente do toast normal, que desaparece sozinho) ──
