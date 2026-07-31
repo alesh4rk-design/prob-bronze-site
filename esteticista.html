@@ -209,7 +209,6 @@
   .card-titulo { font-weight: 800; font-size: .95rem; margin-bottom: .6rem; color: var(--accent-light); }
   .card-titulo.com-ajuda { margin-bottom: .2rem; }
   .ajuda-inline { font-size: .76rem; color: var(--muted); margin-bottom: .8rem; line-height: 1.4; }
-  .tutorial-grupo-titulo { font-weight: 800; font-size: .8rem; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; margin: 1.2rem 0 .5rem; }
   .tutorial-item { cursor: pointer; }
   .tutorial-item summary { font-weight: 800; font-size: .92rem; color: var(--accent-light); list-style: none; cursor: pointer; }
   .tutorial-item summary::-webkit-details-marker { display: none; }
@@ -502,15 +501,15 @@
         <button class="aba-btn aba-estrategica" data-aba="horarios" data-titulo="🕐 Horários de Funcionamento"><span class="nav-icone">🕐</span>Horários</button>
         <button class="aba-btn" data-aba="configuracoes" data-titulo="⚙️ Configurações"><span class="nav-icone">⚙️</span>Configurações</button>
       </div>
-      <div class="nav-secao">
-        <div class="nav-titulo">Ajuda</div>
-        <button class="aba-btn" data-aba="tutoriais" data-titulo="🎓 Tutoriais do Sistema"><span class="nav-icone">🎓</span>Tutoriais</button>
-      </div>
     </nav>
 
     <main>
     <!-- ABA CABINES -->
     <div class="aba-conteudo ativa" id="aba-cabines">
+      <details class="card tutorial-item">
+        <summary>🎓 Como usar esta aba</summary>
+        <div class="tutorial-texto">Aqui você vê cada cabine/cama do seu negócio: <b>verde</b> é livre, <b>vermelho</b> é ocupada (cliente em sessão) e <b>amarelo</b> é manutenção. Toque numa cabine livre pra colocá-la em manutenção quando precisar (limpeza, conserto etc.) — ela some da lista de opções ao agendar até você liberar de novo. Cadastre uma cabine pra cada espaço físico que você tiver: isso define quantas clientes podem ser atendidas ao mesmo tempo.</div>
+      </details>
       <div class="card">
         <div class="card-titulo com-ajuda">Nova Cabine / Cama</div>
         <div class="ajuda-inline">Cada cabine é um espaço físico de bronzeamento (cama ou cabine). Cadastre quantas você tiver — isso define quantas clientes podem ser atendidas ao mesmo tempo.</div>
@@ -535,6 +534,10 @@
 
     <!-- ABA AGENDA -->
     <div class="aba-conteudo" id="aba-agenda">
+      <details class="card tutorial-item">
+        <summary>🎓 Como usar esta aba</summary>
+        <div class="tutorial-texto">Mostra tudo que está marcado pra hoje, em ordem de horário. Toque em <b>Iniciar</b> pra começar o cronômetro da sessão daquela cliente na cabine escolhida, <b>Faltou</b> se ela não aparecer, ou <b>Cancelar</b> pra desmarcar. O card mostra o serviço, a cabine e um link direto de WhatsApp pra falar com a cliente.</div>
+      </details>
       <div class="card">
         <div style="display:flex;justify-content:space-between;align-items:center;gap:.6rem;flex-wrap:wrap;margin-bottom:.8rem">
           <div class="card-titulo" style="margin-bottom:0">Agenda</div>
@@ -610,6 +613,10 @@
 
     <!-- ABA EQUIPE -->
     <div class="aba-conteudo" id="aba-equipe">
+      <details class="card tutorial-item">
+        <summary>🎓 Como usar esta aba</summary>
+        <div class="tutorial-texto">Cadastre as pessoas que trabalham com você (recepcionista, outro sócio) gerando um link de acesso próprio — cada uma entra com seu próprio login, sem precisar da sua senha.</div>
+      </details>
       <div class="card" id="card-link-equipe">
         <div class="card-titulo com-ajuda">Link de cadastro para funcionário(a)</div>
         <div class="ajuda-inline">Gere o link e envie por WhatsApp — a pessoa cria a própria conta de funcionário(a), sem você precisar digitar e-mail/senha dela.</div>
@@ -648,6 +655,10 @@
 
     <!-- ABA CLIENTES -->
     <div class="aba-conteudo" id="aba-clientes">
+      <details class="card tutorial-item">
+        <summary>🎓 Como usar esta aba</summary>
+        <div class="tutorial-texto">Cadastre suas clientes ou compartilhe o link pra elas criarem a própria conta e agendarem sozinhas pelo celular. Toque no nome de uma cliente pra ver opções de cobrança, venda e mensagens de WhatsApp prontas.</div>
+      </details>
       <div class="card" id="card-aniversariantes" style="display:none">
         <div class="card-titulo">🎂 Aniversariantes de hoje</div>
         <div id="lista-aniversariantes"></div>
@@ -696,6 +707,10 @@
 
     <!-- ABA SERVIÇOS -->
     <div class="aba-conteudo" id="aba-servicos">
+      <details class="card tutorial-item">
+        <summary>🎓 Como usar esta aba</summary>
+        <div class="tutorial-texto">Cadastre os serviços que você oferece (nome, preço, duração) — eles aparecem pra escolher na hora de agendar ou vender presencialmente.</div>
+      </details>
       <div class="card">
         <div class="card-titulo com-ajuda">Novo Serviço</div>
         <div class="ajuda-inline">Cadastre aqui os serviços que você oferece (bronzeamento, com óleo essencial, etc.) — eles aparecem como opções de combo no agendamento e na venda avulsa.</div>
@@ -718,6 +733,10 @@
 
     <!-- ABA FINANCEIRO -->
     <div class="aba-conteudo" id="aba-financeiro">
+      <details class="card tutorial-item">
+        <summary>🎓 Como usar esta aba</summary>
+        <div class="tutorial-texto">Aqui você vê tudo sobre o dinheiro do negócio: quanto entrou, quanto ainda falta receber (pendências), suas despesas (aluguel, salário, contas) e o lucro real, além de gráficos pra te ajudar a decidir.</div>
+      </details>
       <div class="card">
         <div class="card-titulo com-ajuda">Resumo do Mês</div>
         <div class="ajuda-inline">Faturamento = tudo que entrou (já com desconto aplicado, se houver). Pendente = o que falta receber. Lucro = Faturamento menos Despesas.</div>
@@ -840,6 +859,10 @@
 
     <!-- ABA PACOTES -->
     <div class="aba-conteudo" id="aba-pacotes">
+      <details class="card tutorial-item">
+        <summary>🎓 Como usar esta aba</summary>
+        <div class="tutorial-texto">Venda pacotes de várias sessões de uma vez (ex: 10 sessões de bronzeamento). O sistema desconta uma sessão automaticamente a cada atendimento e avisa quando o pacote está acabando ou parado (a cliente sumiu no meio do pacote).</div>
+      </details>
       <div class="card">
         <div style="display:flex;justify-content:space-between;align-items:center;gap:.6rem;flex-wrap:wrap;margin-bottom:.8rem">
           <div class="card-titulo com-ajuda" style="margin-bottom:0">Pacotes Ativos</div>
@@ -872,6 +895,10 @@
     </div>
     <!-- ABA PRODUTOS -->
     <div class="aba-conteudo" id="aba-produtos">
+      <details class="card tutorial-item">
+        <summary>🎓 Como usar esta aba</summary>
+        <div class="tutorial-texto">Registre a venda avulsa de produtos (bronzeador, protetor, óleo etc.) pra uma cliente, fora de uma sessão de bronzeamento. Cada venda desconta automaticamente do estoque cadastrado em Insumos.</div>
+      </details>
       <div class="card">
         <div style="display:flex;justify-content:space-between;align-items:center;gap:.6rem;flex-wrap:wrap;margin-bottom:.8rem">
           <div class="card-titulo" style="margin-bottom:0">Venda rápida por código de barras</div>
@@ -946,6 +973,10 @@
 
     <!-- ABA INSUMOS -->
     <div class="aba-conteudo" id="aba-insumos">
+      <details class="card tutorial-item">
+        <summary>🎓 Como usar esta aba</summary>
+        <div class="tutorial-texto">Controle o estoque de tudo que você usa ou vende: bronzeador, protetor, óleo, descartáveis etc. O sistema avisa quando algo está acabando, pra você repor a tempo.</div>
+      </details>
       <div class="card">
         <div style="display:flex;justify-content:space-between;align-items:center;gap:.6rem;flex-wrap:wrap;margin-bottom:.8rem">
           <div class="card-titulo" style="margin-bottom:0">Insumos</div>
@@ -1000,6 +1031,10 @@
 
     <!-- ABA CUPONS -->
     <div class="aba-conteudo" id="aba-cupons">
+      <details class="card tutorial-item">
+        <summary>🎓 Como usar esta aba</summary>
+        <div class="tutorial-texto">Crie códigos de desconto (percentual ou valor fixo) pra usar na hora de fechar o pagamento de uma cliente.</div>
+      </details>
       <div class="card">
         <div style="display:flex;justify-content:space-between;align-items:center;gap:.6rem;flex-wrap:wrap;margin-bottom:.8rem">
           <div class="card-titulo com-ajuda" style="margin-bottom:0">Cupons Ativos</div>
@@ -1032,6 +1067,10 @@
 
     <!-- ABA RELATÓRIOS -->
     <div class="aba-conteudo" id="aba-relatorios">
+      <details class="card tutorial-item">
+        <summary>🎓 Como usar esta aba</summary>
+        <div class="tutorial-texto">Exporte um relatório em Excel ou PDF de qualquer período que você escolher, com o resumo de vendas, sessões e financeiro do negócio.</div>
+      </details>
       <div class="card">
         <div class="card-titulo com-ajuda">Relatório Financeiro</div>
         <div class="ajuda-inline">O PDF é um relatório executivo (resumo + gráficos) pra apresentar — em banco, contador etc. O Excel traz o detalhamento completo, transação por transação, pra uso interno.</div>
@@ -1049,6 +1088,10 @@
 
     <!-- ABA HORÁRIOS DE FUNCIONAMENTO -->
     <div class="aba-conteudo" id="aba-horarios">
+      <details class="card tutorial-item">
+        <summary>🎓 Como usar esta aba</summary>
+        <div class="tutorial-texto">Defina os dias e horários em que seu negócio funciona — isso controla os horários disponíveis pra suas clientes agendarem sozinhas.</div>
+      </details>
       <div class="card">
         <div class="card-titulo com-ajuda">Horário de Funcionamento</div>
         <div class="ajuda-inline">Marque os dias que sua loja abre e os horários — isso ajuda a organizar a agenda (ainda não bloqueia agendamento fora do horário).</div>
@@ -1059,6 +1102,10 @@
 
     <!-- ABA CONFIGURAÇÕES -->
     <div class="aba-conteudo" id="aba-configuracoes">
+      <details class="card tutorial-item">
+        <summary>🎓 Como usar esta aba</summary>
+        <div class="tutorial-texto">Coloque o nome da sua loja, WhatsApp, chave PIX, meta de faturamento e ajuste as regras de segurança (intervalo entre sessões, limite mensal de sessões por cliente).</div>
+      </details>
       <div class="card">
         <div class="card-titulo com-ajuda">Dados do Estabelecimento</div>
         <div class="ajuda-inline">Essas informações aparecem pra suas clientes e nas mensagens automáticas de WhatsApp.</div>
@@ -1078,78 +1125,8 @@
         <div class="ajuda-inline">Defina uma meta mensal (líquido) — ela aparece como barra de progresso na aba Financeiro.</div>
         <div class="input-group"><label>Meta mensal (R$)</label><input type="number" id="cfg-meta-mensal" min="0" step="0.01"></div>
       </div>
+      <button class="btn-secundario" id="btn-rever-tutorial-guiado" style="width:auto;margin-top:.6rem">▶️ Rever o tour guiado inicial</button>
       <button class="btn-primario" id="btn-salvar-configuracoes">Salvar Configurações</button>
-    </div>
-
-    <!-- ABA TUTORIAIS -->
-    <div class="aba-conteudo" id="aba-tutoriais">
-      <div class="card">
-        <div class="card-titulo">🎓 Tutoriais do Sistema</div>
-        <div class="ajuda-inline">Um guia rápido de cada área do painel, separado por seção. Toque em um tópico pra abrir.</div>
-        <button class="btn-secundario" id="btn-rever-tutorial-guiado" style="width:auto">▶️ Rever o tour guiado inicial</button>
-      </div>
-
-      <div class="tutorial-grupo-titulo">🛏️ Operação do dia</div>
-      <details class="card tutorial-item">
-        <summary>🛏️ Cabines</summary>
-        <div class="tutorial-texto">Aqui você vê cada cabine/cama do seu negócio: <b>verde</b> é livre, <b>vermelho</b> é ocupada (cliente em sessão) e <b>amarelo</b> é manutenção. Toque numa cabine livre pra colocá-la em manutenção quando precisar (limpeza, conserto etc.) — ela some da lista de opções ao agendar até você liberar de novo. Cadastre uma cabine pra cada espaço físico que você tiver: isso define quantas clientes podem ser atendidas ao mesmo tempo.</div>
-      </details>
-      <details class="card tutorial-item">
-        <summary>📅 Agenda do Dia</summary>
-        <div class="tutorial-texto">Mostra tudo que está marcado pra hoje, em ordem de horário. Toque em <b>Iniciar</b> pra começar o cronômetro da sessão daquela cliente na cabine escolhida, <b>Faltou</b> se ela não aparecer, ou <b>Cancelar</b> pra desmarcar. O card mostra o serviço, a cabine e um link direto de WhatsApp pra falar com a cliente.</div>
-      </details>
-
-      <div class="tutorial-grupo-titulo">🎀 Catálogo</div>
-      <details class="card tutorial-item">
-        <summary>🎀 Meus Serviços</summary>
-        <div class="tutorial-texto">Cadastre os serviços que você oferece (nome, preço, duração) — eles aparecem pra escolher na hora de marcar um horário ou vender presencialmente.</div>
-      </details>
-      <details class="card tutorial-item">
-        <summary>🧴 Venda de Produtos</summary>
-        <div class="tutorial-texto">Registre a venda avulsa de produtos (bronzeador, protetor, óleo etc.) pra uma cliente, fora de uma sessão de bronzeamento. Cada venda desconta automaticamente do estoque cadastrado em Insumos.</div>
-      </details>
-      <details class="card tutorial-item">
-        <summary>🧪 Insumos</summary>
-        <div class="tutorial-texto">Controle o estoque de tudo que você usa ou vende: bronzeador, protetor, óleo, descartáveis etc. O sistema avisa quando algo está acabando, pra você repor a tempo.</div>
-      </details>
-      <details class="card tutorial-item">
-        <summary>📦 Pacotes</summary>
-        <div class="tutorial-texto">Venda pacotes de várias sessões de uma vez (ex: 10 sessões de bronzeamento). O sistema desconta uma sessão automaticamente a cada atendimento e avisa quando o pacote está acabando ou parado (a cliente sumiu no meio do pacote).</div>
-      </details>
-      <details class="card tutorial-item">
-        <summary>🏷️ Cupons</summary>
-        <div class="tutorial-texto">Crie códigos de desconto (percentual ou valor fixo) pra usar na hora de fechar o pagamento de uma cliente.</div>
-      </details>
-
-      <div class="tutorial-grupo-titulo">🧑‍💼 Pessoas</div>
-      <details class="card tutorial-item">
-        <summary>🧑‍💼 Equipe</summary>
-        <div class="tutorial-texto">Cadastre as pessoas que trabalham com você (recepcionista, outro sócio) gerando um link de acesso próprio — cada uma entra com seu próprio login, sem precisar da sua senha.</div>
-      </details>
-      <details class="card tutorial-item">
-        <summary>👥 Clientes</summary>
-        <div class="tutorial-texto">Cadastre suas clientes ou compartilhe o link pra elas criarem a própria conta e agendarem sozinhas pelo celular. Toque no nome de uma cliente pra ver opções de cobrança, venda e mensagens de WhatsApp prontas.</div>
-      </details>
-
-      <div class="tutorial-grupo-titulo">💰 Financeiro</div>
-      <details class="card tutorial-item">
-        <summary>💰 Financeiro</summary>
-        <div class="tutorial-texto">Aqui você vê tudo sobre o dinheiro do negócio: quanto entrou, quanto ainda falta receber (pendências), suas despesas (aluguel, salário, contas) e o lucro real, além de gráficos pra te ajudar a decidir.</div>
-      </details>
-      <details class="card tutorial-item">
-        <summary>📊 Relatórios</summary>
-        <div class="tutorial-texto">Exporte um relatório em Excel ou PDF de qualquer período que você escolher, com o resumo de vendas, sessões e financeiro do negócio.</div>
-      </details>
-
-      <div class="tutorial-grupo-titulo">🕐 Negócio</div>
-      <details class="card tutorial-item">
-        <summary>🕐 Horários de Funcionamento</summary>
-        <div class="tutorial-texto">Defina os dias e horários em que seu negócio funciona — isso controla os horários disponíveis pra suas clientes agendarem sozinhas.</div>
-      </details>
-      <details class="card tutorial-item">
-        <summary>⚙️ Configurações</summary>
-        <div class="tutorial-texto">Coloque o nome da sua loja, WhatsApp, chave PIX, meta de faturamento e ajuste as regras de segurança (intervalo entre sessões, limite mensal de sessões por cliente).</div>
-      </details>
     </div>
     </main>
   </div>
@@ -1368,7 +1345,7 @@ import {
   linkPacoteParado
 } from './js/whatsapp.js?v=20260728d';
 import { verificarIntervaloMinimo } from './js/ficha-pele.js?v=20260728d';
-import { tutorialJaVisto, iniciarTutorial } from './js/tutorial.js?v=20260731a';
+import { tutorialJaVisto, iniciarTutorial } from './js/tutorial.js?v=20260731b';
 import { DIAS_SEMANA, escutarHorarios, salvarHorarios, validarHorarioFuncionamento } from './js/horarios.js?v=20260728d';
 import { escutarConfigNegocio, salvarConfigNegocio } from './js/config-negocio.js?v=20260729a';
 import { CATEGORIAS_DESPESA, criarDespesa, excluirDespesa, escutarDespesas } from './js/despesas.js?v=20260728d';

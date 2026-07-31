@@ -12,8 +12,7 @@ const PASSOS = [
   { aba: "financeiro", titulo: "💰 Financeiro", texto: "Aqui você vê tudo sobre o dinheiro do negócio: quanto entrou, quanto ainda falta receber, suas despesas (aluguel, salário, contas) e o lucro real, além de gráficos pra te ajudar a decidir." },
   { aba: "relatorios", titulo: "📊 Relatórios", texto: "Exporte um relatório em Excel ou PDF de qualquer período que você escolher." },
   { aba: "horarios", titulo: "🕐 Horários", texto: "Defina os dias e horários em que seu negócio funciona." },
-  { aba: "configuracoes", titulo: "⚙️ Configurações", texto: "Coloque o nome da sua loja, WhatsApp, chave PIX e ajuste as regras de segurança (intervalo entre sessões, limite mensal)." },
-  { aba: "tutoriais", titulo: "🎓 Tutoriais do Sistema", texto: "Se precisar rever qualquer explicação depois, é só voltar aqui — tem um tutorial completo de cada seção do painel, sempre disponível." }
+  { aba: "configuracoes", titulo: "⚙️ Configurações", texto: "Coloque o nome da sua loja, WhatsApp, chave PIX e ajuste as regras de segurança (intervalo entre sessões, limite mensal). Se precisar rever qualquer explicação depois, cada aba tem um bloco '🎓 Como usar esta aba' no topo." }
 ];
 
 export function tutorialJaVisto(usuarioUid) {
