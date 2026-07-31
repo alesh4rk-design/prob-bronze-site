@@ -1487,6 +1487,22 @@ $('link-esqueci-senha').addEventListener('click', async (e) => {
   }
 });
 
+// Confirmação nativa do navegador antes de recarregar/fechar a aba —
+// protege contra um F5, Ctrl+R ou fechar sem querer no meio de um
+// cadastro/pagamento. Só fica ativa DEPOIS do login (na tela de login não
+// tem nada em andamento pra perder), e os navegadores não deixam customizar
+// o texto do aviso por segurança — mesmo assim, o "Sair"/logout tira essa
+// trava de propósito, senão o próprio botão de sair passaria a confirmar.
+let confirmarSairAtiva = false;
+function ativarConfirmacaoAoSair() {
+  if (confirmarSairAtiva) return;
+  confirmarSairAtiva = true;
+  window.addEventListener('beforeunload', (e) => {
+    e.preventDefault();
+    e.returnValue = '';
+  });
+}
+
 onAuthChange((usuario, motivo) => {
   if (!usuario) {
     pararTodosOsListeners();
@@ -1506,6 +1522,7 @@ onAuthChange((usuario, motivo) => {
   $('painel').style.display = 'block';
   iniciarPainel();
   initNovidades();
+  ativarConfirmacaoAoSair();
 
   if (!tutorialJaVisto(usuario.uid)) {
     iniciarTutorial(usuario.uid, (abaId) => {
