@@ -234,7 +234,20 @@
     transition: border-color .15s ease, background .15s ease;
   }
   .agendamento-item:hover { border-color: rgba(245,230,211,.22); background: rgba(245,230,211,.02); }
+  .agendamento-info { flex: 1 1 200px; min-width: 0; }
   .agendamento-info .nome { font-weight: 700; font-size: .88rem; }
+  /* Grupo de botões de ação (Serviços/Pacotes/Equipe etc.) — em telas
+     largas fica lado a lado à direita do card; em telas estreitas (onde
+     um pacote pode ter até 5-6 botões) empilha embaixo do texto, em
+     largura total, pra nenhum botão ficar espremido ou cortado. */
+  .agendamento-acoes { display: flex; gap: .4rem; flex-wrap: wrap; align-items: center; }
+  @media (max-width: 640px) {
+    .agendamento-item { flex-direction: column; align-items: stretch; }
+    .agendamento-acoes { width: 100%; }
+    .agendamento-acoes > .btn-secundario, .agendamento-acoes > .btn-primario, .agendamento-acoes > a {
+      flex: 1 1 auto; min-width: 130px; text-align: center;
+    }
+  }
   .nome-clicavel {
     cursor: pointer; color: var(--accent-light);
     user-select: none; -webkit-user-select: none; -webkit-tap-highlight-color: transparent;
@@ -2781,7 +2794,7 @@ function renderPacotes(pacotes) {
         <div class="detalhe">${p.sessoesUsadas}/${p.totalSessoes} sessões usadas · R$${Number(p.valorTotal).toFixed(2)}</div>
         <div class="detalhe">${historicoTexto}</div>
       </div>
-      <div style="display:flex;gap:.4rem;flex-wrap:wrap">
+      <div class="agendamento-acoes">
         ${!vencido ? `<button class="btn-secundario" data-baixa-btn="${p.id}">− Dar baixa</button>` : ''}
         <button class="btn-secundario" data-vender-pacote="${p.clienteId}">🛍️ Vender Produto</button>
         <button class="btn-secundario" data-remover-pacote="${p.id}" style="color:var(--red);border-color:var(--red)">🗑️ Remover Pacote</button>
@@ -2921,9 +2934,11 @@ function renderEquipe(equipe) {
         <div class="nome">${m.nome}</div>
         <div class="detalhe">${ROTULO_PAPEL[m.papel] || m.papel} · ${m.email}${remuneracao}</div>
       </div>
-      ${(usuarioAtual.papel === 'dono' && m.papel !== 'dono') ? `<button class="btn-secundario" data-editar-remuneracao="${m.id}">✏️ Diária</button>` : ''}
-      ${podeRegistrarDiaria ? `<button class="btn-secundario" data-registrar-diaria="${m.id}">📅 Registrar diária</button>` : ''}
-      ${(usuarioAtual.papel === 'dono' && m.id !== usuarioAtual.uid) ? `<button class="btn-secundario" data-excluir-membro="${m.id}">Remover</button>` : ''}
+      <div class="agendamento-acoes">
+        ${(usuarioAtual.papel === 'dono' && m.papel !== 'dono') ? `<button class="btn-secundario" data-editar-remuneracao="${m.id}">✏️ Diária</button>` : ''}
+        ${podeRegistrarDiaria ? `<button class="btn-secundario" data-registrar-diaria="${m.id}">📅 Registrar diária</button>` : ''}
+        ${(usuarioAtual.papel === 'dono' && m.id !== usuarioAtual.uid) ? `<button class="btn-secundario" data-excluir-membro="${m.id}">Remover</button>` : ''}
+      </div>
     </div>
   `;
   }).join('');
