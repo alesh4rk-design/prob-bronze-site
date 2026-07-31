@@ -146,6 +146,12 @@
     border-bottom: 1.5px solid var(--card-border); position: sticky; top: 0; background: var(--bg); z-index: 10;
   }
   header.topo .marca { font-weight: 800; font-size: 1.1rem; color: var(--accent-light); }
+  @media (max-width: 400px) {
+    header.topo { padding: 1rem .7rem; gap: .4rem; }
+    header.topo .marca { font-size: .92rem; }
+    header.topo .txt-ajuda { display: none; }
+    header.topo #btn-ajuda { padding: .5rem .6rem; }
+  }
   .avatar-iniciais {
     width: 30px; height: 30px; border-radius: 50%; background: linear-gradient(135deg, var(--accent), var(--accent-light));
     color: var(--card-btn-text); font-weight: 800; font-size: .78rem; display: flex; align-items: center;
@@ -460,7 +466,7 @@
     </div>
     <div style="display:flex;align-items:center;gap:.6rem">
       <div class="avatar-iniciais" id="avatar-iniciais" title=""></div>
-      <button class="btn-secundario" id="btn-ajuda" title="Rever o tutorial">❓ Ajuda</button>
+      <button class="btn-secundario" id="btn-ajuda" title="Rever o tutorial">❓<span class="txt-ajuda"> Ajuda</span></button>
       <button class="btn-secundario" id="btn-sair">Sair</button>
     </div>
   </header>
