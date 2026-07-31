@@ -209,6 +209,13 @@
   .card-titulo { font-weight: 800; font-size: .95rem; margin-bottom: .6rem; color: var(--accent-light); }
   .card-titulo.com-ajuda { margin-bottom: .2rem; }
   .ajuda-inline { font-size: .76rem; color: var(--muted); margin-bottom: .8rem; line-height: 1.4; }
+  .tutorial-grupo-titulo { font-weight: 800; font-size: .8rem; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; margin: 1.2rem 0 .5rem; }
+  .tutorial-item { cursor: pointer; }
+  .tutorial-item summary { font-weight: 800; font-size: .92rem; color: var(--accent-light); list-style: none; cursor: pointer; }
+  .tutorial-item summary::-webkit-details-marker { display: none; }
+  .tutorial-item summary::before { content: '▸ '; }
+  .tutorial-item[open] summary::before { content: '▾ '; }
+  .tutorial-texto { font-size: .85rem; color: var(--text); line-height: 1.55; margin-top: .6rem; }
 
   .cabines-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: .8rem; }
   /* Cards do Resumo do Mês: sempre lado a lado, mesmo em tela estreita —
@@ -494,6 +501,10 @@
         <div class="nav-titulo">Negócio</div>
         <button class="aba-btn aba-estrategica" data-aba="horarios" data-titulo="🕐 Horários de Funcionamento"><span class="nav-icone">🕐</span>Horários</button>
         <button class="aba-btn" data-aba="configuracoes" data-titulo="⚙️ Configurações"><span class="nav-icone">⚙️</span>Configurações</button>
+      </div>
+      <div class="nav-secao">
+        <div class="nav-titulo">Ajuda</div>
+        <button class="aba-btn" data-aba="tutoriais" data-titulo="🎓 Tutoriais do Sistema"><span class="nav-icone">🎓</span>Tutoriais</button>
       </div>
     </nav>
 
@@ -1069,6 +1080,77 @@
       </div>
       <button class="btn-primario" id="btn-salvar-configuracoes">Salvar Configurações</button>
     </div>
+
+    <!-- ABA TUTORIAIS -->
+    <div class="aba-conteudo" id="aba-tutoriais">
+      <div class="card">
+        <div class="card-titulo">🎓 Tutoriais do Sistema</div>
+        <div class="ajuda-inline">Um guia rápido de cada área do painel, separado por seção. Toque em um tópico pra abrir.</div>
+        <button class="btn-secundario" id="btn-rever-tutorial-guiado" style="width:auto">▶️ Rever o tour guiado inicial</button>
+      </div>
+
+      <div class="tutorial-grupo-titulo">🛏️ Operação do dia</div>
+      <details class="card tutorial-item">
+        <summary>🛏️ Cabines</summary>
+        <div class="tutorial-texto">Aqui você vê cada cabine/cama do seu negócio: <b>verde</b> é livre, <b>vermelho</b> é ocupada (cliente em sessão) e <b>amarelo</b> é manutenção. Toque numa cabine livre pra colocá-la em manutenção quando precisar (limpeza, conserto etc.) — ela some da lista de opções ao agendar até você liberar de novo. Cadastre uma cabine pra cada espaço físico que você tiver: isso define quantas clientes podem ser atendidas ao mesmo tempo.</div>
+      </details>
+      <details class="card tutorial-item">
+        <summary>📅 Agenda do Dia</summary>
+        <div class="tutorial-texto">Mostra tudo que está marcado pra hoje, em ordem de horário. Toque em <b>Iniciar</b> pra começar o cronômetro da sessão daquela cliente na cabine escolhida, <b>Faltou</b> se ela não aparecer, ou <b>Cancelar</b> pra desmarcar. O card mostra o serviço, a cabine e um link direto de WhatsApp pra falar com a cliente.</div>
+      </details>
+
+      <div class="tutorial-grupo-titulo">🎀 Catálogo</div>
+      <details class="card tutorial-item">
+        <summary>🎀 Meus Serviços</summary>
+        <div class="tutorial-texto">Cadastre os serviços que você oferece (nome, preço, duração) — eles aparecem pra escolher na hora de marcar um horário ou vender presencialmente.</div>
+      </details>
+      <details class="card tutorial-item">
+        <summary>🧴 Venda de Produtos</summary>
+        <div class="tutorial-texto">Registre a venda avulsa de produtos (bronzeador, protetor, óleo etc.) pra uma cliente, fora de uma sessão de bronzeamento. Cada venda desconta automaticamente do estoque cadastrado em Insumos.</div>
+      </details>
+      <details class="card tutorial-item">
+        <summary>🧪 Insumos</summary>
+        <div class="tutorial-texto">Controle o estoque de tudo que você usa ou vende: bronzeador, protetor, óleo, descartáveis etc. O sistema avisa quando algo está acabando, pra você repor a tempo.</div>
+      </details>
+      <details class="card tutorial-item">
+        <summary>📦 Pacotes</summary>
+        <div class="tutorial-texto">Venda pacotes de várias sessões de uma vez (ex: 10 sessões de bronzeamento). O sistema desconta uma sessão automaticamente a cada atendimento e avisa quando o pacote está acabando ou parado (a cliente sumiu no meio do pacote).</div>
+      </details>
+      <details class="card tutorial-item">
+        <summary>🏷️ Cupons</summary>
+        <div class="tutorial-texto">Crie códigos de desconto (percentual ou valor fixo) pra usar na hora de fechar o pagamento de uma cliente.</div>
+      </details>
+
+      <div class="tutorial-grupo-titulo">🧑‍💼 Pessoas</div>
+      <details class="card tutorial-item">
+        <summary>🧑‍💼 Equipe</summary>
+        <div class="tutorial-texto">Cadastre as pessoas que trabalham com você (recepcionista, outro sócio) gerando um link de acesso próprio — cada uma entra com seu próprio login, sem precisar da sua senha.</div>
+      </details>
+      <details class="card tutorial-item">
+        <summary>👥 Clientes</summary>
+        <div class="tutorial-texto">Cadastre suas clientes ou compartilhe o link pra elas criarem a própria conta e agendarem sozinhas pelo celular. Toque no nome de uma cliente pra ver opções de cobrança, venda e mensagens de WhatsApp prontas.</div>
+      </details>
+
+      <div class="tutorial-grupo-titulo">💰 Financeiro</div>
+      <details class="card tutorial-item">
+        <summary>💰 Financeiro</summary>
+        <div class="tutorial-texto">Aqui você vê tudo sobre o dinheiro do negócio: quanto entrou, quanto ainda falta receber (pendências), suas despesas (aluguel, salário, contas) e o lucro real, além de gráficos pra te ajudar a decidir.</div>
+      </details>
+      <details class="card tutorial-item">
+        <summary>📊 Relatórios</summary>
+        <div class="tutorial-texto">Exporte um relatório em Excel ou PDF de qualquer período que você escolher, com o resumo de vendas, sessões e financeiro do negócio.</div>
+      </details>
+
+      <div class="tutorial-grupo-titulo">🕐 Negócio</div>
+      <details class="card tutorial-item">
+        <summary>🕐 Horários de Funcionamento</summary>
+        <div class="tutorial-texto">Defina os dias e horários em que seu negócio funciona — isso controla os horários disponíveis pra suas clientes agendarem sozinhas.</div>
+      </details>
+      <details class="card tutorial-item">
+        <summary>⚙️ Configurações</summary>
+        <div class="tutorial-texto">Coloque o nome da sua loja, WhatsApp, chave PIX, meta de faturamento e ajuste as regras de segurança (intervalo entre sessões, limite mensal de sessões por cliente).</div>
+      </details>
+    </div>
     </main>
   </div>
 
@@ -1286,7 +1368,7 @@ import {
   linkPacoteParado
 } from './js/whatsapp.js?v=20260728d';
 import { verificarIntervaloMinimo } from './js/ficha-pele.js?v=20260728d';
-import { tutorialJaVisto, iniciarTutorial } from './js/tutorial.js?v=20260728f';
+import { tutorialJaVisto, iniciarTutorial } from './js/tutorial.js?v=20260731a';
 import { DIAS_SEMANA, escutarHorarios, salvarHorarios, validarHorarioFuncionamento } from './js/horarios.js?v=20260728d';
 import { escutarConfigNegocio, salvarConfigNegocio } from './js/config-negocio.js?v=20260729a';
 import { CATEGORIAS_DESPESA, criarDespesa, excluirDespesa, escutarDespesas } from './js/despesas.js?v=20260728d';
@@ -1555,6 +1637,12 @@ onAuthChange((usuario, motivo) => {
 });
 
 $('btn-ajuda').addEventListener('click', () => {
+  iniciarTutorial(usuarioAtual.uid, (abaId) => {
+    document.querySelector(`[data-aba="${abaId}"]`)?.click();
+  });
+});
+
+$('btn-rever-tutorial-guiado').addEventListener('click', () => {
   iniciarTutorial(usuarioAtual.uid, (abaId) => {
     document.querySelector(`[data-aba="${abaId}"]`)?.click();
   });

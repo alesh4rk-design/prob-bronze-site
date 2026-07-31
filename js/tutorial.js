@@ -2,18 +2,18 @@
 const PASSOS = [
   { aba: "cabines", titulo: "🛏️ Cabines", texto: "Aqui você vê cada cabine/cama: verde é livre, vermelho é ocupada, amarelo é manutenção. Toque numa cabine livre pra colocá-la em manutenção, se precisar." },
   { aba: "agenda", titulo: "📅 Agenda do Dia", texto: "Mostra tudo que está marcado pra hoje. Toque em 'Iniciar' pra começar o cronômetro da sessão daquela cliente." },
-  { aba: "fila", titulo: "🪑 Fila de Espera", texto: "Lista de quem está esperando ou em sessão agora. Dá pra marcar falta ou cancelar um agendamento por aqui." },
-  { aba: "novo", titulo: "➕ Novo Agendamento", texto: "Marque uma sessão presencial: escolha a cliente, o(s) serviço(s), a cabine e o horário. O sistema avisa sozinho se não puder (intervalo mínimo, limite do mês, cabines cheias)." },
-  { aba: "servicos", titulo: "✂️ Serviços", texto: "Cadastre os serviços que você oferece (nome, preço, duração) — eles aparecem pra escolher na hora de agendar." },
-  { aba: "produtos", titulo: "🧴 Produtos", texto: "Controle o estoque de bronzeador, protetor, óleo etc. O sistema avisa quando algo está acabando." },
+  { aba: "servicos", titulo: "🎀 Meus Serviços", texto: "Cadastre os serviços que você oferece (nome, preço, duração) — eles aparecem pra escolher na hora de agendar." },
+  { aba: "produtos", titulo: "🧴 Venda de Produtos", texto: "Registre a venda avulsa de produtos (bronzeador, protetor, óleo etc.) pra uma cliente." },
+  { aba: "insumos", titulo: "🧪 Insumos", texto: "Controle o estoque de tudo que você usa ou vende. O sistema avisa quando algo está acabando." },
+  { aba: "pacotes", titulo: "📦 Pacotes", texto: "Venda pacotes de várias sessões de uma vez (ex: 10 sessões) — o sistema desconta uma sessão automaticamente a cada atendimento." },
   { aba: "cupons", titulo: "🏷️ Cupons", texto: "Crie códigos de desconto pra usar na hora de fechar o pagamento de uma cliente." },
   { aba: "equipe", titulo: "🧑‍💼 Equipe", texto: "Cadastre as pessoas que trabalham com você (recepcionista, outro dono)." },
   { aba: "clientes", titulo: "👥 Clientes", texto: "Cadastre suas clientes ou compartilhe o link pra elas criarem a própria conta e agendar sozinhas pelo celular. Toque no nome de uma cliente pra ver opções de cobrança, venda e mensagens de WhatsApp prontas." },
   { aba: "financeiro", titulo: "💰 Financeiro", texto: "Aqui você vê tudo sobre o dinheiro do negócio: quanto entrou, quanto ainda falta receber, suas despesas (aluguel, salário, contas) e o lucro real, além de gráficos pra te ajudar a decidir." },
-  { aba: "pacotes", titulo: "📦 Pacotes", texto: "Venda pacotes de várias sessões de uma vez (ex: 10 sessões) — o sistema desconta uma sessão automaticamente a cada atendimento." },
   { aba: "relatorios", titulo: "📊 Relatórios", texto: "Exporte um relatório em Excel ou PDF de qualquer período que você escolher." },
   { aba: "horarios", titulo: "🕐 Horários", texto: "Defina os dias e horários em que seu negócio funciona." },
-  { aba: "configuracoes", titulo: "⚙️ Configurações", texto: "Coloque o nome da sua loja, WhatsApp, chave PIX e ajuste as regras de segurança (intervalo entre sessões, limite mensal)." }
+  { aba: "configuracoes", titulo: "⚙️ Configurações", texto: "Coloque o nome da sua loja, WhatsApp, chave PIX e ajuste as regras de segurança (intervalo entre sessões, limite mensal)." },
+  { aba: "tutoriais", titulo: "🎓 Tutoriais do Sistema", texto: "Se precisar rever qualquer explicação depois, é só voltar aqui — tem um tutorial completo de cada seção do painel, sempre disponível." }
 ];
 
 export function tutorialJaVisto(usuarioUid) {
