@@ -277,11 +277,13 @@
     }
     .agendamento-acoes > select { flex: 1 1 100%; }
   }
-  .nome-clicavel {
-    cursor: pointer; color: var(--accent-light);
-    user-select: none; -webkit-user-select: none; -webkit-tap-highlight-color: transparent;
-  }
-  .nome-clicavel:hover { text-decoration: underline; }
+  /* Usada tanto num elemento-folha (ex.: nome da cliente no modal) quanto
+     num card inteiro clicável (ex.: card de agendamento) — nos dois casos
+     só o nome deve ficar dourado/sublinhado, não o card inteiro (senão
+     todo texto e botão dentro herda a cor e sublinha junto ao tocar). */
+  .nome-clicavel { cursor: pointer; user-select: none; -webkit-user-select: none; -webkit-tap-highlight-color: transparent; }
+  .nome-clicavel .nome, strong.nome-clicavel { color: var(--accent-light); }
+  .nome-clicavel:hover .nome, strong.nome-clicavel:hover { text-decoration: underline; }
   .agendamento-info .detalhe { font-size: .74rem; color: var(--muted); margin-top: .15rem; }
   .badge { font-size: .68rem; font-weight: 700; padding: .28rem .65rem; border-radius: 20px; white-space: nowrap; text-transform: uppercase; letter-spacing: .02em; }
   .badge.agendado { background: rgba(217,164,65,.15); color: var(--yellow); }
