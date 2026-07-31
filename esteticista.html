@@ -243,6 +243,10 @@
   .agendamento-acoes { display: flex; gap: .4rem; flex-wrap: wrap; align-items: center; }
   @media (max-width: 640px) {
     .agendamento-item { flex-direction: column; align-items: stretch; }
+    /* Sem isso, o "200px" do flex-basis (pensado pra largura, lado a
+       lado) vira altura mínima quando o card empilha em coluna — cada
+       card ficava com ~200px de espaço vazio entre o texto e o botão. */
+    .agendamento-info { flex: 1 1 auto; }
     .agendamento-acoes { width: 100%; }
     .agendamento-acoes > .btn-secundario, .agendamento-acoes > .btn-primario, .agendamento-acoes > a {
       flex: 1 1 auto; min-width: 130px; text-align: center;
