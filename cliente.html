@@ -126,6 +126,29 @@
   .item .detalhe { color: var(--muted); font-size: .75rem; margin-top: .15rem; }
 
   .empty-state { text-align: center; color: var(--muted); padding: 1.5rem 1rem; font-size: .85rem; }
+
+  /* ── Seletor de data e hora do agendamento ── */
+  .data-scroll {
+    display: flex; gap: .5rem; overflow-x: auto; padding-bottom: .3rem; scrollbar-width: none;
+  }
+  .data-scroll::-webkit-scrollbar { display: none; }
+  .data-chip {
+    padding: .55rem 1rem; background: var(--card-inp-bg); border: 1.5px solid var(--card-inp-border);
+    border-radius: 20px; font-size: .8rem; cursor: pointer; white-space: nowrap; flex-shrink: 0;
+    transition: all .15s ease; color: var(--text);
+  }
+  .data-chip.ativo { border-color: var(--accent); color: var(--accent-light); background: rgba(var(--accent-rgb),.14); }
+  .horas-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(72px, 1fr)); gap: .45rem;
+  }
+  .hora-btn {
+    padding: .6rem .3rem; text-align: center; border-radius: 8px; font-size: .82rem; font-weight: 700;
+    cursor: pointer; transition: all .15s ease; border: 1.5px solid var(--card-inp-border);
+    background: var(--card-inp-bg); color: var(--text); font-family: var(--font);
+  }
+  .hora-btn.livre { border-color: rgba(123,160,91,.4); color: var(--green); background: rgba(123,160,91,.06); }
+  .hora-btn.livre:hover, .hora-btn.selecionado { border-color: var(--accent); color: var(--accent-light); background: rgba(var(--accent-rgb),.14); }
+  .hora-btn.ocupado { border-color: rgba(193,85,74,.25); color: rgba(193,85,74,.45); cursor: not-allowed; text-decoration: line-through; }
   .btn-secundario { width: 100%; background: transparent; border: 1.5px solid var(--card-border); color: var(--muted); border-radius: 8px; padding: .6rem; font-size: .8rem; cursor: pointer; margin-top: .5rem; }
 </style>
 </head>
@@ -161,7 +184,14 @@
         <label>Serviços (selecione um ou mais)</label>
         <div id="agendar-servicos"><div class="empty-state">Carregando...</div></div>
       </div>
-      <div class="input-group"><label>Data e hora</label><input type="datetime-local" id="agendar-datahora"></div>
+      <div class="input-group">
+        <label>Data</label>
+        <div class="data-scroll" id="agendar-data-scroll"></div>
+      </div>
+      <div class="input-group">
+        <label>Horário</label>
+        <div class="horas-grid" id="agendar-horas-grid"><div class="empty-state">Escolha ao menos um serviço primeiro.</div></div>
+      </div>
       <button class="btn-primario" id="btn-agendar-online">Confirmar Agendamento</button>
     </div>
 
@@ -191,8 +221,8 @@ import {
   collection, doc, setDoc, query, where, onSnapshot
 } from 'https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js';
 import { escutarServicos, calcularCombo } from './js/servicos.js?v=20260728d';
-import { criarAgendamento, contarConflitosHorario } from './js/agenda.js?v=20260728e';
-import { checarElegibilidade } from './js/agenda.js?v=20260728e';
+import { criarAgendamento, contarConflitosHorario, listarAgendamentosAtivos } from './js/agenda.js?v=20260731a';
+import { checarElegibilidade } from './js/agenda.js?v=20260731a';
 import { escutarCabines } from './js/cabines.js?v=20260728d';
 import { escutarConfigNegocio } from './js/config-negocio.js?v=20260729a';
 import { escutarHorarios, validarHorarioFuncionamento } from './js/horarios.js?v=20260728d';
@@ -227,6 +257,9 @@ let clienteAtual = null;
 let cabinesCache = [];
 let configNegocioCache = { nome: "Pro'Bronze", whatsappNegocio: '', chavePix: '', vitrineSubtitulo: '', intervaloMinimoHoras: 24, limiteSessoesMes: 12 };
 let horariosCache = null;
+let dataEscolhida = null;
+let horaEscolhida = null;
+const DIA_JS = ["dom", "seg", "ter", "qua", "qui", "sex", "sab"]; // Date.getDay(): 0=domingo
 
 // Login da cliente usa a mesma Auth do Firebase; o vínculo com o
 // documento em "clientes" é feito por clienteUid (campo salvo no
@@ -305,7 +338,11 @@ $('btn-sair-cliente').addEventListener('click', async () => {
         renderContatoEstabelecimento(config);
         aplicarPersonalizacao(config);
       });
-      escutarHorarios(cliente.negocioId, (horarios) => { horariosCache = horarios; });
+      escutarHorarios(cliente.negocioId, (horarios) => {
+        horariosCache = horarios;
+        if (dataEscolhida) montarGradeHorarios();
+      });
+      montarSeletorDatas();
     });
   });
 })();
@@ -447,6 +484,101 @@ function renderServicosAgendar(servicos) {
     chk.addEventListener('change', () => {
       if (chk.checked) combosSelecionados.add(chk.dataset.combo);
       else combosSelecionados.delete(chk.dataset.combo);
+      horaEscolhida = null;
+      if (dataEscolhida) montarGradeHorarios();
+    });
+  });
+}
+
+// ── Seletor de data e hora (chips de data + grade de horários) ──
+function fmtDataChip(chave) {
+  const d = new Date(chave + 'T12:00:00');
+  const dia = d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+  const semana = d.toLocaleDateString('pt-BR', { weekday: 'short' }).replace('.', '');
+  return `${dia} ${semana}`;
+}
+
+function montarSeletorDatas() {
+  const wrap = $('agendar-data-scroll');
+  wrap.innerHTML = '';
+  const hoje = new Date();
+  const chips = [];
+  for (let i = 0; i < 14; i++) {
+    const d = new Date(hoje);
+    d.setDate(hoje.getDate() + i);
+    const chave = d.toISOString().split('T')[0];
+    const chip = document.createElement('div');
+    chip.className = 'data-chip' + (i === 0 ? ' ativo' : '');
+    chip.textContent = i === 0 ? 'Hoje' : fmtDataChip(chave);
+    chip.dataset.data = chave;
+    chip.addEventListener('click', () => {
+      chips.forEach((c) => c.classList.remove('ativo'));
+      chip.classList.add('ativo');
+      dataEscolhida = chave;
+      horaEscolhida = null;
+      montarGradeHorarios();
+    });
+    chips.push(chip);
+    wrap.appendChild(chip);
+  }
+  dataEscolhida = hoje.toISOString().split('T')[0];
+  montarGradeHorarios();
+}
+
+function horaParaMin(h) { const [hh, mm] = h.split(':').map(Number); return hh * 60 + mm; }
+
+async function montarGradeHorarios() {
+  const grid = $('agendar-horas-grid');
+  if (combosSelecionados.size === 0) {
+    grid.innerHTML = '<div class="empty-state">Escolha ao menos um serviço primeiro.</div>';
+    return;
+  }
+  grid.innerHTML = '<div class="empty-state">Carregando horários...</div>';
+
+  const chave = DIA_JS[new Date(dataEscolhida + 'T12:00:00').getDay()];
+  const config = (horariosCache || {})[chave];
+  if (!config || !config.aberto) {
+    grid.innerHTML = '<div class="empty-state">A loja não funciona neste dia.</div>';
+    return;
+  }
+
+  const servicosDoCombo = servicosCache.filter((s) => combosSelecionados.has(s.id));
+  const { duracaoTotalMin } = calcularCombo(servicosDoCombo);
+  const tempoMin = duracaoTotalMin || 15;
+
+  const iniMin = horaParaMin(config.abre);
+  const fimMin = horaParaMin(config.fecha);
+  const intervaloMin = 30;
+  const slots = [];
+  for (let min = iniMin; min <= fimMin - tempoMin; min += intervaloMin) {
+    const h = Math.floor(min / 60), m = min % 60;
+    slots.push(`${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`);
+  }
+  if (!slots.length) {
+    grid.innerHTML = '<div class="empty-state">Sem horários disponíveis neste dia pra esse combo de serviços.</div>';
+    return;
+  }
+
+  const agora = new Date();
+  const isHoje = dataEscolhida === agora.toISOString().split('T')[0];
+  const agoraMin = isHoje ? agora.getHours() * 60 + agora.getMinutes() : 0;
+  const ativos = await listarAgendamentosAtivos(clienteAtual.negocioId);
+
+  grid.innerHTML = slots.map((hora) => {
+    const passado = isHoje && horaParaMin(hora) <= agoraMin;
+    const inicio = new Date(`${dataEscolhida}T${hora}`);
+    const fim = new Date(inicio.getTime() + tempoMin * 60000);
+    const conflitos = ativos.filter((a) => a.inicio < fim && a.fim > inicio).length;
+    const ocupado = conflitos >= cabinesCache.length;
+    const indisponivel = passado || ocupado;
+    return `<button class="hora-btn ${indisponivel ? 'ocupado' : 'livre'}" data-hora="${hora}" ${indisponivel ? 'disabled' : ''}>${hora}</button>`;
+  }).join('');
+
+  grid.querySelectorAll('.hora-btn.livre').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      grid.querySelectorAll('.hora-btn').forEach((b) => b.classList.remove('selecionado'));
+      btn.classList.add('selecionado');
+      horaEscolhida = btn.dataset.hora;
     });
   });
 }
@@ -456,12 +588,12 @@ $('btn-agendar-online').addEventListener('click', async () => {
   if (btn.disabled) return;
   const avisosWrap = $('agendar-avisos');
   avisosWrap.innerHTML = '';
-  const dataHora = $('agendar-datahora').value;
 
-  if (combosSelecionados.size === 0 || !dataHora) {
-    avisosWrap.innerHTML = '<div class="empty-state">Selecione ao menos um serviço e a data/hora.</div>';
+  if (combosSelecionados.size === 0 || !dataEscolhida || !horaEscolhida) {
+    avisosWrap.innerHTML = '<div class="empty-state">Selecione ao menos um serviço e um horário.</div>';
     return;
   }
+  const dataHora = `${dataEscolhida}T${horaEscolhida}`;
 
   const horarioValido = validarHorarioFuncionamento(horariosCache, dataHora);
   if (!horarioValido.permitido) {
@@ -501,8 +633,9 @@ $('btn-agendar-online').addEventListener('click', async () => {
     });
 
     combosSelecionados.clear();
-    $('agendar-datahora').value = '';
+    horaEscolhida = null;
     document.querySelectorAll('#agendar-servicos [data-combo]').forEach((chk) => { chk.checked = false; });
+    $('agendar-horas-grid').innerHTML = '<div class="empty-state">Escolha ao menos um serviço primeiro.</div>';
     toast('Agendamento solicitado! A loja vai confirmar.', 'sucesso');
   } finally {
     btn.disabled = false;

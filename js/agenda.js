@@ -61,6 +61,28 @@ export async function checarElegibilidade(negocioId, clienteId, opcoes = {}) {
 // Conta quantos agendamentos ativos (agendado/em_andamento) do negócio
 // se sobrepõem ao intervalo [dataHora, dataHora + tempoMin) — usado pra
 // não deixar marcar mais sessões simultâneas do que o número de cabines
+// Retorna os intervalos [inicio,fim] de todos os agendamentos ativos do
+// negócio, pra montar a grade de horários disponíveis sem precisar de uma
+// consulta ao Firestore por horário candidato (contarConflitosHorario faz
+// uma consulta só, mas repetida pra cada slot ficaria caro à toa).
+export async function listarAgendamentosAtivos(negocioId) {
+  const q = query(
+    collection(db, "agendamentos"),
+    where("negocioId", "==", negocioId),
+    where("status", "in", ["agendado", "em_andamento"])
+  );
+  const snap = await getDocs(q);
+  const intervalos = [];
+  snap.forEach((d) => {
+    const ag = d.data();
+    if (!ag.dataHora?.toDate) return;
+    const inicio = ag.dataHora.toDate();
+    const fim = new Date(inicio.getTime() + (ag.tempoMin || 15) * 60000);
+    intervalos.push({ inicio, fim });
+  });
+  return intervalos;
+}
+
 export async function contarConflitosHorario(negocioId, dataHora, tempoMin) {
   const inicio = new Date(dataHora);
   const fim = new Date(inicio.getTime() + tempoMin * 60000);
