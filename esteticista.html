@@ -450,9 +450,15 @@
       <div class="card">
         <div class="card-titulo com-ajuda">Nova Cabine / Cama</div>
         <div class="ajuda-inline">Cada cabine é um espaço físico de bronzeamento (cama ou cabine). Cadastre quantas você tiver — isso define quantas clientes podem ser atendidas ao mesmo tempo.</div>
-        <div class="input-group"><label>Nome</label><input type="text" id="cab-nome" placeholder="Ex: Cabine 1"></div>
-        <div class="input-group"><label>Tempo padrão (minutos)</label><input type="number" id="cab-tempo" value="15" min="1"></div>
-        <button class="btn-primario" id="btn-criar-cabine">Cadastrar Cabine</button>
+        <div id="cab-form-intro">
+          <button class="btn-primario" style="width:auto" id="btn-abrir-form-cabine">+ Adicionar Cabine</button>
+        </div>
+        <div id="cab-form-wrap" style="display:none">
+          <div class="input-group"><label>Nome</label><input type="text" id="cab-nome" placeholder="Ex: Cabine 1"></div>
+          <div class="input-group"><label>Tempo padrão (minutos)</label><input type="number" id="cab-tempo" value="15" min="1"></div>
+          <button class="btn-primario" id="btn-criar-cabine">Cadastrar Cabine</button>
+          <button class="btn-secundario" id="btn-cancelar-form-cabine">Cancelar</button>
+        </div>
       </div>
       <div class="card">
         <div class="card-titulo">Cabines / Camas</div>
@@ -551,18 +557,24 @@
       <div class="card" id="card-nova-equipe">
         <div class="card-titulo com-ajuda">Adicionar Funcionário(a) manualmente</div>
         <div class="ajuda-inline">Cadastre você mesmo o login da pessoa (funcionário ou outro dono). Cada pessoa ganha seu próprio login.</div>
-        <div class="input-group"><label>Nome</label><input type="text" id="eq-nome"></div>
-        <div class="input-group"><label>E-mail</label><input type="email" id="eq-email"></div>
-        <div class="input-group"><label>Senha</label><input type="password" id="eq-senha" placeholder="mínimo 6 caracteres"></div>
-        <div class="input-group">
-          <label>Papel</label>
-          <select id="eq-papel">
-            <option value="recepcionista">Funcionário(a)</option>
-            <option value="dono">Dono</option>
-          </select>
+        <div id="eq-form-intro">
+          <button class="btn-primario" style="width:auto" id="btn-abrir-form-equipe">+ Adicionar Manualmente</button>
         </div>
-        <div class="input-group"><label>Diária (R$, opcional)</label><input type="number" id="eq-diaria" value="0" min="0" step="0.01"></div>
-        <button class="btn-primario" id="btn-criar-equipe">Adicionar</button>
+        <div id="eq-form-wrap" style="display:none">
+          <div class="input-group"><label>Nome</label><input type="text" id="eq-nome"></div>
+          <div class="input-group"><label>E-mail</label><input type="email" id="eq-email"></div>
+          <div class="input-group"><label>Senha</label><input type="password" id="eq-senha" placeholder="mínimo 6 caracteres"></div>
+          <div class="input-group">
+            <label>Papel</label>
+            <select id="eq-papel">
+              <option value="recepcionista">Funcionário(a)</option>
+              <option value="dono">Dono</option>
+            </select>
+          </div>
+          <div class="input-group"><label>Diária (R$, opcional)</label><input type="number" id="eq-diaria" value="0" min="0" step="0.01"></div>
+          <button class="btn-primario" id="btn-criar-equipe">Adicionar</button>
+          <button class="btn-secundario" id="btn-cancelar-form-equipe">Cancelar</button>
+        </div>
       </div>
       <div class="card">
         <div class="card-titulo">Equipe</div>
@@ -588,23 +600,29 @@
       </div>
       <div class="card">
         <div class="card-titulo">Nova Cliente (cadastro presencial, sem login)</div>
-        <div class="input-group"><label>Nome</label><input type="text" id="cli-nome"></div>
-        <div class="input-group"><label>WhatsApp</label><input type="text" id="cli-wpp" placeholder="21999999999"></div>
-        <div class="input-group"><label>Data de nascimento</label><input type="date" id="cli-nascimento"></div>
-        <div class="input-group">
-          <label>Tipo de pele (Fitzpatrick)</label>
-          <select id="cli-fitzpatrick">
-            <option value="">Não informado</option>
-            <option value="I">I — muito clara, sempre queima</option>
-            <option value="II">II — clara</option>
-            <option value="III">III — morena clara</option>
-            <option value="IV">IV — morena moderada</option>
-            <option value="V">V — morena escura</option>
-            <option value="VI">VI — negra</option>
-          </select>
+        <div id="cli-form-intro">
+          <button class="btn-primario" style="width:auto" id="btn-abrir-form-cliente">+ Adicionar Cliente</button>
         </div>
-        <div class="input-group"><label>Observações de pele</label><input type="text" id="cli-obs-pele"></div>
-        <button class="btn-primario" id="btn-criar-cliente">Cadastrar Cliente</button>
+        <div id="cli-form-wrap" style="display:none">
+          <div class="input-group"><label>Nome</label><input type="text" id="cli-nome"></div>
+          <div class="input-group"><label>WhatsApp</label><input type="text" id="cli-wpp" placeholder="21999999999"></div>
+          <div class="input-group"><label>Data de nascimento</label><input type="date" id="cli-nascimento"></div>
+          <div class="input-group">
+            <label>Tipo de pele (Fitzpatrick)</label>
+            <select id="cli-fitzpatrick">
+              <option value="">Não informado</option>
+              <option value="I">I — muito clara, sempre queima</option>
+              <option value="II">II — clara</option>
+              <option value="III">III — morena clara</option>
+              <option value="IV">IV — morena moderada</option>
+              <option value="V">V — morena escura</option>
+              <option value="VI">VI — negra</option>
+            </select>
+          </div>
+          <div class="input-group"><label>Observações de pele</label><input type="text" id="cli-obs-pele"></div>
+          <button class="btn-primario" id="btn-criar-cliente">Cadastrar Cliente</button>
+          <button class="btn-secundario" id="btn-cancelar-form-cliente">Cancelar</button>
+        </div>
       </div>
       <div class="card">
         <div class="card-titulo">Clientes Cadastradas</div>
@@ -617,10 +635,16 @@
       <div class="card">
         <div class="card-titulo com-ajuda">Novo Serviço</div>
         <div class="ajuda-inline">Cadastre aqui os serviços que você oferece (bronzeamento, com óleo essencial, etc.) — eles aparecem como opções de combo no agendamento e na venda avulsa.</div>
-        <div class="input-group"><label>Nome</label><input type="text" id="serv-nome" placeholder="Ex: Bronzeamento"></div>
-        <div class="input-group"><label>Preço (R$)</label><input type="number" id="serv-preco" step="0.01"></div>
-        <div class="input-group"><label>Duração (min)</label><input type="number" id="serv-duracao"></div>
-        <button class="btn-primario" id="btn-criar-servico">Adicionar Serviço</button>
+        <div id="serv-form-intro">
+          <button class="btn-primario" style="width:auto" id="btn-abrir-form-servico">+ Adicionar Serviço</button>
+        </div>
+        <div id="serv-form-wrap" style="display:none">
+          <div class="input-group"><label>Nome</label><input type="text" id="serv-nome" placeholder="Ex: Bronzeamento"></div>
+          <div class="input-group"><label>Preço (R$)</label><input type="number" id="serv-preco" step="0.01"></div>
+          <div class="input-group"><label>Duração (min)</label><input type="number" id="serv-duracao"></div>
+          <button class="btn-primario" id="btn-criar-servico">Adicionar Serviço</button>
+          <button class="btn-secundario" id="btn-cancelar-form-servico">Cancelar</button>
+        </div>
       </div>
       <div class="card">
         <div class="card-titulo">Serviços Cadastrados</div>
@@ -671,17 +695,23 @@
       <div class="card">
         <div class="card-titulo com-ajuda">Nova Despesa</div>
         <div class="ajuda-inline">Registre tudo que sai do caixa: aluguel, salário, água, luz, manutenção etc. Isso é descontado do faturamento pra mostrar o lucro real.</div>
-        <div class="input-group">
-          <label>Categoria</label>
-          <select id="desp-categoria"></select>
+        <div id="desp-form-intro">
+          <button class="btn-primario" style="width:auto" id="btn-abrir-form-despesa">+ Adicionar Despesa</button>
         </div>
-        <div class="input-group"><label>Descrição (opcional)</label><input type="text" id="desp-descricao" placeholder="Ex: Salário Maria — julho"></div>
-        <div class="input-group"><label>Valor (R$)</label><input type="number" id="desp-valor" step="0.01"></div>
-        <div class="input-group"><label>Data</label><input type="date" id="desp-data"></div>
-        <label style="display:flex;align-items:center;gap:.5rem;font-size:.85rem;margin-bottom:1rem">
-          <input type="checkbox" id="desp-recorrente"> Despesa recorrente (repete todo mês, ex: aluguel/salário)
-        </label>
-        <button class="btn-primario" id="btn-criar-despesa">Registrar Despesa</button>
+        <div id="desp-form-wrap" style="display:none">
+          <div class="input-group">
+            <label>Categoria</label>
+            <select id="desp-categoria"></select>
+          </div>
+          <div class="input-group"><label>Descrição (opcional)</label><input type="text" id="desp-descricao" placeholder="Ex: Salário Maria — julho"></div>
+          <div class="input-group"><label>Valor (R$)</label><input type="number" id="desp-valor" step="0.01"></div>
+          <div class="input-group"><label>Data</label><input type="date" id="desp-data"></div>
+          <label style="display:flex;align-items:center;gap:.5rem;font-size:.85rem;margin-bottom:1rem">
+            <input type="checkbox" id="desp-recorrente"> Despesa recorrente (repete todo mês, ex: aluguel/salário)
+          </label>
+          <button class="btn-primario" id="btn-criar-despesa">Registrar Despesa</button>
+          <button class="btn-secundario" id="btn-cancelar-form-despesa">Cancelar</button>
+        </div>
       </div>
       <div class="card">
         <div class="card-titulo">Despesas</div>
@@ -1369,8 +1399,18 @@ $('btn-criar-despesa').addEventListener('click', async () => {
   try {
     await criarDespesa(usuarioAtual.negocioId, { categoria, descricao, valor, data, recorrente });
     $('desp-descricao').value = ''; $('desp-valor').value = ''; $('desp-recorrente').checked = false;
+    $('desp-form-wrap').style.display = 'none';
+    $('desp-form-intro').style.display = 'block';
     toast('Despesa registrada.', 'sucesso');
   } finally { btn.disabled = false; }
+});
+$('btn-abrir-form-despesa').addEventListener('click', () => {
+  $('desp-form-wrap').style.display = 'block';
+  $('desp-form-intro').style.display = 'none';
+});
+$('btn-cancelar-form-despesa').addEventListener('click', () => {
+  $('desp-form-wrap').style.display = 'none';
+  $('desp-form-intro').style.display = 'block';
 });
 let configNegocioCache = { nome: "Pro'Bronze", whatsappNegocio: '', chavePix: '', vitrineSubtitulo: '', intervaloMinimoHoras: 24, limiteSessoesMes: 12 };
 
@@ -1920,8 +1960,18 @@ $('btn-criar-cabine').addEventListener('click', async () => {
   try {
     await criarCabine(usuarioAtual.negocioId, { nome, tempoPadraoMin });
     $('cab-nome').value = ''; $('cab-tempo').value = '15';
+    $('cab-form-wrap').style.display = 'none';
+    $('cab-form-intro').style.display = 'block';
     toast('Cabine cadastrada.', 'sucesso');
   } finally { btn.disabled = false; }
+});
+$('btn-abrir-form-cabine').addEventListener('click', () => {
+  $('cab-form-wrap').style.display = 'block';
+  $('cab-form-intro').style.display = 'none';
+});
+$('btn-cancelar-form-cabine').addEventListener('click', () => {
+  $('cab-form-wrap').style.display = 'none';
+  $('cab-form-intro').style.display = 'block';
 });
 
 $('btn-criar-produto').addEventListener('click', async () => {
@@ -2814,8 +2864,18 @@ $('btn-criar-equipe').addEventListener('click', async () => {
   try {
     await criarMembroEquipe(usuarioAtual.negocioId, { nome, email, senha, papel, valorDiaria });
     $('eq-nome').value = ''; $('eq-email').value = ''; $('eq-senha').value = ''; $('eq-diaria').value = '0';
+    $('eq-form-wrap').style.display = 'none';
+    $('eq-form-intro').style.display = 'block';
     toast('Membro da equipe adicionado.', 'sucesso');
   } finally { btn.disabled = false; }
+});
+$('btn-abrir-form-equipe').addEventListener('click', () => {
+  $('eq-form-wrap').style.display = 'block';
+  $('eq-form-intro').style.display = 'none';
+});
+$('btn-cancelar-form-equipe').addEventListener('click', () => {
+  $('eq-form-wrap').style.display = 'none';
+  $('eq-form-intro').style.display = 'block';
 });
 
 function renderAniversariantes(clientes) {
@@ -3553,11 +3613,21 @@ $('btn-criar-cliente').addEventListener('click', async () => {
       dataNascimento: $('cli-nascimento').value || null
     });
     $('cli-nome').value = ''; $('cli-wpp').value = ''; $('cli-fitzpatrick').value = ''; $('cli-obs-pele').value = ''; $('cli-nascimento').value = '';
+    $('cli-form-wrap').style.display = 'none';
+    $('cli-form-intro').style.display = 'block';
     toast('Cliente cadastrada.', 'sucesso');
   } finally {
     btn.disabled = false;
     btn.textContent = textoOriginal;
   }
+});
+$('btn-abrir-form-cliente').addEventListener('click', () => {
+  $('cli-form-wrap').style.display = 'block';
+  $('cli-form-intro').style.display = 'none';
+});
+$('btn-cancelar-form-cliente').addEventListener('click', () => {
+  $('cli-form-wrap').style.display = 'none';
+  $('cli-form-intro').style.display = 'block';
 });
 
 $('btn-criar-servico').addEventListener('click', async () => {
@@ -3571,8 +3641,18 @@ $('btn-criar-servico').addEventListener('click', async () => {
   try {
     await criarServico(usuarioAtual.negocioId, { nome, preco, duracaoMin });
     $('serv-nome').value = ''; $('serv-preco').value = ''; $('serv-duracao').value = '';
+    $('serv-form-wrap').style.display = 'none';
+    $('serv-form-intro').style.display = 'block';
     toast('Serviço cadastrado.', 'sucesso');
   } finally { btn.disabled = false; }
+});
+$('btn-abrir-form-servico').addEventListener('click', () => {
+  $('serv-form-wrap').style.display = 'block';
+  $('serv-form-intro').style.display = 'none';
+});
+$('btn-cancelar-form-servico').addEventListener('click', () => {
+  $('serv-form-wrap').style.display = 'none';
+  $('serv-form-intro').style.display = 'block';
 });
 
 // Sugere tempo de cabine com base na ficha de pele da cliente selecionada
