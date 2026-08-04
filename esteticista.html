@@ -1625,12 +1625,9 @@ onAuthChange((usuario, motivo) => {
   initNovidades();
   ativarConfirmacaoAoSair();
   ativarConfirmacaoAoSair();
-
-  if (!tutorialJaVisto(usuario.uid)) {
-    iniciarTutorial(usuario.uid, (abaId) => {
-      document.querySelector(`[data-aba="${abaId}"]`)?.click();
-    });
-  }
+  // O tutorial guiado de primeira vez agora dispara de dentro de
+  // verificarAssinatura(), só depois de confirmar que a conta está
+  // liberada — ver comentário lá.
 });
 
 $('btn-ajuda').addEventListener('click', () => {
@@ -1752,6 +1749,12 @@ function verificarAssinatura(config) {
   }
 
   if (bloqueado) {
+    // Conta ainda sem acesso liberado (trial pendente de aprovação ou
+    // assinatura vencida) — fecha o tutorial se ele já tiver sido aberto
+    // (dispara no login, antes desta checagem chegar, já que carrega a
+    // config do Firestore de forma assíncrona) e não deixa abrir de novo
+    // enquanto a tela de bloqueio estiver em cima.
+    document.getElementById('tutorial-overlay')?.remove();
     $('painel').style.display = 'none';
     $('tela-vencida').style.display = 'flex';
     $('vencida-bloco-pendente').style.display = motivo === 'pendente' ? 'block' : 'none';
@@ -1766,6 +1769,15 @@ function verificarAssinatura(config) {
   } else {
     $('tela-vencida').style.display = 'none';
     $('painel').style.display = 'block';
+    // Só dispara o tutorial de primeira vez depois de saber que a conta
+    // está liberada — antes rodava direto no login, sem esperar essa
+    // checagem (que depende de um listener assíncrono do Firestore), e
+    // podia aparecer em cima da própria tela de "aguardando liberação".
+    if (usuarioAtual && !tutorialJaVisto(usuarioAtual.uid) && !document.getElementById('tutorial-overlay')) {
+      iniciarTutorial(usuarioAtual.uid, (abaId) => {
+        document.querySelector(`[data-aba="${abaId}"]`)?.click();
+      });
+    }
   }
 }
 
