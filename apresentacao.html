@@ -98,12 +98,17 @@
   .pessoa .nome-pessoa { font-size: .98rem; font-weight: 700; color: #f6f8fb; line-height: 1.3; }
   .pessoa .cargo-pessoa { font-size: .78rem; color: #e6b143; font-weight: 600; letter-spacing: .03em; text-transform: uppercase; }
 
-  .grade-fotos { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.2rem; }
-  .grade-fotos .foto-item {
-    border-radius: 12px; overflow: hidden; aspect-ratio: 3/4;
-    border: 1px solid rgba(230,177,67,.35); box-shadow: 0 10px 30px rgba(0,0,0,.35);
+  .linha-com-fotos {
+    width: min(1200px, 94vw); max-height: 88vh;
+    display: flex; align-items: center; gap: 2.5rem; position: relative; z-index: 1;
   }
-  .grade-fotos .foto-item img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .linha-com-fotos .conteudo { width: auto; flex: 1 1 auto; min-width: 0; }
+  .coluna-fotos { display: flex; flex-direction: column; gap: .8rem; flex: 0 0 150px; }
+  .foto-lateral {
+    border-radius: 10px; overflow: hidden; aspect-ratio: 4/3;
+    border: 1px solid rgba(230,177,67,.35); box-shadow: 0 8px 24px rgba(0,0,0,.35);
+  }
+  .foto-lateral img { width: 100%; height: 100%; object-fit: cover; display: block; }
 
   .grade-cartoes { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1rem; }
   .cartao {
@@ -314,7 +319,10 @@
     .rodape-marca { left: 18px; bottom: 60px; }
 
     .grade-equipe { grid-template-columns: repeat(2, 1fr); gap: .9rem 1rem; }
-    .grade-fotos { grid-template-columns: repeat(2, 1fr); gap: .8rem; }
+    .linha-com-fotos { flex-direction: column; gap: 1rem; max-height: 82vh; overflow-y: auto; }
+    .linha-com-fotos .conteudo { max-height: none; overflow: visible; }
+    .coluna-fotos { flex-direction: row; flex: 0 0 auto; width: 100%; overflow-x: auto; }
+    .foto-lateral { flex: 0 0 90px; }
     .foto-pessoa { width: 84px; height: 84px; border-width: 2px; }
     .foto-pessoa .iniciais { font-size: 1.15rem; }
     .pessoa { gap: .4rem; }
@@ -338,7 +346,6 @@
 
 <div id="tela-inicio">
   <div class="grade-ciber"></div>
-  <div class="scanner"></div>
   <div class="icone-play"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></div>
   <p>Toque para iniciar a apresentação</p>
 </div>
@@ -429,9 +436,8 @@
       'Acompanhar prestadores de serviços e atividades de maior risco, quando solicitado.',
       'Comunicar imediatamente qualquer irregularidade à supervisão e à administração.',
       'Registrar ocorrências relevantes no Livro de Ocorrências.'
-    ]},
-    { tipo: 'fotos', rotulo: 'VSPP Armado', titulo: 'Operação em Campo', fotos: [
-      'vspp-portaria-cyano.jpg', 'vspp-entrada-telefone.jpg', 'vspp-posto.jpg'
+    ], fotos: [
+      'vspp-portaria-cyano.jpg', 'vspp-entrada-telefone.jpg', 'vspp-posto.jpg', 'vspp-cancela.jpg'
     ]},
     { tipo: 'topicos', rotulo: 'Vigilante — Portaria de Carga e Descarga (Armado)', titulo: 'Principais Atribuições', itens: [
       'Permanecer em posicionamento ostensivo na Portaria de Serviço.',
@@ -553,7 +559,19 @@
         <div class="linha-divisora"></div>
         <ul class="lista-topicos">${lis}</ul>
       `;
-      div.appendChild(c);
+      if (dados.fotos && dados.fotos.length) {
+        const linha = document.createElement('div');
+        linha.className = 'linha-com-fotos';
+        c.classList.add('conteudo-estreito');
+        const coluna = document.createElement('div');
+        coluna.className = 'coluna-fotos';
+        coluna.innerHTML = dados.fotos.map(f => `<div class="foto-lateral"><img src="img/fotos/${f}" alt="${dados.titulo}" loading="lazy"></div>`).join('');
+        div.appendChild(linha);
+        linha.appendChild(c);
+        linha.appendChild(coluna);
+      } else {
+        div.appendChild(c);
+      }
     } else if (dados.tipo === 'equipe') {
       const c = document.createElement('div');
       c.className = 'conteudo';
@@ -574,17 +592,6 @@
         <h1 class="titulo">${dados.titulo}</h1>
         <div class="linha-divisora"></div>
         <div class="${classeGrade}">${cards}</div>
-      `;
-      div.appendChild(c);
-    } else if (dados.tipo === 'fotos') {
-      const c = document.createElement('div');
-      c.className = 'conteudo';
-      const itens = dados.fotos.map(f => `<div class="foto-item"><img src="img/fotos/${f}" alt="${dados.titulo}" loading="lazy"></div>`).join('');
-      c.innerHTML = `
-        <span class="rotulo">${dados.rotulo}</span>
-        <h1 class="titulo">${dados.titulo}</h1>
-        <div class="linha-divisora"></div>
-        <div class="grade-fotos">${itens}</div>
       `;
       div.appendChild(c);
     } else if (dados.tipo === 'cartoes') {
