@@ -52,11 +52,14 @@
     display: flex; flex-direction: column; gap: 1.4rem;
   }
   .rotulo {
-    display: inline-flex; align-items: center; gap: .5rem;
-    font-size: .95rem; font-weight: 700; letter-spacing: .16em; text-transform: uppercase;
-    color: #e6b143; width: fit-content;
+    display: inline-flex; align-items: center; gap: .55rem;
+    font-size: 1rem; font-weight: 800; letter-spacing: .1em; text-transform: uppercase;
+    color: #16283f; width: fit-content;
+    background: linear-gradient(135deg, #f5c463, #e6b143);
+    padding: .4rem 1rem; border-radius: 8px;
+    box-shadow: 0 4px 14px rgba(0,0,0,.25);
   }
-  .rotulo::before { content: ''; width: 22px; height: 2px; background: #e6b143; display: inline-block; }
+  .rotulo::before { display: none; }
   .titulo {
     font-size: clamp(1.5rem, 4vw, 2.6rem); font-weight: 800; color: #f6f8fb;
     line-height: 1.18; letter-spacing: -.01em; margin: 0;
@@ -448,6 +451,8 @@
       'Prestar apoio na segurança durante as operações de carga e descarga.',
       'Registrar a entrada e saída de pessoas e veículos no Livro ATA.',
       'Comunicar imediatamente qualquer irregularidade ao VSPP ou à administração.'
+    ], fotos: [
+      'vigilante-carga-portao.jpg', 'vigilante-carga-radio.jpg'
     ]},
     { tipo: 'topicos', rotulo: 'Vigia dos Blocos (Mare, Sabbia e Cielo)', titulo: 'Principais Atribuições', itens: [
       'Permanecer no bloco designado durante todo o plantão.',
