@@ -405,8 +405,8 @@
     { tipo: 'equipe', rotulo: 'Equipe Diurna', titulo: 'Portaria Principal', pessoas: [
       { nome: 'Jefferson Pereira', cargo: 'Vigia', foto: 'jefferson-pereira.jpg' },
       { nome: 'Paulo Henrique', cargo: 'Vigia', foto: 'paulo-henrique.jpg' },
-      { nome: 'Alexandre Gomes', cargo: 'VSPP', foto: 'alexandre-gomes.jpg' },
-      { nome: 'Pedro dos Santos', cargo: 'VSPP', foto: 'pedro-dos-santos.jpg' }
+      { nome: 'Pedro dos Santos', cargo: 'VSPP', foto: 'alexandre-gomes.jpg' },
+      { nome: 'Alexandre Gomes', cargo: 'VSPP', foto: 'pedro-dos-santos.jpg' }
     ]},
     { tipo: 'equipe', rotulo: 'Equipe Diurna', titulo: 'Portaria de Serviço', pessoas: [
       { nome: 'Marcos Vinicius', cargo: 'Vigilante', foto: 'marcos-vinicius.jpg' },
@@ -419,12 +419,12 @@
       { nome: 'Thiago da Silva', cargo: 'Vigia Móvel', foto: 'thiago-da-silva.jpg' }
     ]},
     { tipo: 'equipe', rotulo: 'Equipe Diurna', titulo: 'Blocos Mare, Sabbia e Cielo', pessoas: [
-      { nome: 'Mateus Teixeira', cargo: 'Vigia — Bloco 1', foto: 'thiago-alves.jpg' },
       { nome: 'Denilson Jorge', cargo: 'Vigia — Bloco 1', foto: 'denilson-jorge.jpg' },
+      { nome: 'Leonardo Souza', cargo: 'Vigia — Bloco 2', foto: 'leonardo-souza.jpg' },
+      { nome: 'Samuel Victor', cargo: 'Vigia — Bloco 3', foto: 'laert-silva.jpg' },
+      { nome: 'Thiago Alves', cargo: 'Vigia — Bloco 1', foto: 'samuel-victor.jpg' },
       { nome: 'Laert Silva', cargo: 'Vigia — Bloco 2', foto: 'mateus-teixeira.jpg' },
-      { nome: 'Samuel Victor', cargo: 'Vigia — Bloco 2', foto: 'laert-silva.jpg' },
-      { nome: 'Thiago Alves', cargo: 'Vigia — Bloco 3', foto: 'samuel-victor.jpg' },
-      { nome: 'Leonardo Souza', cargo: 'Vigia — Bloco 3', foto: 'leonardo-souza.jpg' }
+      { nome: 'Mateus Teixeira', cargo: 'Vigia — Bloco 1', foto: 'thiago-alves.jpg' }
     ]},
     { tipo: 'imagem', rotulo: 'Rendição de Almoço', titulo: 'Plano de Rendição — Vigilante, Vigia Serviço e Vigia', src: 'slide-09.jpg' },
     { tipo: 'imagem', rotulo: 'Rendição de Almoço', titulo: 'Anagrama de Rendições', src: 'slide-10.jpg' },
@@ -497,12 +497,12 @@
     { tipo: 'topicos', rotulo: 'Vigia dos Blocos (Mare, Sabbia e Cielo)', titulo: 'Principais Atribuições', itens: [
       'Permanecer no bloco designado durante todo o plantão.',
       'Atender moradores, visitantes e prestadores de serviços com cordialidade e profissionalismo.',
-      'Realizar a liberação de elevadores por meio do sistema Intel Control/TKE, quando autorizada.',
-      'Efetuar os agendamentos das áreas comuns através do aplicativo Gyby.',
+      'Abrir a porta para moradores e visitantes nos horários de 05:00 às 07:00 e 19:00 às 22:00.',
+      'Efetuar os agendamentos das áreas comuns através do aplicativo Gruvi.',
       'Acionar a sauna quando solicitado pelo morador.',
       'Realizar rondas periódicas nas áreas comuns, verificando iluminação, banheiros, limpeza e necessidades de manutenção.',
       'Registrar e comunicar qualquer irregularidade no Livro de Ocorrências.',
-      'No Bloco 3 (Cielo), realizar o controle e a entrega de toalhas para sauna e piscina, conforme procedimento do condomínio.'
+      'Em todos os blocos, entregar toalhas aos moradores que solicitarem.'
     ], fotos: [
       'blocos-recepcao.jpg', 'blocos-monitoramento.jpg', 'blocos-registro.jpg'
     ]},
@@ -682,29 +682,6 @@
         <span class="marca-final">${dados.marca}</span>
       `;
       div.appendChild(c);
-
-      const fogos = document.createElement('div');
-      fogos.className = 'fogos-final';
-      const coresFogos = ['#3fb54a', '#ffd23f'];
-      const pontos = [
-        { x: 20, y: 28, atraso: 0 }, { x: 78, y: 22, atraso: .6 },
-        { x: 50, y: 15, atraso: 1.2 }, { x: 12, y: 60, atraso: 1.9 },
-        { x: 88, y: 55, atraso: 2.5 }, { x: 35, y: 70, atraso: 3.2 },
-        { x: 65, y: 65, atraso: 3.8 }
-      ];
-      let fogosHtml = '';
-      pontos.forEach((p, pi) => {
-        const cor = coresFogos[pi % 2];
-        let particulas = '';
-        const n = 14;
-        for (let i = 0; i < n; i++) {
-          const ang = (360 / n) * i;
-          particulas += `<span class="particula" style="--ang:${ang}deg; --cor:${cor};"></span>`;
-        }
-        fogosHtml += `<div class="explosao" style="left:${p.x}%; top:${p.y}%; animation-delay:${p.atraso}s;">${particulas}</div>`;
-      });
-      fogos.innerHTML = fogosHtml;
-      div.appendChild(fogos);
     }
 
     const ondas = document.createElement('div');
