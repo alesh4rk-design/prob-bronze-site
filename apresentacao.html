@@ -44,7 +44,7 @@
             mask-image: linear-gradient(-40deg, transparent 40%, #000 78%, transparent 100%);
     opacity: .55;
   }
-  .conteudo, .slide-imagem, .rodape-marca { position: relative; z-index: 1; }
+  .conteudo, .slide-imagem-caixa, .rodape-marca { position: relative; z-index: 1; }
 
   /* ---- padrão comum a todo slide de conteúdo ---- */
   .conteudo {
@@ -128,12 +128,12 @@
   }
 
   /* slide-imagem (organogramas originais do PDF) */
-  .slide-imagem {
+  .slide-imagem-caixa {
     width: 100%; height: 100%;
     display: flex; flex-direction: column; align-items: center; justify-content: center;
     padding: 90px 3vw 40px;
   }
-  .slide-imagem img {
+  .slide-imagem-caixa img {
     max-width: 100%; max-height: 100%; width: auto; height: auto;
     object-fit: contain; border-radius: 6px;
     box-shadow: 0 16px 50px rgba(150,120,40,.18);
@@ -149,7 +149,7 @@
     to   { opacity: 1; }
   }
   .slide.ativo .conteudo { animation: entrarSuave .6s ease both; }
-  .slide.ativo .slide-imagem img { animation: entrarFade .5s ease both; }
+  .slide.ativo .slide-imagem-caixa img { animation: entrarFade .5s ease both; }
   .slide.ativo .lista-topicos li { animation: entrarSuave .5s ease both; }
   .slide.ativo .lista-topicos li:nth-child(1) { animation-delay: .05s; }
   .slide.ativo .lista-topicos li:nth-child(2) { animation-delay: .11s; }
@@ -258,11 +258,11 @@
       { nome: 'Thiago da Silva', cargo: 'Vigia Móvel', foto: 'thiago-da-silva.jpg' }
     ]},
     { tipo: 'equipe', rotulo: 'Equipe Diurna', titulo: 'Blocos Mare, Sabbia e Cielo', pessoas: [
-      { nome: 'Thiago Alves', cargo: 'Vigia — Bloco 1', foto: 'thiago-alves.jpg' },
+      { nome: 'Mateus Teixeira', cargo: 'Vigia — Bloco 1', foto: 'thiago-alves.jpg' },
       { nome: 'Denilson Jorge', cargo: 'Vigia — Bloco 1', foto: 'denilson-jorge.jpg' },
-      { nome: 'Mateus Teixeira', cargo: 'Vigia — Bloco 2', foto: 'mateus-teixeira.jpg' },
-      { nome: 'Laert Silva', cargo: 'Vigia — Bloco 2', foto: 'laert-silva.jpg' },
-      { nome: 'Samuel Victor', cargo: 'Vigia — Bloco 3', foto: 'samuel-victor.jpg' },
+      { nome: 'Laert Silva', cargo: 'Vigia — Bloco 2', foto: 'mateus-teixeira.jpg' },
+      { nome: 'Samuel Victor', cargo: 'Vigia — Bloco 2', foto: 'laert-silva.jpg' },
+      { nome: 'Thiago Alves', cargo: 'Vigia — Bloco 3', foto: 'samuel-victor.jpg' },
       { nome: 'Leonardo Souza', cargo: 'Vigia — Bloco 3', foto: 'leonardo-souza.jpg' }
     ]},
     { tipo: 'imagem', rotulo: 'Rendição de Almoço', titulo: 'Plano de Rendição — Vigilante, Vigia Serviço e Vigia', src: 'slide-09.jpg' },
@@ -376,7 +376,7 @@
 
     if (dados.tipo === 'imagem') {
       const wrap = document.createElement('div');
-      wrap.className = 'slide-imagem';
+      wrap.className = 'slide-imagem-caixa';
       const rot = document.createElement('div');
       rot.className = 'rotulo'; rot.style.position = 'absolute'; rot.style.top = '32px'; rot.style.left = '40px';
       rot.textContent = dados.rotulo;
