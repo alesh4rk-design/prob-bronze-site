@@ -240,10 +240,14 @@
   #contador { color: #cdd6e4; font-size: .82rem; letter-spacing: .04em; min-width: 64px; text-align: center; font-variant-numeric: tabular-nums; }
 
   #tela-inicio {
-    position: fixed; inset: 0; z-index: 50; background: #122845; color: #f6f8fb;
+    position: fixed; inset: 0; z-index: 50; color: #f6f8fb;
+    background: linear-gradient(rgba(10,20,35,.55), rgba(10,20,35,.75)), url('img/capa/tela-inicio.jpg') center/cover no-repeat;
     display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1rem; cursor: pointer;
   }
-  #tela-inicio h1 { font-size: 1.15rem; font-weight: 700; opacity: .9; letter-spacing: .03em; text-align: center; padding: 0 1.5rem; }
+  #tela-inicio h1 {
+    font-size: 1.15rem; font-weight: 700; letter-spacing: .03em; text-align: center; padding: 0 1.5rem;
+    text-shadow: 0 2px 12px rgba(0,0,0,.6);
+  }
   #tela-inicio .icone-play {
     width: 76px; height: 76px; border-radius: 50%;
     background: linear-gradient(135deg, #c9971f, #e6b143);
