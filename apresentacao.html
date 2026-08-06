@@ -240,7 +240,7 @@
   #contador { color: #cdd6e4; font-size: .82rem; letter-spacing: .04em; min-width: 64px; text-align: center; font-variant-numeric: tabular-nums; }
 
   #tela-inicio {
-    position: fixed; inset: 0; z-index: 50; color: #f6f8fb;
+    position: fixed; inset: 0; z-index: 50; color: #f6f8fb; overflow: hidden;
     background: linear-gradient(rgba(10,20,35,.35), rgba(10,20,35,.55)), url('img/capa/tela-inicio.jpg') center/cover no-repeat;
     display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
     padding-top: 83vh; gap: 1rem; cursor: pointer;
@@ -249,14 +249,48 @@
     font-size: 1.15rem; font-weight: 700; letter-spacing: .03em; text-align: center; padding: 0 1.5rem;
     text-shadow: 0 2px 12px rgba(0,0,0,.6);
   }
+
+  /* efeito cibernético: varredura de scanner + grade + pulsos de radar no botão */
+  #tela-inicio .scanner {
+    position: absolute; left: 0; right: 0; height: 2px; z-index: 1; pointer-events: none;
+    background: linear-gradient(90deg, transparent, rgba(120,220,255,.9), rgba(230,177,67,.9), transparent);
+    box-shadow: 0 0 12px 2px rgba(120,220,255,.6);
+    animation: scannerVarre 4.5s linear infinite;
+  }
+  @keyframes scannerVarre {
+    0%   { top: -2%; opacity: 0; }
+    6%   { opacity: 1; }
+    94%  { opacity: 1; }
+    100% { top: 102%; opacity: 0; }
+  }
+  #tela-inicio .grade-ciber {
+    position: absolute; inset: 0; z-index: 1; pointer-events: none; opacity: .35;
+    background-image:
+      linear-gradient(rgba(120,220,255,.12) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(120,220,255,.12) 1px, transparent 1px);
+    background-size: 42px 42px;
+    -webkit-mask-image: radial-gradient(ellipse at center, #000 0%, transparent 72%);
+            mask-image: radial-gradient(ellipse at center, #000 0%, transparent 72%);
+  }
+
   #tela-inicio .icone-play {
-    width: 76px; height: 76px; border-radius: 50%;
+    position: relative; width: 76px; height: 76px; border-radius: 50%; z-index: 2;
     background: linear-gradient(135deg, #c9971f, #e6b143);
     display: flex; align-items: center; justify-content: center;
     box-shadow: 0 8px 30px rgba(230,177,67,.35);
   }
-  #tela-inicio .icone-play svg { width: 28px; height: 28px; fill: #122845; margin-left: 4px; }
-  #tela-inicio p { font-size: .8rem; color: rgba(255,255,255,.45); }
+  #tela-inicio .icone-play::before, #tela-inicio .icone-play::after {
+    content: ''; position: absolute; inset: 0; border-radius: 50%;
+    border: 1.5px solid rgba(120,220,255,.7);
+    animation: radarPulso 2.4s ease-out infinite;
+  }
+  #tela-inicio .icone-play::after { animation-delay: 1.2s; }
+  @keyframes radarPulso {
+    0%   { transform: scale(1); opacity: .8; }
+    100% { transform: scale(2.1); opacity: 0; }
+  }
+  #tela-inicio .icone-play svg { width: 28px; height: 28px; fill: #122845; margin-left: 4px; position: relative; z-index: 1; }
+  #tela-inicio p { font-size: .8rem; color: rgba(255,255,255,.45); position: relative; z-index: 2; }
 
   /* rolagem de segurança: em telas pequenas ou conteúdo longo, permite rolar dentro do slide */
   .conteudo {
@@ -295,6 +329,8 @@
 <body>
 
 <div id="tela-inicio">
+  <div class="grade-ciber"></div>
+  <div class="scanner"></div>
   <div class="icone-play"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></div>
   <p>Toque para iniciar a apresentação</p>
 </div>
