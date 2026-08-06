@@ -232,7 +232,7 @@
 <script>
   // ---------- conteúdo de cada slide, no padrão visual único da apresentação ----------
   const slidesDados = [
-    { tipo: 'capa', rotulo: 'Haganá Segurança', titulo: 'Treinamento Operacional', sub: 'Condomínio Cyano', numero: '01' },
+    { tipo: 'capaFoto', src: 'capa/capa-cyano.jpg' },
     { tipo: 'capa', rotulo: 'Introdução', titulo: 'Apresentação da Operação', sub: 'Visão geral da estrutura, equipe e procedimentos do empreendimento.', numero: '02' },
     { tipo: 'topicos', rotulo: 'Perfil do Empreendimento', titulo: 'Estrutura Exclusiva', itens: [
       'O Cyano é composto por 3 blocos frontais ao mar: Mare, Sabbia e Cielo.',
@@ -387,6 +387,12 @@
       img.loading = 'lazy';
       wrap.appendChild(img);
       div.appendChild(wrap);
+    } else if (dados.tipo === 'capaFoto') {
+      const img = document.createElement('img');
+      img.src = 'img/' + dados.src;
+      img.alt = 'Capa da apresentação';
+      img.style.width = '100%'; img.style.height = '100%'; img.style.objectFit = 'cover';
+      div.appendChild(img);
     } else if (dados.tipo === 'capa') {
       const c = document.createElement('div');
       c.className = 'conteudo';
