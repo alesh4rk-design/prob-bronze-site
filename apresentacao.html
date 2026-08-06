@@ -128,8 +128,8 @@
   }
 
   .vento-capa span.floco {
-    position: absolute; width: 2.5px; height: 2.5px; border-radius: 50%;
-    background: #fff; box-shadow: 0 0 4px 1px rgba(255,255,255,.7);
+    position: absolute; width: 1.5px; height: 1.5px; border-radius: 50%;
+    background: #fff; box-shadow: 0 0 3px 1px rgba(255,255,255,.6);
     left: -3vw; opacity: 0;
     animation: flocoVoa linear infinite;
   }
@@ -146,8 +146,8 @@
     overflow: hidden; pointer-events: none;
   }
   .ondas-slide svg { position: absolute; bottom: 0; left: 0; width: 100%; height: 100%; }
-  .onda { fill: rgba(230,177,67,.12); }
-  .onda-2 { fill: rgba(230,177,67,.2); }
+  .onda { fill: rgba(230,177,67,.28); }
+  .onda-2 { fill: rgba(230,177,67,.42); }
   .onda-1 { animation: ondaMove 9s ease-in-out infinite; }
   .onda-2 { animation: ondaMove 6.5s ease-in-out infinite reverse; }
   @keyframes ondaMove {
@@ -452,7 +452,7 @@
       for (let i = 0; i < 22; i++) {
         const topo = Math.random() * 92;
         const atraso = (Math.random() * 6).toFixed(2);
-        const duracao = (5 + Math.random() * 4).toFixed(2);
+        const duracao = (14 + Math.random() * 10).toFixed(2);
         ventoHtml += `<span class="floco" style="top:${topo}%; animation-delay:${atraso}s; animation-duration:${duracao}s;"></span>`;
       }
       vento.innerHTML = ventoHtml;
