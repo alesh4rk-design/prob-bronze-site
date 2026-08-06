@@ -146,16 +146,14 @@
     overflow: hidden; pointer-events: none;
   }
   .ondas-slide svg { position: absolute; bottom: 0; left: 0; width: 100%; height: 100%; }
-  .onda { fill: rgba(230,177,67,.28); }
-  .onda-2 { fill: rgba(230,177,67,.42); }
+  .onda { fill: rgba(255,255,255,.16); }
+  .onda-2 { fill: rgba(255,255,255,.28); }
   .onda-1 { animation: ondaMove 9s ease-in-out infinite; }
   .onda-2 { animation: ondaMove 6.5s ease-in-out infinite reverse; }
   @keyframes ondaMove {
     0%, 100% { transform: translateX(0) translateY(0); }
     50% { transform: translateX(-4%) translateY(4px); }
   }
-  .slide-capaFoto .ondas-slide .onda { fill: rgba(255,255,255,.16); }
-  .slide-capaFoto .ondas-slide .onda-2 { fill: rgba(255,255,255,.28); }
 
   /* slide de capa/seção */
   .slide-capa .conteudo { align-items: flex-start; }
