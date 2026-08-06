@@ -8,12 +8,11 @@
   * { box-sizing: border-box; }
   html, body {
     margin: 0; padding: 0; width: 100%; height: 100%;
-    background: #0b0b0d; overflow: hidden; font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    background: #0a0e14; overflow: hidden;
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
   }
 
-  #apresentacao {
-    position: relative; width: 100vw; height: 100vh;
-  }
+  #apresentacao { position: relative; width: 100vw; height: 100vh; }
 
   .slide {
     position: absolute; inset: 0;
@@ -21,56 +20,116 @@
     opacity: 0; visibility: hidden; z-index: 0;
     transform: scale(1.06) translateX(0);
     transition: opacity .6s cubic-bezier(.22,.61,.36,1), transform .6s cubic-bezier(.22,.61,.36,1);
+    background: radial-gradient(ellipse at top left, #101720 0%, #0a0e14 60%);
   }
-  .slide.ativo {
-    opacity: 1; visibility: visible; z-index: 2;
-    transform: scale(1) translateX(0);
-  }
+  .slide.ativo { opacity: 1; visibility: visible; z-index: 2; transform: scale(1) translateX(0); }
   .slide.saindo-esquerda { transform: scale(.94) translateX(-4%); opacity: 0; }
   .slide.saindo-direita  { transform: scale(.94) translateX(4%); opacity: 0; }
 
-  .slide img {
-    max-width: 100%; max-height: 100%; width: auto; height: auto;
-    object-fit: contain;
-    box-shadow: 0 0 60px rgba(0,0,0,.5);
+  /* ---- padrão comum a todo slide de conteúdo ---- */
+  .conteudo {
+    width: min(1100px, 92vw); max-height: 88vh;
+    display: flex; flex-direction: column; gap: 1.4rem;
+  }
+  .rotulo {
+    display: inline-flex; align-items: center; gap: .5rem;
+    font-size: .72rem; font-weight: 700; letter-spacing: .18em; text-transform: uppercase;
+    color: #ffb648; width: fit-content;
+  }
+  .rotulo::before { content: ''; width: 22px; height: 2px; background: #ffb648; display: inline-block; }
+  .titulo {
+    font-size: clamp(1.5rem, 4vw, 2.6rem); font-weight: 800; color: #f4f6f9;
+    line-height: 1.18; letter-spacing: -.01em; margin: 0;
+  }
+  .subtitulo {
+    font-size: clamp(.95rem, 1.6vw, 1.15rem); color: #9fabbd; font-weight: 400;
+    line-height: 1.55; margin: 0; max-width: 62ch;
+  }
+  .linha-divisora {
+    height: 1px; width: 100%;
+    background: linear-gradient(90deg, rgba(255,182,72,.5), rgba(255,182,72,0));
+  }
+
+  .lista-topicos { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: .85rem; }
+  .lista-topicos li {
+    display: flex; align-items: flex-start; gap: .8rem;
+    font-size: clamp(.92rem, 1.5vw, 1.08rem); color: #dbe2ed; line-height: 1.5;
+  }
+  .lista-topicos li::before {
+    content: ''; flex: 0 0 7px; width: 7px; height: 7px; border-radius: 50%;
+    background: #ffb648; margin-top: .55em; box-shadow: 0 0 10px rgba(255,182,72,.6);
+  }
+
+  .grade-cartoes { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1rem; }
+  .cartao {
+    background: rgba(255,255,255,.035); border: 1px solid rgba(255,255,255,.08); border-radius: 14px;
+    padding: 1.3rem 1.4rem; backdrop-filter: blur(6px);
+  }
+  .cartao .rotulo-cartao {
+    font-size: .78rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase;
+    color: #ffb648; margin: 0 0 .5rem;
+  }
+  .cartao p { margin: 0; font-size: .92rem; color: #c3ccd9; line-height: 1.5; }
+
+  /* slide de capa/seção */
+  .slide-capa .conteudo { align-items: flex-start; }
+  .slide-capa .titulo { font-size: clamp(1.9rem, 5.5vw, 3.4rem); }
+  .numero-grande {
+    font-size: clamp(3.5rem, 9vw, 6.5rem); font-weight: 900; color: transparent;
+    -webkit-text-stroke: 1.5px rgba(255,182,72,.4); line-height: 1; letter-spacing: -.02em;
+  }
+
+  /* slide de encerramento */
+  .slide-final .conteudo { align-items: center; text-align: center; }
+  .slide-final .titulo { font-size: clamp(1.7rem, 4.5vw, 2.8rem); }
+  .marca-final {
+    font-size: .85rem; font-weight: 700; letter-spacing: .2em; text-transform: uppercase;
+    color: #ffb648; margin-top: .6rem;
+  }
+
+  .rodape-marca {
+    position: absolute; bottom: 22px; left: 32px; z-index: 1;
+    font-size: .68rem; letter-spacing: .12em; text-transform: uppercase;
+    color: rgba(255,255,255,.28); font-weight: 700; pointer-events: none;
+  }
+
+  /* slide-imagem (organogramas originais do PDF) */
+  .slide-imagem img {
+    max-width: 92%; max-height: 88vh; width: auto; height: auto;
+    object-fit: contain; border-radius: 6px;
+    box-shadow: 0 20px 70px rgba(0,0,0,.55);
+    border: 1px solid rgba(255,255,255,.06);
   }
 
   @keyframes entrarSuave {
-    from { opacity: 0; transform: translateY(10px) scale(1.01); }
-    to   { opacity: 1; transform: translateY(0) scale(1); }
+    from { opacity: 0; transform: translateY(14px); }
+    to   { opacity: 1; transform: translateY(0); }
   }
-  .slide.ativo img { animation: entrarSuave .55s ease both; }
+  .slide.ativo .conteudo, .slide.ativo .slide-imagem img { animation: entrarSuave .6s ease both; }
+  .slide.ativo .lista-topicos li { animation: entrarSuave .5s ease both; }
+  .slide.ativo .lista-topicos li:nth-child(1) { animation-delay: .05s; }
+  .slide.ativo .lista-topicos li:nth-child(2) { animation-delay: .11s; }
+  .slide.ativo .lista-topicos li:nth-child(3) { animation-delay: .17s; }
+  .slide.ativo .lista-topicos li:nth-child(4) { animation-delay: .23s; }
+  .slide.ativo .lista-topicos li:nth-child(5) { animation-delay: .29s; }
+  .slide.ativo .lista-topicos li:nth-child(6) { animation-delay: .35s; }
+  .slide.ativo .lista-topicos li:nth-child(7) { animation-delay: .41s; }
+  .slide.ativo .lista-topicos li:nth-child(8) { animation-delay: .47s; }
 
   /* zonas de clique/toque para navegar */
-  .zona-clique {
-    position: fixed; top: 0; bottom: 0; width: 45%; z-index: 5;
-  }
+  .zona-clique { position: fixed; top: 0; bottom: 0; width: 45%; z-index: 5; }
   #zona-voltar { left: 0; cursor: pointer; }
   #zona-avancar { right: 0; cursor: pointer; }
 
-  /* barra de progresso no topo */
-  #progresso-wrap {
-    position: fixed; top: 0; left: 0; right: 0; height: 3px; z-index: 20;
-    background: rgba(255,255,255,.08);
-  }
-  #progresso {
-    height: 100%; width: 0%;
-    background: linear-gradient(90deg, #f5a623, #ff7a1a);
-    transition: width .35s ease;
-  }
+  #progresso-wrap { position: fixed; top: 0; left: 0; right: 0; height: 3px; z-index: 20; background: rgba(255,255,255,.08); }
+  #progresso { height: 100%; width: 0%; background: linear-gradient(90deg, #ffb648, #ff7a1a); transition: width .35s ease; }
 
-  /* controles inferiores */
   #controles {
     position: fixed; bottom: 0; left: 0; right: 0; z-index: 20;
     display: flex; align-items: center; justify-content: center; gap: 1.2rem;
     padding: .9rem 1rem 1.1rem;
     background: linear-gradient(to top, rgba(0,0,0,.55), transparent);
-    opacity: 0; transition: opacity .3s ease;
-    pointer-events: none;
   }
-  #apresentacao:hover ~ #controles,
-  #controles.visivel { opacity: 1; pointer-events: auto; }
-
   .btn-ctrl {
     width: 42px; height: 42px; border-radius: 50%;
     background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.18);
@@ -80,32 +139,27 @@
   }
   .btn-ctrl:hover { background: rgba(255,255,255,.18); transform: scale(1.06); }
   .btn-ctrl:active { transform: scale(.95); }
+  #contador { color: rgba(255,255,255,.85); font-size: .82rem; letter-spacing: .04em; min-width: 64px; text-align: center; font-variant-numeric: tabular-nums; }
 
-  #contador {
-    color: rgba(255,255,255,.85); font-size: .82rem; letter-spacing: .04em;
-    min-width: 64px; text-align: center; font-variant-numeric: tabular-nums;
-  }
-
-  /* tela inicial de clique para ativar tela cheia (política de navegador) */
   #tela-inicio {
-    position: fixed; inset: 0; z-index: 50;
-    background: #0b0b0d; color: #fff;
-    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1rem;
-    cursor: pointer;
+    position: fixed; inset: 0; z-index: 50; background: #0a0e14; color: #fff;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1rem; cursor: pointer;
   }
-  #tela-inicio h1 { font-size: 1.1rem; font-weight: 600; opacity: .85; letter-spacing: .03em; }
+  #tela-inicio h1 { font-size: 1.15rem; font-weight: 700; opacity: .9; letter-spacing: .03em; text-align: center; padding: 0 1.5rem; }
   #tela-inicio .icone-play {
     width: 76px; height: 76px; border-radius: 50%;
-    background: linear-gradient(135deg, #f5a623, #ff7a1a);
+    background: linear-gradient(135deg, #ffb648, #ff7a1a);
     display: flex; align-items: center; justify-content: center;
     box-shadow: 0 8px 30px rgba(255,122,26,.35);
   }
-  #tela-inicio .icone-play svg { width: 28px; height: 28px; fill: #0b0b0d; margin-left: 4px; }
+  #tela-inicio .icone-play svg { width: 28px; height: 28px; fill: #0a0e14; margin-left: 4px; }
   #tela-inicio p { font-size: .8rem; color: rgba(255,255,255,.45); }
 
   @media (max-width: 640px) {
     .btn-ctrl { width: 38px; height: 38px; font-size: 1rem; }
     #controles { gap: .8rem; }
+    .conteudo { gap: 1rem; }
+    .rodape-marca { left: 18px; bottom: 60px; }
   }
 </style>
 </head>
@@ -124,7 +178,7 @@
 <div id="zona-voltar" class="zona-clique"></div>
 <div id="zona-avancar" class="zona-clique"></div>
 
-<div id="controles" class="visivel">
+<div id="controles">
   <div class="btn-ctrl" id="btn-voltar" title="Slide anterior">‹</div>
   <div id="contador">1 / 1</div>
   <div class="btn-ctrl" id="btn-avancar" title="Próximo slide">›</div>
@@ -132,11 +186,185 @@
 </div>
 
 <script>
-  // Lista de slides (imagens exportadas do PDF/PowerPoint)
-  const totalSlides = 28;
-  const pasta = 'img/slides/';
-  const prefixo = 'slide-';
-  const extensao = '.jpg';
+  // ---------- conteúdo de cada slide, no padrão visual único da apresentação ----------
+  const slidesDados = [
+    { tipo: 'capa', rotulo: 'Haganá Segurança', titulo: 'Treinamento Operacional', sub: 'Condomínio Cyano', numero: '01' },
+    { tipo: 'capa', rotulo: 'Introdução', titulo: 'Apresentação da Operação', sub: 'Visão geral da estrutura, equipe e procedimentos do empreendimento.', numero: '02' },
+    { tipo: 'topicos', rotulo: 'Perfil do Empreendimento', titulo: 'Estrutura Exclusiva', itens: [
+      'O Cyano é composto por 3 blocos frontais ao mar: Mare, Sabbia e Cielo.',
+      'São 45 unidades residenciais de altíssimo padrão.',
+      'Padrão de exigência: público com elevada exigência quanto à hospitalidade, discrição e atendimento personalizado.',
+      'Demanda uma segurança "invisível", mas onipresente.'
+    ]},
+    { tipo: 'imagem', rotulo: 'Estrutura da Equipe', titulo: 'Organograma Operacional', src: 'slide-04.jpg' },
+    { tipo: 'imagem', rotulo: 'Portaria Principal', titulo: 'Posicionamento da Equipe Diurna', src: 'slide-05.jpg' },
+    { tipo: 'imagem', rotulo: 'Portaria de Serviço', titulo: 'Posicionamento da Equipe Diurna', src: 'slide-06.jpg' },
+    { tipo: 'imagem', rotulo: 'Equipe Móvel', titulo: 'Vigias Diurno — Móvel', src: 'slide-07.jpg' },
+    { tipo: 'imagem', rotulo: 'Blocos Mare, Sabbia e Cielo', titulo: 'Equipe de Vigias — Diurno', src: 'slide-08.jpg' },
+    { tipo: 'imagem', rotulo: 'Rendição de Almoço', titulo: 'Plano de Rendição — Vigilante, Vigia Serviço e Vigia', src: 'slide-09.jpg' },
+    { tipo: 'imagem', rotulo: 'Rendição de Almoço', titulo: 'Anagrama de Rendições', src: 'slide-10.jpg' },
+    { tipo: 'imagem', rotulo: 'Rendição de Janta', titulo: 'Concierge e Vigia Principal', src: 'slide-11.jpg' },
+    { tipo: 'imagem', rotulo: 'Portaria Principal', titulo: 'Posicionamento da Equipe Noturna', src: 'slide-12.jpg' },
+    { tipo: 'imagem', rotulo: 'Concierge', titulo: 'Posicionamento Noturno', src: 'slide-13.jpg' },
+    { tipo: 'imagem', rotulo: 'Concierge', titulo: 'Plano de Rendição de Janta', src: 'slide-14.jpg' },
+    { tipo: 'topicos', rotulo: 'Controle de Acesso', titulo: 'Eclusa Veicular Operacional', itens: [
+      'Eclusa de veículo formada por portão e cancela, para triagem de veículos.',
+      'Atuação humana para validação dos acessos.',
+      'Sistema de controle de acesso Intelbras InControl.'
+    ]},
+    { tipo: 'cartoes', rotulo: 'Controle de Acesso', titulo: 'Metodologia dos 4 Pontos Básicos', cartoes: [
+      { r: 'Avisado', t: 'Nenhum acesso é permitido sem a comunicação prévia imediata ao morador ou responsável pela unidade.' },
+      { r: 'Conhecido', t: 'Identificação visual e confirmação de se tratar de um morador ou funcionário do condomínio.' },
+      { r: 'Autorizado', t: 'A entrada só é liberada após a permissão explícita e confirmada, sem exceções por conveniência.' },
+      { r: 'Reconhecido', t: 'Validação rigorosa de documentos, credenciais e biometria, cruzando dados com o sistema de segurança.' }
+    ]},
+    { tipo: 'capa', rotulo: 'Funções e Procedimentos', titulo: 'VSPP Armado', sub: 'Funções e procedimentos do vigilante em serviço de prevenção patrimonial.', numero: '17' },
+    { tipo: 'topicos', rotulo: 'Vigilante Portaria Carga e Descarga — Armado', titulo: 'Principais Atribuições', itens: [
+      'Permanecer em posicionamento ostensivo na Portaria de Serviço.',
+      'Controlar o acesso de prestadores de serviços, fornecedores e veículos de carga e descarga.',
+      'Solicitar ao vigia responsável pelo bloco a confirmação e autorização de acesso.',
+      'Prestar apoio na segurança durante as operações de carga e descarga.',
+      'Registrar a entrada e saída de pessoas e veículos no Livro ATA.',
+      'Comunicar imediatamente qualquer irregularidade ao VSPP ou à administração.'
+    ]},
+    { tipo: 'topicos', rotulo: 'Funções e Procedimentos', titulo: 'Vigia Portaria Carga e Descarga', itens: [
+      'Controlar o acesso de prestadores, fornecedores e veículos de carga e descarga.',
+      'Confirmar as autorizações junto aos respectivos blocos.',
+      'Registrar entradas e saídas conforme procedimento estabelecido.',
+      'Orientar prestadores e fornecedores.',
+      'Comunicar irregularidades e registrar ocorrências.',
+      'Acessos a partir das 09h00.'
+    ]},
+    { tipo: 'topicos', rotulo: 'Funções e Procedimentos', titulo: 'Vigia Portaria Principal', itens: [
+      'Realizar cadastro e controle de acesso de visitantes, prestadores e veículos.',
+      'Efetuar contato com moradores para confirmação das autorizações.',
+      'Orientar visitantes e prestadores quanto aos procedimentos de acesso.',
+      'Manter comunicação com os demais postos por rádio HT.',
+      'Registrar e comunicar ocorrências à supervisão.'
+    ]},
+    { tipo: 'topicos', rotulo: 'Funções e Procedimentos', titulo: 'Vigia Móvel', itens: [
+      'Realizar entregas de encomendas, pedidos e materiais às unidades e aos blocos.',
+      'Acompanhar e direcionar visitantes nas áreas autorizadas.',
+      'Apoiar os Vigias dos blocos nas demandas operacionais.',
+      'Orientar visitantes, prestadores e entregadores.',
+      'Comunicar irregularidades à supervisão.'
+    ]},
+    { tipo: 'topicos', rotulo: 'Mare e Sabbia · 08h00 às 20h00', titulo: 'Vigia Bloco 1 e 2', itens: [
+      'Atende e orienta moradores, visitantes e prestadores.',
+      'Realiza abertura e fiscalização das áreas comuns.',
+      'Efetua agendamentos pelo aplicativo Gyby.',
+      'Realiza liberações de elevadores pelo sistema Intel Control/TKE, mediante confirmação.',
+      'Realiza rondas e verifica conservação, iluminação, banheiros e insumos.',
+      'Registra e comunica irregularidades.'
+    ]},
+    { tipo: 'topicos', rotulo: 'Cielo — Turno Diurno · 08h00 às 22h00', titulo: 'Vigia Bloco 3', itens: [
+      'Realizar o controle e a entrega de toalhas para utilização da sauna e piscina/praia.',
+      'Controlar toalhas brancas para sauna e toalhas listradas para piscina/praia.',
+      'Manter o controle das entregas por meio de planilha, com comunicação no grupo de WhatsApp do bloco.',
+      'Zelar pela organização e controle das áreas sob sua responsabilidade.',
+      'Registrar e comunicar eventuais irregularidades à administração ou supervisão.',
+      'Também desempenha as mesmas funções operacionais dos Vigias dos Blocos 1 (Mare) e 2 (Sabbia).'
+    ]},
+    { tipo: 'topicos', rotulo: 'Funções e Procedimentos', titulo: 'Concierge Noturno', itens: [
+      'Abertura e fechamento dos espaços Spa, Vestiários, Piscina, Sauna Seca e a Vapor (05h30 às 22h00).',
+      'Verificação na bomba de pressurização, localizada próximo ao terraço de todos os blocos.',
+      'Verificação nas casas de bombas de incêndio de todos os blocos.',
+      'Rondas em todas as escadas de emergência dos blocos.',
+      'Verificação dos espaços Kids, Sala de Jogos, Brinquedoteca e Parquinho.',
+      'Vistoria no espaço Pet Place, sinalizando não conformidades no grupo de WhatsApp da supervisão.',
+      'Verificação do terraço e, se necessário, do nível de água da caixa d’água.',
+      'Em falta de energia, ao retorno liga manualmente os exaustores da piscina indoor nos locais sinalizados.'
+    ]},
+    { tipo: 'topicos', rotulo: 'Horário: 19h00 às 07h00', titulo: 'Concierge Noturno — Rotina', itens: [
+      'Atender moradores e realizar entrega de pedidos, encomendas e correspondências.',
+      'Acompanhar e direcionar visitantes.',
+      'Prestar apoio operacional ao Clube do Bloco 3 e às áreas comuns.',
+      'Realizar controle de toalhas, agendamentos e liberações de elevadores.',
+      'Ao assumir o serviço às 19h, atua como vigia móvel até às 20h.',
+      'A partir das 20h, realiza rendições do vigia do bloco 3 e efetua o fechamento da área às 22h00.',
+      'Acompanhar demandas de manutenção no período noturno; apoia rendições de RF do efetivo noturno.',
+      'Realiza rondas após as rendições e registra ocorrências e irregularidades.'
+    ]},
+    { tipo: 'topicos', rotulo: 'Academia', titulo: 'Quadro de Disjuntores', itens: [
+      'Local dentro da Academia onde está localizado o quadro de disjuntores dos equipamentos.',
+      'Ligados às 05h30 e desligados às 22h00.',
+      'Sinalizados com fita branca.'
+    ]},
+    { tipo: 'capa', rotulo: 'Pré-Implantação', titulo: 'Treinamento de Orientação Operacional', sub: 'Etapa final de preparação da equipe antes do início das atividades.', numero: '27' },
+    { tipo: 'final', titulo: 'Conclusão e Compromisso', sub: 'O sucesso da operação Cyano depende da integração perfeita entre segurança patrimonial, hospitalidade de luxo e tecnologia de ponta.', marca: 'Haganá Segurança — Referência em Proteção e Serviço' }
+  ];
+
+  const pastaImagens = 'img/slides/';
+
+  function criarSlide(dados) {
+    const div = document.createElement('div');
+    div.className = 'slide slide-' + dados.tipo;
+
+    if (dados.tipo === 'imagem') {
+      const wrap = document.createElement('div');
+      wrap.className = 'slide-imagem';
+      wrap.style.display = 'flex'; wrap.style.flexDirection = 'column'; wrap.style.alignItems = 'center'; wrap.style.gap = '1rem';
+      const rot = document.createElement('div');
+      rot.className = 'rotulo'; rot.style.position = 'absolute'; rot.style.top = '32px'; rot.style.left = '40px';
+      rot.textContent = dados.rotulo;
+      div.appendChild(rot);
+      const img = document.createElement('img');
+      img.src = pastaImagens + dados.src;
+      img.alt = dados.titulo;
+      img.loading = 'lazy';
+      wrap.appendChild(img);
+      div.appendChild(wrap);
+    } else if (dados.tipo === 'capa') {
+      const c = document.createElement('div');
+      c.className = 'conteudo';
+      c.innerHTML = `
+        <span class="rotulo">${dados.rotulo}</span>
+        <h1 class="titulo">${dados.titulo}</h1>
+        ${dados.sub ? `<p class="subtitulo">${dados.sub}</p>` : ''}
+        <div class="linha-divisora"></div>
+      `;
+      div.appendChild(c);
+    } else if (dados.tipo === 'topicos') {
+      const c = document.createElement('div');
+      c.className = 'conteudo';
+      const lis = dados.itens.map(t => `<li>${t}</li>`).join('');
+      c.innerHTML = `
+        <span class="rotulo">${dados.rotulo}</span>
+        <h1 class="titulo">${dados.titulo}</h1>
+        <div class="linha-divisora"></div>
+        <ul class="lista-topicos">${lis}</ul>
+      `;
+      div.appendChild(c);
+    } else if (dados.tipo === 'cartoes') {
+      const c = document.createElement('div');
+      c.className = 'conteudo';
+      const cards = dados.cartoes.map(x => `<div class="cartao"><p class="rotulo-cartao">${x.r}</p><p>${x.t}</p></div>`).join('');
+      c.innerHTML = `
+        <span class="rotulo">${dados.rotulo}</span>
+        <h1 class="titulo">${dados.titulo}</h1>
+        <div class="linha-divisora"></div>
+        <div class="grade-cartoes">${cards}</div>
+      `;
+      div.appendChild(c);
+    } else if (dados.tipo === 'final') {
+      const c = document.createElement('div');
+      c.className = 'conteudo';
+      c.innerHTML = `
+        <h1 class="titulo">${dados.titulo}</h1>
+        <p class="subtitulo">${dados.sub}</p>
+        <div class="linha-divisora" style="width:120px"></div>
+        <span class="marca-final">${dados.marca}</span>
+      `;
+      div.appendChild(c);
+    }
+
+    const marca = document.createElement('div');
+    marca.className = 'rodape-marca';
+    marca.textContent = 'Haganá Segurança · Treinamento Cyano';
+    div.appendChild(marca);
+
+    return div;
+  }
 
   const apresentacao = document.getElementById('apresentacao');
   const contador = document.getElementById('contador');
@@ -144,19 +372,13 @@
   let atual = 0;
   let slides = [];
 
-  function pad(n) { return String(n).padStart(2, '0'); }
-
-  for (let i = 1; i <= totalSlides; i++) {
-    const div = document.createElement('div');
-    div.className = 'slide' + (i === 1 ? ' ativo' : '');
-    const img = document.createElement('img');
-    img.src = pasta + prefixo + pad(i) + extensao;
-    img.alt = 'Slide ' + i;
-    if (i > 2) img.loading = 'lazy';
-    div.appendChild(img);
-    apresentacao.appendChild(div);
-    slides.push(div);
-  }
+  slidesDados.forEach((dados, i) => {
+    const el = criarSlide(dados);
+    if (i === 0) el.classList.add('ativo');
+    apresentacao.appendChild(el);
+    slides.push(el);
+  });
+  const totalSlides = slides.length;
 
   function atualizarUI() {
     contador.textContent = (atual + 1) + ' / ' + totalSlides;
