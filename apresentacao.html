@@ -80,19 +80,19 @@
     background: #e6b143; margin-top: .55em; box-shadow: 0 0 8px rgba(230,177,67,.6);
   }
 
-  .grade-equipe { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 1.3rem; }
-  .pessoa { display: flex; flex-direction: column; align-items: center; text-align: center; gap: .55rem; }
+  .grade-equipe { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 1.5rem; }
+  .pessoa { display: flex; flex-direction: column; align-items: center; text-align: center; gap: .7rem; }
   .foto-pessoa {
-    position: relative; width: 96px; height: 96px; border-radius: 50%; overflow: hidden;
+    position: relative; width: 148px; height: 148px; border-radius: 50%; overflow: hidden;
     background: linear-gradient(135deg, #2a4a70, #1c3a5e);
-    border: 2px solid rgba(230,177,67,.55);
+    border: 3px solid rgba(230,177,67,.55);
     display: flex; align-items: center; justify-content: center;
-    box-shadow: 0 4px 14px rgba(0,0,0,.25);
+    box-shadow: 0 6px 20px rgba(0,0,0,.3);
   }
   .foto-pessoa img { width: 100%; height: 100%; object-fit: cover; position: absolute; inset: 0; }
-  .foto-pessoa .iniciais { font-size: 1.3rem; font-weight: 800; color: #e6b143; letter-spacing: .02em; }
-  .pessoa .nome-pessoa { font-size: .88rem; font-weight: 700; color: #f6f8fb; line-height: 1.3; }
-  .pessoa .cargo-pessoa { font-size: .74rem; color: #e6b143; font-weight: 600; letter-spacing: .03em; text-transform: uppercase; }
+  .foto-pessoa .iniciais { font-size: 2rem; font-weight: 800; color: #e6b143; letter-spacing: .02em; }
+  .pessoa .nome-pessoa { font-size: .98rem; font-weight: 700; color: #f6f8fb; line-height: 1.3; }
+  .pessoa .cargo-pessoa { font-size: .78rem; color: #e6b143; font-weight: 600; letter-spacing: .03em; text-transform: uppercase; }
 
   .grade-cartoes { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1rem; }
   .cartao {
@@ -107,22 +107,38 @@
 
   /* animações da capa: vento + ondas */
   .vento-capa { position: absolute; inset: 0; z-index: 2; overflow: hidden; pointer-events: none; }
-  .vento-capa span {
-    position: absolute; height: 1px; width: 26vw;
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,.85), transparent);
+  .vento-capa span.risco {
+    position: absolute; height: 2px; width: 26vw;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,.95), transparent);
     left: -30vw; opacity: 0; border-radius: 2px;
-    animation: ventoPassa 7s linear infinite;
+    animation: ventoPassa 6s linear infinite;
   }
-  .vento-capa span:nth-child(1) { top: 18%; animation-delay: 0s; width: 22vw; }
-  .vento-capa span:nth-child(2) { top: 34%; animation-delay: 1.6s; width: 30vw; }
-  .vento-capa span:nth-child(3) { top: 52%; animation-delay: 3.1s; width: 18vw; }
-  .vento-capa span:nth-child(4) { top: 65%; animation-delay: 4.5s; width: 26vw; }
-  .vento-capa span:nth-child(5) { top: 78%; animation-delay: 5.8s; width: 20vw; }
+  .vento-capa span.risco:nth-of-type(1) { top: 14%; animation-delay: 0s; width: 24vw; }
+  .vento-capa span.risco:nth-of-type(2) { top: 28%; animation-delay: 1.2s; width: 32vw; }
+  .vento-capa span.risco:nth-of-type(3) { top: 44%; animation-delay: 2.3s; width: 20vw; }
+  .vento-capa span.risco:nth-of-type(4) { top: 58%; animation-delay: 3.4s; width: 28vw; }
+  .vento-capa span.risco:nth-of-type(5) { top: 71%; animation-delay: 4.4s; width: 22vw; }
+  .vento-capa span.risco:nth-of-type(6) { top: 22%; animation-delay: 5s; width: 18vw; }
+  .vento-capa span.risco:nth-of-type(7) { top: 84%; animation-delay: 2.8s; width: 24vw; }
   @keyframes ventoPassa {
     0%   { transform: translateX(0); opacity: 0; }
-    8%   { opacity: .55; }
-    45%  { opacity: .3; }
+    8%   { opacity: .8; }
+    45%  { opacity: .45; }
     100% { transform: translateX(150vw); opacity: 0; }
+  }
+
+  .vento-capa span.floco {
+    position: absolute; width: 5px; height: 5px; border-radius: 50%;
+    background: #fff; box-shadow: 0 0 6px 1px rgba(255,255,255,.8);
+    left: -3vw; opacity: 0;
+    animation: flocoVoa linear infinite;
+  }
+  @keyframes flocoVoa {
+    0%   { transform: translate(0, 0); opacity: 0; }
+    10%  { opacity: .9; }
+    50%  { transform: translate(70vw, -3vh); opacity: .7; }
+    90%  { opacity: .3; }
+    100% { transform: translate(150vw, 4vh); opacity: 0; }
   }
 
   .ondas-capa {
@@ -430,7 +446,14 @@
 
       const vento = document.createElement('div');
       vento.className = 'vento-capa';
-      vento.innerHTML = '<span></span><span></span><span></span><span></span><span></span>';
+      let ventoHtml = '<span class="risco"></span>'.repeat(7);
+      for (let i = 0; i < 22; i++) {
+        const topo = Math.random() * 92;
+        const atraso = (Math.random() * 6).toFixed(2);
+        const duracao = (5 + Math.random() * 4).toFixed(2);
+        ventoHtml += `<span class="floco" style="top:${topo}%; animation-delay:${atraso}s; animation-duration:${duracao}s;"></span>`;
+      }
+      vento.innerHTML = ventoHtml;
       div.appendChild(vento);
 
       const ondas = document.createElement('div');
