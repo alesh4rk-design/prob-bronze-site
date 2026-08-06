@@ -8,7 +8,7 @@
   * { box-sizing: border-box; }
   html, body {
     margin: 0; padding: 0; width: 100%; height: 100%;
-    background: #0a0e14; overflow: hidden;
+    background: #ffffff; overflow: hidden;
     font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
   }
 
@@ -20,7 +20,7 @@
     opacity: 0; visibility: hidden; z-index: 0;
     transform: scale(1.06) translateX(0);
     transition: opacity .6s cubic-bezier(.22,.61,.36,1), transform .6s cubic-bezier(.22,.61,.36,1);
-    background: radial-gradient(ellipse at top left, #101720 0%, #0a0e14 60%);
+    background: radial-gradient(ellipse at top left, #fffdf8 0%, #ffffff 60%);
   }
   .slide.ativo { opacity: 1; visibility: visible; z-index: 2; transform: scale(1) translateX(0); }
   .slide.saindo-esquerda { transform: scale(.94) translateX(-4%); opacity: 0; }
@@ -34,49 +34,63 @@
   .rotulo {
     display: inline-flex; align-items: center; gap: .5rem;
     font-size: .72rem; font-weight: 700; letter-spacing: .18em; text-transform: uppercase;
-    color: #ffb648; width: fit-content;
+    color: #b8860b; width: fit-content;
   }
-  .rotulo::before { content: ''; width: 22px; height: 2px; background: #ffb648; display: inline-block; }
+  .rotulo::before { content: ''; width: 22px; height: 2px; background: #c9971f; display: inline-block; }
   .titulo {
-    font-size: clamp(1.5rem, 4vw, 2.6rem); font-weight: 800; color: #f4f6f9;
+    font-size: clamp(1.5rem, 4vw, 2.6rem); font-weight: 800; color: #1c1b18;
     line-height: 1.18; letter-spacing: -.01em; margin: 0;
   }
   .subtitulo {
-    font-size: clamp(.95rem, 1.6vw, 1.15rem); color: #9fabbd; font-weight: 400;
+    font-size: clamp(.95rem, 1.6vw, 1.15rem); color: #6b6355; font-weight: 400;
     line-height: 1.55; margin: 0; max-width: 62ch;
   }
   .linha-divisora {
     height: 1px; width: 100%;
-    background: linear-gradient(90deg, rgba(255,182,72,.5), rgba(255,182,72,0));
+    background: linear-gradient(90deg, rgba(201,151,31,.6), rgba(201,151,31,0));
   }
 
   .lista-topicos { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: .85rem; }
   .lista-topicos li {
     display: flex; align-items: flex-start; gap: .8rem;
-    font-size: clamp(.92rem, 1.5vw, 1.08rem); color: #dbe2ed; line-height: 1.5;
+    font-size: clamp(.92rem, 1.5vw, 1.08rem); color: #38352e; line-height: 1.5;
   }
   .lista-topicos li::before {
     content: ''; flex: 0 0 7px; width: 7px; height: 7px; border-radius: 50%;
-    background: #ffb648; margin-top: .55em; box-shadow: 0 0 10px rgba(255,182,72,.6);
+    background: #c9971f; margin-top: .55em; box-shadow: 0 0 8px rgba(201,151,31,.5);
   }
+
+  .grade-equipe { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 1.3rem; }
+  .pessoa { display: flex; flex-direction: column; align-items: center; text-align: center; gap: .55rem; }
+  .foto-pessoa {
+    position: relative; width: 96px; height: 96px; border-radius: 50%; overflow: hidden;
+    background: linear-gradient(135deg, #fbeecb, #f3e0ad);
+    border: 2px solid rgba(201,151,31,.45);
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 4px 14px rgba(180,140,40,.15);
+  }
+  .foto-pessoa img { width: 100%; height: 100%; object-fit: cover; position: absolute; inset: 0; }
+  .foto-pessoa .iniciais { font-size: 1.3rem; font-weight: 800; color: #9a7315; letter-spacing: .02em; }
+  .pessoa .nome-pessoa { font-size: .88rem; font-weight: 700; color: #1c1b18; line-height: 1.3; }
+  .pessoa .cargo-pessoa { font-size: .74rem; color: #9a7315; font-weight: 600; letter-spacing: .03em; text-transform: uppercase; }
 
   .grade-cartoes { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1rem; }
   .cartao {
-    background: rgba(255,255,255,.035); border: 1px solid rgba(255,255,255,.08); border-radius: 14px;
-    padding: 1.3rem 1.4rem; backdrop-filter: blur(6px);
+    background: #fffaf0; border: 1px solid rgba(201,151,31,.28); border-radius: 14px;
+    padding: 1.3rem 1.4rem; box-shadow: 0 2px 14px rgba(180,140,40,.08);
   }
   .cartao .rotulo-cartao {
     font-size: .78rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase;
-    color: #ffb648; margin: 0 0 .5rem;
+    color: #b8860b; margin: 0 0 .5rem;
   }
-  .cartao p { margin: 0; font-size: .92rem; color: #c3ccd9; line-height: 1.5; }
+  .cartao p { margin: 0; font-size: .92rem; color: #4a4436; line-height: 1.5; }
 
   /* slide de capa/seção */
   .slide-capa .conteudo { align-items: flex-start; }
   .slide-capa .titulo { font-size: clamp(1.9rem, 5.5vw, 3.4rem); }
   .numero-grande {
     font-size: clamp(3.5rem, 9vw, 6.5rem); font-weight: 900; color: transparent;
-    -webkit-text-stroke: 1.5px rgba(255,182,72,.4); line-height: 1; letter-spacing: -.02em;
+    -webkit-text-stroke: 1.5px rgba(201,151,31,.4); line-height: 1; letter-spacing: -.02em;
   }
 
   /* slide de encerramento */
@@ -84,21 +98,21 @@
   .slide-final .titulo { font-size: clamp(1.7rem, 4.5vw, 2.8rem); }
   .marca-final {
     font-size: .85rem; font-weight: 700; letter-spacing: .2em; text-transform: uppercase;
-    color: #ffb648; margin-top: .6rem;
+    color: #b8860b; margin-top: .6rem;
   }
 
   .rodape-marca {
     position: absolute; bottom: 22px; left: 32px; z-index: 1;
     font-size: .68rem; letter-spacing: .12em; text-transform: uppercase;
-    color: rgba(255,255,255,.28); font-weight: 700; pointer-events: none;
+    color: rgba(0,0,0,.28); font-weight: 700; pointer-events: none;
   }
 
   /* slide-imagem (organogramas originais do PDF) */
   .slide-imagem img {
     max-width: 92%; max-height: 88vh; width: auto; height: auto;
     object-fit: contain; border-radius: 6px;
-    box-shadow: 0 20px 70px rgba(0,0,0,.55);
-    border: 1px solid rgba(255,255,255,.06);
+    box-shadow: 0 16px 50px rgba(150,120,40,.18);
+    border: 1px solid rgba(201,151,31,.25);
   }
 
   @keyframes entrarSuave {
@@ -121,39 +135,39 @@
   #zona-voltar { left: 0; cursor: pointer; }
   #zona-avancar { right: 0; cursor: pointer; }
 
-  #progresso-wrap { position: fixed; top: 0; left: 0; right: 0; height: 3px; z-index: 20; background: rgba(255,255,255,.08); }
-  #progresso { height: 100%; width: 0%; background: linear-gradient(90deg, #ffb648, #ff7a1a); transition: width .35s ease; }
+  #progresso-wrap { position: fixed; top: 0; left: 0; right: 0; height: 3px; z-index: 20; background: rgba(0,0,0,.06); }
+  #progresso { height: 100%; width: 0%; background: linear-gradient(90deg, #c9971f, #e6b143); transition: width .35s ease; }
 
   #controles {
     position: fixed; bottom: 0; left: 0; right: 0; z-index: 20;
     display: flex; align-items: center; justify-content: center; gap: 1.2rem;
     padding: .9rem 1rem 1.1rem;
-    background: linear-gradient(to top, rgba(0,0,0,.55), transparent);
+    background: linear-gradient(to top, rgba(255,255,255,.9), transparent);
   }
   .btn-ctrl {
     width: 42px; height: 42px; border-radius: 50%;
-    background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.18);
-    color: #fff; display: flex; align-items: center; justify-content: center;
-    cursor: pointer; font-size: 1.1rem; backdrop-filter: blur(6px);
+    background: #fffaf0; border: 1px solid rgba(201,151,31,.35);
+    color: #7a5c10; display: flex; align-items: center; justify-content: center;
+    cursor: pointer; font-size: 1.1rem;
     transition: background .2s ease, transform .15s ease;
   }
-  .btn-ctrl:hover { background: rgba(255,255,255,.18); transform: scale(1.06); }
+  .btn-ctrl:hover { background: #fbeecb; transform: scale(1.06); }
   .btn-ctrl:active { transform: scale(.95); }
-  #contador { color: rgba(255,255,255,.85); font-size: .82rem; letter-spacing: .04em; min-width: 64px; text-align: center; font-variant-numeric: tabular-nums; }
+  #contador { color: #5c5445; font-size: .82rem; letter-spacing: .04em; min-width: 64px; text-align: center; font-variant-numeric: tabular-nums; }
 
   #tela-inicio {
-    position: fixed; inset: 0; z-index: 50; background: #0a0e14; color: #fff;
+    position: fixed; inset: 0; z-index: 50; background: #ffffff; color: #1c1b18;
     display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1rem; cursor: pointer;
   }
   #tela-inicio h1 { font-size: 1.15rem; font-weight: 700; opacity: .9; letter-spacing: .03em; text-align: center; padding: 0 1.5rem; }
   #tela-inicio .icone-play {
     width: 76px; height: 76px; border-radius: 50%;
-    background: linear-gradient(135deg, #ffb648, #ff7a1a);
+    background: linear-gradient(135deg, #c9971f, #e6b143);
     display: flex; align-items: center; justify-content: center;
-    box-shadow: 0 8px 30px rgba(255,122,26,.35);
+    box-shadow: 0 8px 30px rgba(201,151,31,.3);
   }
-  #tela-inicio .icone-play svg { width: 28px; height: 28px; fill: #0a0e14; margin-left: 4px; }
-  #tela-inicio p { font-size: .8rem; color: rgba(255,255,255,.45); }
+  #tela-inicio .icone-play svg { width: 28px; height: 28px; fill: #fff; margin-left: 4px; }
+  #tela-inicio p { font-size: .8rem; color: rgba(0,0,0,.4); }
 
   @media (max-width: 640px) {
     .btn-ctrl { width: 38px; height: 38px; font-size: 1rem; }
@@ -197,15 +211,45 @@
       'Demanda uma segurança "invisível", mas onipresente.'
     ]},
     { tipo: 'imagem', rotulo: 'Estrutura da Equipe', titulo: 'Organograma Operacional', src: 'slide-04.jpg' },
-    { tipo: 'imagem', rotulo: 'Portaria Principal', titulo: 'Posicionamento da Equipe Diurna', src: 'slide-05.jpg' },
-    { tipo: 'imagem', rotulo: 'Portaria de Serviço', titulo: 'Posicionamento da Equipe Diurna', src: 'slide-06.jpg' },
-    { tipo: 'imagem', rotulo: 'Equipe Móvel', titulo: 'Vigias Diurno — Móvel', src: 'slide-07.jpg' },
-    { tipo: 'imagem', rotulo: 'Blocos Mare, Sabbia e Cielo', titulo: 'Equipe de Vigias — Diurno', src: 'slide-08.jpg' },
+    { tipo: 'equipe', rotulo: 'Portaria Principal · Diurno', titulo: 'Posicionamento da Equipe Diurna', pessoas: [
+      { nome: 'Jefferson Pereira', cargo: 'Vigia', foto: 'jefferson-pereira.jpg' },
+      { nome: 'Paulo Henrique', cargo: 'Vigia', foto: 'paulo-henrique.jpg' },
+      { nome: 'Alexandre Gomes', cargo: 'VSPP', foto: 'alexandre-gomes.jpg' },
+      { nome: 'Pedro dos Santos', cargo: 'VSPP', foto: 'pedro-dos-santos.jpg' }
+    ]},
+    { tipo: 'equipe', rotulo: 'Portaria de Serviço · Diurno', titulo: 'Posicionamento da Equipe Diurna', pessoas: [
+      { nome: 'Marcos Vinicius', cargo: 'Vigilante', foto: 'marcos-vinicius.jpg' },
+      { nome: 'Francisco Chagas', cargo: 'Vigilante', foto: 'francisco-chagas.jpg' },
+      { nome: 'Alexandre Gomes', cargo: 'Vigia', foto: 'alexandre-gomes-2.jpg' },
+      { nome: 'Pedro dos Santos', cargo: 'Vigia', foto: 'pedro-dos-santos-2.jpg' }
+    ]},
+    { tipo: 'equipe', rotulo: 'Equipe Móvel · Diurno', titulo: 'Vigias Diurno — Móvel', pessoas: [
+      { nome: 'Gabriel Alves', cargo: 'Vigia Móvel', foto: 'gabriel-alves.jpg' },
+      { nome: 'Thiago da Silva', cargo: 'Vigia Móvel', foto: 'thiago-da-silva.jpg' }
+    ]},
+    { tipo: 'equipe', rotulo: 'Blocos Mare, Sabbia e Cielo · Diurno', titulo: 'Equipe de Vigias — Diurno', pessoas: [
+      { nome: 'Thiago Alves', cargo: 'Vigia — Bloco 1', foto: 'thiago-alves.jpg' },
+      { nome: 'Denilson Jorge', cargo: 'Vigia — Bloco 1', foto: 'denilson-jorge.jpg' },
+      { nome: 'Mateus Teixeira', cargo: 'Vigia — Bloco 2', foto: 'mateus-teixeira.jpg' },
+      { nome: 'Laert Silva', cargo: 'Vigia — Bloco 2', foto: 'laert-silva.jpg' },
+      { nome: 'Samuel Victor', cargo: 'Vigia — Bloco 3', foto: 'samuel-victor.jpg' },
+      { nome: 'Leonardo Souza', cargo: 'Vigia — Bloco 3', foto: 'leonardo-souza.jpg' }
+    ]},
     { tipo: 'imagem', rotulo: 'Rendição de Almoço', titulo: 'Plano de Rendição — Vigilante, Vigia Serviço e Vigia', src: 'slide-09.jpg' },
     { tipo: 'imagem', rotulo: 'Rendição de Almoço', titulo: 'Anagrama de Rendições', src: 'slide-10.jpg' },
     { tipo: 'imagem', rotulo: 'Rendição de Janta', titulo: 'Concierge e Vigia Principal', src: 'slide-11.jpg' },
-    { tipo: 'imagem', rotulo: 'Portaria Principal', titulo: 'Posicionamento da Equipe Noturna', src: 'slide-12.jpg' },
-    { tipo: 'imagem', rotulo: 'Concierge', titulo: 'Posicionamento Noturno', src: 'slide-13.jpg' },
+    { tipo: 'equipe', rotulo: 'Portaria Principal · Noturno', titulo: 'Posicionamento da Equipe Noturna', pessoas: [
+      { nome: 'Talles Moreira', cargo: 'Vigia', foto: 'talles-moreira.jpg' },
+      { nome: 'Daniel Victor', cargo: 'Vigia', foto: 'daniel-victor.jpg' },
+      { nome: 'Jonathas Paulino', cargo: 'VSPP', foto: 'jonathas-paulino.jpg' },
+      { nome: 'Renan Luiz', cargo: 'VSPP', foto: 'renan-luiz.jpg' },
+      { nome: 'Ruan Diego', cargo: 'Vigilante', foto: 'ruan-diego.jpg' },
+      { nome: 'Igor Sales', cargo: 'Vigilante', foto: 'igor-sales.jpg' }
+    ]},
+    { tipo: 'equipe', rotulo: 'Concierge · Noturno', titulo: 'Posicionamento Noturno', pessoas: [
+      { nome: 'Amilton Mesquita', cargo: 'Concierge', foto: 'amilton-mesquita.jpg' },
+      { nome: 'Daniel Willian', cargo: 'Concierge', foto: 'daniel-willian.jpg' }
+    ]},
     { tipo: 'imagem', rotulo: 'Concierge', titulo: 'Plano de Rendição de Janta', src: 'slide-14.jpg' },
     { tipo: 'topicos', rotulo: 'Controle de Acesso', titulo: 'Eclusa Veicular Operacional', itens: [
       'Eclusa de veículo formada por portão e cancela, para triagem de veículos.',
@@ -333,6 +377,27 @@
         <h1 class="titulo">${dados.titulo}</h1>
         <div class="linha-divisora"></div>
         <ul class="lista-topicos">${lis}</ul>
+      `;
+      div.appendChild(c);
+    } else if (dados.tipo === 'equipe') {
+      const c = document.createElement('div');
+      c.className = 'conteudo';
+      const iniciaisDe = (nome) => nome.split(' ').filter(Boolean).slice(0, 2).map(p => p[0]).join('').toUpperCase();
+      const cards = dados.pessoas.map(p => `
+        <div class="pessoa">
+          <div class="foto-pessoa">
+            <span class="iniciais">${iniciaisDe(p.nome)}</span>
+            <img src="img/equipe/${p.foto}" alt="${p.nome}" onerror="this.style.display='none'">
+          </div>
+          <span class="nome-pessoa">${p.nome}</span>
+          <span class="cargo-pessoa">${p.cargo}</span>
+        </div>
+      `).join('');
+      c.innerHTML = `
+        <span class="rotulo">${dados.rotulo}</span>
+        <h1 class="titulo">${dados.titulo}</h1>
+        <div class="linha-divisora"></div>
+        <div class="grade-equipe">${cards}</div>
       `;
       div.appendChild(c);
     } else if (dados.tipo === 'cartoes') {
