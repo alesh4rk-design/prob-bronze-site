@@ -107,6 +107,7 @@
   }
   .linha-com-fotos .conteudo { width: auto; flex: 1 1 auto; min-width: 0; }
   .coluna-fotos { display: flex; flex-direction: column; gap: .8rem; flex: 0 0 150px; }
+  .coluna-fotos-grande { flex: 0 0 260px; gap: 1.1rem; }
   .foto-lateral {
     border-radius: 10px; overflow: hidden; aspect-ratio: 4/3;
     border: 1px solid rgba(230,177,67,.35); box-shadow: 0 8px 24px rgba(0,0,0,.35);
@@ -603,7 +604,7 @@
         const linha = document.createElement('div');
         linha.className = 'linha-com-fotos';
         const coluna = document.createElement('div');
-        coluna.className = 'coluna-fotos';
+        coluna.className = 'coluna-fotos' + (dados.fotos.length <= 2 ? ' coluna-fotos-grande' : '');
         coluna.innerHTML = dados.fotos.map(f => `<div class="foto-lateral"><img src="img/fotos/${f}" alt="${dados.titulo}" loading="lazy"></div>`).join('');
         div.appendChild(linha);
         linha.appendChild(c);
@@ -626,7 +627,7 @@
         linha.className = 'linha-com-fotos';
         c.classList.add('conteudo-estreito');
         const coluna = document.createElement('div');
-        coluna.className = 'coluna-fotos';
+        coluna.className = 'coluna-fotos' + (dados.fotos.length <= 2 ? ' coluna-fotos-grande' : '');
         coluna.innerHTML = dados.fotos.map(f => `<div class="foto-lateral"><img src="img/fotos/${f}" alt="${dados.titulo}" loading="lazy"></div>`).join('');
         div.appendChild(linha);
         linha.appendChild(c);
