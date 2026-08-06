@@ -3,12 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Apresentação</title>
+<title>Treinamento Operacional Cyano</title>
 <style>
   * { box-sizing: border-box; }
   html, body {
     margin: 0; padding: 0; width: 100%; height: 100%;
-    background: #000; overflow: hidden; font-family: system-ui, sans-serif;
+    background: #0b0b0d; overflow: hidden; font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
   }
 
   #apresentacao {
@@ -18,55 +18,166 @@
   .slide {
     position: absolute; inset: 0;
     display: flex; align-items: center; justify-content: center;
-    opacity: 0; visibility: hidden; transition: opacity .5s ease;
+    opacity: 0; visibility: hidden; z-index: 0;
+    transform: scale(1.06) translateX(0);
+    transition: opacity .6s cubic-bezier(.22,.61,.36,1), transform .6s cubic-bezier(.22,.61,.36,1);
   }
-  .slide.ativo { opacity: 1; visibility: visible; }
+  .slide.ativo {
+    opacity: 1; visibility: visible; z-index: 2;
+    transform: scale(1) translateX(0);
+  }
+  .slide.saindo-esquerda { transform: scale(.94) translateX(-4%); opacity: 0; }
+  .slide.saindo-direita  { transform: scale(.94) translateX(4%); opacity: 0; }
 
   .slide img {
-    max-width: 100%; max-height: 100%; width: 100%; height: 100%;
-    object-fit: contain; /* troque para "cover" se quiser preencher a tela sem sobras */
-    background: #000;
+    max-width: 100%; max-height: 100%; width: auto; height: auto;
+    object-fit: contain;
+    box-shadow: 0 0 60px rgba(0,0,0,.5);
   }
 
-  /* área invisível para clique/toque avançar (lado direito) e voltar (lado esquerdo) */
+  @keyframes entrarSuave {
+    from { opacity: 0; transform: translateY(10px) scale(1.01); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+  }
+  .slide.ativo img { animation: entrarSuave .55s ease both; }
+
+  /* zonas de clique/toque para navegar */
   .zona-clique {
-    position: fixed; top: 0; bottom: 0; width: 50%; z-index: 5;
+    position: fixed; top: 0; bottom: 0; width: 45%; z-index: 5;
   }
   #zona-voltar { left: 0; cursor: pointer; }
   #zona-avancar { right: 0; cursor: pointer; }
 
+  /* barra de progresso no topo */
+  #progresso-wrap {
+    position: fixed; top: 0; left: 0; right: 0; height: 3px; z-index: 20;
+    background: rgba(255,255,255,.08);
+  }
+  #progresso {
+    height: 100%; width: 0%;
+    background: linear-gradient(90deg, #f5a623, #ff7a1a);
+    transition: width .35s ease;
+  }
+
+  /* controles inferiores */
+  #controles {
+    position: fixed; bottom: 0; left: 0; right: 0; z-index: 20;
+    display: flex; align-items: center; justify-content: center; gap: 1.2rem;
+    padding: .9rem 1rem 1.1rem;
+    background: linear-gradient(to top, rgba(0,0,0,.55), transparent);
+    opacity: 0; transition: opacity .3s ease;
+    pointer-events: none;
+  }
+  #apresentacao:hover ~ #controles,
+  #controles.visivel { opacity: 1; pointer-events: auto; }
+
+  .btn-ctrl {
+    width: 42px; height: 42px; border-radius: 50%;
+    background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.18);
+    color: #fff; display: flex; align-items: center; justify-content: center;
+    cursor: pointer; font-size: 1.1rem; backdrop-filter: blur(6px);
+    transition: background .2s ease, transform .15s ease;
+  }
+  .btn-ctrl:hover { background: rgba(255,255,255,.18); transform: scale(1.06); }
+  .btn-ctrl:active { transform: scale(.95); }
+
   #contador {
-    position: fixed; bottom: 14px; right: 18px; z-index: 10;
-    color: rgba(255,255,255,.55); font-size: .8rem; letter-spacing: .05em;
-    background: rgba(0,0,0,.35); padding: .25rem .6rem; border-radius: 20px;
-    pointer-events: none; user-select: none;
+    color: rgba(255,255,255,.85); font-size: .82rem; letter-spacing: .04em;
+    min-width: 64px; text-align: center; font-variant-numeric: tabular-nums;
+  }
+
+  /* tela inicial de clique para ativar tela cheia (política de navegador) */
+  #tela-inicio {
+    position: fixed; inset: 0; z-index: 50;
+    background: #0b0b0d; color: #fff;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1rem;
+    cursor: pointer;
+  }
+  #tela-inicio h1 { font-size: 1.1rem; font-weight: 600; opacity: .85; letter-spacing: .03em; }
+  #tela-inicio .icone-play {
+    width: 76px; height: 76px; border-radius: 50%;
+    background: linear-gradient(135deg, #f5a623, #ff7a1a);
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 8px 30px rgba(255,122,26,.35);
+  }
+  #tela-inicio .icone-play svg { width: 28px; height: 28px; fill: #0b0b0d; margin-left: 4px; }
+  #tela-inicio p { font-size: .8rem; color: rgba(255,255,255,.45); }
+
+  @media (max-width: 640px) {
+    .btn-ctrl { width: 38px; height: 38px; font-size: 1rem; }
+    #controles { gap: .8rem; }
   }
 </style>
 </head>
 <body>
 
-<div id="apresentacao">
-  <!-- Adicione/edite quantos slides quiser. Troque o "src" pela sua imagem. -->
-  <div class="slide ativo"><img src="https://via.placeholder.com/1600x900/1a1a1a/ffffff?text=Slide+1" alt="Slide 1"></div>
-  <div class="slide"><img src="https://via.placeholder.com/1600x900/2a2a2a/ffffff?text=Slide+2" alt="Slide 2"></div>
-  <div class="slide"><img src="https://via.placeholder.com/1600x900/3a3a3a/ffffff?text=Slide+3" alt="Slide 3"></div>
+<div id="tela-inicio">
+  <div class="icone-play"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></div>
+  <h1>Treinamento Operacional Cyano</h1>
+  <p>Toque para iniciar a apresentação</p>
 </div>
+
+<div id="progresso-wrap"><div id="progresso"></div></div>
+
+<div id="apresentacao"></div>
 
 <div id="zona-voltar" class="zona-clique"></div>
 <div id="zona-avancar" class="zona-clique"></div>
-<div id="contador"></div>
+
+<div id="controles" class="visivel">
+  <div class="btn-ctrl" id="btn-voltar" title="Slide anterior">‹</div>
+  <div id="contador">1 / 1</div>
+  <div class="btn-ctrl" id="btn-avancar" title="Próximo slide">›</div>
+  <div class="btn-ctrl" id="btn-tela-cheia" title="Tela cheia">⛶</div>
+</div>
 
 <script>
-  const slides = document.querySelectorAll('.slide');
+  // Lista de slides (imagens exportadas do PDF/PowerPoint)
+  const totalSlides = 28;
+  const pasta = 'img/slides/';
+  const prefixo = 'slide-';
+  const extensao = '.jpg';
+
+  const apresentacao = document.getElementById('apresentacao');
   const contador = document.getElementById('contador');
+  const progresso = document.getElementById('progresso');
   let atual = 0;
+  let slides = [];
+
+  function pad(n) { return String(n).padStart(2, '0'); }
+
+  for (let i = 1; i <= totalSlides; i++) {
+    const div = document.createElement('div');
+    div.className = 'slide' + (i === 1 ? ' ativo' : '');
+    const img = document.createElement('img');
+    img.src = pasta + prefixo + pad(i) + extensao;
+    img.alt = 'Slide ' + i;
+    if (i > 2) img.loading = 'lazy';
+    div.appendChild(img);
+    apresentacao.appendChild(div);
+    slides.push(div);
+  }
+
+  function atualizarUI() {
+    contador.textContent = (atual + 1) + ' / ' + totalSlides;
+    progresso.style.width = ((atual + 1) / totalSlides * 100) + '%';
+  }
 
   function mostrar(indice) {
-    if (indice < 0 || indice >= slides.length) return;
-    slides[atual].classList.remove('ativo');
+    if (indice < 0 || indice >= totalSlides || indice === atual) return;
+    const indoPraFrente = indice > atual;
+    const anterior = slides[atual];
+
+    anterior.classList.add(indoPraFrente ? 'saindo-esquerda' : 'saindo-direita');
+    anterior.classList.remove('ativo');
+
     atual = indice;
+    slides[atual].classList.remove('saindo-esquerda', 'saindo-direita');
     slides[atual].classList.add('ativo');
-    contador.textContent = (atual + 1) + ' / ' + slides.length;
+
+    setTimeout(() => anterior.classList.remove('saindo-esquerda', 'saindo-direita'), 650);
+
+    atualizarUI();
   }
 
   function avancar() { mostrar(atual + 1); }
@@ -80,11 +191,15 @@
     } else if (['ArrowLeft', 'ArrowUp', 'PageUp', 'Backspace'].includes(e.key)) {
       e.preventDefault();
       voltar();
+    } else if (e.key === 'f' || e.key === 'F') {
+      alternarTelaCheia();
     }
   });
 
   document.getElementById('zona-avancar').addEventListener('click', avancar);
   document.getElementById('zona-voltar').addEventListener('click', voltar);
+  document.getElementById('btn-avancar').addEventListener('click', (e) => { e.stopPropagation(); avancar(); });
+  document.getElementById('btn-voltar').addEventListener('click', (e) => { e.stopPropagation(); voltar(); });
 
   // Toque/arrastar no celular e tablet
   let toqueX = 0;
@@ -95,7 +210,24 @@
     diff < 0 ? avancar() : voltar();
   }, { passive: true });
 
-  mostrar(0);
+  function alternarTelaCheia() {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen?.().catch(() => {});
+    } else {
+      document.exitFullscreen?.();
+    }
+  }
+  document.getElementById('btn-tela-cheia').addEventListener('click', (e) => {
+    e.stopPropagation();
+    alternarTelaCheia();
+  });
+
+  document.getElementById('tela-inicio').addEventListener('click', function () {
+    this.style.display = 'none';
+    alternarTelaCheia();
+  });
+
+  atualizarUI();
 </script>
 
 </body>
