@@ -21,10 +21,30 @@
     transform: scale(1.06) translateX(0);
     transition: opacity .6s cubic-bezier(.22,.61,.36,1), transform .6s cubic-bezier(.22,.61,.36,1);
     background: radial-gradient(ellipse at top left, #fffdf8 0%, #ffffff 60%);
+    overflow: hidden;
   }
   .slide.ativo { opacity: 1; visibility: visible; z-index: 2; transform: scale(1) translateX(0); }
   .slide.saindo-esquerda { transform: scale(.94) translateX(-4%); opacity: 0; }
   .slide.saindo-direita  { transform: scale(.94) translateX(4%); opacity: 0; }
+
+  /* textura decorativa: diagonais douradas + faixas suaves + pontilhado, tipo corporativo */
+  .slide::before, .slide::after { content: ''; position: absolute; z-index: 0; pointer-events: none; }
+  .slide::before {
+    inset: 0;
+    background-image:
+      repeating-linear-gradient(-40deg, rgba(201,151,31,.16) 0px, rgba(201,151,31,.16) 1.5px, transparent 1.5px, transparent 46px),
+      linear-gradient(-40deg, transparent 55%, rgba(201,151,31,.05) 60%, transparent 66%),
+      linear-gradient(-40deg, transparent 70%, rgba(180,140,40,.045) 74%, transparent 80%);
+  }
+  .slide::after {
+    top: 0; right: 0; width: 46%; height: 60%;
+    background-image: radial-gradient(rgba(201,151,31,.35) 1.6px, transparent 1.6px);
+    background-size: 22px 22px;
+    -webkit-mask-image: linear-gradient(-40deg, transparent 40%, #000 78%, transparent 100%);
+            mask-image: linear-gradient(-40deg, transparent 40%, #000 78%, transparent 100%);
+    opacity: .55;
+  }
+  .conteudo, .slide-imagem, .rodape-marca { position: relative; z-index: 1; }
 
   /* ---- padrão comum a todo slide de conteúdo ---- */
   .conteudo {
