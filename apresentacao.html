@@ -105,6 +105,40 @@
   }
   .cartao p { margin: 0; font-size: .92rem; color: #4a4436; line-height: 1.5; }
 
+  /* animações da capa: vento + ondas */
+  .vento-capa { position: absolute; inset: 0; z-index: 2; overflow: hidden; pointer-events: none; }
+  .vento-capa span {
+    position: absolute; height: 1px; width: 26vw;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,.85), transparent);
+    left: -30vw; opacity: 0; border-radius: 2px;
+    animation: ventoPassa 7s linear infinite;
+  }
+  .vento-capa span:nth-child(1) { top: 18%; animation-delay: 0s; width: 22vw; }
+  .vento-capa span:nth-child(2) { top: 34%; animation-delay: 1.6s; width: 30vw; }
+  .vento-capa span:nth-child(3) { top: 52%; animation-delay: 3.1s; width: 18vw; }
+  .vento-capa span:nth-child(4) { top: 65%; animation-delay: 4.5s; width: 26vw; }
+  .vento-capa span:nth-child(5) { top: 78%; animation-delay: 5.8s; width: 20vw; }
+  @keyframes ventoPassa {
+    0%   { transform: translateX(0); opacity: 0; }
+    8%   { opacity: .55; }
+    45%  { opacity: .3; }
+    100% { transform: translateX(150vw); opacity: 0; }
+  }
+
+  .ondas-capa {
+    position: absolute; left: 0; right: 0; bottom: 0; height: 14vh; min-height: 90px; z-index: 2;
+    overflow: hidden; pointer-events: none;
+  }
+  .ondas-capa svg { position: absolute; bottom: 0; left: 0; width: 100%; height: 100%; }
+  .onda { fill: rgba(255,255,255,.16); }
+  .onda-2 { fill: rgba(255,255,255,.28); }
+  .onda-1 { animation: ondaMove 9s ease-in-out infinite; }
+  .onda-2 { animation: ondaMove 6.5s ease-in-out infinite reverse; }
+  @keyframes ondaMove {
+    0%, 100% { transform: translateX(0) translateY(0); }
+    50% { transform: translateX(-4%) translateY(4px); }
+  }
+
   /* slide de capa/seção */
   .slide-capa .conteudo { align-items: flex-start; }
   .slide-capa .titulo { font-size: clamp(1.9rem, 5.5vw, 3.4rem); }
@@ -393,6 +427,21 @@
       img.alt = 'Capa da apresentação';
       img.style.width = '100%'; img.style.height = '100%'; img.style.objectFit = 'cover';
       div.appendChild(img);
+
+      const vento = document.createElement('div');
+      vento.className = 'vento-capa';
+      vento.innerHTML = '<span></span><span></span><span></span><span></span><span></span>';
+      div.appendChild(vento);
+
+      const ondas = document.createElement('div');
+      ondas.className = 'ondas-capa';
+      ondas.innerHTML = `
+        <svg viewBox="0 0 1600 160" preserveAspectRatio="none">
+          <path class="onda onda-1" d="M0,90 C 200,40 400,140 600,90 C 800,40 1000,140 1200,90 C 1350,60 1500,110 1600,90 L1600,160 L0,160 Z"></path>
+          <path class="onda onda-2" d="M0,110 C 220,70 420,150 620,110 C 820,70 1020,150 1220,110 C 1370,85 1500,125 1600,110 L1600,160 L0,160 Z"></path>
+        </svg>
+      `;
+      div.appendChild(ondas);
     } else if (dados.tipo === 'capa') {
       const c = document.createElement('div');
       c.className = 'conteudo';
