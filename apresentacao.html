@@ -249,11 +249,37 @@
   #tela-inicio .icone-play svg { width: 28px; height: 28px; fill: #122845; margin-left: 4px; }
   #tela-inicio p { font-size: .8rem; color: rgba(255,255,255,.45); }
 
+  /* rolagem de segurança: em telas pequenas ou conteúdo longo, permite rolar dentro do slide */
+  .conteudo {
+    max-height: 82vh; overflow-y: auto; -webkit-overflow-scrolling: touch;
+    padding-right: 4px;
+  }
+  .conteudo::-webkit-scrollbar { width: 5px; }
+  .conteudo::-webkit-scrollbar-thumb { background: rgba(230,177,67,.35); border-radius: 3px; }
+
   @media (max-width: 640px) {
     .btn-ctrl { width: 38px; height: 38px; font-size: 1rem; }
     #controles { gap: .8rem; }
-    .conteudo { gap: 1rem; }
+    .conteudo { gap: 1rem; max-height: 76vh; }
     .rodape-marca { left: 18px; bottom: 60px; }
+
+    .grade-equipe { grid-template-columns: repeat(2, 1fr); gap: .9rem 1rem; }
+    .foto-pessoa { width: 84px; height: 84px; border-width: 2px; }
+    .foto-pessoa .iniciais { font-size: 1.15rem; }
+    .pessoa { gap: .4rem; }
+    .pessoa .nome-pessoa { font-size: .78rem; }
+    .pessoa .cargo-pessoa { font-size: .64rem; }
+
+    .titulo { font-size: clamp(1.25rem, 6vw, 1.7rem); }
+    .subtitulo { font-size: .88rem; }
+    .lista-topicos li { font-size: .85rem; }
+
+    .slide-imagem-caixa { padding: 60px 4vw 60px; }
+    .rotulo { font-size: .62rem; }
+  }
+
+  @media (max-width: 640px) and (orientation: portrait) {
+    .slide-imagem-caixa img { max-height: 55vh; }
   }
 </style>
 </head>
