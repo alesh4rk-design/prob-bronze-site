@@ -184,6 +184,28 @@
 
   /* slide de encerramento */
   .slide-final .conteudo { align-items: center; text-align: center; }
+
+  .fogos-final { position: absolute; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
+  .explosao {
+    position: absolute; width: 0; height: 0;
+    animation: explosaoCiclo 4.5s ease-out infinite;
+  }
+  .particula {
+    position: absolute; top: 0; left: 0; width: 5px; height: 5px; border-radius: 50%;
+    background: var(--cor); box-shadow: 0 0 6px 1px var(--cor);
+    opacity: 0;
+    transform: rotate(var(--ang)) translateX(0);
+    animation: particulaVoa 4.5s ease-out infinite;
+  }
+  @keyframes explosaoCiclo {
+    0%, 100% { opacity: 1; }
+  }
+  @keyframes particulaVoa {
+    0%   { opacity: 0; transform: rotate(var(--ang)) translateX(0) scale(1); }
+    4%   { opacity: 1; }
+    35%  { opacity: 1; transform: rotate(var(--ang)) translateX(85px) scale(1); }
+    100% { opacity: 0; transform: rotate(var(--ang)) translateX(150px) scale(.4); }
+  }
   .slide-final .titulo { font-size: clamp(1.7rem, 4.5vw, 2.8rem); }
   .marca-final {
     font-size: .85rem; font-weight: 700; letter-spacing: .2em; text-transform: uppercase;
@@ -629,6 +651,29 @@
         <span class="marca-final">${dados.marca}</span>
       `;
       div.appendChild(c);
+
+      const fogos = document.createElement('div');
+      fogos.className = 'fogos-final';
+      const coresFogos = ['#3fb54a', '#ffd23f'];
+      const pontos = [
+        { x: 20, y: 28, atraso: 0 }, { x: 78, y: 22, atraso: .6 },
+        { x: 50, y: 15, atraso: 1.2 }, { x: 12, y: 60, atraso: 1.9 },
+        { x: 88, y: 55, atraso: 2.5 }, { x: 35, y: 70, atraso: 3.2 },
+        { x: 65, y: 65, atraso: 3.8 }
+      ];
+      let fogosHtml = '';
+      pontos.forEach((p, pi) => {
+        const cor = coresFogos[pi % 2];
+        let particulas = '';
+        const n = 14;
+        for (let i = 0; i < n; i++) {
+          const ang = (360 / n) * i;
+          particulas += `<span class="particula" style="--ang:${ang}deg; --cor:${cor};"></span>`;
+        }
+        fogosHtml += `<div class="explosao" style="left:${p.x}%; top:${p.y}%; animation-delay:${p.atraso}s;">${particulas}</div>`;
+      });
+      fogos.innerHTML = fogosHtml;
+      div.appendChild(fogos);
     }
 
     const ondas = document.createElement('div');
