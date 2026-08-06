@@ -536,7 +536,9 @@
       'Ligados às 05h30 e desligados às 22h00.',
       'Sinalizados com fita branca.'
     ]},
-    { tipo: 'capa', rotulo: 'Pré-Implantação', titulo: 'Treinamento de Orientação Operacional', sub: 'Etapa final de preparação da equipe antes do início das atividades.', numero: '27' },
+    { tipo: 'capa', rotulo: 'Pré-Implantação', titulo: 'Treinamento de Orientação Operacional', sub: 'Etapa final de preparação da equipe antes do início das atividades.', numero: '27', fotos: [
+      'treinamento-apresentacao.jpg', 'treinamento-sala.jpg', 'treinamento-dinamica.jpg', 'treinamento-material.jpg'
+    ]},
     { tipo: 'final', titulo: 'Conclusão e Compromisso', sub: 'O sucesso da operação Cyano depende da integração perfeita entre segurança patrimonial, hospitalidade de luxo e tecnologia de ponta.', marca: 'Haganá Segurança — Referência em Proteção e Serviço' }
   ];
 
@@ -586,7 +588,18 @@
         ${dados.sub ? `<p class="subtitulo">${dados.sub}</p>` : ''}
         <div class="linha-divisora"></div>
       `;
-      div.appendChild(c);
+      if (dados.fotos && dados.fotos.length) {
+        const linha = document.createElement('div');
+        linha.className = 'linha-com-fotos';
+        const coluna = document.createElement('div');
+        coluna.className = 'coluna-fotos';
+        coluna.innerHTML = dados.fotos.map(f => `<div class="foto-lateral"><img src="img/fotos/${f}" alt="${dados.titulo}" loading="lazy"></div>`).join('');
+        div.appendChild(linha);
+        linha.appendChild(c);
+        linha.appendChild(coluna);
+      } else {
+        div.appendChild(c);
+      }
     } else if (dados.tipo === 'topicos') {
       const c = document.createElement('div');
       c.className = 'conteudo';
