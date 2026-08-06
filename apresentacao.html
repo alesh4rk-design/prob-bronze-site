@@ -27,7 +27,6 @@
   .slide.saindo-esquerda { transform: scale(.94) translateX(-4%); opacity: 0; }
   .slide.saindo-direita  { transform: scale(.94) translateX(4%); opacity: 0; }
 
-  /* textura decorativa: diagonais douradas + faixas suaves + pontilhado, tipo corporativo */
   .slide::before, .slide::after { content: ''; position: absolute; z-index: 0; pointer-events: none; }
   .slide::before {
     inset: 0;
@@ -46,7 +45,6 @@
   }
   .conteudo, .slide-imagem-caixa, .rodape-marca { position: relative; z-index: 1; }
 
-  /* ---- padrão comum a todo slide de conteúdo ---- */
   .conteudo {
     width: min(1100px, 92vw); max-height: 88vh;
     display: flex; flex-direction: column; gap: 1.4rem;
@@ -59,7 +57,6 @@
     padding: .4rem 1rem; border-radius: 8px;
     box-shadow: 0 4px 14px rgba(0,0,0,.25);
   }
-  .rotulo::before { display: none; }
   .titulo {
     font-size: clamp(1.5rem, 4vw, 2.6rem); font-weight: 800; color: #f6f8fb;
     line-height: 1.18; letter-spacing: -.01em; margin: 0;
@@ -96,7 +93,11 @@
     display: flex; align-items: center; justify-content: center;
     box-shadow: 0 6px 20px rgba(0,0,0,.3);
   }
-  .foto-pessoa img { width: 100%; height: 100%; object-fit: cover; position: absolute; inset: 0; }
+  .foto-pessoa img {
+    width: 100%; height: 100%; object-fit: cover;
+    object-position: top center; /* fallback global */
+    position: absolute; inset: 0;
+  }
   .foto-pessoa .iniciais { font-size: 2rem; font-weight: 800; color: #e6b143; letter-spacing: .02em; }
   .pessoa .nome-pessoa { font-size: .98rem; font-weight: 700; color: #f6f8fb; line-height: 1.3; }
   .pessoa .cargo-pessoa { font-size: .78rem; color: #e6b143; font-weight: 600; letter-spacing: .03em; text-transform: uppercase; }
@@ -125,7 +126,6 @@
   }
   .cartao p { margin: 0; font-size: .92rem; color: #cdd6e4; line-height: 1.5; }
 
-  /* animações da capa: vento + ondas */
   .vento-capa { position: absolute; inset: 0; z-index: 2; overflow: hidden; pointer-events: none; }
   .vento-capa span.risco {
     position: absolute; height: 2px; width: 26vw;
@@ -175,7 +175,6 @@
     50% { transform: translateX(-4%) translateY(4px); }
   }
 
-  /* slide de capa/seção */
   .slide-capa .conteudo { align-items: flex-start; }
   .slide-capa .titulo { font-size: clamp(1.9rem, 5.5vw, 3.4rem); }
   .numero-grande {
@@ -183,30 +182,7 @@
     -webkit-text-stroke: 1.5px rgba(230,177,67,.4); line-height: 1; letter-spacing: -.02em;
   }
 
-  /* slide de encerramento */
   .slide-final .conteudo { align-items: center; text-align: center; }
-
-  .fogos-final { position: absolute; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
-  .explosao {
-    position: absolute; width: 0; height: 0;
-    animation: explosaoCiclo 4.5s ease-out infinite;
-  }
-  .particula {
-    position: absolute; top: 0; left: 0; width: 5px; height: 5px; border-radius: 50%;
-    background: var(--cor); box-shadow: 0 0 6px 1px var(--cor);
-    opacity: 0;
-    transform: rotate(var(--ang)) translateX(0);
-    animation: particulaVoa 4.5s ease-out infinite;
-  }
-  @keyframes explosaoCiclo {
-    0%, 100% { opacity: 1; }
-  }
-  @keyframes particulaVoa {
-    0%   { opacity: 0; transform: rotate(var(--ang)) translateX(0) scale(1); }
-    4%   { opacity: 1; }
-    35%  { opacity: 1; transform: rotate(var(--ang)) translateX(85px) scale(1); }
-    100% { opacity: 0; transform: rotate(var(--ang)) translateX(150px) scale(.4); }
-  }
   .slide-final .titulo { font-size: clamp(1.7rem, 4.5vw, 2.8rem); }
   .marca-final {
     font-size: .85rem; font-weight: 700; letter-spacing: .2em; text-transform: uppercase;
@@ -219,7 +195,6 @@
     color: rgba(255,255,255,.3); font-weight: 700; pointer-events: none;
   }
 
-  /* slide-imagem (organogramas originais do PDF) */
   .slide-imagem-caixa {
     width: 100%; height: 100%;
     display: flex; flex-direction: column; align-items: center; justify-content: center;
@@ -252,7 +227,6 @@
   .slide.ativo .lista-topicos li:nth-child(7) { animation-delay: .41s; }
   .slide.ativo .lista-topicos li:nth-child(8) { animation-delay: .47s; }
 
-  /* zonas de clique/toque para navegar */
   .zona-clique { position: fixed; top: 0; bottom: 0; width: 45%; z-index: 5; }
   #zona-voltar { left: 0; cursor: pointer; }
   #zona-avancar { right: 0; cursor: pointer; }
@@ -283,24 +257,6 @@
     display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
     padding-top: 83vh; gap: 1rem; cursor: pointer;
   }
-  #tela-inicio h1 {
-    font-size: 1.15rem; font-weight: 700; letter-spacing: .03em; text-align: center; padding: 0 1.5rem;
-    text-shadow: 0 2px 12px rgba(0,0,0,.6);
-  }
-
-  /* efeito cibernético: varredura de scanner + grade + pulsos de radar no botão */
-  #tela-inicio .scanner {
-    position: absolute; left: 0; right: 0; height: 2px; z-index: 1; pointer-events: none;
-    background: linear-gradient(90deg, transparent, rgba(120,220,255,.9), rgba(230,177,67,.9), transparent);
-    box-shadow: 0 0 12px 2px rgba(120,220,255,.6);
-    animation: scannerVarre 4.5s linear infinite;
-  }
-  @keyframes scannerVarre {
-    0%   { top: -2%; opacity: 0; }
-    6%   { opacity: 1; }
-    94%  { opacity: 1; }
-    100% { top: 102%; opacity: 0; }
-  }
   #tela-inicio .grade-ciber {
     position: absolute; inset: 0; z-index: 1; pointer-events: none; opacity: .35;
     background-image:
@@ -310,7 +266,6 @@
     -webkit-mask-image: radial-gradient(ellipse at center, #000 0%, transparent 72%);
             mask-image: radial-gradient(ellipse at center, #000 0%, transparent 72%);
   }
-
   #tela-inicio .icone-play {
     position: relative; width: 76px; height: 76px; border-radius: 50%; z-index: 2;
     background: linear-gradient(135deg, #c9971f, #e6b143);
@@ -330,7 +285,6 @@
   #tela-inicio .icone-play svg { width: 28px; height: 28px; fill: #122845; margin-left: 4px; position: relative; z-index: 1; }
   #tela-inicio p { font-size: .8rem; color: rgba(255,255,255,.45); position: relative; z-index: 2; }
 
-  /* rolagem de segurança: em telas pequenas ou conteúdo longo, permite rolar dentro do slide */
   .conteudo {
     max-height: 82vh; overflow-y: auto; -webkit-overflow-scrolling: touch;
     padding-right: 4px;
@@ -391,7 +345,7 @@
 </div>
 
 <script>
-  // ---------- conteúdo de cada slide, no padrão visual único da apresentação ----------
+  // ---------- conteúdo de cada slide ----------
   const slidesDados = [
     { tipo: 'capaFoto', src: 'capa/capa-cyano.jpg' },
     { tipo: 'capa', rotulo: 'Introdução', titulo: 'Apresentação da Operação', sub: 'Visão geral da estrutura, equipe e procedimentos do empreendimento.', numero: '02' },
@@ -405,14 +359,14 @@
     { tipo: 'equipe', rotulo: 'Equipe Diurna', titulo: 'Portaria Principal', pessoas: [
       { nome: 'Jefferson Pereira', cargo: 'Vigia', foto: 'jefferson-pereira.jpg' },
       { nome: 'Paulo Henrique', cargo: 'Vigia', foto: 'paulo-henrique.jpg' },
-      { nome: 'Pedro dos Santos', cargo: 'VSPP', foto: 'alexandre-gomes.jpg' },
-      { nome: 'Alexandre Gomes', cargo: 'VSPP', foto: 'pedro-dos-santos.jpg' }
+      { nome: 'Pedro dos Santos', cargo: 'VSPP', foto: 'pedro-dos-santos.jpg', ajuste: 'object-position: 50% 20%;' }, // <-- ajuste adicionado
+      { nome: 'Alexandre Gomes', cargo: 'VSPP', foto: 'alexandre-gomes.jpg' }
     ]},
     { tipo: 'equipe', rotulo: 'Equipe Diurna', titulo: 'Portaria de Serviço', pessoas: [
       { nome: 'Marcos Vinicius', cargo: 'Vigilante', foto: 'marcos-vinicius.jpg' },
       { nome: 'Francisco Chagas', cargo: 'Vigilante', foto: 'francisco-chagas.jpg' },
       { nome: 'Nilton Silva', cargo: 'Vigia', foto: 'alexandre-gomes-2.jpg' },
-      { nome: 'Rodrigo Gomes', cargo: 'Vigia', foto: 'pedro-dos-santos-2.jpg' }
+      { nome: 'Rodrigo Gomes', cargo: 'Vigia', foto: 'pedro-dos-santos-2.jpg', ajuste: 'object-position: 50% 20%;' } // <-- ajuste adicionado
     ]},
     { tipo: 'equipe', rotulo: 'Equipe Diurna', titulo: 'Vigias — Móvel', pessoas: [
       { nome: 'Gabriel Alves', cargo: 'Vigia Móvel', foto: 'gabriel-alves.jpg' },
@@ -420,12 +374,12 @@
     ]},
     { tipo: 'equipe', rotulo: 'Equipe Diurna', titulo: 'Blocos Mare, Sabbia e Cielo', pessoas: [
       { nome: 'Denilson Jorge', cargo: 'Vigia — Bloco 1', foto: 'denilson-jorge.jpg' },
-      { nome: 'Leonardo Souza', cargo: 'Vigia — Bloco 2', foto: 'leonardo-souza.jpg' },
+      { nome: 'Laert Silva', cargo: 'Vigia — Bloco 2', foto: 'mateus-teixeira.jpg' },
       { nome: 'Samuel Victor', cargo: 'Vigia — Bloco 3', foto: 'laert-silva.jpg' },
       { nome: 'Thiago Alves', cargo: 'Vigia — Bloco 1', foto: 'samuel-victor.jpg' },
-      { nome: 'Laert Silva', cargo: 'Vigia — Bloco 2', foto: 'mateus-teixeira.jpg' },
-      { nome: 'Mateus Teixeira', cargo: 'Vigia — Bloco 1', foto: 'thiago-alves.jpg' }
-    ]},
+      { nome: 'Leonardo Souza', cargo: 'Vigia — Bloco 2', foto: 'leonardo-souza.jpg' },
+      { nome: 'Mateus Teixeira', cargo: 'Vigia — Bloco 3', foto: 'thiago-alves.jpg' }
+    ]}, 
     { tipo: 'imagem', rotulo: 'Rendição de Almoço', titulo: 'Plano de Rendição — Vigilante, Vigia Serviço e Vigia', src: 'slide-09.jpg' },
     { tipo: 'imagem', rotulo: 'Rendição de Almoço', titulo: 'Anagrama de Rendições', src: 'slide-10.jpg' },
     { tipo: 'equipe', rotulo: 'Equipe Noturna', titulo: 'Portaria Principal', pessoas: [
@@ -497,7 +451,7 @@
     { tipo: 'topicos', rotulo: 'Vigia dos Blocos (Mare, Sabbia e Cielo)', titulo: 'Principais Atribuições', itens: [
       'Permanecer no bloco designado durante todo o plantão.',
       'Atender moradores, visitantes e prestadores de serviços com cordialidade e profissionalismo.',
-      'Abrir a porta para moradores e visitantes nos horários de 05:00 às 07:00 e 19:00 às 22:00.',
+      'Abrir a porta para moradores e visitantes sempre com bom dia, boa tarde e boa noite',
       'Efetuar os agendamentos das áreas comuns através do aplicativo Gruvi.',
       'Acionar a sauna quando solicitado pelo morador.',
       'Realizar rondas periódicas nas áreas comuns, verificando iluminação, banheiros, limpeza e necessidades de manutenção.',
@@ -527,7 +481,7 @@
       'vigia-portaria-principal-monitor.jpg', 'vigia-portaria-principal-posto.jpg'
     ]},
     { tipo: 'topicos', rotulo: 'Funções e Procedimentos', titulo: 'Concierge Noturno', itens: [
-      'Abertura e fechamento dos espaços Spa, Vestiários, Piscina, Sauna Seca e a Vapor (05h30 às 22h00).',
+      'Abertura e fechamento dos espaços Spa, Vestiários, Piscina, Sauna Seca e a Vapor (05:00 às 07:00 e às 19:00 às 22:00).',
       'Verificação na bomba de pressurização, localizada próximo ao terraço de todos os blocos.',
       'Verificação nas casas de bombas de incêndio de todos os blocos.',
       'Rondas em todas as escadas de emergência dos blocos.',
@@ -643,16 +597,20 @@
       const c = document.createElement('div');
       c.className = 'conteudo';
       const iniciaisDe = (nome) => nome.split(' ').filter(Boolean).slice(0, 2).map(p => p[0]).join('').toUpperCase();
-      const cards = dados.pessoas.map(p => `
-        <div class="pessoa">
-          <div class="foto-pessoa">
-            <span class="iniciais">${iniciaisDe(p.nome)}</span>
-            <img src="img/equipe/${p.foto}" alt="${p.nome}" onerror="this.style.display='none'">
+      const cards = dados.pessoas.map(p => {
+        // Se existir ajuste individual, aplica; senão, usa o fallback do CSS
+        const estiloAjuste = p.ajuste ? `style="object-position: ${p.ajuste};"` : '';
+        return `
+          <div class="pessoa">
+            <div class="foto-pessoa">
+              <span class="iniciais">${iniciaisDe(p.nome)}</span>
+              <img src="img/equipe/${p.foto}" alt="${p.nome}" ${estiloAjuste} onerror="this.style.display='none'">
+            </div>
+            <span class="nome-pessoa">${p.nome}</span>
+            <span class="cargo-pessoa">${p.cargo}</span>
           </div>
-          <span class="nome-pessoa">${p.nome}</span>
-          <span class="cargo-pessoa">${p.cargo}</span>
-        </div>
-      `).join('');
+        `;
+      }).join('');
       const classeGrade = dados.pessoas.length > 4 ? 'grade-equipe grade-equipe-3col' : 'grade-equipe';
       c.innerHTML = `
         <span class="rotulo">${dados.rotulo}</span>
@@ -736,7 +694,6 @@
   function avancar() { mostrar(atual + 1); }
   function voltar() { mostrar(atual - 1); }
 
-  // Passador de slides (clicker) normalmente envia setas, PageUp/PageDown, Espaço ou "b"
   document.addEventListener('keydown', (e) => {
     if (['ArrowRight', 'ArrowDown', 'PageDown', ' ', 'Enter'].includes(e.key)) {
       e.preventDefault();
@@ -754,7 +711,6 @@
   document.getElementById('btn-avancar').addEventListener('click', (e) => { e.stopPropagation(); avancar(); });
   document.getElementById('btn-voltar').addEventListener('click', (e) => { e.stopPropagation(); voltar(); });
 
-  // Toque/arrastar no celular e tablet
   let toqueX = 0;
   document.addEventListener('touchstart', (e) => { toqueX = e.changedTouches[0].screenX; }, { passive: true });
   document.addEventListener('touchend', (e) => {
