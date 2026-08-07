@@ -2,9 +2,15 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Pro'Bronze — Comece Grátis</title>
-<link rel="stylesheet" href="css/theme.css">
+<link rel="icon" href="icons/icon-192.png" type="image/png">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<meta name="theme-color" content="#C68642">
+<link rel="stylesheet" href="css/theme.css?v=20260728d">
 <style>
   * { box-sizing: border-box; }
   body {
@@ -32,8 +38,17 @@
   .btn-primario {
     width: 100%; background: linear-gradient(135deg, var(--accent), var(--accent-light)); color: var(--card-btn-text);
     border: none; border-radius: 10px; padding: .85rem; font-size: .92rem; font-weight: 800; cursor: pointer; margin-top: .4rem;
+    letter-spacing: .03em; text-shadow: 0 0 10px rgba(255,255,255,.35);
+    animation: btn-neon-pulsar 2.2s ease-in-out infinite;
+    transition: transform .12s ease, filter .12s ease;
   }
-  .btn-primario:disabled { opacity: .5; cursor: not-allowed; }
+  .btn-primario:hover:not(:disabled) { transform: translateY(-1px); filter: brightness(1.1); }
+  .btn-primario:active:not(:disabled) { transform: translateY(0) scale(.98); }
+  .btn-primario:disabled { opacity: .5; cursor: not-allowed; animation: none; }
+  @keyframes btn-neon-pulsar {
+    0%, 100% { box-shadow: 0 0 10px 1px rgba(var(--accent-rgb),.5), 0 4px 14px rgba(var(--accent-rgb),.28); }
+    50% { box-shadow: 0 0 20px 4px rgba(var(--accent-rgb),.85), 0 4px 20px rgba(var(--accent-rgb),.5); }
+  }
   #erro { color: var(--red); font-size: .8rem; margin-top: .75rem; min-height: 1em; text-align: center; }
   .rodape { text-align: center; font-size: .75rem; color: var(--muted); margin-top: 1.2rem; }
   .rodape a { color: var(--accent-light); text-decoration: none; }
@@ -42,29 +57,36 @@
 <body>
 
 <div class="card">
-  <h1>Pro'Bronze</h1>
+  <h1><span class="marca-pro">Pro</span><span class="marca-apo">'</span>Bronze</h1>
   <p class="sub">Gestão completa para o seu espaço de bronzeamento</p>
-  <span class="trial-badge">✨ 7 dias grátis, sem cartão</span>
+  <span class="trial-badge">✨ 7 dias grátis, depois R$45/mês</span>
 
   <div class="input-group"><label>Nome do negócio</label><input type="text" id="f-negocio" placeholder="Ex: Studio Bronze Rio"></div>
   <div class="input-group"><label>Seu nome</label><input type="text" id="f-nome"></div>
+  <div class="input-group"><label>WhatsApp do negócio</label><input type="text" id="f-whatsapp" placeholder="21999999999"></div>
   <div class="input-group"><label>E-mail</label><input type="email" id="f-email"></div>
   <div class="input-group"><label>Senha</label><input type="password" id="f-senha"></div>
 
   <button class="btn-primario" id="btn-cadastrar">Começar meu trial grátis</button>
   <div id="erro"></div>
 
+  <div style="display:flex;align-items:center;gap:.6rem;margin:1.1rem 0;color:var(--muted);font-size:.75rem">
+    <div style="flex:1;height:1px;background:var(--card-border)"></div>ou<div style="flex:1;height:1px;background:var(--card-border)"></div>
+  </div>
+  <button class="btn-secundario" id="btn-cadastrar-google" style="width:100%;background:transparent;border:1.5px solid var(--card-border);color:var(--text);border-radius:10px;padding:.7rem;font-size:.88rem;cursor:pointer">🔵 Cadastrar com Google</button>
+
   <div class="rodape">Já tem conta? <a href="esteticista.html">Entrar</a></div>
 </div>
 
 <script type="module">
-import { cadastrarNegocioComDono } from './js/auth.js';
+import { cadastrarNegocioComDono, cadastrarNegocioComDonoGoogle } from './js/auth.js?v=20260728d';
 
 const $ = (id) => document.getElementById(id);
 
 $('btn-cadastrar').addEventListener('click', async () => {
   const nomeNegocio = $('f-negocio').value.trim();
   const nomeDono = $('f-nome').value.trim();
+  const whatsappNegocio = $('f-whatsapp').value.trim();
   const email = $('f-email').value.trim();
   const senha = $('f-senha').value;
   $('erro').textContent = '';
@@ -80,7 +102,7 @@ $('btn-cadastrar').addEventListener('click', async () => {
 
   $('btn-cadastrar').disabled = true;
   try {
-    await cadastrarNegocioComDono({ nomeNegocio, email, senha, nomeDono });
+    await cadastrarNegocioComDono({ nomeNegocio, email, senha, nomeDono, whatsappNegocio });
     window.location.href = 'esteticista.html';
   } catch (err) {
     $('btn-cadastrar').disabled = false;
@@ -89,6 +111,27 @@ $('btn-cadastrar').addEventListener('click', async () => {
     } else {
       $('erro').textContent = 'Não foi possível criar sua conta. Tente novamente.';
     }
+  }
+});
+
+$('btn-cadastrar-google').addEventListener('click', async () => {
+  const nomeNegocio = $('f-negocio').value.trim();
+  const nomeDono = $('f-nome').value.trim();
+  const whatsappNegocio = $('f-whatsapp').value.trim();
+  $('erro').textContent = '';
+
+  if (!nomeNegocio || !nomeDono) {
+    $('erro').textContent = 'Preencha o nome do negócio e o seu nome antes de continuar com Google.';
+    return;
+  }
+
+  $('btn-cadastrar-google').disabled = true;
+  try {
+    await cadastrarNegocioComDonoGoogle({ nomeNegocio, nomeDono, whatsappNegocio });
+    window.location.href = 'esteticista.html';
+  } catch (err) {
+    $('btn-cadastrar-google').disabled = false;
+    $('erro').textContent = err.message || 'Não foi possível cadastrar com Google. Tente novamente.';
   }
 });
 </script>

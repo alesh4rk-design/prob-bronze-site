@@ -23,50 +23,159 @@ service cloud.firestore {
     }
 
     function ehAdmin() {
-      return logado() && request.auth.uid == "uQYLkphlAcaG22YDYCSHaDbpnhy1";
+      return logado() && request.auth.uid == "vzgts23koAWeJeJ6ojMVdsLRJkJ3";
+    }
+
+    // negocioId da cliente autenticada, se ela tiver o mapeamento em
+    // "clienteNegocios" (ver match abaixo) — usado pra restringir leitura de
+    // "negocios" e "agendamentos" só ao próprio negócio da cliente, em vez
+    // de abrir pra qualquer usuário logado da plataforma inteira.
+    function meuNegocioComoCliente() {
+      return (logado() && exists(/databases/$(database)/documents/clienteNegocios/$(request.auth.uid)))
+        ? get(/databases/$(database)/documents/clienteNegocios/$(request.auth.uid)).data.negocioId
+        : null;
+    }
+
+    // Confere se já existe um documento de cliente de verdade (criado pelo
+    // fluxo de autocadastro, com o próprio uid como ID — ver cliente-auth.js)
+    // vinculando essa pessoa aquele negócio específico. Usado só pra validar
+    // a CRIAÇÃO do mapeamento clienteNegocios (ver abaixo) — sem isso,
+    // qualquer conta logada podia se autodeclarar cliente de qualquer
+    // negócio e ganhar leitura de dados de outra empresa.
+    function souClienteDeVerdade(negocioId) {
+      return exists(/databases/$(database)/documents/clientes/$(request.auth.uid)) &&
+        get(/databases/$(database)/documents/clientes/$(request.auth.uid)).data.clienteUid == request.auth.uid &&
+        get(/databases/$(database)/documents/clientes/$(request.auth.uid)).data.negocioId == negocioId;
     }
 
     // Negócios: qualquer visitante logado pode criar (cadastro trial);
     // leitura de UM negócio (vitrine da cliente) é aberta a qualquer logado,
     // mas LISTAR todos só é permitido ao dono do próprio negócio ou ao admin geral.
     match /negocios/{negocioId} {
-      allow create: if logado();
-      allow get: if ehDoMeuNegocio(negocioId) || logado();
+      // Nasce sempre "pendente" — só o admin aprova pra "trial"/"ativo"
+      // (ver update abaixo). Sem essa checagem, dava pra criar direto com
+      // status "ativo" e pular a aprovação/pagamento.
+      allow create: if logado() && request.resource.data.status == 'pendente';
+      // Antes era "|| logado()" — qualquer cliente de qualquer negócio
+      // conseguia ler o negócio de outra pessoa (meta de faturamento, PIX).
+      // Agora só quem é do negócio ou uma cliente cadastrada NESSE negócio.
+      allow get: if ehDoMeuNegocio(negocioId) || meuNegocioComoCliente() == negocioId || ehAdmin();
       allow list: if ehDoMeuNegocio(negocioId) || ehAdmin();
-      allow update: if ehDoMeuNegocio(negocioId) || ehAdmin();
-      allow delete: if false;
+      // O dono edita o próprio negócio livremente, mas NÃO pode mexer em
+      // status/trialInicio/trialFim — antes dava pra chamar updateDoc direto
+      // e virar "ativo" sozinho, pulando aprovação e pagamento. Só o admin
+      // mexe nesses três campos.
+      allow update: if ehAdmin() ||
+        (ehDoMeuNegocio(negocioId) &&
+         !request.resource.data.diff(resource.data).affectedKeys().hasAny(['status', 'trialInicio', 'trialFim']));
+      allow delete: if ehAdmin();
     }
 
-    // Usuários: cada um lê o próprio doc; dono lê/cria os da equipe do seu negócio
+    // Usuários: qualquer um do mesmo negócio pode ver a equipe;
+    // só o dono cria/edita/remove membros. Criação tem 3 casos legítimos:
+    // (1) dono se autocadastrando (negocioId = próprio uid, papel "dono");
+    // (2) funcionário se autocadastrando pelo link de convite (papel
+    // "recepcionista", negócio precisa existir de verdade);
+    // (3) dono cadastrando um funcionário pra própria equipe (usa uma auth
+    // secundária pra não perder a própria sessão, então quem está
+    // autenticado na hora do create ainda é o dono, não o novo uid).
+    // Sem essas checagens, qualquer conta logada podia criar seu próprio
+    // doc em "usuarios" com papel "dono" de um negócio de outra pessoa —
+    // e a partir daí enxergar o financeiro dela inteiro.
     match /usuarios/{uid} {
-      allow read: if logado() && (request.auth.uid == uid || ehDono());
-      allow create: if logado();
-      allow update: if request.auth.uid == uid || ehDono();
-      allow delete: if ehDono();
+      // "ehDono()" sozinho checa só se A PESSOA é dona de ALGUM negócio,
+      // não deste — antes disso, qualquer dono conseguia ler/editar/apagar
+      // o cadastro de QUALQUER usuário de QUALQUER negócio da plataforma
+      // (inclusive virando "dono" do negócio alheio via update). Sempre
+      // precisa comparar com o negocioId do documento de verdade.
+      allow read: if logado() && (
+        request.auth.uid == uid || resource.data.negocioId == meuNegocioId()
+      );
+      allow create: if
+        (request.auth.uid == uid && request.resource.data.papel == 'dono' && request.resource.data.negocioId == uid) ||
+        // Autocadastro de recepcionista pelo link — exige o código secreto
+        // do convite bater com o codigoConviteEquipe salvo no negócio. O
+        // negocioId sozinho NÃO é segredo (é o mesmo valor que vai público
+        // no QR Code do link de agendamento da cliente), então validar só a
+        // existência do negócio permitia qualquer pessoa virar recepcionista
+        // de qualquer loja só de saber esse valor.
+        (request.auth.uid == uid && request.resource.data.papel == 'recepcionista' &&
+          exists(/databases/$(database)/documents/negocios/$(request.resource.data.negocioId)) &&
+          request.resource.data.codigoConviteUsado is string &&
+          request.resource.data.codigoConviteUsado.size() > 0 &&
+          request.resource.data.codigoConviteUsado ==
+            get(/databases/$(database)/documents/negocios/$(request.resource.data.negocioId)).data.codigoConviteEquipe) ||
+        (ehDono() && request.resource.data.papel == 'recepcionista' && request.resource.data.negocioId == meuNegocioId());
+      // Autoedição removida de propósito: nenhum fluxo do app precisa disso
+      // hoje, e permitir abria brecha pra alguém trocar o próprio "papel"
+      // pra "dono" e ganhar acesso a dados que não são dela.
+      allow update: if ehAdmin() || (ehDono() && resource.data.negocioId == meuNegocioId());
+      allow delete: if ehAdmin() || (ehDono() && resource.data.negocioId == meuNegocioId());
+    }
+
+    // Mapeamento uid -> negocioId de clientes (ver função meuNegocioComoCliente
+    // acima) — só a própria cliente lê/cria o próprio. A criação exige que já
+    // exista um documento de verdade em "clientes/{uid}" (ID = próprio uid,
+    // criado no autocadastro — ver cliente-auth.js) com esse mesmo negocioId.
+    // Antes bastava estar logada pra se autodeclarar cliente de QUALQUER
+    // negócio e, a partir daí, ler o financeiro e a agenda inteira dele.
+    match /clienteNegocios/{uid} {
+      allow read: if request.auth.uid == uid;
+      allow create: if request.auth.uid == uid && souClienteDeVerdade(request.resource.data.negocioId);
     }
 
     // Coleções operacionais: isoladas por negocioId, dono e recepcionista têm acesso
     match /clientes/{id} {
       allow read: if ehDoMeuNegocio(resource.data.negocioId) ||
         (logado() && resource.data.clienteUid == request.auth.uid);
+      // Autocadastro (sem ser da equipe): confere o formato básico dos
+      // campos e que o negócio de destino existe de verdade — sem isso,
+      // dava pra criar um cliente com negocioId inventado, nome gigante
+      // (que ia parar cru no innerHTML do painel do dono) ou não-string.
       allow create: if logado() && (
-        request.resource.data.clienteUid == request.auth.uid ||
+        (request.resource.data.clienteUid == request.auth.uid &&
+         exists(/databases/$(database)/documents/negocios/$(request.resource.data.negocioId)) &&
+         request.resource.data.nome is string && request.resource.data.nome.size() < 100 &&
+         (!request.resource.data.keys().hasAny(['whatsapp']) || (request.resource.data.whatsapp is string && request.resource.data.whatsapp.size() < 20))) ||
         ehDoMeuNegocio(request.resource.data.negocioId)
       );
       allow update, delete: if ehDoMeuNegocio(resource.data.negocioId);
     }
 
+    // Cabines: leitura aberta só à cliente cadastrada NESSE negócio (pra
+    // saber quantas existem e checar vaga no horário escolhido) — antes era
+    // "|| logado()", que deixava qualquer conta logada da plataforma listar
+    // as cabines de qualquer negócio, mesmo sem ser cliente dele.
     match /cabines/{id} {
-      allow read, write: if ehDoMeuNegocio(resource.data.negocioId) ||
+      allow read: if ehDoMeuNegocio(resource.data.negocioId) || meuNegocioComoCliente() == resource.data.negocioId;
+      allow write: if ehDoMeuNegocio(resource.data.negocioId) ||
         (request.method == "create" && ehDoMeuNegocio(request.resource.data.negocioId));
     }
 
     match /agendamentos/{id} {
-      allow read: if ehDoMeuNegocio(resource.data.negocioId) ||
-        (logado() && resource.data.clienteId != null &&
-         get(/databases/$(database)/documents/clientes/$(resource.data.clienteId)).data.clienteUid == request.auth.uid);
-      allow write: if ehDoMeuNegocio(resource.data.negocioId) ||
-        (request.method == "create" && ehDoMeuNegocio(request.resource.data.negocioId));
+      // A cliente precisa contar quantos horários já estão ocupados
+      // (capacidade de cabines) antes de agendar, mas só do PRÓPRIO negócio
+      // — antes "|| logado()" deixava qualquer cliente logada ler nome e
+      // WhatsApp de clientes de QUALQUER negócio da plataforma.
+      allow read: if ehDoMeuNegocio(resource.data.negocioId) || meuNegocioComoCliente() == resource.data.negocioId;
+      // No caminho da cliente, também confere que o negocioId do agendamento
+      // bate com o negocioId real do cadastro dela — sem isso, dava pra
+      // apontar um agendamento pra outro negócio usando o próprio clienteId.
+      // Além disso, valida o formato básico: só pode nascer com status
+      // "agendado" (nunca já "concluido", pulando o atendimento de
+      // verdade) e com um tempo de cabine dentro de um limite razoável —
+      // sem isso, dava pra criar direto pelo SDK um agendamento já
+      // concluído com preço/tempo inventado, distorcendo o financeiro e
+      // travando a agenda com uma sessão "gigante".
+      allow create: if ehDoMeuNegocio(request.resource.data.negocioId) ||
+        (logado() && request.resource.data.clienteId != null &&
+         get(/databases/$(database)/documents/clientes/$(request.resource.data.clienteId)).data.clienteUid == request.auth.uid &&
+         get(/databases/$(database)/documents/clientes/$(request.resource.data.clienteId)).data.negocioId == request.resource.data.negocioId &&
+         request.resource.data.status == 'agendado' &&
+         request.resource.data.dataHora is timestamp &&
+         request.resource.data.tempoMin is number &&
+         request.resource.data.tempoMin > 0 && request.resource.data.tempoMin <= 480);
+      allow update, delete: if ehDoMeuNegocio(resource.data.negocioId);
     }
 
     match /pacotesSessoes/{id} {
@@ -77,18 +186,63 @@ service cloud.firestore {
         (request.method == "create" && ehDoMeuNegocio(request.resource.data.negocioId));
     }
 
+    // Produtos e financeiro: qualquer um do negócio pode ler/escrever no
+    // dia a dia (recepcionista registra pagamento e baixa estoque também)
     match /produtosCabine/{id} {
-      allow read, write: if ehDono() &&
-        (resource == null || ehDoMeuNegocio(resource.data.negocioId));
-    }
-
-    match /financeiro/{id} {
-      allow read, write: if ehDono() &&
-        (resource == null || ehDoMeuNegocio(resource.data.negocioId));
-    }
-
-    match /servicos/{id} {
       allow read, write: if ehDoMeuNegocio(resource.data.negocioId) ||
+        (request.method == "create" && ehDoMeuNegocio(request.resource.data.negocioId));
+    }
+
+    match /insumos/{id} {
+      allow read, write: if ehDoMeuNegocio(resource.data.negocioId) ||
+        (request.method == "create" && ehDoMeuNegocio(request.resource.data.negocioId));
+    }
+
+    // Histórico de entrada/saída — mesmo isolamento por negócio de
+    // produtos/insumos, só que sem update/delete (é um log, não se edita).
+    match /movimentosProdutosCabine/{id} {
+      allow read: if ehDoMeuNegocio(resource.data.negocioId);
+      allow create: if ehDoMeuNegocio(request.resource.data.negocioId);
+    }
+
+    match /movimentosInsumos/{id} {
+      allow read: if ehDoMeuNegocio(resource.data.negocioId);
+      allow create: if ehDoMeuNegocio(request.resource.data.negocioId);
+    }
+
+    // Financeiro/Despesas: qualquer um do negócio pode CRIAR (recepcionista
+    // registra pagamento na venda, e o restoque de produto/insumo lança
+    // despesa automática) — mas só o dono pode LER/editar, já que são
+    // informações estratégicas que a funcionária não deve enxergar.
+    match /financeiro/{id} {
+      allow read, update, delete: if ehDoMeuNegocio(resource.data.negocioId) && ehDono();
+      allow create: if ehDoMeuNegocio(request.resource.data.negocioId);
+    }
+
+    match /despesas/{id} {
+      allow read, update, delete: if ehDoMeuNegocio(resource.data.negocioId) && ehDono();
+      allow create: if ehDoMeuNegocio(request.resource.data.negocioId);
+    }
+
+    // Horário de funcionamento: coleção própria (não é mais campo do doc
+    // "negocios") justamente pra poder restringir a leitura só ao dono,
+    // exceto pra clientes logadas, que precisam validar o horário ao agendar.
+    match /horariosFuncionamento/{negocioId} {
+      // Antes "ehClienteSemCadastroDeEquipe()" liberava pra qualquer conta
+      // logada sem cadastro de equipe — não importava se era cliente
+      // daquele negócio ou de outro qualquer. Agora só a cliente cadastrada
+      // NESSE negócio específico.
+      allow read: if (ehDoMeuNegocio(negocioId) && ehDono()) || meuNegocioComoCliente() == negocioId;
+      allow write: if ehDoMeuNegocio(negocioId) && ehDono();
+    }
+
+    // Serviços: leitura aberta só à cliente cadastrada NESSE negócio
+    // (vitrine pra escolher o que agendar); escrita só de quem é do negócio.
+    // Antes era "|| logado()", que deixava qualquer conta da plataforma
+    // listar o catálogo e os preços de serviço de qualquer concorrente.
+    match /servicos/{id} {
+      allow read: if ehDoMeuNegocio(resource.data.negocioId) || meuNegocioComoCliente() == resource.data.negocioId;
+      allow write: if ehDoMeuNegocio(resource.data.negocioId) ||
         (request.method == "create" && ehDoMeuNegocio(request.resource.data.negocioId));
     }
 

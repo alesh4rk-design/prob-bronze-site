@@ -1,38 +1,47 @@
 // Pro'Bronze — Agenda (online + presencial), combo de serviços,
 // integrando ficha de pele e regras de segurança
-import { db } from "./firebase-config.js";
+import { db } from "./firebase-config.js?v=20260728d";
 import {
-  collection, doc, addDoc, updateDoc, getDoc, getDocs,
+  collection, doc, addDoc, updateDoc, getDoc, getDocs, increment,
   onSnapshot, query, where, orderBy, serverTimestamp, Timestamp
 } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
 import {
   verificarIntervaloMinimo, verificarLimiteMensal, tempoMaxRecomendado
-} from "./ficha-pele.js";
+} from "./ficha-pele.js?v=20260728d";
+import { notificarErroFirestore } from "./firestore-erro.js?v=20260728d";
 
 // status: "agendado" | "em_andamento" | "concluido" | "cancelado" | "faltou"
 // origem: "online" | "presencial"
 
-// Checa se o cliente pode agendar (intervalo mínimo + limite mensal)
-export async function checarElegibilidade(clienteId) {
+// Checa se o cliente pode agendar (intervalo mínimo + limite mensal).
+// opcoes.intervaloHoras e opcoes.limiteMes vêm da Configuração do negócio;
+// se não informados, usam os padrões de ficha-pele.js.
+export async function checarElegibilidade(negocioId, clienteId, opcoes = {}) {
   const clienteSnap = await getDoc(doc(db, "clientes", clienteId));
   if (!clienteSnap.exists()) return { podeAgendar: true, avisos: [] };
   const cliente = clienteSnap.data();
   const avisos = [];
 
-  const intervalo = verificarIntervaloMinimo(cliente.ultimaSessaoEm);
+  const intervalo = verificarIntervaloMinimo(cliente.ultimaSessaoEm, opcoes.intervaloHoras);
   if (!intervalo.permitido) {
     avisos.push(`Intervalo mínimo não cumprido: faltam ${intervalo.horasFaltando}h desde a última sessão.`);
   }
 
   const inicioMes = new Date(); inicioMes.setDate(1); inicioMes.setHours(0, 0, 0, 0);
+  // Precisa filtrar por negocioId também: sem isso, as regras do Firestore
+  // rejeitam a lista inteira com permission-denied, porque não conseguem
+  // garantir que todo documento retornável pertence ao negócio certo — a
+  // regra de leitura de "agendamentos" exige resource.data.negocioId ==
+  // meuNegocioId(), e uma query sem esse filtro deixa isso indeterminado.
   const q = query(
     collection(db, "agendamentos"),
+    where("negocioId", "==", negocioId),
     where("clienteId", "==", clienteId),
     where("status", "==", "concluido"),
     where("dataHora", ">=", Timestamp.fromDate(inicioMes))
   );
   const sessoesSnap = await getDocs(q);
-  const limite = verificarLimiteMensal(sessoesSnap.size);
+  const limite = verificarLimiteMensal(sessoesSnap.size, opcoes.limiteMes);
   if (!limite.dentroDoLimite) {
     avisos.push("Limite de sessões do mês atingido.");
   } else if (limite.alerta) {
@@ -47,6 +56,51 @@ export async function checarElegibilidade(clienteId) {
     avisos,
     tempoSugerido
   };
+}
+
+// Conta quantos agendamentos ativos (agendado/em_andamento) do negócio
+// se sobrepõem ao intervalo [dataHora, dataHora + tempoMin) — usado pra
+// não deixar marcar mais sessões simultâneas do que o número de cabines
+// Retorna os intervalos [inicio,fim] de todos os agendamentos ativos do
+// negócio, pra montar a grade de horários disponíveis sem precisar de uma
+// consulta ao Firestore por horário candidato (contarConflitosHorario faz
+// uma consulta só, mas repetida pra cada slot ficaria caro à toa).
+export async function listarAgendamentosAtivos(negocioId) {
+  const q = query(
+    collection(db, "agendamentos"),
+    where("negocioId", "==", negocioId),
+    where("status", "in", ["agendado", "em_andamento"])
+  );
+  const snap = await getDocs(q);
+  const intervalos = [];
+  snap.forEach((d) => {
+    const ag = d.data();
+    if (!ag.dataHora?.toDate) return;
+    const inicio = ag.dataHora.toDate();
+    const fim = new Date(inicio.getTime() + (ag.tempoMin || 15) * 60000);
+    intervalos.push({ inicio, fim });
+  });
+  return intervalos;
+}
+
+export async function contarConflitosHorario(negocioId, dataHora, tempoMin) {
+  const inicio = new Date(dataHora);
+  const fim = new Date(inicio.getTime() + tempoMin * 60000);
+  const q = query(
+    collection(db, "agendamentos"),
+    where("negocioId", "==", negocioId),
+    where("status", "in", ["agendado", "em_andamento"])
+  );
+  const snap = await getDocs(q);
+  let conflitos = 0;
+  snap.forEach((d) => {
+    const ag = d.data();
+    if (!ag.dataHora?.toDate) return;
+    const agInicio = ag.dataHora.toDate();
+    const agFim = new Date(agInicio.getTime() + (ag.tempoMin || 15) * 60000);
+    if (agInicio < fim && agFim > inicio) conflitos++;
+  });
+  return conflitos;
 }
 
 export async function criarAgendamento(negocioId, {
@@ -66,9 +120,33 @@ export async function criarAgendamento(negocioId, {
   });
 }
 
+// Marca o agendamento como em andamento assim que a sessão é iniciada
+// na cabine — sem isso, o botão "Iniciar" continuava aparecendo na
+// Agenda/Fila mesmo com a sessão já rodando. Guarda também o instante
+// de início (iniciadoEm), pra dar pra reconstruir o timer visual caso
+// a página recarregue (ex.: navegador derruba a aba em segundo plano).
+export function marcarEmAndamento(agendamentoId) {
+  return updateDoc(doc(db, "agendamentos", agendamentoId), { status: "em_andamento", iniciadoEm: Timestamp.now() });
+}
+
 export async function concluirAgendamento(agendamentoId, clienteId) {
   await updateDoc(doc(db, "agendamentos", agendamentoId), { status: "concluido" });
   await updateDoc(doc(db, "clientes", clienteId), { ultimaSessaoEm: new Date().toISOString() });
+}
+
+// Adiciona minutos ao tempo de cabine de uma sessão já em andamento
+export function estenderTempoSessao(agendamentoId, minutosAdicionais) {
+  return updateDoc(doc(db, "agendamentos", agendamentoId), { tempoMin: increment(minutosAdicionais) });
+}
+
+// Registra a avaliação (1 a 5) que a cliente deu pra sessão concluída
+export function salvarAvaliacaoSessao(agendamentoId, nota) {
+  return updateDoc(doc(db, "agendamentos", agendamentoId), { avaliacao: nota });
+}
+
+// Atribui/troca a cabine de um agendamento online (criado sem cabine definida)
+export function atribuirCabine(agendamentoId, cabineId) {
+  return updateDoc(doc(db, "agendamentos", agendamentoId), { cabineId });
 }
 
 export function cancelarAgendamento(agendamentoId) {
@@ -93,20 +171,5 @@ export function escutarAgendamentosDoDia(negocioId, data, callback) {
     const lista = [];
     snap.forEach((d) => lista.push({ id: d.id, ...d.data() }));
     callback(lista);
-  });
-}
-
-// Fila de espera: agendamentos presenciais "em_andamento" ou aguardando cabine livre
-export function escutarFilaEspera(negocioId, callback) {
-  const q = query(
-    collection(db, "agendamentos"),
-    where("negocioId", "==", negocioId),
-    where("status", "in", ["agendado", "em_andamento"])
-  );
-  return onSnapshot(q, (snap) => {
-    const fila = [];
-    snap.forEach((d) => fila.push({ id: d.id, ...d.data() }));
-    fila.sort((a, b) => a.dataHora.toMillis() - b.dataHora.toMillis());
-    callback(fila);
-  });
+  }, notificarErroFirestore);
 }

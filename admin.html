@@ -2,9 +2,12 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Pro'Bronze — Admin</title>
-<link rel="stylesheet" href="css/theme.css">
+<link rel="stylesheet" href="css/theme.css?v=20260728d">
 <style>
   * { box-sizing: border-box; }
   body { margin: 0; background: var(--bg); color: var(--text); font-family: var(--font); }
@@ -40,7 +43,7 @@
   #btn-sair { background: transparent; border: 1.5px solid var(--card-border); color: var(--muted); border-radius: 8px; padding: .5rem .9rem; font-size: .78rem; cursor: pointer; }
 
   main { padding: 1.25rem; max-width: 900px; margin: 0 auto; }
-  .kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: .7rem; margin-bottom: 1.5rem; }
+  .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: .7rem; margin-bottom: 1.5rem; }
   .kpi { background: var(--card); border: 1.5px solid var(--card-border); border-radius: 12px; padding: .9rem; text-align: center; }
   .kpi-val { font-size: 1.4rem; font-weight: 800; }
   .kpi-lbl { font-size: .68rem; color: var(--muted); margin-top: .25rem; }
@@ -56,6 +59,8 @@
   .badge.trial { background: rgba(217,164,65,.15); color: var(--yellow); }
   .badge.ativo { background: rgba(123,160,91,.15); color: var(--green); }
   .badge.expirado { background: rgba(193,85,74,.15); color: var(--red); }
+  .badge.pendente { background: rgba(120,120,120,.18); color: var(--muted); }
+  .btn-ativar-trial { background: rgba(123,160,91,.1); border: 1.5px solid var(--green); color: var(--green); font-weight: 700; }
   .negocio-acoes { display: flex; gap: .5rem; margin-top: .8rem; flex-wrap: wrap; }
   .negocio-acoes button { flex: 1; min-width: 140px; padding: .5rem; border-radius: 8px; font-size: .76rem; font-weight: 700; cursor: pointer; }
   .btn-ativar { background: rgba(123,160,91,.1); border: 1.5px solid var(--green); color: var(--green); }
@@ -69,22 +74,70 @@
 
 <div id="tela-login">
   <div class="login-card">
-    <h1>Pro'Bronze — Admin</h1>
+    <h1><span class="marca-pro">Pro</span><span class="marca-apo">'</span>Bronze — Admin</h1>
     <p>Acesso restrito ao administrador do sistema</p>
     <div class="input-group"><label>E-mail</label><input type="email" id="login-email" autocomplete="username"></div>
     <div class="input-group"><label>Senha</label><input type="password" id="login-senha" autocomplete="current-password"></div>
     <button class="btn-primario" id="btn-login">Entrar</button>
+    <p style="text-align:center;margin-top:.8rem"><a href="#" id="link-esqueci-senha" style="font-size:.82rem;color:var(--accent-light)">Esqueci minha senha</a></p>
     <div id="login-erro"></div>
   </div>
 </div>
 
 <div id="painel">
   <header class="topo">
-    <div class="marca">Pro'Bronze — Admin</div>
+    <div class="marca"><span class="marca-pro">Pro</span><span class="marca-apo">'</span>Bronze — Admin</div>
     <button id="btn-sair">Sair</button>
   </header>
   <main>
+    <div class="section-title" style="font-weight:800;font-size:.85rem;margin-bottom:.6rem">🔗 Links do Sistema</div>
+    <div style="background:var(--card);border:1.5px solid var(--card-border);border-radius:12px;padding:1rem;margin-bottom:1.5rem">
+      <div style="display:flex;flex-direction:column;gap:.4rem">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:.6rem .85rem;background:var(--card-inp-bg);border:1px solid var(--card-border);border-radius:8px;gap:.5rem;flex-wrap:wrap">
+          <div style="min-width:0">
+            <div style="font-size:.8rem;font-weight:700;color:var(--text)">☀️ Agenda da Cliente</div>
+            <div style="font-size:.68rem;color:var(--muted);margin-top:.1rem;word-break:break-all">https://alesh4rk-design.github.io/prob-bronze-site/</div>
+          </div>
+          <div style="display:flex;gap:.4rem;flex-shrink:0">
+            <a href="https://alesh4rk-design.github.io/prob-bronze-site/" target="_blank" class="btn-sm btn-ativar" style="text-decoration:none;font-size:.68rem;padding:.4rem .7rem;border-radius:6px;display:inline-block">Abrir</a>
+            <button class="btn-sm" style="border:1.5px solid var(--card-border);background:transparent;color:var(--muted);font-size:.68rem;padding:.4rem .7rem;border-radius:6px;cursor:pointer" onclick="navigator.clipboard.writeText('https://alesh4rk-design.github.io/prob-bronze-site/');toast('Copiado!','sucesso')">Copiar</button>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:.6rem .85rem;background:var(--card-inp-bg);border:1px solid var(--card-border);border-radius:8px;gap:.5rem;flex-wrap:wrap">
+          <div style="min-width:0">
+            <div style="font-size:.8rem;font-weight:700;color:var(--text)">🧑‍💼 Painel do Dono/Esteticista</div>
+            <div style="font-size:.68rem;color:var(--muted);margin-top:.1rem;word-break:break-all">https://alesh4rk-design.github.io/prob-bronze-site/esteticista.html</div>
+          </div>
+          <div style="display:flex;gap:.4rem;flex-shrink:0">
+            <a href="https://alesh4rk-design.github.io/prob-bronze-site/esteticista.html" target="_blank" class="btn-sm btn-ativar" style="text-decoration:none;font-size:.68rem;padding:.4rem .7rem;border-radius:6px;display:inline-block">Abrir</a>
+            <button class="btn-sm" style="border:1.5px solid var(--card-border);background:transparent;color:var(--muted);font-size:.68rem;padding:.4rem .7rem;border-radius:6px;cursor:pointer" onclick="navigator.clipboard.writeText('https://alesh4rk-design.github.io/prob-bronze-site/esteticista.html');toast('Copiado!','sucesso')">Copiar</button>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:.6rem .85rem;background:var(--card-inp-bg);border:1.5px solid var(--green);border-radius:8px;gap:.5rem;flex-wrap:wrap">
+          <div style="min-width:0">
+            <div style="font-size:.8rem;font-weight:700;color:var(--green)">💰 Página de Vendas — Pro'Bronze</div>
+            <div style="font-size:.68rem;color:var(--muted);margin-top:.1rem;word-break:break-all">https://alesh4rk-design.github.io/prob-bronze-site/vender.html</div>
+          </div>
+          <div style="display:flex;gap:.4rem;flex-shrink:0">
+            <a href="https://alesh4rk-design.github.io/prob-bronze-site/vender.html" target="_blank" class="btn-sm btn-ativar" style="text-decoration:none;font-size:.68rem;padding:.4rem .7rem;border-radius:6px;display:inline-block">Abrir</a>
+            <button class="btn-sm" style="border:1.5px solid var(--card-border);background:transparent;color:var(--muted);font-size:.68rem;padding:.4rem .7rem;border-radius:6px;cursor:pointer" onclick="navigator.clipboard.writeText('https://alesh4rk-design.github.io/prob-bronze-site/vender.html');toast('Copiado!','sucesso')">Copiar</button>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:.6rem .85rem;background:var(--card-inp-bg);border:1px solid rgba(0,212,255,.35);border-radius:8px;gap:.5rem;flex-wrap:wrap">
+          <div style="min-width:0">
+            <div style="font-size:.8rem;font-weight:700;color:#00d4ff">✂️ Página de Vendas — Pro'B (barbearia)</div>
+            <div style="font-size:.68rem;color:var(--muted);margin-top:.1rem;word-break:break-all">https://alesh4rk-design.github.io/prob-site/vender.html</div>
+          </div>
+          <div style="display:flex;gap:.4rem;flex-shrink:0">
+            <a href="https://alesh4rk-design.github.io/prob-site/vender.html" target="_blank" class="btn-sm btn-ativar" style="text-decoration:none;font-size:.68rem;padding:.4rem .7rem;border-radius:6px;display:inline-block">Abrir</a>
+            <button class="btn-sm" style="border:1.5px solid var(--card-border);background:transparent;color:var(--muted);font-size:.68rem;padding:.4rem .7rem;border-radius:6px;cursor:pointer" onclick="navigator.clipboard.writeText('https://alesh4rk-design.github.io/prob-site/vender.html');toast('Copiado!','sucesso')">Copiar</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <div class="kpis">
+      <div class="kpi"><div class="kpi-val" id="k-pendentes">0</div><div class="kpi-lbl">⏳ Pendentes</div></div>
       <div class="kpi green"><div class="kpi-val" id="k-ativos">0</div><div class="kpi-lbl">Ativos</div></div>
       <div class="kpi yellow"><div class="kpi-val" id="k-trial">0</div><div class="kpi-lbl">Em trial</div></div>
       <div class="kpi yellow"><div class="kpi-val" id="k-vencendo">0</div><div class="kpi-lbl">Vence em 3d</div></div>
@@ -95,10 +148,17 @@
 </div>
 
 <script type="module">
-import { auth, db } from './js/firebase-config.js';
-import { ADMIN_UID } from './js/admin-config.js';
-import { signInWithEmailAndPassword, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js';
-import { collection, onSnapshot, doc, updateDoc } from 'https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js';
+import { auth, db } from './js/firebase-config.js?v=20260728d';
+import { ADMIN_UID } from './js/admin-config.js?v=20260728d';
+import { signInWithEmailAndPassword, signOut, onAuthStateChanged, sendPasswordResetEmail } from 'https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js';
+import { collection, onSnapshot, doc, updateDoc, getDoc } from 'https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js';
+import { toast, confirmar } from './js/ui-feedback.js?v=20260728d';
+
+window.addEventListener('unhandledrejection', (e) => {
+  console.error(e.reason);
+  const detalhe = e.reason?.code || e.reason?.message || '';
+  toast(`Algo deu errado. Tente novamente.${detalhe ? ' [' + detalhe + ']' : ''}`, 'erro');
+});
 
 const $ = (id) => document.getElementById(id);
 
@@ -115,6 +175,18 @@ $('btn-login').addEventListener('click', async () => {
 });
 $('login-senha').addEventListener('keydown', (e) => { if (e.key === 'Enter') $('btn-login').click(); });
 $('btn-sair').addEventListener('click', () => signOut(auth));
+
+$('link-esqueci-senha').addEventListener('click', async (e) => {
+  e.preventDefault();
+  const email = $('login-email').value.trim();
+  if (!email) { $('login-erro').textContent = 'Digite seu e-mail no campo acima e clique em "Esqueci minha senha" de novo.'; return; }
+  try {
+    await sendPasswordResetEmail(auth, email);
+    toast(`Enviamos um link de redefinição de senha pra ${email}.`);
+  } catch (err) {
+    $('login-erro').textContent = 'Não foi possível enviar o e-mail de redefinição.';
+  }
+});
 
 onAuthStateChanged(auth, (user) => {
   // A checagem real de permissão acontece nas regras do Firestore
@@ -142,6 +214,7 @@ function escutarNegocios() {
 }
 
 function statusReal(n) {
+  if (n.status === 'pendente') return 'pendente';
   if (n.status === 'ativo') return 'ativo';
   if (n.status === 'expirado') return 'expirado';
   if (n.status === 'trial') {
@@ -155,6 +228,7 @@ function renderNegocios(negocios) {
   const ativos = negocios.filter((n) => statusReal(n) === 'ativo').length;
   const trial = negocios.filter((n) => statusReal(n) === 'trial').length;
   const expirados = negocios.filter((n) => statusReal(n) === 'expirado').length;
+  const pendentes = negocios.filter((n) => statusReal(n) === 'pendente').length;
   const vencendo = negocios.filter((n) => {
     if (statusReal(n) !== 'trial') return false;
     const trialFim = n.trialFim?.toDate ? n.trialFim.toDate() : new Date(n.trialFim);
@@ -162,6 +236,7 @@ function renderNegocios(negocios) {
     return dias <= 3;
   }).length;
 
+  $('k-pendentes').textContent = pendentes;
   $('k-ativos').textContent = ativos;
   $('k-trial').textContent = trial;
   $('k-vencendo').textContent = vencendo;
@@ -184,12 +259,14 @@ function renderNegocios(negocios) {
             <div class="negocio-nome">${n.nome || '(sem nome)'}</div>
             ${status === 'trial' && diasRestantes != null ? `<div class="negocio-detalhe">Trial: ${diasRestantes >= 0 ? diasRestantes + ' dias restantes' : 'vencido'}</div>` : ''}
           </div>
-          <span class="badge ${status}">${status === 'trial' ? '⏳ Trial' : status === 'ativo' ? '✓ Ativo' : '✕ Expirado'}</span>
+          <span class="badge ${status}">${status === 'pendente' ? '⏳ Pendente' : status === 'trial' ? '⏳ Trial' : status === 'ativo' ? '✓ Ativo' : '✕ Expirado'}</span>
         </div>
         <div class="negocio-acoes">
+          ${status === 'pendente' ? `<button class="btn-ativar-trial" data-acao="ativarTrial" data-id="${n.id}">🎁 Ativar teste grátis (7 dias)</button>` : ''}
           <button class="btn-ativar" data-acao="ativar" data-id="${n.id}">✓ Ativar</button>
           <button class="btn-estender" data-acao="estender" data-id="${n.id}">+7 dias trial</button>
           <button class="btn-expirar" data-acao="expirar" data-id="${n.id}">✕ Expirar</button>
+          <a class="btn-estender" href="esteticista.html" target="_blank" style="text-decoration:none;display:flex;align-items:center;justify-content:center">🔗 Painel do Dono</a>
         </div>
       </div>
     `;
@@ -201,14 +278,28 @@ function renderNegocios(negocios) {
 }
 
 async function executarAcao(id, acao) {
-  if (acao === 'ativar') {
+  if (acao === 'ativarTrial') {
+    const trialFim = new Date(); trialFim.setDate(trialFim.getDate() + 7);
+    await updateDoc(doc(db, 'negocios', id), { status: 'trial', trialInicio: new Date().toISOString(), trialFim: trialFim.toISOString() });
+    toast('Teste grátis de 7 dias liberado!', 'sucesso');
+  } else if (acao === 'ativar') {
     await updateDoc(doc(db, 'negocios', id), { status: 'ativo' });
+    toast('Negócio ativado.', 'sucesso');
   } else if (acao === 'expirar') {
-    if (!confirm('Expirar o acesso desse negócio agora?')) return;
+    if (!(await confirmar('Expirar o acesso desse negócio agora?'))) return;
     await updateDoc(doc(db, 'negocios', id), { status: 'expirado' });
+    toast('Acesso expirado.', 'sucesso');
   } else if (acao === 'estender') {
-    const novaData = new Date(); novaData.setDate(novaData.getDate() + 7);
+    // Soma 7 dias em cima do trialFim que já existe (se ainda estiver no
+    // futuro) — antes sempre zerava pra "hoje + 7", o que ENCURTAVA o
+    // trial de quem ainda tinha mais de 7 dias restantes.
+    const snap = await getDoc(doc(db, 'negocios', id));
+    const atual = snap.data() || {};
+    const trialFimAtual = atual.trialFim?.toDate ? atual.trialFim.toDate() : (atual.trialFim ? new Date(atual.trialFim) : null);
+    const base = trialFimAtual && trialFimAtual > new Date() ? trialFimAtual : new Date();
+    const novaData = new Date(base); novaData.setDate(novaData.getDate() + 7);
     await updateDoc(doc(db, 'negocios', id), { status: 'trial', trialFim: novaData.toISOString() });
+    toast('Trial estendido por mais 7 dias.', 'sucesso');
   }
 }
 </script>

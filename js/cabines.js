@@ -1,9 +1,10 @@
 // Pro'Bronze — Controle de Cabines/Camas
-import { db } from "./firebase-config.js";
+import { db } from "./firebase-config.js?v=20260728d";
 import {
   collection, doc, addDoc, updateDoc, deleteDoc,
   onSnapshot, query, where, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+import { notificarErroFirestore } from "./firestore-erro.js?v=20260728d";
 
 // status: "livre" | "ocupada" | "manutencao"
 
@@ -35,5 +36,5 @@ export function escutarCabines(negocioId, callback) {
     const cabines = [];
     snap.forEach((d) => cabines.push({ id: d.id, ...d.data() }));
     callback(cabines.sort((a, b) => a.nome.localeCompare(b.nome)));
-  });
+  }, notificarErroFirestore);
 }

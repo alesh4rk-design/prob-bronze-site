@@ -1,15 +1,17 @@
 // Pro'Bronze — Clientes (cadastro pela recepção + ficha de pele embutida)
-import { db } from "./firebase-config.js";
+import { db } from "./firebase-config.js?v=20260728d";
 import {
-  collection, doc, addDoc, updateDoc,
+  collection, doc, addDoc, updateDoc, deleteDoc,
   onSnapshot, query, where, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+import { notificarErroFirestore } from "./firestore-erro.js?v=20260728d";
 
-export async function criarCliente(negocioId, { nome, whatsapp = "", tipoFitzpatrick = null, observacoesPele = "" }) {
+export async function criarCliente(negocioId, { nome, whatsapp = "", tipoFitzpatrick = null, observacoesPele = "", dataNascimento = null }) {
   return addDoc(collection(db, "clientes"), {
     negocioId,
     nome,
     whatsapp,
+    dataNascimento: dataNascimento || null,
     fichaPele: tipoFitzpatrick ? {
       tipoFitzpatrick,
       observacoes: observacoesPele,
@@ -20,8 +22,20 @@ export async function criarCliente(negocioId, { nome, whatsapp = "", tipoFitzpat
   });
 }
 
+// Verdadeiro se a data de nascimento (formato "AAAA-MM-DD") cai hoje
+export function ehAniversarioHoje(dataNascimento) {
+  if (!dataNascimento) return false;
+  const [, mes, dia] = dataNascimento.split("-").map(Number);
+  const hoje = new Date();
+  return mes === hoje.getMonth() + 1 && dia === hoje.getDate();
+}
+
 export function editarCliente(clienteId, dados) {
   return updateDoc(doc(db, "clientes", clienteId), dados);
+}
+
+export function excluirCliente(clienteId) {
+  return deleteDoc(doc(db, "clientes", clienteId));
 }
 
 export function escutarClientes(negocioId, callback) {
@@ -30,5 +44,5 @@ export function escutarClientes(negocioId, callback) {
     const clientes = [];
     snap.forEach((d) => clientes.push({ id: d.id, ...d.data() }));
     callback(clientes.sort((a, b) => a.nome.localeCompare(b.nome)));
-  });
+  }, notificarErroFirestore);
 }

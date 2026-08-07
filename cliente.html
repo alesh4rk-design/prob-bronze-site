@@ -2,9 +2,20 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Pro'Bronze — Área da Cliente</title>
-<link rel="stylesheet" href="css/theme.css">
+<link rel="manifest" href="manifest-cliente.json">
+<link rel="icon" href="icons/icon-192.png" type="image/png">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<meta name="theme-color" content="#C68642">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Pro'Bronze">
+<link rel="stylesheet" href="css/theme.css?v=20260728d">
 <style>
   * { box-sizing: border-box; }
   body { margin: 0; background: var(--bg); color: var(--text); font-family: var(--font); min-height: 100vh; }
@@ -13,13 +24,79 @@
   #tela-login {
     min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 1.5rem;
     background: radial-gradient(circle at 20% 20%, rgba(var(--accent-rgb),.20), transparent 55%), var(--bg);
+    position: relative;
+  }
+  /* Raios de luz gigantes girando atrás de toda a tela de login — fica num
+     elemento fixo próprio (não filho de #tela-login) pra não usar overflow:
+     hidden ali, senão corta o sol quando a tela é mais baixa que o card. */
+  #tela-login-raios {
+    position: fixed; inset: 0; overflow: hidden; z-index: 0; pointer-events: none;
+  }
+  #tela-login-raios::before {
+    content: '';
+    position: absolute; top: 50%; left: 50%;
+    width: 160vmax; height: 160vmax;
+    transform: translate(-50%, -50%) rotate(0deg);
+    background: repeating-conic-gradient(from 0deg, rgba(var(--accent-rgb),.16) 0deg 3deg, transparent 3deg 18deg);
+    -webkit-mask-image: radial-gradient(circle, transparent 8%, black 18%, black 38%, transparent 58%);
+    mask-image: radial-gradient(circle, transparent 8%, black 18%, black 38%, transparent 58%);
+    animation: raios-girar 26s linear infinite;
+  }
+  @keyframes raios-girar {
+    to { transform: translate(-50%, -50%) rotate(360deg); }
+  }
+  .login-card-wrap { position: relative; width: 100%; max-width: 380px; z-index: 1; padding: 4px; border-radius: 24px; }
+  /* Néon contínuo ao redor de todo o card */
+  .login-card-wrap::before {
+    content: ''; position: absolute; inset: 0; border-radius: 24px;
+    border: 3px solid var(--accent-light);
+    box-shadow: 0 0 10px 2px rgba(var(--accent-rgb),.9), 0 0 22px 6px rgba(var(--accent-rgb),.6), inset 0 0 14px 2px rgba(var(--accent-rgb),.5);
+    animation: neon-pulsar 2.2s ease-in-out infinite;
+    pointer-events: none;
+  }
+  @keyframes neon-pulsar {
+    0%, 100% { box-shadow: 0 0 10px 2px rgba(var(--accent-rgb),.9), 0 0 22px 6px rgba(var(--accent-rgb),.6), inset 0 0 14px 2px rgba(var(--accent-rgb),.5); }
+    50% { box-shadow: 0 0 16px 4px rgba(var(--accent-rgb),1), 0 0 34px 10px rgba(var(--accent-rgb),.8), inset 0 0 20px 4px rgba(var(--accent-rgb),.7); }
   }
   .login-card {
-    width: 100%; max-width: 380px; background: rgba(36,28,22,.72); backdrop-filter: blur(18px);
-    border: 1.5px solid var(--card-border); border-radius: 20px; padding: 2.3rem 1.9rem; text-align: center;
+    width: 100%; background: rgba(36,28,22,.72); backdrop-filter: blur(18px);
+    border: 1.5px solid var(--card-border); border-radius: 20px; padding: 2.6rem 1.9rem 2.3rem; text-align: center;
+    position: relative;
   }
   .login-card h1 { font-size: 1.4rem; margin: 0 0 .3rem; color: var(--accent-light); }
   .login-card p { color: var(--muted); font-size: .85rem; margin: 0 0 1.5rem; }
+
+  /* Sol no topo do card — só o emoji brilhando, sem fundo redondo */
+  .login-sol {
+    position: absolute; top: -90px; left: 50%; transform: translateX(-50%);
+    display: flex; align-items: center; justify-content: center; font-size: 3.6rem;
+    filter: drop-shadow(0 0 18px rgba(var(--accent-rgb),.85)) drop-shadow(0 0 40px rgba(var(--accent-rgb),.5));
+    animation: sol-pulsar 3s ease-in-out infinite;
+    z-index: 2;
+  }
+  @keyframes sol-pulsar {
+    0%, 100% {
+      transform: translateX(-50%) scale(1);
+      filter: drop-shadow(0 0 18px rgba(var(--accent-rgb),.85)) drop-shadow(0 0 40px rgba(var(--accent-rgb),.5));
+    }
+    50% {
+      transform: translateX(-50%) scale(1.12);
+      filter: drop-shadow(0 0 26px rgba(var(--accent-rgb),1)) drop-shadow(0 0 56px rgba(var(--accent-rgb),.65));
+    }
+  }
+
+  /* Botão de entrar com neon pulsante */
+  #tela-login .btn-primario {
+    letter-spacing: .03em; text-shadow: 0 0 10px rgba(255,255,255,.35);
+    animation: btn-neon-pulsar 2.2s ease-in-out infinite;
+    transition: transform .12s ease;
+  }
+  #tela-login .btn-primario:hover { transform: translateY(-1px); filter: brightness(1.1); }
+  #tela-login .btn-primario:active { transform: translateY(0) scale(.98); }
+  @keyframes btn-neon-pulsar {
+    0%, 100% { box-shadow: 0 0 10px 1px rgba(var(--accent-rgb),.5), 0 4px 14px rgba(var(--accent-rgb),.28); }
+    50% { box-shadow: 0 0 20px 4px rgba(var(--accent-rgb),.85), 0 4px 20px rgba(var(--accent-rgb),.5); }
+  }
   .input-group { margin-bottom: 1rem; text-align: left; }
   .input-group label { display: block; font-size: .78rem; color: var(--muted); margin-bottom: .35rem; font-weight: 600; }
   .input-group input {
@@ -49,28 +126,81 @@
   .item .detalhe { color: var(--muted); font-size: .75rem; margin-top: .15rem; }
 
   .empty-state { text-align: center; color: var(--muted); padding: 1.5rem 1rem; font-size: .85rem; }
+
+  /* ── Seletor de data e hora do agendamento ── */
+  .data-scroll {
+    display: flex; gap: .5rem; overflow-x: auto; padding-bottom: .3rem; scrollbar-width: none;
+  }
+  .data-scroll::-webkit-scrollbar { display: none; }
+  .data-chip {
+    padding: .55rem 1rem; background: var(--card-inp-bg); border: 1.5px solid var(--card-inp-border);
+    border-radius: 20px; font-size: .8rem; cursor: pointer; white-space: nowrap; flex-shrink: 0;
+    transition: all .15s ease; color: var(--text);
+  }
+  .data-chip.ativo { border-color: var(--accent); color: var(--accent-light); background: rgba(var(--accent-rgb),.14); }
+  .horas-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(72px, 1fr)); gap: .45rem;
+  }
+  .hora-btn {
+    padding: .6rem .3rem; text-align: center; border-radius: 8px; font-size: .82rem; font-weight: 700;
+    cursor: pointer; transition: all .15s ease; border: 1.5px solid var(--card-inp-border);
+    background: var(--card-inp-bg); color: var(--text); font-family: var(--font);
+  }
+  .hora-btn.livre { border-color: rgba(123,160,91,.4); color: var(--green); background: rgba(123,160,91,.06); }
+  .hora-btn.livre:hover, .hora-btn.selecionado { border-color: var(--accent); color: var(--accent-light); background: rgba(var(--accent-rgb),.14); }
+  .hora-btn.ocupado { border-color: rgba(193,85,74,.25); color: rgba(193,85,74,.45); cursor: not-allowed; text-decoration: line-through; }
   .btn-secundario { width: 100%; background: transparent; border: 1.5px solid var(--card-border); color: var(--muted); border-radius: 8px; padding: .6rem; font-size: .8rem; cursor: pointer; margin-top: .5rem; }
 </style>
 </head>
 <body>
 
 <div id="tela-login">
+  <div id="tela-login-raios"></div>
+  <div class="login-card-wrap">
   <div class="login-card">
-    <h1>Pro'Bronze</h1>
+    <h1><span class="marca-pro">Pro</span><span class="marca-apo">'</span>Bronze</h1>
     <p>Área da Cliente</p>
     <div class="input-group"><label>E-mail</label><input type="email" id="login-email" autocomplete="username"></div>
     <div class="input-group"><label>Senha</label><input type="password" id="login-senha" autocomplete="current-password"></div>
     <button class="btn-primario" id="btn-login">Entrar</button>
+    <div style="text-align:right;margin-top:.4rem">
+      <a href="#" id="link-esqueci-senha" style="font-size:.78rem;color:var(--muted);text-decoration:none">Esqueci minha senha</a>
+    </div>
     <div id="login-erro"></div>
+    <div style="display:flex;align-items:center;gap:.6rem;margin:1.1rem 0;color:var(--muted);font-size:.75rem">
+      <div style="flex:1;height:1px;background:var(--card-border)"></div>ou<div style="flex:1;height:1px;background:var(--card-border)"></div>
+    </div>
+    <button class="btn-secundario" id="btn-login-google-cliente" style="width:100%">🔵 Entrar com Google</button>
+  </div>
   </div>
 </div>
 
 <div id="painel-cliente">
   <main>
     <header class="topo-cliente">
+      <div id="vitrine-logo" style="font-size:2.2rem;margin-bottom:.3rem;line-height:1">☀️</div>
       <h1 id="vitrine-titulo">Pro'Bronze</h1>
       <p id="vitrine-subtitulo">Olá! Acompanhe suas sessões por aqui.</p>
+      <div id="contato-estabelecimento" style="margin-top:.4rem"></div>
     </header>
+
+    <div class="card">
+      <div class="card-titulo">Agendar Nova Sessão</div>
+      <div id="agendar-avisos"></div>
+      <div class="input-group">
+        <label>Serviços (selecione um ou mais)</label>
+        <div id="agendar-servicos"><div class="empty-state">Carregando...</div></div>
+      </div>
+      <div class="input-group">
+        <label>Data</label>
+        <div class="data-scroll" id="agendar-data-scroll"></div>
+      </div>
+      <div class="input-group">
+        <label>Horário</label>
+        <div class="horas-grid" id="agendar-horas-grid"><div class="empty-state">Escolha ao menos um serviço primeiro.</div></div>
+      </div>
+      <button class="btn-primario" id="btn-agendar-online">Confirmar Agendamento</button>
+    </div>
 
     <div class="card">
       <div class="card-titulo">Meus Pacotes</div>
@@ -92,13 +222,51 @@
 </div>
 
 <script type="module">
-import { onAuthChange, login, logout } from './js/auth.js';
-import { db } from './js/firebase-config.js';
+import { onAuthChange, login, logout, iniciarLoginComGoogle, resetSenha } from './js/auth.js?v=20260728d';
+import { db } from './js/firebase-config.js?v=20260728d';
 import {
-  collection, query, where, onSnapshot, doc, getDoc, orderBy
+  collection, doc, setDoc, query, where, onSnapshot
 } from 'https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js';
+import { escutarServicos, calcularCombo } from './js/servicos.js?v=20260728d';
+import { criarAgendamento, contarConflitosHorario, listarAgendamentosAtivos } from './js/agenda.js?v=20260731a';
+import { checarElegibilidade } from './js/agenda.js?v=20260731a';
+import { escutarCabines } from './js/cabines.js?v=20260728d';
+import { escutarConfigNegocio } from './js/config-negocio.js?v=20260729a';
+import { escutarHorarios, validarHorarioFuncionamento } from './js/horarios.js?v=20260728d';
+import { toast } from './js/ui-feedback.js?v=20260728d';
+
+window.addEventListener('unhandledrejection', (e) => {
+  console.error(e.reason);
+  const detalhe = e.reason?.code || e.reason?.message || '';
+  toast(`Algo deu errado. Tente novamente.${detalhe ? ' [' + detalhe + ']' : ''}`, 'erro');
+});
+window.addEventListener('firestore-erro', (e) => {
+  const err = e.detail;
+  const detalhe = err?.code || err?.message || 'erro desconhecido';
+  toast(`Não foi possível carregar alguns dados. [${detalhe}]`, 'erro');
+});
 
 const $ = (id) => document.getElementById(id);
+
+// Escapa dado escrito pelo dono do negócio (logo, PIX, nome etc.) antes de
+// jogar cru num innerHTML — o dono edita esses campos livremente nas
+// Configurações, e sem escapar eles executavam na sessão autenticada de
+// TODAS as clientes daquele negócio (XSS armazenado).
+function escapeHtml(str) {
+  return String(str ?? '').replace(/[&<>"']/g, (c) => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+  }[c]));
+}
+
+let servicosCache = [];
+let combosSelecionados = new Set();
+let clienteAtual = null;
+let cabinesCache = [];
+let configNegocioCache = { nome: "Pro'Bronze", whatsappNegocio: '', chavePix: '', vitrineSubtitulo: '', intervaloMinimoHoras: 24, limiteSessoesMes: 12 };
+let horariosCache = null;
+let dataEscolhida = null;
+let horaEscolhida = null;
+const DIA_JS = ["dom", "seg", "ter", "qua", "qui", "sex", "sab"]; // Date.getDay(): 0=domingo
 
 // Login da cliente usa a mesma Auth do Firebase; o vínculo com o
 // documento em "clientes" é feito por clienteUid (campo salvo no
@@ -119,6 +287,29 @@ $('btn-login').addEventListener('click', async () => {
 });
 $('login-senha').addEventListener('keydown', (e) => { if (e.key === 'Enter') $('btn-login').click(); });
 
+$('link-esqueci-senha').addEventListener('click', async (e) => {
+  e.preventDefault();
+  const email = $('login-email').value.trim();
+  if (!email) { $('login-erro').textContent = 'Digite seu e-mail no campo acima primeiro.'; return; }
+  try {
+    await resetSenha(email);
+    toast('E-mail de recuperação enviado! Confira sua caixa de entrada.', 'sucesso');
+  } catch (err) {
+    toast('Não foi possível enviar o e-mail de recuperação. Confira se o e-mail está certo.', 'erro');
+  }
+});
+
+$('btn-login-google-cliente').addEventListener('click', async () => {
+  $('login-erro').textContent = '';
+  try {
+    await iniciarLoginComGoogle();
+  } catch (err) {
+    if (err.code !== 'auth/popup-closed-by-user' && err.code !== 'auth/cancelled-popup-request') {
+      $('login-erro').textContent = 'Não foi possível entrar com Google. Tente novamente.';
+    }
+  }
+});
+
 $('btn-sair-cliente').addEventListener('click', async () => {
   const { getAuth, signOut } = await import('https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js');
   await signOut(getAuth());
@@ -135,31 +326,117 @@ $('btn-sair-cliente').addEventListener('click', async () => {
     }
     // Busca o doc do cliente vinculado a este login (campo clienteUid)
     const q = query(collection(db, 'clientes'), where('clienteUid', '==', user.uid));
-    const unsub = onSnapshot(q, (snap) => {
+    // As assinaturas de servicos/cabines/config/horarios/pacotes/sessões só
+    // precisam ser feitas UMA vez por login — antes rodavam de novo a cada
+    // atualização do próprio doc da cliente (ex.: o dono grava
+    // ultimaSessaoEm a cada sessão concluída), empilhando um conjunto novo
+    // de listeners do Firestore a cada disparo, sem nunca cancelar os
+    // antigos (vazamento de listeners) — e cada disparo também reconstruía
+    // a lista de serviços do zero, sem limpar a seleção já feita.
+    let assinado = false;
+    const unsub = onSnapshot(q, async (snap) => {
       if (snap.empty) {
         $('login-erro').textContent = 'Esta conta ainda não está vinculada a um cadastro de cliente.';
         return;
       }
       const clienteDoc = snap.docs[0];
       const cliente = { id: clienteDoc.id, ...clienteDoc.data() };
+      clienteAtual = cliente;
       $('tela-login').style.display = 'none';
       $('painel-cliente').style.display = 'block';
-      carregarVitrine(cliente.negocioId);
+      if (assinado) return;
+      assinado = true;
+      // Autocorreção pra contas criadas antes desse mapeamento existir —
+      // sem isso, clientes antigas perderiam acesso aos próprios dados do
+      // negócio ao qual pertencem. Espera terminar antes de ler qualquer
+      // coisa que dependa dele, senão a primeira leitura pode cair antes
+      // do mapeamento existir.
+      try {
+        await setDoc(doc(db, 'clienteNegocios', user.uid), { negocioId: cliente.negocioId });
+      } catch (e) { console.error('clienteNegocios:', e); }
       escutarMeusPacotes(cliente.id);
       escutarMinhasSessoes(cliente.negocioId, cliente.id);
+      escutarServicos(cliente.negocioId, (servicos) => {
+        servicosCache = servicos;
+        renderServicosAgendar(servicos);
+      });
+      escutarCabines(cliente.negocioId, (cabines) => { cabinesCache = cabines; });
+      escutarConfigNegocio(cliente.negocioId, (config) => {
+        configNegocioCache = config;
+        $('vitrine-titulo').textContent = config.nome;
+        $('vitrine-subtitulo').textContent = config.vitrineSubtitulo;
+        renderContatoEstabelecimento(config);
+        aplicarPersonalizacao(config);
+      });
+      escutarHorarios(cliente.negocioId, (horarios) => {
+        horariosCache = horarios;
+        if (dataEscolhida) montarGradeHorarios();
+      });
+      montarSeletorDatas();
     });
   });
 })();
 
-async function carregarVitrine(negocioId) {
-  try {
-    const snap = await getDoc(doc(db, 'negocios', negocioId));
-    if (snap.exists()) {
-      const dados = snap.data();
-      if (dados.vitrineTitulo) $('vitrine-titulo').textContent = dados.vitrineTitulo;
-      if (dados.vitrineSubtitulo) $('vitrine-subtitulo').textContent = dados.vitrineSubtitulo;
-    }
-  } catch (err) { /* usa padrão */ }
+// Aplica a personalização visual do estúdio (cor + logo/ícone) só na área
+// já logada da cliente — a tela de login é anterior a sabermos de qual
+// negócio se trata, então continua com a marca padrão do Pro'Bronze.
+function hexParaRgb(hex) {
+  const limpo = (hex || '').replace('#', '');
+  if (limpo.length !== 6) return null;
+  const r = parseInt(limpo.slice(0, 2), 16), g = parseInt(limpo.slice(2, 4), 16), b = parseInt(limpo.slice(4, 6), 16);
+  if ([r, g, b].some(Number.isNaN)) return null;
+  return `${r},${g},${b}`;
+}
+
+function aplicarPersonalizacao(config) {
+  const painel = $('painel-cliente');
+  if (config.corDestaque) {
+    painel.style.setProperty('--accent', config.corDestaque);
+    painel.style.setProperty('--accent-light', config.corDestaque);
+    const rgb = hexParaRgb(config.corDestaque);
+    if (rgb) painel.style.setProperty('--accent-rgb', rgb);
+  }
+  const logoEl = $('vitrine-logo');
+  // Monta o <img> via DOM em vez de innerHTML com string interpolada — o
+  // logoUrl/logoEmoji vêm de campo livre que o dono preenche nas
+  // Configurações, e iam parar cru num atributo/JS inline antes (dava pra
+  // quebrar o onerror="..." com aspas e rodar script na sessão de toda
+  // cliente que abrisse essa loja).
+  logoEl.textContent = '';
+  if (config.logoUrl) {
+    const img = document.createElement('img');
+    img.src = config.logoUrl;
+    img.alt = 'Logo';
+    img.style.cssText = 'max-width:56px;max-height:56px;border-radius:10px;display:inline-block';
+    img.onerror = () => { img.replaceWith(document.createTextNode(config.logoEmoji || '☀️')); };
+    logoEl.appendChild(img);
+  } else {
+    logoEl.textContent = config.logoEmoji || '☀️';
+  }
+}
+
+function renderContatoEstabelecimento(config) {
+  const wrap = $('contato-estabelecimento');
+  if (!wrap) return;
+  const linhas = [];
+  if (config.whatsappNegocio) {
+    const numero = String(config.whatsappNegocio).replace(/\D/g, '');
+    const msg = encodeURIComponent(`Olá! Sou cliente da ${config.nome || 'Pro\'Bronze'} e gostaria de falar com você.`);
+    linhas.push(`<a href="https://wa.me/55${numero}?text=${msg}" target="_blank" class="detalhe" style="display:block;text-decoration:none;color:inherit">📱 Chamar no WhatsApp</a>`);
+  }
+  if (config.chavePix) {
+    linhas.push(`<div class="detalhe" style="display:flex;align-items:center;gap:.4rem;justify-content:center;flex-wrap:wrap">
+      💳 PIX: <span id="contato-pix-key">${escapeHtml(config.chavePix)}</span>
+      <button type="button" id="btn-copiar-pix-contato" style="border:none;background:transparent;color:inherit;text-decoration:underline;cursor:pointer;font-size:.85em;padding:0">copiar</button>
+    </div>`);
+  }
+  wrap.innerHTML = linhas.join('');
+  const btnCopiar = $('btn-copiar-pix-contato');
+  if (btnCopiar) {
+    btnCopiar.addEventListener('click', () => {
+      navigator.clipboard.writeText($('contato-pix-key').textContent).then(() => toast('PIX copiado!', 'sucesso'));
+    });
+  }
 }
 
 function escutarMeusPacotes(clienteId) {
@@ -194,8 +471,11 @@ function escutarMinhasSessoes(negocioId, clienteId) {
       if (ag.status === 'agendado') proximas.push(ag);
       else historico.push(ag);
     });
-    proximas.sort((a, b) => a.dataHora.toMillis() - b.dataHora.toMillis());
-    historico.sort((a, b) => b.dataHora.toMillis() - a.dataHora.toMillis());
+    // Defensivo: um agendamento sem dataHora válida (documento malformado)
+    // não deve travar a tela inteira com um TypeError dentro do listener.
+    const millis = (ag) => ag.dataHora?.toMillis ? ag.dataHora.toMillis() : 0;
+    proximas.sort((a, b) => millis(a) - millis(b));
+    historico.sort((a, b) => millis(b) - millis(a));
     renderLista('lista-proximas', proximas, true);
     renderLista('lista-historico', historico.slice(0, 10), false);
   });
@@ -220,6 +500,178 @@ function renderLista(elId, lista, futura) {
     `;
   }).join('');
 }
+
+// ── Agendamento online ───────────────────────────────────
+function renderServicosAgendar(servicos) {
+  const wrap = $('agendar-servicos');
+  if (servicos.length === 0) { wrap.innerHTML = '<div class="empty-state">Nenhum serviço disponível no momento.</div>'; return; }
+  wrap.innerHTML = servicos.map((s) => `
+    <label style="display:grid;grid-template-columns:1.2rem 1fr;column-gap:.5rem;align-items:start;padding:.5rem 0;font-size:.85rem;text-align:left">
+      <input type="checkbox" data-combo="${s.id}" style="margin:.15rem 0 0"><span style="overflow-wrap:anywhere">${s.nome} — R$${Number(s.preco).toFixed(2)} (${s.duracaoMin}min)</span>
+    </label>
+  `).join('');
+  wrap.querySelectorAll('[data-combo]').forEach((chk) => {
+    chk.addEventListener('change', () => {
+      if (chk.checked) combosSelecionados.add(chk.dataset.combo);
+      else combosSelecionados.delete(chk.dataset.combo);
+      horaEscolhida = null;
+      if (dataEscolhida) montarGradeHorarios();
+    });
+  });
+}
+
+// ── Seletor de data e hora (chips de data + grade de horários) ──
+function fmtDataChip(chave) {
+  const d = new Date(chave + 'T12:00:00');
+  const dia = d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+  const semana = d.toLocaleDateString('pt-BR', { weekday: 'short' }).replace('.', '');
+  return `${dia} ${semana}`;
+}
+
+function montarSeletorDatas() {
+  const wrap = $('agendar-data-scroll');
+  wrap.innerHTML = '';
+  const hoje = new Date();
+  const chips = [];
+  for (let i = 0; i < 14; i++) {
+    const d = new Date(hoje);
+    d.setDate(hoje.getDate() + i);
+    const chave = d.toISOString().split('T')[0];
+    const chip = document.createElement('div');
+    chip.className = 'data-chip' + (i === 0 ? ' ativo' : '');
+    chip.textContent = i === 0 ? 'Hoje' : fmtDataChip(chave);
+    chip.dataset.data = chave;
+    chip.addEventListener('click', () => {
+      chips.forEach((c) => c.classList.remove('ativo'));
+      chip.classList.add('ativo');
+      dataEscolhida = chave;
+      horaEscolhida = null;
+      montarGradeHorarios();
+    });
+    chips.push(chip);
+    wrap.appendChild(chip);
+  }
+  dataEscolhida = hoje.toISOString().split('T')[0];
+  montarGradeHorarios();
+}
+
+function horaParaMin(h) { const [hh, mm] = h.split(':').map(Number); return hh * 60 + mm; }
+
+async function montarGradeHorarios() {
+  const grid = $('agendar-horas-grid');
+  if (combosSelecionados.size === 0) {
+    grid.innerHTML = '<div class="empty-state">Escolha ao menos um serviço primeiro.</div>';
+    return;
+  }
+  grid.innerHTML = '<div class="empty-state">Carregando horários...</div>';
+
+  const chave = DIA_JS[new Date(dataEscolhida + 'T12:00:00').getDay()];
+  const config = (horariosCache || {})[chave];
+  if (!config || !config.aberto) {
+    grid.innerHTML = '<div class="empty-state">A loja não funciona neste dia.</div>';
+    return;
+  }
+
+  const servicosDoCombo = servicosCache.filter((s) => combosSelecionados.has(s.id));
+  const { duracaoTotalMin } = calcularCombo(servicosDoCombo);
+  const tempoMin = duracaoTotalMin || 15;
+
+  const iniMin = horaParaMin(config.abre);
+  const fimMin = horaParaMin(config.fecha);
+  const intervaloMin = 30;
+  const slots = [];
+  for (let min = iniMin; min <= fimMin - tempoMin; min += intervaloMin) {
+    const h = Math.floor(min / 60), m = min % 60;
+    slots.push(`${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`);
+  }
+  if (!slots.length) {
+    grid.innerHTML = '<div class="empty-state">Sem horários disponíveis neste dia pra esse combo de serviços.</div>';
+    return;
+  }
+
+  const agora = new Date();
+  const isHoje = dataEscolhida === agora.toISOString().split('T')[0];
+  const agoraMin = isHoje ? agora.getHours() * 60 + agora.getMinutes() : 0;
+  const ativos = await listarAgendamentosAtivos(clienteAtual.negocioId);
+
+  grid.innerHTML = slots.map((hora) => {
+    const passado = isHoje && horaParaMin(hora) <= agoraMin;
+    const inicio = new Date(`${dataEscolhida}T${hora}`);
+    const fim = new Date(inicio.getTime() + tempoMin * 60000);
+    const conflitos = ativos.filter((a) => a.inicio < fim && a.fim > inicio).length;
+    const ocupado = conflitos >= cabinesCache.length;
+    const indisponivel = passado || ocupado;
+    return `<button class="hora-btn ${indisponivel ? 'ocupado' : 'livre'}" data-hora="${hora}" ${indisponivel ? 'disabled' : ''}>${hora}</button>`;
+  }).join('');
+
+  grid.querySelectorAll('.hora-btn.livre').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      grid.querySelectorAll('.hora-btn').forEach((b) => b.classList.remove('selecionado'));
+      btn.classList.add('selecionado');
+      horaEscolhida = btn.dataset.hora;
+    });
+  });
+}
+
+$('btn-agendar-online').addEventListener('click', async () => {
+  const btn = $('btn-agendar-online');
+  if (btn.disabled) return;
+  const avisosWrap = $('agendar-avisos');
+  avisosWrap.innerHTML = '';
+
+  if (combosSelecionados.size === 0 || !dataEscolhida || !horaEscolhida) {
+    avisosWrap.innerHTML = '<div class="empty-state">Selecione ao menos um serviço e um horário.</div>';
+    return;
+  }
+  const dataHora = `${dataEscolhida}T${horaEscolhida}`;
+
+  const horarioValido = validarHorarioFuncionamento(horariosCache, dataHora);
+  if (!horarioValido.permitido) {
+    avisosWrap.innerHTML = `<div class="empty-state" style="color:var(--red)">${horarioValido.motivo}</div>`;
+    return;
+  }
+
+  btn.disabled = true;
+  const textoOriginal = btn.textContent;
+  btn.textContent = 'Agendando...';
+
+  try {
+    const elegibilidade = await checarElegibilidade(clienteAtual.negocioId, clienteAtual.id, { intervaloHoras: configNegocioCache.intervaloMinimoHoras, limiteMes: configNegocioCache.limiteSessoesMes });
+    if (!elegibilidade.podeAgendar) {
+      avisosWrap.innerHTML = elegibilidade.avisos.map((a) => `<div class="empty-state" style="color:var(--red)">${a}</div>`).join('');
+      return;
+    }
+
+    const servicosDoCombo = servicosCache.filter((s) => combosSelecionados.has(s.id));
+    const { duracaoTotalMin } = calcularCombo(servicosDoCombo);
+    const tempoMin = duracaoTotalMin || 15;
+
+    const conflitos = await contarConflitosHorario(clienteAtual.negocioId, dataHora, tempoMin);
+    if (conflitos >= cabinesCache.length) {
+      avisosWrap.innerHTML = `<div class="empty-state" style="color:var(--red)">Todas as cabines já estão ocupadas nesse horário. Escolha outro horário.</div>`;
+      return;
+    }
+
+    await criarAgendamento(clienteAtual.negocioId, {
+      clienteId: clienteAtual.id,
+      clienteNome: clienteAtual.nome,
+      cabineId: null,
+      servicos: servicosDoCombo,
+      dataHora,
+      origem: 'online',
+      tempoMin
+    });
+
+    combosSelecionados.clear();
+    horaEscolhida = null;
+    document.querySelectorAll('#agendar-servicos [data-combo]').forEach((chk) => { chk.checked = false; });
+    $('agendar-horas-grid').innerHTML = '<div class="empty-state">Escolha ao menos um serviço primeiro.</div>';
+    toast('Agendamento solicitado! A loja vai confirmar.', 'sucesso');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = textoOriginal;
+  }
+});
 </script>
 </body>
 </html>
