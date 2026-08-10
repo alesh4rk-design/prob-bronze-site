@@ -102,6 +102,7 @@
 .editor-toolbar { display: flex; gap: 4px; flex-wrap: wrap; border: 1px solid var(--borda); border-bottom: none; border-radius: 10px 10px 0 0; padding: 6px; background: var(--bg); }
 .editor-toolbar button { border: none; background: none; color: var(--texto); padding: 7px 10px; border-radius: 6px; cursor: pointer; font-size: 13px; }
 .editor-toolbar button:hover { background: var(--bg-card); }
+.editor-toolbar .btn-ia { margin-left: auto; color: var(--acento); font-weight: 600; }
 .editor-conteudo {
   border: 1px solid var(--borda); border-radius: 0 0 10px 10px; min-height: 220px;
   padding: 14px; background: var(--bg); color: var(--texto); font-size: 14.5px; line-height: 1.6; outline: none;

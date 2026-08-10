@@ -10,6 +10,7 @@ import { renderTreinamentos, abrirFormularioTreinamento } from "./treinamentos.j
 import { renderDocumentos, abrirFormularioDocumento } from "./documentos.js";
 import { renderPendencias, abrirFormularioPendencia } from "./pendencias.js";
 import { buscarGlobal } from "./busca.js";
+import { getChaveIA, salvarChaveIA } from "./ia.js";
 
 /* ===== Tema ===== */
 const btnTema = document.getElementById("btn-tema");
@@ -53,12 +54,33 @@ function renderConfiguracoes(view) {
         <p>Seus dados ficam salvos no Firestore, vinculados exclusivamente à sua conta.</p>
       </div>
       <div class="card">
+        <h3>✨ Melhorar textos com IA</h3>
+        <p>Cole aqui sua chave gratuita do Google Gemini para habilitar o botão "Melhorar com IA" nos editores de Treinamentos e Anotações. A chave fica salva só neste navegador, nunca é enviada ao Firestore.</p>
+        <div class="campo full">
+          <input id="cfg-chave-ia" type="password" placeholder="Cole sua chave da API do Gemini" value="${getChaveIA()}">
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn btn-primary btn-sm" id="cfg-salvar-ia">Salvar chave</button>
+          <button class="btn btn-ghost btn-sm" id="cfg-remover-ia">Remover</button>
+        </div>
+        <p style="margin-top:10px;font-size:12px">Como obter: acesse <strong>aistudio.google.com/apikey</strong>, faça login com sua conta Google e clique em "Create API key". É gratuito, sem cartão de crédito, com cota diária generosa.</p>
+      </div>
+      <div class="card">
         <h3>Sobre</h3>
         <p>Central do Inspetor v1.0 — organização pessoal de treinamentos e segurança patrimonial.</p>
       </div>
     </div>
   `;
   view.querySelector("#cfg-logout").onclick = async () => { await sair(); };
+  view.querySelector("#cfg-salvar-ia").onclick = () => {
+    salvarChaveIA(view.querySelector("#cfg-chave-ia").value);
+    toast("Chave de IA salva neste navegador.", "sucesso");
+  };
+  view.querySelector("#cfg-remover-ia").onclick = () => {
+    salvarChaveIA("");
+    view.querySelector("#cfg-chave-ia").value = "";
+    toast("Chave de IA removida.", "sucesso");
+  };
 }
 
 function renderMais(view) {

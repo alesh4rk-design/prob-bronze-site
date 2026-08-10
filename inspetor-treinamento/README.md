@@ -57,6 +57,15 @@ users/{uid}/visitas/{id}
 - Modo claro/escuro (escuro padrão), mobile-first, navegação inferior no celular, botão de ação rápida (+).
 - PWA instalável com cache do app shell para consulta offline.
 
+## ✨ Melhorar textos com IA (opcional, gratuito)
+
+Os editores de **Treinamentos** e **Anotações** têm um botão "✨ Melhorar com IA" que envia o texto escrito para o Google Gemini (plano gratuito, sem cartão de crédito) e sugere uma versão revisada — você decide se usa ou não.
+
+1. Acesse https://aistudio.google.com/apikey e crie uma chave de API gratuita.
+2. No sistema, vá em **⚙️ Configurações > Melhorar textos com IA** e cole a chave.
+3. A chave fica salva apenas no seu navegador (localStorage), nunca é enviada ao Firestore.
+4. Ao escrever um treinamento ou anotação, clique em "✨ Melhorar com IA", ajuste a sugestão se quiser e clique em "Usar este texto".
+
 ## Próximos passos sugeridos (V2)
 
 - Exportação de documentos/treinamentos para PDF.
