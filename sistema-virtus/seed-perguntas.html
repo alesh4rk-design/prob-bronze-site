@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Virtus — Seed de Perguntas (uso único)</title>
+<style>
+  body { font-family: system-ui, sans-serif; background:#0f1117; color:#c0cbd6; padding:40px; max-width:680px; margin:0 auto; }
+  h1 { color:#e8a000; font-size:1.3rem; }
+  p { line-height:1.6; }
+  button { background:#e8a000; color:#0f1117; border:none; padding:12px 22px; border-radius:6px; font-weight:700; cursor:pointer; font-size:0.95rem; }
+  button:disabled { opacity:.5; cursor:not-allowed; }
+  #log { white-space:pre-wrap; background:#1e2229; border:1px solid #2d3340; border-radius:8px; padding:14px; margin-top:20px; font-family:monospace; font-size:0.82rem; max-height:340px; overflow:auto; }
+</style>
+</head>
+<body>
+<h1>⚙ Virtus — Popular banco de perguntas no Firestore</h1>
+<p>
+  Esta página é uma ferramenta de <strong>uso único</strong> (ou sempre que o banco de
+  perguntas mudar). Ela lê o objeto <code>PERGUNTAS_SEED</code> de
+  <code>js/perguntas-seed-data.js</code> (dados migrados do antigo
+  <code>perguntas.json</code>) e grava um documento por módulo na coleção
+  Firestore <code>perguntas</code> — campo <code>questoes: [{q,o,n,resposta}]</code>.
+</p>
+<p>
+  <strong>Não deixe esta página publicamente acessível/linkada em produção</strong> sem
+  necessidade — ela deve ser aberta manualmente pelo administrador, com a sessão logada
+  como um usuário admin (as regras em <code>firestore.rules</code> só permitem escrita em
+  <code>perguntas</code> para quem tiver perfil <code>admin</code>).
+</p>
+<button id="btnSeed">▶ Popular Firestore agora</button>
+<div id="log"></div>
+
+<script type="module">
+  import { db } from "./js/firebase-config.js";
+  import { doc, setDoc } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+  import { PERGUNTAS_SEED } from "./js/perguntas-seed-data.js";
+
+  const logEl = document.getElementById('log');
+  function log(msg) { logEl.textContent += msg + '\n'; logEl.scrollTop = logEl.scrollHeight; }
+
+  document.getElementById('btnSeed').onclick = async () => {
+    document.getElementById('btnSeed').disabled = true;
+    log('Iniciando importação...');
+    let ok = 0, fail = 0;
+    for (const [modulo, questoes] of Object.entries(PERGUNTAS_SEED)) {
+      try {
+        await setDoc(doc(db, "perguntas", modulo), { questoes });
+        log(`✅ ${modulo}: ${questoes.length} perguntas gravadas`);
+        ok++;
+      } catch (e) {
+        log(`❌ ${modulo}: erro — ${e.message}`);
+        fail++;
+      }
+    }
+    log(`\nConcluído: ${ok} módulos gravados, ${fail} falharam.`);
+    document.getElementById('btnSeed').disabled = false;
+  };
+</script>
+</body>
+</html>

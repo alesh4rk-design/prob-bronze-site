@@ -1,0 +1,775 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Virtus — Teste de Digitação</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@300;400;500;600;700&family=Exo+2:ital,wght@0,100;0,300;0,400;0,600;0,800;1,300&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+
+body {
+  background: #05080F; color: #D8E2F0;
+  font-family: 'Exo 2', sans-serif;
+  min-height: 100vh; display: flex; align-items: center;
+  justify-content: center; padding: 2rem;
+  position: relative; overflow-x: hidden;
+}
+body::before {
+  content:''; position:fixed; inset:0;
+  background-image:
+    linear-gradient(rgba(0,200,232,0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,200,232,0.025) 1px, transparent 1px);
+  background-size: 40px 40px; pointer-events:none; z-index:0;
+}
+body::after {
+  content:''; position:fixed; inset:0;
+  background: radial-gradient(ellipse 80% 60% at 50% 0%, rgba(232,160,0,0.05) 0%, transparent 60%);
+  pointer-events:none; z-index:0;
+}
+
+.corner { position:fixed; width:50px; height:50px; pointer-events:none; z-index:5; }
+.corner-tl { top:0;left:0;  border-top:1px solid rgba(232,160,0,0.45); border-left:1px solid rgba(232,160,0,0.45); }
+.corner-tr { top:0;right:0; border-top:1px solid rgba(232,160,0,0.45); border-right:1px solid rgba(232,160,0,0.45); }
+.corner-bl { bottom:0;left:0;  border-bottom:1px solid rgba(232,160,0,0.45); border-left:1px solid rgba(232,160,0,0.45); }
+.corner-br { bottom:0;right:0; border-bottom:1px solid rgba(232,160,0,0.45); border-right:1px solid rgba(232,160,0,0.45); }
+
+.container {
+  max-width: 880px; width: 100%;
+  background: rgba(10,14,26,0.98);
+  border: 1px solid rgba(255,255,255,0.1); border-radius: 4px;
+  padding: 2rem 2.5rem; position: relative; z-index: 10;
+  box-shadow: 0 0 80px rgba(0,0,0,0.7);
+}
+.container::before {
+  content:''; position:absolute; top:0; left:0; right:0; height:2px;
+  background: linear-gradient(90deg, transparent, #E8A000 30%, #FFD060 50%, #E8A000 70%, transparent);
+}
+
+.hdr { display:flex; align-items:center; justify-content:center; gap:14px; margin-bottom:1.8rem; padding-bottom:1.2rem; border-bottom:1px solid rgba(255,255,255,0.08); }
+.hdr-icon { width:44px; height:44px; background:rgba(232,160,0,0.1); border:1px solid rgba(232,160,0,0.35); border-radius:3px; display:flex; align-items:center; justify-content:center; font-size:22px; }
+h1 { font-family:'Rajdhani',sans-serif; font-size:24px; letter-spacing:5px; color:#E8A000; text-transform:uppercase; line-height:1; }
+.hdr-sub { font-family:'Share Tech Mono',monospace; font-size:9px; letter-spacing:3px; color:#5A6880; text-transform:uppercase; margin-top:4px; }
+
+.field-group { margin-bottom:1.1rem; }
+label { font-family:'Share Tech Mono',monospace; font-size:10px; letter-spacing:2px; color:#7A90A8; text-transform:uppercase; display:block; margin-bottom:7px; }
+input {
+  width:100%; background:#0D1220; border:1px solid rgba(255,255,255,0.1); border-radius:3px;
+  padding:12px 15px; color:#E0E8F4; font-family:'Exo 2',sans-serif; font-size:15px;
+  outline:none; transition:border-color 0.2s, box-shadow 0.2s;
+}
+input:focus { border-color:#E8A000; box-shadow:0 0 0 2px rgba(232,160,0,0.15); }
+input::placeholder { color:#3A4E62; }
+.field-hint { font-family:'Share Tech Mono',monospace; font-size:9px; color:#3A4E62; margin-top:5px; letter-spacing:1px; transition:color 0.3s; }
+.field-hint.ok { color:#00D46A; }
+
+.info-row {
+  display:flex; align-items:center; gap:8px; flex-wrap:wrap;
+  padding:11px 15px; background:#0D1220; border:1px solid rgba(255,255,255,0.08);
+  border-radius:3px; margin-bottom:1.1rem;
+  font-family:'Share Tech Mono',monospace; font-size:10px; color:#7A90A8; letter-spacing:1px;
+}
+.info-row span { color:#00C8E8; font-weight:700; }
+
+.btn-start {
+  width:100%; background:linear-gradient(135deg,#E8A000 0%,#FFB800 100%);
+  border:none; padding:15px 24px; font-family:'Rajdhani',sans-serif; font-size:16px;
+  font-weight:700; letter-spacing:4px; text-transform:uppercase; color:#050810;
+  cursor:pointer; border-radius:3px; transition:all 0.2s; margin-top:0.3rem;
+}
+.btn-start:hover { transform:translateY(-1px); box-shadow:0 8px 28px rgba(232,160,0,0.35); }
+.btn-start:disabled { opacity:0.35; cursor:not-allowed; transform:none; box-shadow:none; }
+
+.btn { background:linear-gradient(135deg,#E8A000 0%,#FFB800 100%); border:none; padding:11px 22px; font-family:'Rajdhani',sans-serif; font-size:13px; font-weight:700; letter-spacing:3px; text-transform:uppercase; color:#050810; cursor:pointer; border-radius:3px; transition:all 0.2s; }
+.btn:hover { transform:translateY(-1px); box-shadow:0 4px 18px rgba(232,160,0,0.35); }
+.btn-ghost { background:transparent; border:1px solid rgba(255,255,255,0.12); color:#7A90A8; }
+.btn-ghost:hover { border-color:rgba(255,59,48,0.5); color:#FF4A40; background:rgba(255,59,48,0.06); }
+.btn-cyan { background:linear-gradient(135deg,#0098B8 0%,#00C8E8 100%); color:#050810; }
+.btn-cyan:hover { box-shadow:0 4px 18px rgba(0,200,232,0.35); }
+
+.candidate-bar { display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; padding:10px 15px; background:#0D1220; border:1px solid rgba(255,255,255,0.08); border-radius:3px; }
+.candidate-name { font-size:14px; font-weight:700; color:#E0E8F4; letter-spacing:1px; }
+
+.timer-wrap { display:flex; flex-direction:column; align-items:flex-end; gap:5px; }
+.timer { display:inline-flex; align-items:center; gap:8px; background:#0D1220; border:1px solid rgba(255,255,255,0.1); border-radius:3px; padding:6px 16px; font-family:'Share Tech Mono',monospace; font-size:24px; font-weight:700; color:#E0E8F4; letter-spacing:2px; transition:all 0.3s; }
+.timer.warning { border-color:rgba(255,59,48,0.6); color:#FF4A40; animation:pulse 0.8s ease infinite; }
+.timer-bar-wrap { width:140px; height:4px; background:rgba(255,255,255,0.07); border-radius:2px; overflow:hidden; }
+.timer-bar { height:100%; background:#00C8E8; border-radius:2px; transition:width 1s linear, background 0.5s; width:100%; }
+.timer-bar.warn { background:#E8A000; }
+.timer-bar.crit { background:#FF4A40; }
+@keyframes pulse { 50%{opacity:0.45;} }
+
+.stats { display:grid; grid-template-columns:repeat(5,1fr); gap:8px; margin:10px 0; }
+@media(max-width:600px){ .stats{grid-template-columns:repeat(3,1fr);} }
+.stat { background:#0D1220; border:1px solid rgba(255,255,255,0.07); border-radius:3px; padding:10px 8px; text-align:center; transition:border-color 0.3s; }
+.stat-val { font-family:'Rajdhani',sans-serif; font-size:28px; font-weight:700; color:#00C8E8; line-height:1; }
+.stat-val.red   { color:#FF4A40; }
+.stat-val.amber { color:#E8A000; }
+.stat-lbl { font-family:'Share Tech Mono',monospace; font-size:9px; letter-spacing:1.5px; color:#7A90A8; text-transform:uppercase; margin-top:4px; }
+
+.text-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:7px; }
+.text-progress { font-family:'Share Tech Mono',monospace; font-size:10px; color:#7A90A8; letter-spacing:1px; }
+.cat-badge { display:inline-flex; align-items:center; gap:6px; padding:4px 10px; border-radius:3px; font-family:'Share Tech Mono',monospace; font-size:9px; letter-spacing:2px; text-transform:uppercase; font-weight:700; border:1px solid; }
+.cat-lgpd    { background:rgba(168,128,255,0.1); border-color:rgba(168,128,255,0.4); color:#C4A0FF; }
+.cat-acesso  { background:rgba(0,200,232,0.1);   border-color:rgba(0,200,232,0.4);   color:#00D8F8; }
+.cat-numeros { background:rgba(232,160,0,0.1);   border-color:rgba(232,160,0,0.4);   color:#E8A000; }
+
+.type-display {
+  background:#080C18; border:1px solid rgba(255,255,255,0.08);
+  border-left:3px solid #00C8E8; padding:18px 20px;
+  font-family:'Share Tech Mono',monospace; font-size:16px; line-height:2;
+  margin-bottom:12px; white-space:pre-wrap; word-break:break-word;
+  border-radius:0 3px 3px 0; min-height:90px;
+}
+.type-display .pending { color:#B0C0D8; }
+.type-display .ok      { color:#00E080; }
+.type-display .err     { color:#FF4A40; background:rgba(255,59,48,0.14); border-radius:2px; padding:0 1px; }
+.type-display .cur     { background:#E8A000; color:#050810; border-radius:2px; animation:blink 0.85s step-end infinite; }
+@keyframes blink { 50%{opacity:0;} }
+
+textarea {
+  width:100%; background:#0D1220; border:1px solid rgba(255,255,255,0.1); border-radius:3px;
+  padding:14px 16px; color:#E0E8F4; font-family:'Share Tech Mono',monospace;
+  font-size:15px; line-height:1.65; outline:none; resize:none; transition:border-color 0.2s;
+}
+textarea:focus { border-color:rgba(232,160,0,0.5); box-shadow:0 0 0 2px rgba(232,160,0,0.08); }
+textarea::placeholder { color:#4A6078; }
+
+.btn-row { display:flex; gap:10px; margin-top:12px; }
+
+.ready-overlay {
+  display:none; position:fixed; inset:0;
+  background:rgba(5,8,15,0.92); z-index:600;
+  align-items:center; justify-content:center; flex-direction:column; gap:20px;
+}
+.ready-overlay.show { display:flex; }
+.ready-box {
+  background:#0A0E1A; border:1px solid rgba(232,160,0,0.3); border-radius:4px;
+  padding:2rem 2.5rem; max-width:680px; width:90%; text-align:center;
+  box-shadow:0 0 60px rgba(0,0,0,0.8);
+  position:relative;
+}
+.ready-box::before {
+  content:''; position:absolute; top:0;left:0;right:0;height:2px;
+  background:linear-gradient(90deg,transparent,#E8A000 30%,#FFD060 50%,#E8A000 70%,transparent);
+}
+.ready-title { font-family:'Rajdhani',sans-serif; font-size:13px; letter-spacing:4px; color:#7A90A8; text-transform:uppercase; margin-bottom:6px; }
+.ready-name  { font-family:'Rajdhani',sans-serif; font-size:22px; font-weight:700; color:#E0E8F4; letter-spacing:2px; margin-bottom:1.2rem; }
+.ready-label { font-family:'Share Tech Mono',monospace; font-size:9px; letter-spacing:2px; color:#7A90A8; text-transform:uppercase; margin-bottom:8px; }
+.ready-text {
+  background:#080C18; border:1px solid rgba(255,255,255,0.08);
+  border-left:3px solid rgba(232,160,0,0.5); border-radius:0 3px 3px 0;
+  padding:14px 16px; font-family:'Share Tech Mono',monospace; font-size:13px;
+  line-height:1.8; color:#B0C0D8; text-align:left; margin-bottom:1.5rem;
+  white-space:pre-wrap; word-break:break-word;
+}
+.ready-cat { display:flex; justify-content:center; margin-bottom:1.4rem; }
+.ready-btn {
+  width:100%; background:linear-gradient(135deg,#E8A000 0%,#FFB800 100%);
+  border:none; padding:15px 24px; font-family:'Rajdhani',sans-serif; font-size:16px;
+  font-weight:700; letter-spacing:4px; text-transform:uppercase; color:#050810;
+  cursor:pointer; border-radius:3px; transition:all 0.2s;
+}
+.ready-btn:hover { transform:translateY(-1px); box-shadow:0 8px 28px rgba(232,160,0,0.4); }
+.ready-tip { font-family:'Share Tech Mono',monospace; font-size:9px; color:#3A4E62; letter-spacing:1px; margin-top:10px; }
+
+.countdown-overlay {
+  display:none; position:fixed; inset:0;
+  background:rgba(5,8,15,0.94); z-index:700;
+  align-items:center; justify-content:center; flex-direction:column; gap:12px;
+}
+.countdown-overlay.show { display:flex; }
+.countdown-num { font-family:'Rajdhani',sans-serif; font-size:140px; font-weight:700; color:#E8A000; animation:countPop 0.8s ease-out; line-height:1; text-shadow:0 0 60px rgba(232,160,0,0.4); }
+.countdown-lbl { font-family:'Share Tech Mono',monospace; font-size:11px; letter-spacing:4px; color:#7A90A8; text-transform:uppercase; }
+@keyframes countPop { 0%{transform:scale(1.6);opacity:0;} 100%{transform:scale(1);opacity:1;} }
+
+.result-top { display:flex; align-items:center; justify-content:center; gap:2rem; margin:1rem 0 1.5rem; flex-wrap:wrap; }
+.result-ring { position:relative; width:130px; height:130px; flex-shrink:0; }
+.result-ring svg { transform:rotate(-90deg); }
+.ring-label { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; }
+.ring-pct { font-family:'Rajdhani',sans-serif; font-size:38px; font-weight:700; color:#00C8E8; line-height:1; transition:color 1s; }
+.ring-sub { font-family:'Share Tech Mono',monospace; font-size:8px; letter-spacing:2px; color:#7A90A8; text-transform:uppercase; }
+.result-summary { display:flex; flex-direction:column; gap:8px; flex:1; min-width:200px; }
+.result-row { display:flex; justify-content:space-between; align-items:center; padding:9px 13px; background:#0D1220; border:1px solid rgba(255,255,255,0.07); border-radius:3px; }
+.result-key { font-family:'Share Tech Mono',monospace; font-size:9px; letter-spacing:1.5px; color:#7A90A8; text-transform:uppercase; }
+.result-val { font-family:'Rajdhani',sans-serif; font-size:20px; font-weight:700; }
+.result-stats-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-bottom:1rem; }
+@media(max-width:500px){ .result-stats-grid{grid-template-columns:repeat(2,1fr);} }
+.result-stat { background:#0D1220; border:1px solid rgba(255,255,255,0.07); border-radius:3px; padding:12px 8px; text-align:center; }
+.result-stat-val { font-family:'Rajdhani',sans-serif; font-size:28px; font-weight:700; line-height:1; }
+.result-stat-lbl { font-family:'Share Tech Mono',monospace; font-size:8px; letter-spacing:1.5px; color:#7A90A8; text-transform:uppercase; margin-top:4px; }
+
+.perf-badge { display:flex; align-items:center; justify-content:center; gap:10px; padding:13px 16px; border-radius:3px; margin-bottom:12px; font-family:'Rajdhani',sans-serif; font-size:16px; font-weight:700; letter-spacing:2px; text-transform:uppercase; border:1px solid; }
+.perf-excellent { background:rgba(0,229,128,0.09); border-color:rgba(0,229,128,0.35); color:#00E880; }
+.perf-good      { background:rgba(0,200,232,0.09); border-color:rgba(0,200,232,0.35); color:#00D8F8; }
+.perf-avg       { background:rgba(232,160,0,0.09); border-color:rgba(232,160,0,0.35); color:#E8A000; }
+.perf-low       { background:rgba(255,59,48,0.09); border-color:rgba(255,59,48,0.35); color:#FF4A40; }
+
+.del-warning { display:flex; align-items:center; gap:10px; padding:10px 14px; border-radius:3px; margin-bottom:12px; font-family:'Share Tech Mono',monospace; font-size:11px; letter-spacing:1px; }
+.del-low  { background:rgba(0,200,232,0.07); border:1px solid rgba(0,200,232,0.25); color:#00D8F8; }
+.del-mid  { background:rgba(232,160,0,0.07); border:1px solid rgba(232,160,0,0.3);  color:#E8A000; }
+.del-high { background:rgba(255,59,48,0.07); border:1px solid rgba(255,59,48,0.3);  color:#FF4A40; }
+
+.sync-status { text-align:center; margin:10px 0; font-family:'Share Tech Mono',monospace; font-size:11px; color:#7A90A8; letter-spacing:1px; }
+.result-btns { display:flex; gap:10px; justify-content:center; margin-top:1rem; flex-wrap:wrap; }
+
+.history-section { margin-top:1.5rem; padding-top:1.2rem; border-top:1px solid rgba(255,255,255,0.07); }
+.history-title { font-family:'Share Tech Mono',monospace; font-size:9px; letter-spacing:2px; color:#5A6880; text-transform:uppercase; margin-bottom:10px; }
+.history-list { display:flex; flex-direction:column; gap:6px; max-height:180px; overflow-y:auto; }
+.history-item { display:flex; justify-content:space-between; align-items:center; padding:9px 13px; background:#0D1220; border:1px solid rgba(255,255,255,0.06); border-radius:3px; font-family:'Share Tech Mono',monospace; font-size:10px; gap:8px; flex-wrap:wrap; }
+.h-name { color:#E0E8F4; flex:1; }
+.h-wpm  { color:#E8A000; font-weight:700; }
+.h-prec { color:#00C8E8; }
+.h-date { color:#5A6880; font-size:8px; }
+
+.toast { position:fixed; bottom:20px; right:20px; background:#0A0E1A; border:1px solid rgba(255,255,255,0.18); border-radius:3px; padding:10px 16px; font-family:'Share Tech Mono',monospace; font-size:11px; transition:opacity 0.3s,transform 0.3s; opacity:0; transform:translateY(8px); pointer-events:none; z-index:999; letter-spacing:1px; max-width:280px; color:#D8E2F0; }
+.toast.show { opacity:1; transform:translateY(0); }
+.toast.err { border-color:rgba(255,59,48,0.55); color:#FF4A40; }
+.toast.ok  { border-color:rgba(0,229,128,0.55); color:#00E880; }
+
+.status-bar {
+  display:flex; align-items:center; justify-content:space-between;
+  padding:9px 15px; background:#0D1220;
+  border:1px solid rgba(255,255,255,0.08); border-radius:3px;
+  margin-bottom:1.1rem; gap:12px; flex-wrap:wrap;
+}
+.status-item { display:flex; align-items:center; gap:8px; font-family:'Share Tech Mono',monospace; font-size:10px; letter-spacing:1px; color:#7A90A8; }
+.status-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; transition:background 0.4s, box-shadow 0.4s; }
+.status-dot.online  { background:#00E080; box-shadow:0 0 8px rgba(0,224,128,0.6); animation:dotPulse 2s ease infinite; }
+.status-dot.offline { background:#FF4A40; box-shadow:0 0 8px rgba(255,74,64,0.4); }
+.status-dot.checking{ background:#E8A000; box-shadow:0 0 8px rgba(232,160,0,0.4); animation:dotPulse 0.6s ease infinite; }
+@keyframes dotPulse { 0%,100%{opacity:1;} 50%{opacity:0.4;} }
+.status-label { transition:color 0.4s; }
+.status-label.online  { color:#00E080; }
+.status-label.offline { color:#FF4A40; }
+.status-label.checking{ color:#E8A000; }
+.status-ping { font-family:'Share Tech Mono',monospace; font-size:9px; color:#3A4E62; letter-spacing:1px; }
+.status-ping.fast { color:#00E080; }
+.status-ping.mid  { color:#E8A000; }
+.status-ping.slow { color:#FF4A40; }
+
+.overlay { display:none; position:fixed; inset:0; background:rgba(5,8,15,0.88); z-index:500; align-items:center; justify-content:center; flex-direction:column; gap:14px; font-family:'Share Tech Mono',monospace; font-size:12px; letter-spacing:2px; color:#E8A000; }
+.overlay.show { display:flex; }
+.overlay-spinner { width:40px; height:40px; border:2px solid rgba(232,160,0,0.2); border-top-color:#E8A000; border-radius:50%; animation:spin 0.8s linear infinite; }
+@keyframes spin { to{transform:rotate(360deg);} }
+</style>
+</head>
+<body>
+<div class="corner corner-tl"></div>
+<div class="corner corner-tr"></div>
+<div class="corner corner-bl"></div>
+<div class="corner corner-br"></div>
+
+<div class="container">
+
+  <div id="prepScreen">
+    <div class="hdr">
+      <div class="hdr-icon">⌨️</div>
+      <div>
+        <h1>Teste de Digitação</h1>
+        <div class="hdr-sub">Sistema Virtus · Processo Seletivo</div>
+      </div>
+    </div>
+
+    <div class="field-group">
+      <label>▸ Nome completo</label>
+      <input type="text" id="nome" placeholder="Nome do candidato" autocomplete="off" oninput="validateForm()">
+      <div class="field-hint" id="nomeHint">Mínimo 3 caracteres</div>
+    </div>
+
+    <div class="field-group">
+      <label>▸ Data do teste</label>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <input type="date" id="datateste" oninput="validateForm()" style="flex:1;">
+        <button onclick="setToday()" style="background:rgba(0,200,232,0.1);border:1px solid rgba(0,200,232,0.3);border-radius:3px;padding:11px 14px;color:#00C8E8;font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:1px;cursor:pointer;white-space:nowrap;transition:all 0.2s;" onmouseover="this.style.background='rgba(0,200,232,0.2)'" onmouseout="this.style.background='rgba(0,200,232,0.1)'">📅 Hoje</button>
+      </div>
+      <div class="field-hint" id="dataHint">Obrigatório</div>
+    </div>
+
+    <div class="status-bar">
+      <div class="status-item">
+        <div class="status-dot checking" id="statusDot"></div>
+        <span class="status-label checking" id="statusLabel">Verificando conexão...</span>
+        <span class="status-ping" id="statusPing"></span>
+      </div>
+      <div class="status-item">
+        ⏱ <span style="color:#00C8E8;font-weight:700;">1 min 30 s</span>&nbsp;·&nbsp;📋 <span style="color:#00C8E8;font-weight:700;">LGPD &amp; Controle de Acesso</span>
+      </div>
+    </div>
+
+    <button class="btn-start" id="startBtn" disabled>▶ INICIAR AVALIAÇÃO</button>
+
+    <div class="history-section" id="historySection" style="display:none;">
+      <div class="history-title">▸ Histórico desta sessão</div>
+      <div class="history-list" id="historyList"></div>
+    </div>
+  </div>
+
+  <div id="testScreen" style="display:none;">
+    <div class="candidate-bar">
+      <div class="candidate-name" id="candidateName"></div>
+      <div class="timer-wrap">
+        <div class="timer" id="timerHud">⏱ <span id="timerVal">01:30</span></div>
+        <div class="timer-bar-wrap"><div class="timer-bar" id="timerBar"></div></div>
+      </div>
+    </div>
+    <div class="stats">
+      <div class="stat"><div class="stat-val" id="sPrecisao">100%</div><div class="stat-lbl">Precisão</div></div>
+      <div class="stat"><div class="stat-val amber" id="sWpm">0</div><div class="stat-lbl">WPM</div></div>
+      <div class="stat"><div class="stat-val" id="sChars">0</div><div class="stat-lbl">Chars</div></div>
+      <div class="stat"><div class="stat-val red" id="sErros">0</div><div class="stat-lbl">Erros</div></div>
+      <div class="stat" id="statDel"><div class="stat-val red" id="sDel">0</div><div class="stat-lbl">⌫ Apagados</div></div>
+    </div>
+    <div class="text-header">
+      <div id="textCatBadge"></div>
+      <div class="text-progress" id="textProgress"></div>
+    </div>
+    <div class="type-display" id="displayText"></div>
+    <textarea id="typeArea" rows="4" placeholder="Clique aqui e comece a digitar..."></textarea>
+    <div class="btn-row">
+      <button class="btn" id="finishBtn">⏹ FINALIZAR</button>
+      <button class="btn btn-ghost" id="cancelBtn">← Cancelar</button>
+    </div>
+  </div>
+
+  <div id="resultScreen" style="display:none;">
+    <div class="hdr" style="margin-bottom:1rem;">
+      <div class="hdr-icon">✅</div>
+      <div><h1 style="font-size:20px;letter-spacing:4px;">Resultado</h1><div class="hdr-sub">Teste concluído com sucesso</div></div>
+    </div>
+    <div id="perfBadge"></div>
+    <div class="result-top">
+      <div class="result-ring">
+        <svg width="130" height="130" viewBox="0 0 130 130">
+          <circle cx="65" cy="65" r="54" fill="none" stroke="rgba(255,255,255,0.07)" stroke-width="8"/>
+          <circle cx="65" cy="65" r="54" fill="none" stroke="#00C8E8" stroke-width="8" stroke-linecap="round" stroke-dasharray="339" id="resultCircle" stroke-dashoffset="339"/>
+        </svg>
+        <div class="ring-label">
+          <div class="ring-pct" id="resultPct">0%</div>
+          <div class="ring-sub">precisão</div>
+        </div>
+      </div>
+      <div class="result-summary">
+        <div class="result-row">
+          <span class="result-key">Velocidade</span>
+          <span class="result-val" style="color:#E8A000" id="rWpm">—</span>
+        </div>
+        <div class="result-row">
+          <span class="result-key">Chars/min</span>
+          <span class="result-val" style="color:#00C8E8" id="rCpm">—</span>
+        </div>
+        <div class="result-row">
+          <span class="result-key">⌫ Apagamentos</span>
+          <span class="result-val" id="rDel" style="color:#FF4A40">0</span>
+        </div>
+        <div class="result-row">
+          <span class="result-key">Categoria</span>
+          <span id="rCat" style="font-size:12px;"></span>
+        </div>
+      </div>
+    </div>
+    <div class="result-stats-grid">
+      <div class="result-stat"><div class="result-stat-val" style="color:#00E080" id="rCorretos">0</div><div class="result-stat-lbl">Corretos</div></div>
+      <div class="result-stat"><div class="result-stat-val" style="color:#FF4A40" id="rErros">0</div><div class="result-stat-lbl">Erros</div></div>
+      <div class="result-stat"><div class="result-stat-val" style="color:#7A90A8" id="rTotal">0</div><div class="result-stat-lbl">Total chars</div></div>
+      <div class="result-stat"><div class="result-stat-val" style="color:#A880FF" id="rTempo">0s</div><div class="result-stat-lbl">Tempo usado</div></div>
+    </div>
+    <div id="delWarning"></div>
+    <div class="sync-status" id="syncStatus"></div>
+    <div class="result-btns">
+      <button class="btn" id="newTestBtn">+ Novo Teste</button>
+      <button class="btn btn-ghost" id="closeBtn">✕ Fechar</button>
+    </div>
+  </div>
+
+</div>
+
+<div class="ready-overlay" id="readyOverlay">
+  <div class="ready-box">
+    <div class="ready-title">Candidato</div>
+    <div class="ready-name" id="readyName"></div>
+    <div class="ready-cat" id="readyCat"></div>
+    <div class="ready-label">Texto do teste — leia antes de começar</div>
+    <div class="ready-text" id="readyText"></div>
+    <button class="ready-btn" id="readyGoBtn">▶ ESTOU PRONTO — INICIAR</button>
+    <div class="ready-tip">O cronômetro começa após a contagem 3 · 2 · 1</div>
+  </div>
+</div>
+
+<div class="countdown-overlay" id="countdownOverlay">
+  <div class="countdown-num" id="countdownNum">3</div>
+  <div class="countdown-lbl">Prepare-se para digitar</div>
+</div>
+
+<div class="overlay" id="sendingOverlay">
+  <div class="overlay-spinner"></div>
+  <div>ENVIANDO RESULTADO...</div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script type="module">
+// sistema-virtus/digitacao.html — script de dados migrado para Firestore.
+// Original usava POST /api/digitacao e GET /api/ping (server.pyw, contrato
+// inferido). Agora grava direto na coleção `resultados` via js/digitacao.js
+// e "status online" reflete apenas se a config do Firebase está OK.
+import { salvarResultadoDigitacao } from "./js/digitacao.js";
+import { db } from "./js/firebase-config.js";
+import { collection, getDocs, limit, query } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+
+// ── 15 frases LGPD + 15 Controle de Acesso (~160 caracteres cada) ──
+const FRASES = {
+  lgpd: [
+    "A LGPD foi sancionada em agosto de 2018 e entrou em vigor em setembro de 2020, estabelecendo regras para o tratamento de dados pessoais em todo o território nacional.",
+    "O titular dos dados tem direito de acessar suas informações a qualquer momento; empresas têm até 15 dias para responder às solicitações recebidas pelo canal oficial.",
+    "Multas por descumprimento da LGPD podem chegar a R$ 50.000.000,00 por infração ou 2% do faturamento anual da empresa, limitado ao mesmo teto de cinquenta milhões.",
+    "Dados sensíveis como biometria, saúde e origem racial exigem consentimento específico; o artigo 11 da LGPD lista as 10 hipóteses que autorizam seu tratamento legal.",
+    "O encarregado de dados, o DPO, deve ser indicado pelo controlador conforme o artigo 41 da lei; sua identidade e contato precisam ser divulgados publicamente pela empresa.",
+    "Em caso de incidente de segurança, o controlador tem prazo razoável para notificar a ANPD; recomenda-se comunicação em até 72 horas após a confirmação do vazamento.",
+    "A ANPD foi criada pela lei 13.709 de 2018 para fiscalizar o cumprimento da LGPD; ela pode aplicar sanções administrativas após processo que garanta ampla defesa.",
+    "O consentimento para tratamento de dados deve ser livre, informado e inequívoco; o artigo 8 da LGPD determina que o ônus da prova cabe sempre ao controlador dos dados.",
+    "A transferência internacional de dados só é permitida para países com nível de proteção equivalente ou mediante cláusulas contratuais aprovadas formalmente pela ANPD.",
+    "O relatório de impacto à proteção de dados é obrigatório quando o tratamento apresentar risco elevado; o artigo 38 da LGPD prevê que a ANPD pode exigir sua elaboração.",
+    "Crianças têm proteção especial na LGPD; o artigo 14 exige consentimento de pelo menos 1 dos pais ou responsáveis legais antes de qualquer coleta de dados da criança.",
+    "O princípio da minimização determina que apenas os dados estritamente necessários para a finalidade declarada no momento da coleta devem ser tratados pelo controlador.",
+    "A base legal de legítimo interesse, prevista no inciso 9 do artigo 7, permite tratar dados sem consentimento desde que não sobreponha direitos e liberdades do titular.",
+    "Toda empresa deve adotar medidas de segurança adequadas; o artigo 46 da LGPD exige salvaguardas técnicas e administrativas para proteger os dados contra acessos ilegais.",
+    "O princípio da transparência obriga o controlador a informar ao titular quais dados coleta, com qual finalidade e por quanto tempo serão mantidos em seus sistemas internos."
+  ],
+  acesso: [
+    "O controle de acesso físico utiliza catracas, biometria e crachás; estudos mostram que 68% das invasões ocorrem por falhas humanas e não por vulnerabilidades tecnológicas.",
+    "A autenticação de 2 fatores reduz em até 99,9% o risco de comprometimento de contas; combine algo que você sabe com algo que você tem ou algo que você é biométrico.",
+    "Visitantes devem ser identificados com documento com foto, registrados no sistema e acompanhados por colaborador; o tempo máximo sem supervisão recomendado é de 0 minutos.",
+    "O princípio do menor privilégio determina que cada colaborador acesse apenas o necessário para sua função; revisões de permissão devem ocorrer a cada 90 dias no mínimo.",
+    "Logs de acesso devem ser mantidos por no mínimo 6 meses conforme boas práticas; em setores regulados como financeiro e saúde, o prazo pode chegar a 5 anos de retenção.",
+    "Tailgating causa 1 em cada 5 incidentes de segurança física registrados; nunca permita que outra pessoa entre em área restrita aproveitando seu acesso com credencial própria.",
+    "Senhas devem ter no mínimo 12 caracteres, combinando letras maiúsculas, minúsculas, números e símbolos; troque sua senha a cada 90 dias e nunca a reutilize por 12 ciclos.",
+    "A revogação de acessos deve ocorrer em até 24 horas após desligamento; pesquisas indicam que 30% das empresas levam mais de 1 semana para revogar credenciais de ex-funcionários.",
+    "Câmeras de videomonitoramento devem cobrir 100% das entradas e saídas; imagens precisam ser retidas por pelo menos 30 dias e o acesso às gravações deve ser controlado.",
+    "A política de mesa limpa exige que documentos sigilosos sejam guardados; em 2023, 43% dos incidentes de vazamento de dados ocorreram por descuido físico com documentos.",
+    "Pendrives não autorizados são vetores de ataque; o malware Stuxnet de 2010 infectou mais de 200.000 computadores industriais através de mídias removíveis não rastreadas.",
+    "Em caso de perda de crachá, comunique ao setor de segurança em até 30 minutos; a emissão de segunda via deve ser registrada e o crachá anterior bloqueado imediatamente.",
+    "Portas corta-fogo não devem ser bloqueadas; o código de incêndio exige desobstrução total das saídas de emergência, com sinalização de no mínimo 20 cm de altura visível.",
+    "O controle de acesso lógico usa senhas, certificados e MFA; o custo médio de uma violação de dados em 2023 foi de R$ 6.750.000,00 segundo o relatório IBM Cost of a Breach.",
+    "Crachás devem ser visíveis durante toda a permanência; sistemas modernos de RFID operam na frequência de 13,56 MHz e permitem leitura a até 10 centímetros de distância."
+  ],
+  numeros: [
+    "4728 1053 8364 2091 7415 6832 3097 5246 9180 4673 2815 7039 1564 8302 6947 3281 5094 7623 1408 9357 2640 8175 3509 6482 1736 4028 7951 2364 5817 0493 6280 1745 9032",
+    "3190 8274 5631 4082 7359 2016 9473 6805 1247 5930 8421 3764 0198 6542 2873 4109 7635 9280 1456 3702 8964 5317 2048 6193 7425 0836 4571 9203 8650 1427 3894 6015 2783",
+    "8053 4716 2039 9184 5327 6401 7892 3150 4867 1293 6045 8731 2584 9360 4712 0839 5126 7493 2801 6354 1970 8246 3507 6921 4038 7163 5294 8610 3745 9082 1456 7230 6849",
+    "1749 3082 6517 4230 8965 2471 5803 9126 3684 7050 1392 4867 2015 9438 6701 3254 8046 5179 2863 4720 9381 6054 1728 3940 7256 8031 4695 2817 5063 9148 3720 6591 4832",
+    "6302 9175 4038 7261 5849 1093 3726 8450 2917 6384 0152 7839 4561 2083 9347 6105 8472 3690 1254 7803 5416 9028 3671 8245 1097 4362 7580 2934 6817 0453 5291 8736 4160",
+    "9817 2043 5360 4728 8195 3062 6541 1879 4203 7956 2418 5037 8634 1290 7465 3801 6152 9347 2086 4573 8920 1634 5709 3281 6047 8352 4916 7203 5849 1076 3428 9561 7034",
+    "5264 7801 3942 6150 8437 2093 4765 9318 1046 3527 7089 4631 2850 9174 6302 8415 1763 5028 4397 6801 2945 7136 8052 3694 1470 5823 9016 4738 2691 8345 7062 1593 4807",
+    "7035 4918 2673 8041 5362 1897 4025 6743 9180 3256 8714 2039 5461 7308 1942 6085 3427 9160 4873 2501 6349 8072 1536 4928 7603 2841 5197 3064 8752 1430 9267 5018 3946"
+  ]
+};
+
+function shuffle(arr) {
+  const a=[...arr];
+  for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}
+  return a;
+}
+function getCategoria(f){
+  if(FRASES.lgpd.includes(f))    return 'lgpd';
+  if(FRASES.numeros.includes(f)) return 'numeros';
+  return 'acesso';
+}
+
+const TEST_DURATION=90;
+let active=false,timerInterval=null,timeLeft=TEST_DURATION,startTime=null;
+let originalText='',textoCategoria='';
+let candidate={nome:''};
+let deleteCount=0,lastLength=0;
+let sessionHistory=[],lastResult=null;
+
+function setToday(){
+  const today = new Date().toISOString().split('T')[0];
+  document.getElementById('datateste').value = today;
+  validateForm();
+}
+
+function validateForm(){
+  const nome = document.getElementById('nome').value.trim();
+  const data = document.getElementById('datateste').value;
+  const hint  = document.getElementById('nomeHint');
+  const dHint = document.getElementById('dataHint');
+
+  hint.textContent  = nome.length>=3 ? '✓ Nome válido' : 'Mínimo 3 caracteres';
+  hint.className    = 'field-hint'+(nome.length>=3?' ok':'');
+
+  if(data){
+    const fmt = new Date(data+'T12:00:00').toLocaleDateString('pt-BR',{weekday:'long',day:'2-digit',month:'long',year:'numeric'});
+    dHint.textContent = '✓ ' + fmt;
+    dHint.className   = 'field-hint ok';
+  } else {
+    dHint.textContent = 'Obrigatório';
+    dHint.className   = 'field-hint';
+  }
+
+  document.getElementById('startBtn').disabled = nome.length<3 || !data;
+}
+
+function toast(msg,type=''){
+  const el=document.getElementById('toast');
+  el.textContent=msg;el.className='toast show '+type;
+  setTimeout(()=>el.classList.remove('show'),3500);
+}
+
+function catBadgeHTML(cat){
+  const map={lgpd:['cat-lgpd','🔒 LGPD'],acesso:['cat-acesso','🚪 Controle de Acesso'],numeros:['cat-numeros','🔢 Numérico']};
+  const [cls,label]=map[cat]||['cat-lgpd','🔒 LGPD'];
+  return `<span class="cat-badge ${cls}">${label}</span>`;
+}
+
+function renderTypeDisplay(typed){
+  const orig=originalText;
+  const esc=c=>c==='<'?'&lt;':c==='>'?'&gt;':c==='&'?'&amp;':c===' '?'&nbsp;':c;
+  let html='';
+  for(let i=0;i<orig.length;i++){
+    if(i<typed.length){
+      html+=typed[i]===orig[i]
+        ?`<span class="ok">${esc(orig[i])}</span>`
+        :`<span class="err">${esc(orig[i])}</span>`;
+    } else if(i===typed.length){
+      html+=`<span class="cur">${esc(orig[i])}</span>`;
+    } else {
+      html+=`<span class="pending">${esc(orig[i])}</span>`;
+    }
+  }
+  document.getElementById('displayText').innerHTML=html;
+  const pct=Math.min(100,Math.round((typed.length/orig.length)*100));
+  document.getElementById('textProgress').textContent=`${typed.length} / ${orig.length} chars · ${pct}%`;
+}
+
+function updateStats(){
+  const typed=document.getElementById('typeArea').value;
+  const curLen=typed.length;
+  if(curLen<lastLength)deleteCount+=(lastLength-curLen);
+  lastLength=curLen;
+  renderTypeDisplay(typed);
+  const elapsed=(Date.now()-startTime)/60000;
+  let correct=0,errors=0;
+  for(let i=0;i<typed.length;i++){
+    if(i<originalText.length){typed[i]===originalText[i]?correct++:errors++;}
+    else errors++;
+  }
+  const prec=typed.length>0?Math.round((correct/Math.max(typed.length,1))*100):100;
+  const wpm=elapsed>0?Math.round((typed.length/5)/elapsed):0;
+  document.getElementById('sPrecisao').textContent=prec+'%';
+  document.getElementById('sWpm').textContent=wpm;
+  document.getElementById('sErros').textContent=errors;
+  document.getElementById('sChars').textContent=typed.length;
+  document.getElementById('sDel').textContent=deleteCount;
+  const ds=document.getElementById('statDel');
+  if(deleteCount>=20)ds.style.borderColor='rgba(255,59,48,0.55)';
+  else if(deleteCount>=10)ds.style.borderColor='rgba(232,160,0,0.45)';
+  else ds.style.borderColor='rgba(255,255,255,0.07)';
+}
+
+function formatTime(sec){
+  const m=Math.floor(sec/60),s=sec%60;
+  return `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+}
+
+function runCountdown(cb){
+  const overlay=document.getElementById('countdownOverlay');
+  const numEl=document.getElementById('countdownNum');
+  overlay.classList.add('show');
+  let n=3;numEl.textContent=n;
+  const iv=setInterval(()=>{
+    n--;
+    if(n<=0){clearInterval(iv);overlay.classList.remove('show');cb();return;}
+    numEl.style.animation='none';void numEl.offsetWidth;
+    numEl.style.animation='countPop 0.8s ease-out';
+    numEl.textContent=n;
+  },900);
+}
+
+async function enviarAoServidor(resultado){
+  document.getElementById('sendingOverlay').classList.add('show');
+  const syncEl=document.getElementById('syncStatus');
+  try{
+    await salvarResultadoDigitacao(resultado);
+    syncEl.innerHTML='✅ <span style="color:#00E880;">Resultado sincronizado com o Firestore</span>';
+    toast('Resultado salvo!','ok');
+  }catch(e){
+    console.error(e);
+    syncEl.innerHTML='⚠️ <span style="color:#E8A000;">Falha ao gravar no Firestore — verifique a configuração</span>';
+  }finally{
+    document.getElementById('sendingOverlay').classList.remove('show');
+  }
+}
+
+function finishTest(){
+  if(!active)return;
+  clearInterval(timerInterval);active=false;
+  const typed=document.getElementById('typeArea').value;
+  const totalChars=originalText.length;
+  let correct=0;
+  for(let i=0;i<typed.length&&i<originalText.length;i++){if(typed[i]===originalText[i])correct++;}
+  const prec=Math.round((correct/totalChars)*100);
+  const elapsedSec=TEST_DURATION-timeLeft;
+  const cpm=elapsedSec>0?Math.round((typed.length/elapsedSec)*60):0;
+  const wpm=Math.round(cpm/5);
+
+  lastResult={nome:candidate.nome,categoria:textoCategoria,acertos:correct,total:totalChars,pct:prec,wpm,cpm,deleteCount,elapsedSec,data:new Date().toLocaleString('pt-BR')};
+  sessionHistory.unshift(lastResult);
+  renderHistory();
+
+  document.getElementById('rWpm').innerHTML=`${wpm} <span style="font-size:13px;color:#7A90A8;">WPM</span>`;
+  document.getElementById('rCpm').innerHTML=`${cpm} <span style="font-size:13px;color:#7A90A8;">CPM</span>`;
+  document.getElementById('rDel').textContent=deleteCount;
+  document.getElementById('rCorretos').textContent=correct;
+  document.getElementById('rErros').textContent=totalChars-correct;
+  document.getElementById('rTotal').textContent=totalChars;
+  document.getElementById('rTempo').textContent=elapsedSec+'s';
+  document.getElementById('resultPct').textContent=prec+'%';
+  document.getElementById('rCat').innerHTML=catBadgeHTML(textoCategoria);
+
+  document.getElementById('perfBadge').innerHTML='';
+
+  const ringColor=prec>=80?'#00E080':prec>=60?'#E8A000':'#FF4A40';
+  const offset=339-(prec/100)*339;
+  setTimeout(()=>{
+    const c=document.getElementById('resultCircle');
+    c.style.transition='stroke-dashoffset 1.2s cubic-bezier(.4,0,.2,1)';
+    c.style.strokeDashoffset=offset;c.style.stroke=ringColor;
+    document.getElementById('resultPct').style.color=ringColor;
+  },100);
+
+  document.getElementById('delWarning').innerHTML='';
+
+  document.getElementById('testScreen').style.display='none';
+  document.getElementById('resultScreen').style.display='block';
+  document.getElementById('syncStatus').innerHTML='';
+  enviarAoServidor(lastResult);
+}
+
+function renderHistory(){
+  const section=document.getElementById('historySection');
+  const list=document.getElementById('historyList');
+  if(!sessionHistory.length){section.style.display='none';return;}
+  section.style.display='block';
+  list.innerHTML=sessionHistory.map(r=>
+    `<div class="history-item">
+      <span class="h-name">${r.nome}</span>
+      <span class="h-wpm">${r.wpm} WPM</span>
+      <span class="h-prec">${r.pct}%</span>
+      <span class="h-date">${r.data}</span>
+    </div>`
+  ).join('');
+}
+
+function beginTiming(){
+  timeLeft=TEST_DURATION;startTime=Date.now();active=true;
+  const bar=document.getElementById('timerBar');
+  bar.style.width='100%';bar.className='timer-bar';
+  document.getElementById('timerVal').textContent=formatTime(timeLeft);
+  clearInterval(timerInterval);
+  timerInterval=setInterval(()=>{
+    if(!active)return;
+    timeLeft--;
+    document.getElementById('timerVal').textContent=formatTime(timeLeft);
+    bar.style.width=((timeLeft/TEST_DURATION)*100)+'%';
+    if(timeLeft<=15){bar.className='timer-bar crit';document.getElementById('timerHud').classList.add('warning');}
+    else if(timeLeft<=30){bar.className='timer-bar warn';}
+    else{document.getElementById('timerHud').classList.remove('warning');}
+    if(timeLeft<=0){clearInterval(timerInterval);finishTest();}
+  },1000);
+  setTimeout(()=>document.getElementById('typeArea').focus(),100);
+}
+
+function startTest(){
+  const nome=document.getElementById('nome').value.trim();
+  if(nome.length<3){toast('Informe o nome completo');return;}
+  candidate={nome};
+
+  const pool=shuffle([...FRASES.lgpd,...FRASES.acesso,...FRASES.numeros]);
+  originalText=pool[0];
+  textoCategoria=getCategoria(originalText);
+  deleteCount=0;lastLength=0;
+
+  document.getElementById('candidateName').textContent=nome;
+  document.getElementById('textCatBadge').innerHTML=catBadgeHTML(textoCategoria);
+  document.getElementById('typeArea').value='';
+  document.getElementById('sDel').textContent='0';
+  document.getElementById('statDel').style.borderColor='rgba(255,255,255,0.07)';
+  renderTypeDisplay('');
+
+  document.getElementById('readyName').textContent=nome;
+  document.getElementById('readyCat').innerHTML=catBadgeHTML(textoCategoria);
+  document.getElementById('readyText').textContent=originalText;
+
+  document.getElementById('prepScreen').style.display='none';
+  document.getElementById('readyOverlay').classList.add('show');
+}
+
+document.getElementById('readyGoBtn').onclick=()=>{
+  document.getElementById('readyOverlay').classList.remove('show');
+  document.getElementById('testScreen').style.display='block';
+  document.getElementById('sPrecisao').textContent='100%';
+  document.getElementById('sWpm').textContent='0';
+  document.getElementById('sChars').textContent='0';
+  document.getElementById('sErros').textContent='0';
+  document.getElementById('timerVal').textContent=formatTime(TEST_DURATION);
+  renderTypeDisplay('');
+  runCountdown(beginTiming);
+};
+
+document.getElementById('startBtn').onclick  = startTest;
+document.getElementById('finishBtn').onclick = finishTest;
+document.getElementById('cancelBtn').onclick = ()=>{
+  if(active){clearInterval(timerInterval);active=false;}
+  document.getElementById('testScreen').style.display='none';
+  document.getElementById('prepScreen').style.display='block';
+};
+document.getElementById('newTestBtn').onclick=()=>{
+  document.getElementById('resultScreen').style.display='none';
+  document.getElementById('prepScreen').style.display='block';
+};
+document.getElementById('closeBtn').onclick=()=>window.location.href='./index.html';
+document.getElementById('typeArea').addEventListener('input',updateStats);
+document.getElementById('typeArea').addEventListener('paste',e=>{e.preventDefault();toast('Cola não permitida no teste','err');});
+
+// Expor funções usadas em atributos inline (onclick="setToday()" etc.)
+window.setToday = setToday;
+window.validateForm = validateForm;
+
+validateForm();
+
+// ── Status: "online" = conseguimos consultar o Firestore ──────────────
+async function checkStatus() {
+  const dot   = document.getElementById('statusDot');
+  const label = document.getElementById('statusLabel');
+  const ping  = document.getElementById('statusPing');
+
+  dot.className   = 'status-dot checking';
+  label.className = 'status-label checking';
+  label.textContent = 'Verificando...';
+  ping.textContent  = '';
+
+  const t0 = Date.now();
+  try {
+    await getDocs(query(collection(db, "resultados"), limit(1)));
+    const ms = Date.now() - t0;
+    dot.className     = 'status-dot online';
+    label.className   = 'status-label online';
+    label.textContent = '● Firestore online';
+    ping.textContent  = ms + ' ms';
+    ping.className    = ms < 300 ? 'status-ping fast' : ms < 900 ? 'status-ping mid' : 'status-ping slow';
+  } catch(e) {
+    dot.className     = 'status-dot offline';
+    label.className   = 'status-label offline';
+    label.textContent = '● Firestore offline';
+    ping.textContent  = 'sem resposta';
+    ping.className    = 'status-ping slow';
+  }
+}
+
+checkStatus();
+setInterval(checkStatus, 30000);
+document.addEventListener('visibilitychange', () => { if (!document.hidden) checkStatus(); });
+</script>
+</body>
+</html>
