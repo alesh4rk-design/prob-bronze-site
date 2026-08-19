@@ -71,6 +71,27 @@ export async function concluirAgendamento(agendamentoId, clienteId) {
   await updateDoc(doc(db, "clientes", clienteId), { ultimaSessaoEm: new Date().toISOString() });
 }
 
+// Lança um atendimento já concluído que a esteticista esqueceu de registrar na hora
+export async function criarAgendamentoRetroativo(negocioId, {
+  clienteId, clienteNome, servicos, dataHora, tempoMin = 0
+}) {
+  const ref = await addDoc(collection(db, "agendamentos"), {
+    negocioId,
+    clienteId,
+    clienteNome,
+    cabineId: null,
+    servicos,
+    tempoMin,
+    dataHora: Timestamp.fromDate(new Date(dataHora)),
+    origem: "presencial",
+    status: "concluido",
+    retroativo: true,
+    criadoEm: serverTimestamp()
+  });
+  await updateDoc(doc(db, "clientes", clienteId), { ultimaSessaoEm: new Date(dataHora).toISOString() });
+  return ref;
+}
+
 export function cancelarAgendamento(agendamentoId) {
   return updateDoc(doc(db, "agendamentos", agendamentoId), { status: "cancelado" });
 }

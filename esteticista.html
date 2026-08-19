@@ -122,6 +122,7 @@
       <button class="aba-btn ativa" data-aba="cabines">Cabines</button>
       <button class="aba-btn" data-aba="agenda">Agenda do Dia</button>
       <button class="aba-btn" data-aba="novo">Novo Agendamento</button>
+      <button class="aba-btn" data-aba="retroativo">Atendimento Esquecido</button>
       <button class="aba-btn" data-aba="clientes">Clientes</button>
       <button class="aba-btn" data-aba="servicos">Serviços</button>
       <button class="aba-btn" data-aba="financeiro">Financeiro</button>
@@ -189,6 +190,39 @@
           <input type="datetime-local" id="novo-datahora">
         </div>
         <button class="btn-primario" id="btn-criar-agendamento">Confirmar Agendamento</button>
+      </div>
+    </div>
+
+    <!-- ABA ATENDIMENTO ESQUECIDO (lançamento retroativo) -->
+    <div class="aba-conteudo" id="aba-retroativo">
+      <div class="card">
+        <div class="card-titulo">Lançar Atendimento Esquecido</div>
+        <p style="font-size:.78rem;color:var(--muted);margin-top:-.3rem">
+          Use quando um atendimento já foi realizado e pago, mas ninguém registrou no sistema na hora.
+        </p>
+        <div class="input-group">
+          <label>Cliente</label>
+          <select id="retro-cliente"><option value="">Selecione...</option></select>
+        </div>
+        <div class="input-group">
+          <label>Serviços realizados</label>
+          <div id="retro-combo-servicos" class="empty-state">Carregando...</div>
+        </div>
+        <div class="input-group">
+          <label>Data e hora do atendimento</label>
+          <input type="datetime-local" id="retro-datahora">
+        </div>
+        <div class="input-group"><label>Valor cobrado (R$)</label><input type="number" id="retro-valor" step="0.01" placeholder="Preenchido a partir dos serviços, ajuste se preciso"></div>
+        <div class="input-group"><label>Desconto (R$)</label><input type="number" id="retro-desconto" value="0" step="0.01"></div>
+        <div class="input-group">
+          <label>Forma de pagamento</label>
+          <select id="retro-forma"><option value="dinheiro">Dinheiro</option><option value="pix">PIX</option><option value="cartao">Cartão</option></select>
+        </div>
+        <div class="input-group">
+          <label>Status</label>
+          <select id="retro-status"><option value="pago">Pago</option><option value="pendente">Pendente</option></select>
+        </div>
+        <button class="btn-primario" id="btn-criar-retroativo">Lançar Atendimento</button>
       </div>
     </div>
 
@@ -348,7 +382,7 @@
 import { onAuthChange, login, logout } from './js/auth.js';
 import { escutarCabines, atualizarStatusCabine } from './js/cabines.js';
 import {
-  escutarAgendamentosDoDia, criarAgendamento, concluirAgendamento
+  escutarAgendamentosDoDia, criarAgendamento, concluirAgendamento, criarAgendamentoRetroativo
 } from './js/agenda.js';
 import { checarElegibilidade } from './js/agenda.js';
 import { escutarServicos, criarServico, calcularCombo } from './js/servicos.js';
@@ -372,6 +406,7 @@ let cabinesCache = [];
 let servicosCache = [];
 let clientesCache = [];
 let combosSelecionados = new Set();
+let comboRetroativoSelecionados = new Set();
 let sessaoAtiva = null; // { cabineId, agendamentoId, clienteId, tempoMin, iniciadoEm, valorBruto }
 let timerInterval = null;
 let pendenciasCache = [];
@@ -442,6 +477,7 @@ function iniciarPainel() {
     servicosCache = servicos;
     renderServicos(servicos);
     renderComboServicos(servicos);
+    renderComboServicosRetroativo(servicos);
   });
 
   escutarClientes(negocioId, (clientes) => {
@@ -449,6 +485,7 @@ function iniciarPainel() {
     renderClientes(clientes);
     preencherSelectClientes(clientes);
     preencherSelectPacoteCliente(clientes);
+    preencherSelectClienteRetroativo(clientes);
   });
 
   escutarPendencias(negocioId, (pendencias) => {
@@ -673,6 +710,67 @@ function renderComboServicos(servicos) {
     });
   });
 }
+
+function preencherSelectClienteRetroativo(clientes) {
+  const sel = $('retro-cliente');
+  const atual = sel.value;
+  sel.innerHTML = '<option value="">Selecione...</option>' +
+    clientes.map((c) => `<option value="${c.id}">${c.nome}</option>`).join('');
+  sel.value = atual;
+}
+
+function renderComboServicosRetroativo(servicos) {
+  const wrap = $('retro-combo-servicos');
+  if (servicos.length === 0) { wrap.innerHTML = '<div class="empty-state">Cadastre serviços na aba Serviços.</div>'; return; }
+  wrap.innerHTML = servicos.map((s) => `
+    <label style="display:flex;align-items:center;gap:.5rem;padding:.5rem 0;font-size:.85rem">
+      <input type="checkbox" data-combo-retro="${s.id}"> ${s.nome} — R$${Number(s.preco).toFixed(2)} (${s.duracaoMin}min)
+    </label>
+  `).join('');
+  wrap.querySelectorAll('[data-combo-retro]').forEach((chk) => {
+    chk.addEventListener('change', () => {
+      if (chk.checked) comboRetroativoSelecionados.add(chk.dataset.comboRetro);
+      else comboRetroativoSelecionados.delete(chk.dataset.comboRetro);
+      const combo = calcularCombo(servicosCache.filter((s) => comboRetroativoSelecionados.has(s.id)));
+      $('retro-valor').value = combo.precoTotal.toFixed(2);
+    });
+  });
+}
+
+$('btn-criar-retroativo').addEventListener('click', async () => {
+  const clienteId = $('retro-cliente').value;
+  const clienteNome = $('retro-cliente').selectedOptions[0]?.textContent;
+  const dataHora = $('retro-datahora').value;
+  const desconto = Number($('retro-desconto').value) || 0;
+  const formaPagamento = $('retro-forma').value;
+  const statusPagamento = $('retro-status').value;
+
+  if (!clienteId || !dataHora) { alert('Preencha cliente e data/hora do atendimento.'); return; }
+
+  const servicosDoCombo = servicosCache.filter((s) => comboRetroativoSelecionados.has(s.id));
+  const combo = calcularCombo(servicosDoCombo);
+  const valorBruto = Number($('retro-valor').value) || combo.precoTotal;
+  if (!valorBruto) { alert('Informe o valor cobrado ou selecione ao menos um serviço.'); return; }
+
+  const agendamentoRef = await criarAgendamentoRetroativo(usuarioAtual.negocioId, {
+    clienteId, clienteNome, servicos: servicosDoCombo, dataHora, tempoMin: combo.duracaoTotalMin
+  });
+
+  await registrarPagamento(usuarioAtual.negocioId, {
+    agendamentoId: agendamentoRef.id,
+    clienteId, clienteNome,
+    valorBruto, desconto,
+    formaPagamento, statusPagamento
+  });
+
+  $('retro-cliente').value = '';
+  $('retro-datahora').value = '';
+  $('retro-valor').value = '';
+  $('retro-desconto').value = 0;
+  comboRetroativoSelecionados.clear();
+  document.querySelectorAll('[data-combo-retro]').forEach((chk) => { chk.checked = false; });
+  alert('Atendimento lançado com sucesso.');
+});
 
 function renderCabines(cabines) {
   const grid = $('grid-cabines');
