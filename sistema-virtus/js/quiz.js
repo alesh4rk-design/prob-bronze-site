@@ -42,9 +42,15 @@ export const MODULOS_COMPORTAMENTAIS = ["Linguagem Positiva", "Atendimento ao Cl
 // Todo candidato faz, em sequência: [módulo escolhido] → Informática →
 // Linguagem Positiva → Atendimento ao Cliente. Se o módulo escolhido já
 // estiver na trilha, ele não é repetido.
+// EXCEÇÃO: o módulo "ASG" fica sozinho, sem emendar na trilha — candidato
+// que escolhe ASG faz só ASG.
 export const TRILHA_PADRAO = ["Informática", "Linguagem Positiva", "Atendimento ao Cliente"];
+export const MODULOS_SEM_TRILHA = ["ASG"];
 
 export function montarTrilha(moduloEscolhido) {
+  if (MODULOS_SEM_TRILHA.includes((moduloEscolhido || "").trim())) {
+    return [moduloEscolhido];
+  }
   const trilha = [moduloEscolhido];
   for (const m of TRILHA_PADRAO) {
     if (m !== moduloEscolhido) trilha.push(m);
