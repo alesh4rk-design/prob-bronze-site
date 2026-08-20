@@ -317,24 +317,50 @@
 
   .pr-sec-title {
     font-family:'Rajdhani',sans-serif; font-size:14px; font-weight:700; letter-spacing:3px;
-    color:#0d1420; text-transform:uppercase; margin:20px 0 10px;
-    padding-bottom:6px; border-bottom:1.5px solid #E8EdF4;
+    color:#0d1420; text-transform:uppercase; margin:16px 0 10px;
+    padding-bottom:6px; border-bottom:1.5px solid #E8EDF4;
+    /* mantém o título colado no conteúdo que ele apresenta */
+    break-after:avoid; page-break-after:avoid; break-inside:avoid;
   }
-  .pr-mod { border:1px solid #DCE3EE; border-radius:5px; margin-bottom:14px; page-break-inside:avoid; }
+  /* Sem page-break-inside:avoid no módulo inteiro: um módulo grande empurrava
+     tudo para a página seguinte e deixava um vazio no fim da anterior.
+     A proteção fica nas questões individuais (.pr-q). */
+  .pr-mod { border:1px solid #DCE3EE; border-radius:5px; margin-bottom:14px; }
+  .pr-mod-head { break-after:avoid; page-break-after:avoid; }
   .pr-mod-head { display:flex; align-items:center; gap:12px; padding:10px 14px; background:#F2F5FA; border-bottom:1px solid #DCE3EE; flex-wrap:wrap; }
   .pr-mod-nome { font-family:'Rajdhani',sans-serif; font-size:15px; font-weight:700; letter-spacing:1px; color:#0d1420; flex:1; }
   .pr-mod-nota { font-family:'Rajdhani',sans-serif; font-size:17px; font-weight:700; }
   .pr-mod-meta { font-family:'Share Tech Mono',monospace; font-size:9px; color:#7A8EA8; letter-spacing:1px; }
   .pr-mod-body { padding:10px 14px; }
 
-  .pr-q { padding:9px 11px; border-radius:4px; margin-bottom:7px; border-left:3px solid; page-break-inside:avoid; }
-  .pr-q.err { background:#FDF0EF; border-color:#E0483C; }
-  .pr-q.ok  { background:#EFFAF4; border-color:#00A85A; }
-  .pr-q-txt { font-size:11.5px; line-height:1.45; color:#12141c; margin-bottom:5px; font-weight:600; }
-  .pr-q-ans { font-family:'Share Tech Mono',monospace; font-size:10px; line-height:1.6; }
-  .pr-q-ans .l { color:#7A8EA8; }
-  .pr-q-ans .e { color:#B32218; font-weight:700; }
-  .pr-q-ans .c { color:#00713C; font-weight:700; }
+  /* Questões no PDF: leves, com o status indicado por um marcador colorido
+     à esquerda em vez de um bloco inteiro pintado. */
+  .pr-q {
+    display:flex; gap:8px; padding:6px 2px 6px 0; margin:0;
+    border-bottom:1px solid #EEF2F7; page-break-inside:avoid;
+  }
+  .pr-q:last-child { border-bottom:none; }
+  .pr-q-mark {
+    flex-shrink:0; width:15px; height:15px; border-radius:50%; margin-top:1px;
+    display:flex; align-items:center; justify-content:center;
+    font-size:9px; font-weight:700; line-height:1;
+  }
+  .pr-q.ok  .pr-q-mark { background:#E3F6EC; color:#00874A; border:1px solid #A8DCC1; }
+  .pr-q.err .pr-q-mark { background:#FCEBE9; color:#C03127; border:1px solid #EFB8B2; }
+  .pr-q-main { flex:1; min-width:0; }
+  .pr-q-txt { font-size:10.5px; line-height:1.4; color:#2A3444; margin-bottom:2px; font-weight:600; }
+  .pr-q.err .pr-q-txt { color:#12141c; }
+  .pr-q-ans { font-family:'Share Tech Mono',monospace; font-size:9px; line-height:1.55; color:#8A97A8; }
+  .pr-q-ans .l { color:#A8B2C0; }
+  .pr-q-ans .e { color:#C03127; font-weight:700; }
+  .pr-q-ans .c { color:#00874A; font-weight:700; }
+  .pr-q-resumo {
+    font-family:'Share Tech Mono',monospace; font-size:8.5px; letter-spacing:1px;
+    color:#8A97A8; text-transform:uppercase; margin-bottom:6px;
+    padding-bottom:5px; border-bottom:1px solid #E8EDF4;
+  }
+  .pr-q-resumo b.ok  { color:#00874A; }
+  .pr-q-resumo b.err { color:#C03127; }
 
   .pr-typing { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; }
   .pr-t-cell { background:#F7F9FC; border:1px solid #DCE3EE; border-radius:5px; padding:10px; text-align:center; }
@@ -377,6 +403,64 @@
     display:inline-block; padding:3px 9px; border-radius:20px; margin:2px 2px 0 0;
     background:#EFFAF4; border:1px solid #9FDCBE; color:#00713C;
     font-family:'Share Tech Mono',monospace; font-size:8.5px;
+  }
+
+  /* ══════════ RESUMO DE COMPETÊNCIAS (supervisores) ══════════ */
+  .sk-hero {
+    background:linear-gradient(135deg,#0d1420 0%,#1a2436 100%);
+    border-radius:6px; padding:18px 22px; margin-bottom:16px;
+    display:flex; align-items:center; gap:20px; flex-wrap:wrap;
+  }
+  .sk-hero-nome { font-family:'Rajdhani',sans-serif; font-size:24px; font-weight:700; letter-spacing:1px; color:#fff; line-height:1.1; }
+  .sk-hero-cargo { font-family:'Share Tech Mono',monospace; font-size:10px; letter-spacing:2px; color:#E8A000; text-transform:uppercase; margin-top:4px; }
+  .sk-hero-meta { margin-left:auto; display:flex; gap:20px; flex-wrap:wrap; }
+  .sk-hm { text-align:center; }
+  .sk-hm-val { font-family:'Rajdhani',sans-serif; font-size:22px; font-weight:700; color:#FFB800; line-height:1; }
+  .sk-hm-lbl { font-family:'Share Tech Mono',monospace; font-size:7.5px; letter-spacing:1px; color:#8A97A8; text-transform:uppercase; margin-top:3px; }
+
+  .sk-reco {
+    border-radius:6px; padding:14px 18px; margin-bottom:16px; page-break-inside:avoid;
+    border:1.5px solid; display:flex; gap:14px; align-items:flex-start;
+  }
+  .sk-reco-forte { background:#EFFAF4; border-color:#00A85A; }
+  .sk-reco-media { background:#FDF8EA; border-color:#E8A000; }
+  .sk-reco-fraca { background:#FDF0EF; border-color:#E0483C; }
+  .sk-reco-icon { font-size:26px; line-height:1; }
+  .sk-reco-titulo { font-family:'Rajdhani',sans-serif; font-size:15px; font-weight:700; letter-spacing:1.5px; text-transform:uppercase; margin-bottom:4px; }
+  .sk-reco-forte .sk-reco-titulo { color:#00713C; }
+  .sk-reco-media .sk-reco-titulo { color:#8A6100; }
+  .sk-reco-fraca .sk-reco-titulo { color:#B32218; }
+  .sk-reco-txt { font-size:11.5px; line-height:1.55; color:#2A3444; }
+
+  .sk-bar-row { margin-bottom:11px; page-break-inside:avoid; }
+  .sk-bar-head { display:flex; align-items:baseline; gap:8px; margin-bottom:4px; }
+  .sk-bar-nome { font-family:'Rajdhani',sans-serif; font-size:13.5px; font-weight:700; color:#0d1420; flex:1; letter-spacing:.3px; }
+  .sk-bar-pct { font-family:'Rajdhani',sans-serif; font-size:15px; font-weight:700; }
+  .sk-bar-tag { font-family:'Share Tech Mono',monospace; font-size:8px; letter-spacing:1px; text-transform:uppercase; padding:2px 7px; border-radius:20px; }
+  .sk-t-forte  { background:#E3F6EC; color:#00713C; border:1px solid #A8DCC1; }
+  .sk-t-apto   { background:#E6F4FB; color:#005E7A; border:1px solid #A5D3E6; }
+  .sk-t-treino { background:#FDF4E0; color:#8A6100; border:1px solid #EBCF8F; }
+  .sk-t-baixo  { background:#FCEBE9; color:#B32218; border:1px solid #EFB8B2; }
+  .sk-bar-track { height:9px; background:#EDF1F7; border-radius:5px; overflow:hidden; }
+  .sk-bar-fill { height:100%; border-radius:5px; }
+
+  .sk-two { display:grid; grid-template-columns:1fr 1fr; gap:14px; page-break-inside:avoid; }
+  .sk-box { border:1px solid #DCE3EE; border-radius:6px; padding:12px 14px; }
+  .sk-box-tit { font-family:'Rajdhani',sans-serif; font-size:12px; font-weight:700; letter-spacing:1.5px; text-transform:uppercase; margin-bottom:8px; padding-bottom:5px; border-bottom:1px solid #EDF1F7; }
+  .sk-box-tit.pos { color:#00713C; }
+  .sk-box-tit.neg { color:#B32218; }
+  .sk-li { font-size:11px; line-height:1.7; color:#2A3444; }
+  .sk-li span { color:#8A97A8; font-family:'Share Tech Mono',monospace; font-size:9.5px; }
+  .sk-vazio { font-family:'Share Tech Mono',monospace; font-size:9.5px; color:#A8B2C0; }
+
+  .sk-perfil { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; page-break-inside:avoid; }
+  .sk-p-cell { border:1px solid #DCE3EE; border-radius:6px; padding:11px 13px; }
+  .sk-p-lbl { font-family:'Share Tech Mono',monospace; font-size:8px; letter-spacing:1px; color:#7A8EA8; text-transform:uppercase; }
+  .sk-p-val { font-family:'Rajdhani',sans-serif; font-size:14px; font-weight:700; color:#0d1420; margin-top:2px; line-height:1.25; }
+
+  .sk-alerta {
+    background:#FCEBE9; border:1px solid #EFB8B2; border-radius:6px; padding:11px 14px;
+    font-size:11px; line-height:1.6; color:#B32218; page-break-inside:avoid;
   }
 </style>
 </head>
@@ -436,7 +520,8 @@
       <div id="cmConteudo"></div>
     </div>
     <div class="modal-actions">
-      <button class="btn-pdf" onclick="gerarPDF()">📄 Exportar relatório em PDF</button>
+      <button class="btn-pdf" onclick="gerarPDF()">📄 Relatório completo</button>
+      <button class="btn-pdf" style="background:linear-gradient(135deg,#0088B0,#00C8E8);color:#02222c;" onclick="gerarResumoSkills()">📊 Resumo de competências</button>
       <button class="btn-act btn-neutral" style="padding:12px 20px;border-radius:6px;" onclick="fecharCandidato()">Fechar</button>
     </div>
   </div>
@@ -909,16 +994,24 @@
             <div class="pr-mod-body">`;
         if (!det.length) {
           h += `<div class="pr-q-ans"><span class="l">Detalhamento das respostas não disponível para este teste.</span></div>`;
-        } else if (!erradas.length) {
-          h += `<div class="pr-q ok"><div class="pr-q-txt">✓ Acertou todas as ${det.length} questões deste módulo.</div></div>`;
         } else {
-          h += `<div class="pr-q-ans" style="margin-bottom:8px;"><span class="l">QUESTÕES INCORRETAS (${erradas.length} de ${det.length})</span></div>`;
-          h += erradas.map((q, i) => `
-            <div class="pr-q err">
-              <div class="pr-q-txt">${i + 1}. ${escapeHtml(q.pergunta || '—')}</div>
-              <div class="pr-q-ans">
-                <span class="l">Respondeu:</span> <span class="e">${escapeHtml(q.resposta_dada || '—')}</span><br>
-                <span class="l">Correta:</span> <span class="c">${escapeHtml(q.resposta_correta || '—')}</span>
+          const certas = det.length - erradas.length;
+          h += `<div class="pr-q-resumo">
+                  <b class="ok">${certas} corretas</b> · <b class="err">${erradas.length} incorretas</b> — de ${det.length} questões
+                </div>`;
+          // Lista todas as questões: verde marca acerto, vermelho marca erro.
+          // A resposta correta só é impressa quando o candidato errou.
+          h += det.map((q, i) => `
+            <div class="pr-q ${q.acertou ? 'ok' : 'err'}">
+              <div class="pr-q-mark">${q.acertou ? '✓' : '✕'}</div>
+              <div class="pr-q-main">
+                <div class="pr-q-txt">${i + 1}. ${escapeHtml(q.pergunta || '—')}</div>
+                <div class="pr-q-ans">
+                  <span class="l">Respondeu:</span>
+                  <span class="${q.acertou ? 'c' : 'e'}">${escapeHtml(q.resposta_dada || '—')}</span>
+                  ${q.acertou ? '' :
+                    ` &nbsp;·&nbsp; <span class="l">Correta:</span> <span class="c">${escapeHtml(q.resposta_correta || '—')}</span>`}
+                </div>
               </div>
             </div>`).join('');
         }
@@ -966,15 +1059,235 @@
         <span>Gerado em ${agora}</span>
       </div>`;
 
-    document.getElementById('printReport').innerHTML = h;
-    // Nome sugerido do arquivo no "Salvar como PDF" vem do título da página.
-    const tituloOriginal = document.title;
-    document.title = `Virtus - ${nome.replace(/[^\w\s-]/g, '')}`;
-    setTimeout(() => {
-      window.print();
-      document.title = tituloOriginal;
-    }, 120);
+    imprimirRelatorio(h, `Virtus - ${nome.replace(/[^\w\s-]/g, '')}`);
   };
+
+
+  // ══════════ RESUMO DE COMPETÊNCIAS (para supervisores) ══════════
+  // Relatório enxuto, sem o detalhamento questão a questão: mostra onde o
+  // candidato é forte, onde precisa de treinamento e sugere alocação.
+
+  // Faixas de classificação por módulo.
+  function classificarModulo(pct) {
+    if (pct >= 85) return { tag: 'Domínio forte', cls: 'sk-t-forte',  cor: '#00A85A' };
+    if (pct >= 70) return { tag: 'Apto',          cls: 'sk-t-apto',   cor: '#0088B0' };
+    if (pct >= 50) return { tag: 'Requer treino', cls: 'sk-t-treino', cor: '#E8A000' };
+    return            { tag: 'Baixo domínio', cls: 'sk-t-baixo',  cor: '#E0483C' };
+  }
+
+  function classificarDigitacao(wpm) {
+    if (wpm == null) return null;
+    if (wpm >= 45) return { txt: 'Rápida', obs: 'apta a funções com muito registro em sistema' };
+    if (wpm >= 30) return { txt: 'Adequada', obs: 'atende rotinas administrativas comuns' };
+    if (wpm >= 20) return { txt: 'Moderada', obs: 'suficiente para registros pontuais' };
+    return { txt: 'Lenta', obs: 'evitar funções com digitação intensiva' };
+  }
+
+  // Consolida o melhor resultado por módulo (se refez o teste, vale o maior).
+  function consolidarModulos(quizzes) {
+    const porMod = {};
+    for (const t of quizzes) {
+      const m = t.modulo || '—';
+      const pct = t.pct || 0;
+      if (!porMod[m] || pct > porMod[m].pct) {
+        porMod[m] = { modulo: m, pct, acertos: t.acertos, total: t.total, tentativas: 0 };
+      }
+    }
+    for (const t of quizzes) {
+      const m = t.modulo || '—';
+      if (porMod[m]) porMod[m].tentativas++;
+    }
+    return Object.values(porMod).sort((a, b) => b.pct - a.pct);
+  }
+
+  window.gerarResumoSkills = function () {
+    const tents = tentativasDe(CAND_ATUAL);
+    if (!tents.length) return;
+
+    const quizzes = tents.filter(t => t.tipo !== 'typing');
+    const typings = tents.filter(t => t.tipo === 'typing');
+    const viols = violacoesDe(CAND_ATUAL);
+    const f = fichaDe(tents);
+    const nome = tents[0].nome || CAND_ATUAL;
+
+    const mods = consolidarModulos(quizzes);
+    const media = mods.length ? Math.round(mods.reduce((a, m) => a + m.pct, 0) / mods.length) : null;
+    const fortes = mods.filter(m => m.pct >= 70);
+    const fracos = mods.filter(m => m.pct < 70);
+    const melhorWpm = typings.length ? Math.max(...typings.map(t => t.wpm || 0)) : null;
+    const dig = classificarDigitacao(melhorWpm);
+
+    const comDecisao = tents.filter(t => t.decisao).slice(-1)[0];
+    const decisao = comDecisao ? comDecisao.decisao : 'pendente';
+    const agora = new Date().toLocaleString('pt-BR');
+
+    // Recomendação de alocação com base no desempenho consolidado.
+    let recoCls, recoIcon, recoTitulo, recoTxt;
+    if (fortes.length) {
+      const top = fortes.slice(0, 2).map(m => m.modulo);
+      recoCls = 'sk-reco-forte'; recoIcon = '🎯';
+      recoTitulo = 'Alocação recomendada';
+      recoTxt = `Melhor aproveitamento em <strong>${top.join('</strong> e <strong>')}</strong>` +
+        (fortes[0].pct >= 85
+          ? `, com domínio consolidado (${fortes[0].pct}%). Pode assumir o posto sem acompanhamento inicial reforçado.`
+          : `, com desempenho satisfatório (${fortes[0].pct}%). Recomenda-se acompanhamento nas primeiras semanas.`) +
+        (fracos.length ? ` Evitar alocação isolada em ${fracos.map(m => m.modulo).join(', ')} sem treinamento prévio.` : '');
+    } else if (mods.length) {
+      const melhor = mods[0];
+      if (melhor.pct >= 50) {
+        recoCls = 'sk-reco-media'; recoIcon = '⚠️';
+        recoTitulo = 'Alocação com ressalvas';
+        recoTxt = `Nenhum módulo atingiu 70%. O melhor resultado foi <strong>${melhor.modulo}</strong> (${melhor.pct}%). ` +
+          `Se aproveitado, indicar treinamento formal antes de assumir posto e supervisão direta no período inicial.`;
+      } else {
+        recoCls = 'sk-reco-fraca'; recoIcon = '⛔';
+        recoTitulo = 'Não recomendado para alocação imediata';
+        recoTxt = `Desempenho abaixo de 50% em todos os módulos avaliados (melhor: ${melhor.modulo}, ${melhor.pct}%). ` +
+          `Recomenda-se capacitação completa e reavaliação antes de qualquer alocação.`;
+      }
+    } else {
+      recoCls = 'sk-reco-media'; recoIcon = 'ℹ️';
+      recoTitulo = 'Sem prova técnica registrada';
+      recoTxt = 'O candidato não possui avaliação de conhecimento concluída neste sistema.';
+    }
+
+    const vLabel = decisao === 'apto' ? 'APROVADO' : decisao === 'nao_apto' ? 'NÃO APROVADO' : 'EM ANÁLISE';
+    const vCor = decisao === 'apto' ? '#00EE88' : decisao === 'nao_apto' ? '#FF7A70' : '#FFB800';
+
+    let h = `
+      <div class="pr-header">
+        <div class="pr-hex">⚡</div>
+        <div>
+          <div class="pr-brand-name">Virtus</div>
+          <div class="pr-brand-sub">Resumo de Competências</div>
+        </div>
+        <div class="pr-doc-label">
+          Documento para supervisão<br>
+          Emitido em ${agora}<br>
+          Uso interno · Confidencial
+        </div>
+      </div>
+
+      <div class="sk-hero">
+        <div>
+          <div class="sk-hero-nome">${escapeHtml(nome)}</div>
+          <div class="sk-hero-cargo">${escapeHtml((f && f.cargo_pretendido) || 'Cargo não informado')}</div>
+        </div>
+        <div class="sk-hero-meta">
+          <div class="sk-hm"><div class="sk-hm-val">${media !== null ? media + '%' : '—'}</div><div class="sk-hm-lbl">Média geral</div></div>
+          <div class="sk-hm"><div class="sk-hm-val">${mods.length}</div><div class="sk-hm-lbl">Módulos</div></div>
+          <div class="sk-hm"><div class="sk-hm-val">${melhorWpm != null ? melhorWpm : '—'}</div><div class="sk-hm-lbl">WPM</div></div>
+          <div class="sk-hm"><div class="sk-hm-val" style="color:${vCor}">${vLabel}</div><div class="sk-hm-lbl">Situação</div></div>
+        </div>
+      </div>
+
+      <div class="sk-reco ${recoCls}">
+        <div class="sk-reco-icon">${recoIcon}</div>
+        <div>
+          <div class="sk-reco-titulo">${recoTitulo}</div>
+          <div class="sk-reco-txt">${recoTxt}</div>
+        </div>
+      </div>`;
+
+    // Perfil operacional
+    if (f) {
+      const certs = (f.certificacoes && f.certificacoes.length) ? f.certificacoes.join(' · ') : 'Nenhuma informada';
+      h += `
+        <div class="pr-sec-title">Perfil operacional</div>
+        <div class="sk-perfil">
+          <div class="sk-p-cell"><div class="sk-p-lbl">Disponibilidade</div><div class="sk-p-val">${escapeHtml(f.turno || '—')}</div></div>
+          <div class="sk-p-cell"><div class="sk-p-lbl">Experiência na área</div><div class="sk-p-val">${f.experiencia ? 'Sim' : 'Não'}</div></div>
+          <div class="sk-p-cell"><div class="sk-p-lbl">Idade</div><div class="sk-p-val">${f.idade != null ? f.idade + ' anos' : '—'}</div></div>
+          <div class="sk-p-cell"><div class="sk-p-lbl">Altura</div><div class="sk-p-val">${f.altura ? String(f.altura).replace('.', ',') + ' m' : '—'}</div></div>
+          <div class="sk-p-cell"><div class="sk-p-lbl">Localização</div><div class="sk-p-val">${escapeHtml(f.cidade || '—')}</div></div>
+          <div class="sk-p-cell"><div class="sk-p-lbl">Contato</div><div class="sk-p-val">${escapeHtml(f.telefone || '—')}</div></div>
+        </div>
+        <div class="pr-f-certs" style="margin-top:10px;">
+          <span class="pr-f-lbl">Cursos e certificações:</span>
+          ${(f.certificacoes && f.certificacoes.length)
+            ? f.certificacoes.map(c => `<span class="pr-chip">✓ ${escapeHtml(c)}</span>`).join(' ')
+            : '<span class="pr-f-val" style="color:#7A8EA8;">Nenhuma informada</span>'}
+        </div>`;
+    }
+
+    // Competências por módulo
+    if (mods.length) {
+      h += `<div class="pr-sec-title">Competências avaliadas</div>`;
+      h += mods.map(m => {
+        const c = classificarModulo(m.pct);
+        return `
+          <div class="sk-bar-row">
+            <div class="sk-bar-head">
+              <span class="sk-bar-nome">${escapeHtml(m.modulo)}</span>
+              <span class="sk-bar-tag ${c.cls}">${c.tag}</span>
+              <span class="sk-bar-pct" style="color:${c.cor}">${m.pct}%</span>
+            </div>
+            <div class="sk-bar-track"><div class="sk-bar-fill" style="width:${m.pct}%;background:${c.cor};"></div></div>
+          </div>`;
+      }).join('');
+
+      h += `
+        <div class="sk-two" style="margin-top:14px;">
+          <div class="sk-box">
+            <div class="sk-box-tit pos">✓ Pontos fortes</div>
+            ${fortes.length
+              ? fortes.map(m => `<div class="sk-li">• ${escapeHtml(m.modulo)} <span>${m.pct}% (${m.acertos}/${m.total})</span></div>`).join('')
+              : '<div class="sk-vazio">Nenhum módulo atingiu 70%.</div>'}
+          </div>
+          <div class="sk-box">
+            <div class="sk-box-tit neg">▲ A desenvolver</div>
+            ${fracos.length
+              ? fracos.map(m => `<div class="sk-li">• ${escapeHtml(m.modulo)} <span>${m.pct}% (${m.acertos}/${m.total})</span></div>`).join('')
+              : '<div class="sk-vazio">Nenhuma lacuna relevante identificada.</div>'}
+          </div>
+        </div>`;
+    }
+
+    // Digitação
+    if (dig) {
+      h += `
+        <div class="pr-sec-title">Habilidade de digitação</div>
+        <div class="sk-perfil">
+          <div class="sk-p-cell"><div class="sk-p-lbl">Velocidade</div><div class="sk-p-val">${melhorWpm} WPM — ${dig.txt}</div></div>
+          <div class="sk-p-cell" style="grid-column:2/-1;"><div class="sk-p-lbl">Leitura</div><div class="sk-p-val" style="font-size:12px;font-weight:600;">${dig.obs}</div></div>
+        </div>`;
+    }
+
+    // Conduta
+    h += `<div class="pr-sec-title">Conduta durante a avaliação</div>`;
+    if (viols.length) {
+      const tipos = [...new Set(viols.map(v => v.tipo))].join(', ');
+      h += `<div class="sk-alerta">
+              ⚠ <strong>${viols.length} ocorrência(s)</strong> registradas durante os testes (${escapeHtml(tipos)}).
+              Considerar no processo: o sistema monitora saída de aba, tentativa de cópia e uso de atalhos.
+            </div>`;
+    } else {
+      h += `<div class="sk-li" style="padding:10px 13px;border:1px solid #DCE3EE;border-radius:6px;">
+              ✓ Nenhuma ocorrência registrada. Testes realizados dentro das regras.
+            </div>`;
+    }
+
+    h += `
+      <div class="pr-assinatura">
+        <div class="pr-sig">Supervisor responsável</div>
+        <div class="pr-sig">Data</div>
+      </div>
+      <div class="pr-foot">
+        <span>SISTEMA VIRTUS · Resumo de competências</span>
+        <span>${escapeHtml(nome)}</span>
+        <span>Gerado em ${agora}</span>
+      </div>`;
+
+    imprimirRelatorio(h, `Virtus - Competencias - ${nome.replace(/[^\w\s-]/g, '')}`);
+  };
+
+  // Envia um HTML para o container de impressão e abre o diálogo do navegador.
+  function imprimirRelatorio(html, tituloArquivo) {
+    document.getElementById('printReport').innerHTML = html;
+    const original = document.title;
+    document.title = tituloArquivo;
+    setTimeout(() => { window.print(); document.title = original; }, 120);
+  }
 
   // ── Filtros ──────────────────────────────────────────────────────────
   window.applyFilters = function() { renderAll(); };
