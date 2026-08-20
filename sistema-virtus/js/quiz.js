@@ -33,9 +33,50 @@ import {
   collection, doc, getDoc, getDocs, addDoc, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
 
-// Tempo limite por módulo (mantido igual à regra original: ASG=480s, demais=300s).
+// ── Configuração por módulo ────────────────────────────────────────────────
+// Módulos comportamentais (criados depois): 10 questões em 3min30.
+// Módulos técnicos: 15 questões, 5min (ASG mantém os 8min originais).
+export const MODULOS_COMPORTAMENTAIS = ["Linguagem Positiva", "Atendimento ao Cliente"];
+
+// Trilha fixa aplicada depois do módulo que o candidato escolheu.
+// Todo candidato faz, em sequência: [módulo escolhido] → Informática →
+// Linguagem Positiva → Atendimento ao Cliente. Se o módulo escolhido já
+// estiver na trilha, ele não é repetido.
+export const TRILHA_PADRAO = ["Informática", "Linguagem Positiva", "Atendimento ao Cliente"];
+
+export function montarTrilha(moduloEscolhido) {
+  const trilha = [moduloEscolhido];
+  for (const m of TRILHA_PADRAO) {
+    if (m !== moduloEscolhido) trilha.push(m);
+  }
+  return trilha;
+}
+
+function ehComportamental(modulo) {
+  return MODULOS_COMPORTAMENTAIS.includes((modulo || "").trim());
+}
+
+// Quantidade de questões sorteadas do banco para o candidato responder.
+export function totalQuestoesParaModulo(modulo) {
+  return ehComportamental(modulo) ? 10 : 15;
+}
+
+// Tempo limite em segundos.
 export function tempoLimiteParaModulo(modulo) {
-  return (modulo || "").trim().toLowerCase() === "asg" ? 480 : 300;
+  const m = (modulo || "").trim();
+  if (ehComportamental(m)) return 210;          // 3min30
+  if (m.toLowerCase() === "asg") return 480;    // 8min (regra original)
+  return 300;                                   // 5min
+}
+
+// Embaralha uma cópia do array (Fisher-Yates).
+function embaralhar(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
 }
 
 // Lista os módulos disponíveis e a contagem total de perguntas.
@@ -63,8 +104,20 @@ export async function carregarPerguntasDoModulo(modulo) {
   const ref = doc(db, "perguntas", modulo);
   const snap = await getDoc(ref);
   if (!snap.exists()) throw new Error(`Módulo "${modulo}" não encontrado em Firestore.`);
-  const questoes = snap.data().questoes || [];
-  return questoes.map((item) => ({ q: item.q, o: item.o, n: item.n, resposta: item.resposta }));
+  const banco = snap.data().questoes || [];
+  if (!banco.length) throw new Error(`Módulo "${modulo}" está sem perguntas cadastradas.`);
+
+  // Sorteia N questões do banco (o banco tem mais questões do que o teste
+  // aplica, então cada candidato recebe uma seleção diferente) e embaralha
+  // também a ordem das alternativas, para que a posição da resposta certa
+  // não se repita entre candidatos.
+  const quantas = Math.min(totalQuestoesParaModulo(modulo), banco.length);
+  return embaralhar(banco).slice(0, quantas).map((item) => ({
+    q: item.q,
+    o: embaralhar(item.o || []),
+    n: item.n,
+    resposta: item.resposta
+  }));
 }
 
 // Grava o resultado final do quiz na coleção `resultados`.

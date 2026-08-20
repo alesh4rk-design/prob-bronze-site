@@ -2744,5 +2744,449 @@ export const PERGUNTAS_SEED = {
       "n": "dificil",
       "resposta": "Acionar a iluminação de emergência e orientar as pessoas com calma"
     }
+  ],
+  "Linguagem Positiva": [
+    {
+      "q": "Um morador pergunta se pode receber uma encomenda fora do horário. A resposta mais adequada é:",
+      "o": [
+        "Não pode, é contra as regras.",
+        "Posso receber encomendas até as 18h. Depois desse horário, consigo registrar a tentativa e avisar você assim que chegar.",
+        "Isso não é comigo.",
+        "Você devia ter lido o regulamento."
+      ],
+      "n": "facil",
+      "resposta": "Posso receber encomendas até as 18h. Depois desse horário, consigo registrar a tentativa e avisar você assim que chegar."
+    },
+    {
+      "q": "Qual frase substitui melhor \"Não posso fazer isso\"?",
+      "o": [
+        "O que eu consigo fazer é registrar sua solicitação e encaminhar ao responsável.",
+        "Isso é impossível.",
+        "Não é função minha.",
+        "Já falei que não dá."
+      ],
+      "n": "facil",
+      "resposta": "O que eu consigo fazer é registrar sua solicitação e encaminhar ao responsável."
+    },
+    {
+      "q": "O que caracteriza a linguagem positiva no atendimento?",
+      "o": [
+        "Focar no que é possível fazer, em vez de enfatizar o impedimento",
+        "Prometer tudo o que a pessoa pedir",
+        "Evitar dar qualquer informação",
+        "Usar palavras difíceis para parecer profissional"
+      ],
+      "n": "facil",
+      "resposta": "Focar no que é possível fazer, em vez de enfatizar o impedimento"
+    },
+    {
+      "q": "Um visitante se irrita porque precisa se identificar. A melhor conduta é:",
+      "o": [
+        "Manter tom calmo e explicar que o registro é para a segurança de todos, inclusive dele",
+        "Responder no mesmo tom para mostrar firmeza",
+        "Ignorar e liberar a entrada para evitar discussão",
+        "Chamar a atenção dele na frente das outras pessoas"
+      ],
+      "n": "medio",
+      "resposta": "Manter tom calmo e explicar que o registro é para a segurança de todos, inclusive dele"
+    },
+    {
+      "q": "Qual destas expressões deve ser EVITADA no atendimento?",
+      "o": [
+        "\"Você não entendeu o que eu falei.\"",
+        "\"Deixa eu explicar de outro jeito.\"",
+        "\"Vou verificar essa informação para você.\"",
+        "\"Obrigado por aguardar.\""
+      ],
+      "n": "facil",
+      "resposta": "\"Você não entendeu o que eu falei.\""
+    },
+    {
+      "q": "Ao precisar que a pessoa aguarde, a abordagem mais adequada é:",
+      "o": [
+        "Explicar o motivo e dar uma previsão: \"Preciso confirmar com a portaria, leva cerca de 2 minutos.\"",
+        "Dizer apenas \"aguarde\" e sair",
+        "Deixar a pessoa esperando sem falar nada",
+        "Dizer que vai ser rápido mesmo sem saber"
+      ],
+      "n": "medio",
+      "resposta": "Explicar o motivo e dar uma previsão: \"Preciso confirmar com a portaria, leva cerca de 2 minutos.\""
+    },
+    {
+      "q": "Substitua a frase \"O senhor está errado\" por uma versão positiva:",
+      "o": [
+        "\"Deixa eu conferir esse dado com o senhor, acho que houve uma informação diferente.\"",
+        "\"O senhor está muito enganado.\"",
+        "\"Não é bem assim que funciona.\"",
+        "\"Quem te falou isso errou.\""
+      ],
+      "n": "medio",
+      "resposta": "\"Deixa eu conferir esse dado com o senhor, acho que houve uma informação diferente.\""
+    },
+    {
+      "q": "Por que evitar a palavra \"problema\" no atendimento?",
+      "o": [
+        "Porque reforça a dificuldade; é melhor falar em \"situação\" e apresentar a solução",
+        "Porque é uma palavra proibida por lei",
+        "Porque ninguém entende o significado",
+        "Porque só pode ser usada por supervisores"
+      ],
+      "n": "medio",
+      "resposta": "Porque reforça a dificuldade; é melhor falar em \"situação\" e apresentar a solução"
+    },
+    {
+      "q": "Ao atender alguém pela primeira vez no dia, o mais adequado é:",
+      "o": [
+        "Cumprimentar, se identificar e perguntar como pode ajudar",
+        "Esperar a pessoa falar primeiro",
+        "Perguntar direto o que ela quer",
+        "Apontar para a placa de instruções"
+      ],
+      "n": "facil",
+      "resposta": "Cumprimentar, se identificar e perguntar como pode ajudar"
+    },
+    {
+      "q": "Um cliente reclama de algo que não foi culpa sua. A melhor reação é:",
+      "o": [
+        "Ouvir sem interromper, reconhecer o incômodo e encaminhar a solução",
+        "Explicar que a culpa foi de outro setor",
+        "Dizer que não tem nada a ver com isso",
+        "Pedir para ele reclamar com outra pessoa"
+      ],
+      "n": "medio",
+      "resposta": "Ouvir sem interromper, reconhecer o incômodo e encaminhar a solução"
+    },
+    {
+      "q": "Qual é a forma mais positiva de recusar um pedido que foge das regras?",
+      "o": [
+        "\"Esse procedimento eu não consigo autorizar, mas posso registrar seu pedido com o síndico hoje mesmo.\"",
+        "\"Regra é regra.\"",
+        "\"Não insista.\"",
+        "\"Isso nunca vai ser liberado.\""
+      ],
+      "n": "dificil",
+      "resposta": "\"Esse procedimento eu não consigo autorizar, mas posso registrar seu pedido com o síndico hoje mesmo.\""
+    },
+    {
+      "q": "O tom de voz no atendimento presencial:",
+      "o": [
+        "Comunica tanto quanto as palavras e deve ser calmo e respeitoso",
+        "Não faz diferença se as palavras estiverem certas",
+        "Deve ser sempre alto para demonstrar autoridade",
+        "Só importa no atendimento por telefone"
+      ],
+      "n": "facil",
+      "resposta": "Comunica tanto quanto as palavras e deve ser calmo e respeitoso"
+    },
+    {
+      "q": "Ao encerrar um atendimento, a conduta adequada é:",
+      "o": [
+        "Confirmar se a pessoa foi atendida no que precisava e se colocar à disposição",
+        "Sair sem falar nada assim que resolver",
+        "Falar \"tchau\" e virar as costas",
+        "Esperar a pessoa ir embora sozinha"
+      ],
+      "n": "facil",
+      "resposta": "Confirmar se a pessoa foi atendida no que precisava e se colocar à disposição"
+    },
+    {
+      "q": "Como registrar uma ocorrência no livro de forma profissional?",
+      "o": [
+        "De forma objetiva e factual, sem opiniões pessoais ou julgamentos",
+        "Descrevendo o que você achou da pessoa",
+        "Usando gírias para ser mais rápido",
+        "Escrevendo só se for algo grave"
+      ],
+      "n": "medio",
+      "resposta": "De forma objetiva e factual, sem opiniões pessoais ou julgamentos"
+    },
+    {
+      "q": "Uma pessoa idosa tem dificuldade em entender uma orientação. O correto é:",
+      "o": [
+        "Repetir com calma, em frases curtas, verificando se ela acompanhou",
+        "Falar mais alto e mais rápido",
+        "Pedir para outra pessoa explicar",
+        "Entregar um papel escrito e encerrar"
+      ],
+      "n": "medio",
+      "resposta": "Repetir com calma, em frases curtas, verificando se ela acompanhou"
+    },
+    {
+      "q": "\"Infelizmente o sistema caiu e não vai dar para atender.\" Como reescrever positivamente?",
+      "o": [
+        "\"O sistema está temporariamente indisponível. Posso anotar seus dados e retornar assim que normalizar.\"",
+        "\"Deu problema, volta depois.\"",
+        "\"Não tem o que fazer agora.\"",
+        "\"O sistema sempre cai mesmo.\""
+      ],
+      "n": "dificil",
+      "resposta": "\"O sistema está temporariamente indisponível. Posso anotar seus dados e retornar assim que normalizar.\""
+    },
+    {
+      "q": "Sobre o uso do celular durante o atendimento:",
+      "o": [
+        "Deve ser evitado; olhar para o celular transmite desatenção e desinteresse",
+        "É permitido se for rápido",
+        "Não interfere na percepção do cliente",
+        "É aceitável desde que a pessoa não reclame"
+      ],
+      "n": "facil",
+      "resposta": "Deve ser evitado; olhar para o celular transmite desatenção e desinteresse"
+    },
+    {
+      "q": "O que significa \"escuta ativa\"?",
+      "o": [
+        "Prestar atenção genuína, sem interromper, confirmando o que foi entendido",
+        "Ouvir enquanto executa outras tarefas",
+        "Concordar com tudo que a pessoa fala",
+        "Repetir literalmente cada palavra dita"
+      ],
+      "n": "medio",
+      "resposta": "Prestar atenção genuína, sem interromper, confirmando o que foi entendido"
+    },
+    {
+      "q": "Ao cometer um erro no atendimento, a atitude correta é:",
+      "o": [
+        "Reconhecer, pedir desculpas de forma objetiva e corrigir",
+        "Esconder para não se prejudicar",
+        "Colocar a culpa no procedimento",
+        "Fingir que não aconteceu"
+      ],
+      "n": "medio",
+      "resposta": "Reconhecer, pedir desculpas de forma objetiva e corrigir"
+    },
+    {
+      "q": "Qual expressão demonstra disponibilidade sem prometer o que não pode cumprir?",
+      "o": [
+        "\"Vou verificar essa possibilidade e te dou um retorno ainda hoje.\"",
+        "\"Pode deixar que eu resolvo tudo.\"",
+        "\"Isso com certeza vai ser aprovado.\"",
+        "\"Não se preocupe, já está resolvido.\""
+      ],
+      "n": "dificil",
+      "resposta": "\"Vou verificar essa possibilidade e te dou um retorno ainda hoje.\""
+    }
+  ],
+  "Atendimento ao Cliente": [
+    {
+      "q": "Qual é a principal função do atendimento em portaria e recepção?",
+      "o": [
+        "Garantir segurança e acolhimento, controlando o acesso com cordialidade",
+        "Apenas abrir e fechar o portão",
+        "Verificar documentos sem falar com ninguém",
+        "Fiscalizar o comportamento dos moradores"
+      ],
+      "n": "facil",
+      "resposta": "Garantir segurança e acolhimento, controlando o acesso com cordialidade"
+    },
+    {
+      "q": "Um prestador de serviço chega sem autorização prévia. O procedimento correto é:",
+      "o": [
+        "Confirmar com o morador ou responsável antes de liberar o acesso",
+        "Liberar, pois prestador sempre pode entrar",
+        "Barrar sem verificar nada",
+        "Pedir para ele voltar outro dia"
+      ],
+      "n": "facil",
+      "resposta": "Confirmar com o morador ou responsável antes de liberar o acesso"
+    },
+    {
+      "q": "Dois atendimentos chegam ao mesmo tempo. O correto é:",
+      "o": [
+        "Reconhecer a presença de ambos e informar que atenderá em seguida",
+        "Atender só o que chegou primeiro e ignorar o outro",
+        "Atender os dois ao mesmo tempo, misturando as conversas",
+        "Escolher quem parece mais importante"
+      ],
+      "n": "medio",
+      "resposta": "Reconhecer a presença de ambos e informar que atenderá em seguida"
+    },
+    {
+      "q": "Um cliente exaltado eleva a voz. A conduta profissional é:",
+      "o": [
+        "Manter a calma, baixar o próprio tom e conduzir para um local mais reservado",
+        "Elevar a voz também para se impor",
+        "Ameaçar chamar a polícia imediatamente",
+        "Dar as costas e ignorar"
+      ],
+      "n": "medio",
+      "resposta": "Manter a calma, baixar o próprio tom e conduzir para um local mais reservado"
+    },
+    {
+      "q": "O que é fundamental ao transferir um atendimento para outro setor?",
+      "o": [
+        "Explicar o contexto ao colega para o cliente não precisar repetir tudo",
+        "Apenas apontar para onde a pessoa deve ir",
+        "Transferir sem avisar o colega",
+        "Pedir para a pessoa explicar tudo de novo"
+      ],
+      "n": "medio",
+      "resposta": "Explicar o contexto ao colega para o cliente não precisar repetir tudo"
+    },
+    {
+      "q": "Como deve ser a apresentação pessoal no atendimento?",
+      "o": [
+        "Uniforme limpo e completo, crachá visível e postura adequada",
+        "Roupa confortável de livre escolha",
+        "Uniforme só quando houver visita da supervisão",
+        "Crachá guardado no bolso"
+      ],
+      "n": "facil",
+      "resposta": "Uniforme limpo e completo, crachá visível e postura adequada"
+    },
+    {
+      "q": "Uma visita pede informações sobre a rotina de um morador. Você deve:",
+      "o": [
+        "Não fornecer; informações de moradores são confidenciais",
+        "Informar apenas o horário que ele sai",
+        "Contar se a pessoa parecer conhecida",
+        "Confirmar se o morador está em casa"
+      ],
+      "n": "dificil",
+      "resposta": "Não fornecer; informações de moradores são confidenciais"
+    },
+    {
+      "q": "Qual atitude demonstra proatividade no atendimento?",
+      "o": [
+        "Perceber que alguém está perdido e oferecer ajuda antes de ser solicitado",
+        "Esperar sempre que a pessoa peça ajuda",
+        "Fazer apenas o que está no procedimento",
+        "Resolver tudo sem consultar ninguém"
+      ],
+      "n": "medio",
+      "resposta": "Perceber que alguém está perdido e oferecer ajuda antes de ser solicitado"
+    },
+    {
+      "q": "Ao atender uma pessoa com deficiência, o correto é:",
+      "o": [
+        "Falar diretamente com ela e perguntar como pode ajudar, sem presumir",
+        "Falar com o acompanhante em vez dela",
+        "Ajudar sem perguntar, pegando no braço",
+        "Evitar contato para não constranger"
+      ],
+      "n": "medio",
+      "resposta": "Falar diretamente com ela e perguntar como pode ajudar, sem presumir"
+    },
+    {
+      "q": "Uma reclamação recorrente sobre o mesmo assunto indica que:",
+      "o": [
+        "Existe uma falha no processo que deve ser reportada à supervisão",
+        "O cliente é implicante",
+        "Deve ser ignorada por ser repetitiva",
+        "É melhor não registrar para não gerar problema"
+      ],
+      "n": "medio",
+      "resposta": "Existe uma falha no processo que deve ser reportada à supervisão"
+    },
+    {
+      "q": "O que fazer se não souber responder a uma pergunta do cliente?",
+      "o": [
+        "Admitir que vai verificar e retornar com a informação correta",
+        "Inventar uma resposta para não parecer despreparado",
+        "Dizer que não é da sua área e encerrar",
+        "Mudar de assunto"
+      ],
+      "n": "facil",
+      "resposta": "Admitir que vai verificar e retornar com a informação correta"
+    },
+    {
+      "q": "Qual é a importância do registro em livro de ocorrências?",
+      "o": [
+        "Documentar fatos para consulta futura e respaldo da equipe",
+        "Cumprir uma formalidade sem utilidade prática",
+        "Servir para apontar culpados",
+        "Registrar apenas o que der errado"
+      ],
+      "n": "facil",
+      "resposta": "Documentar fatos para consulta futura e respaldo da equipe"
+    },
+    {
+      "q": "Durante a troca de turno, o profissional deve:",
+      "o": [
+        "Repassar pendências e ocorrências relevantes ao colega que assume",
+        "Sair assim que der o horário",
+        "Repassar apenas se houver algo grave",
+        "Deixar tudo anotado sem conversar"
+      ],
+      "n": "medio",
+      "resposta": "Repassar pendências e ocorrências relevantes ao colega que assume"
+    },
+    {
+      "q": "Um entregador insiste em subir até o apartamento. O correto é:",
+      "o": [
+        "Manter o procedimento, receber na portaria e comunicar o morador",
+        "Liberar para agilizar a entrega",
+        "Liberar se ele estiver uniformizado",
+        "Deixar subir acompanhado de outro morador"
+      ],
+      "n": "medio",
+      "resposta": "Manter o procedimento, receber na portaria e comunicar o morador"
+    },
+    {
+      "q": "O que significa personalizar o atendimento?",
+      "o": [
+        "Tratar a pessoa pelo nome e considerar seu histórico e necessidade",
+        "Fazer exceções às regras para quem você conhece",
+        "Atender mais rápido os clientes preferidos",
+        "Usar linguagem informal com todos"
+      ],
+      "n": "dificil",
+      "resposta": "Tratar a pessoa pelo nome e considerar seu histórico e necessidade"
+    },
+    {
+      "q": "Ao receber uma crítica sobre seu próprio atendimento, o profissional deve:",
+      "o": [
+        "Ouvir sem se defender de imediato e usar como aprendizado",
+        "Explicar por que a crítica é injusta",
+        "Levar para o lado pessoal",
+        "Rebater com outra crítica"
+      ],
+      "n": "medio",
+      "resposta": "Ouvir sem se defender de imediato e usar como aprendizado"
+    },
+    {
+      "q": "Qual é a conduta correta ao presenciar um colega errando com um cliente?",
+      "o": [
+        "Apoiar discretamente no momento e conversar em particular depois",
+        "Corrigir na frente do cliente",
+        "Ignorar completamente",
+        "Relatar imediatamente ao cliente que o colega errou"
+      ],
+      "n": "dificil",
+      "resposta": "Apoiar discretamente no momento e conversar em particular depois"
+    },
+    {
+      "q": "A confidencialidade no atendimento significa:",
+      "o": [
+        "Não comentar informações de clientes com terceiros, nem fora do trabalho",
+        "Guardar segredo apenas de assuntos financeiros",
+        "Só não contar para quem não trabalha no local",
+        "Poder comentar desde que não cite nomes"
+      ],
+      "n": "medio",
+      "resposta": "Não comentar informações de clientes com terceiros, nem fora do trabalho"
+    },
+    {
+      "q": "Um cliente pede algo que contraria o procedimento, mas insiste muito. Você deve:",
+      "o": [
+        "Manter o procedimento com cordialidade e acionar o supervisor se necessário",
+        "Ceder para evitar conflito",
+        "Ceder se ninguém estiver vendo",
+        "Discutir até ele desistir"
+      ],
+      "n": "dificil",
+      "resposta": "Manter o procedimento com cordialidade e acionar o supervisor se necessário"
+    },
+    {
+      "q": "O que mais contribui para a percepção de um bom atendimento?",
+      "o": [
+        "Rapidez, clareza na informação e tratamento respeitoso",
+        "Apenas a rapidez",
+        "Concordar com tudo que o cliente pede",
+        "Usar termos técnicos para demonstrar conhecimento"
+      ],
+      "n": "facil",
+      "resposta": "Rapidez, clareza na informação e tratamento respeitoso"
+    }
   ]
 };

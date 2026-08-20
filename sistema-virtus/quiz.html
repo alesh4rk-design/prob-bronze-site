@@ -415,6 +415,51 @@
     color:var(--text2); letter-spacing:.5px;
   }
 
+
+  /* ── Trilha de módulos ── */
+  .trilha-bar { display:flex; align-items:center; gap:6px; margin-bottom:12px; flex-wrap:wrap; }
+  .tp {
+    width:22px; height:22px; border-radius:50%; display:inline-flex;
+    align-items:center; justify-content:center; font-family:'Share Tech Mono',monospace;
+    font-size:10px; font-weight:700; flex-shrink:0;
+  }
+  .tp-ok   { background:var(--greendim); color:var(--green); border:1px solid var(--green); }
+  .tp-now  { background:var(--amberdim); color:var(--amber); border:1px solid var(--amber); }
+  .tp-next { background:var(--ink3); color:var(--text4); border:1px solid var(--line2); }
+  .tp-lbl  { font-family:'Share Tech Mono',monospace; font-size:9px; letter-spacing:1.5px;
+             color:var(--text3); text-transform:uppercase; margin-left:4px; }
+
+  /* ── Tela de transição ── */
+  .tz-msg { text-align:center; margin-bottom:18px; }
+  .tz-feito { font-family:'Rajdhani',sans-serif; font-size:19px; font-weight:700;
+              color:var(--green); letter-spacing:1px; }
+  .tz-prox { font-family:'Share Tech Mono',monospace; font-size:11px; color:var(--text3);
+             letter-spacing:1px; margin-top:6px; }
+  .tz-prox strong { color:var(--amber); }
+  .tz-lista { display:flex; flex-direction:column; gap:7px; }
+  .tz-item {
+    display:flex; justify-content:space-between; align-items:center; gap:10px;
+    padding:11px 14px; background:var(--ink3); border:1px solid var(--line2);
+    border-radius:4px; font-size:13px; color:var(--text2);
+  }
+  .tz-ok   { font-family:'Share Tech Mono',monospace; font-size:11px; color:var(--green); }
+  .tz-now  { font-family:'Share Tech Mono',monospace; font-size:10px; color:var(--amber);
+             text-transform:uppercase; letter-spacing:1px; }
+  .tz-next { font-family:'Share Tech Mono',monospace; font-size:10px; color:var(--text4);
+             text-transform:uppercase; letter-spacing:1px; }
+  .tz-auto { text-align:center; font-family:'Share Tech Mono',monospace; font-size:9px;
+             color:var(--text4); letter-spacing:1px; margin-top:10px; }
+
+  /* ── Detalhamento por módulo no resultado ── */
+  .rd-wrap { display:flex; flex-direction:column; gap:6px; margin:14px 0 4px; }
+  .rd-row {
+    display:flex; justify-content:space-between; align-items:center; gap:10px;
+    padding:9px 13px; background:var(--ink3); border:1px solid var(--line2);
+    border-radius:4px; font-size:12.5px;
+  }
+  .rd-mod { color:var(--text2); }
+  .rd-pct { font-family:'Share Tech Mono',monospace; font-size:11px; color:var(--text3); }
+  .rd-pct b { color:var(--amber); font-size:13px; }
 </style>
 </head>
 <body class="dark-theme">
@@ -710,6 +755,7 @@
 <div class="screen" id="s-quiz">
   <div class="panel quiz-panel">
     <div class="panel-body">
+      <div class="trilha-bar" id="trilhaBadge"></div>
       <div class="quiz-header"><span id="qThemeTag">▸ MÓDULO</span><span style="display:flex;align-items:center;gap:8px;font-size:11px;letter-spacing:1px;">⏱ TEMPO<span id="quizTimerVal">05:00</span></span></div>
       <div style="display:flex; justify-content:space-between; align-items:center;"><div><span class="q-nivel-tag" id="qNivelTag">● FÁCIL</span></div><div>Questão <span id="qN">1</span>/<span id="qTotal">0</span></div></div>
       <div class="quiz-question" id="qText">Carregando...</div>
@@ -719,6 +765,34 @@
         <button class="btn btn-amber" id="btnNext" onclick="navigateNext()" style="flex:1;">Próximo →</button>
       </div>
       <button class="btn btn-finish" id="btnFinish" onclick="requestFinishConfirmation()" style="margin-top:12px; display:none;">✅ Finalizar Teste</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- TELA DE TRANSIÇÃO ENTRE MÓDULOS DA TRILHA -->
+<div class="screen" id="s-transicao">
+  <div class="panel panel-md">
+    <div class="panel-header">
+      <div class="panel-header-icon">✅</div>
+      <div>
+        <div class="panel-module" id="tzEtapa">Etapa</div>
+        <div class="panel-title">Módulo<br>Concluído</div>
+        <div class="panel-desc">Avaliação em andamento</div>
+      </div>
+    </div>
+    <div class="panel-divider"></div>
+    <div class="panel-body" style="padding-top:0;">
+      <div class="tz-msg">
+        <div class="tz-feito">✓ <span id="tzFeito">—</span> finalizado</div>
+        <div class="tz-prox">Próximo: <strong id="tzProx">—</strong></div>
+      </div>
+      <div class="tz-lista" id="tzLista"></div>
+      <button class="btn btn-amber" onclick="continuarTrilha()" style="margin-top:18px;">
+        <span>Continuar</span>
+        <span style="opacity:.7;">→</span>
+      </button>
+      <div class="tz-auto">Avança automaticamente em <span id="tzCount">8</span>s</div>
     </div>
   </div>
 </div>
@@ -761,6 +835,7 @@
           <div class="stat-lbl">Candidato</div>
         </div>
       </div>
+      <div class="rd-wrap" id="rDetalhe"></div>
       <div class="sep"></div>
       <button class="btn btn-ghost" onclick="resetAndGoHome()">← Nova Avaliação</button>
     </div>
@@ -768,7 +843,7 @@
 </div>
 
 <script type="module">
-  import { listarModulos, carregarPerguntasDoModulo, salvarResultadoQuiz, registrarViolacao, tempoLimiteParaModulo } from "./js/quiz.js";
+  import { listarModulos, carregarPerguntasDoModulo, salvarResultadoQuiz, registrarViolacao, tempoLimiteParaModulo, montarTrilha } from "./js/quiz.js";
 
   let globalConsentGiven = false;
   let globalLgpdAccepted = false;
@@ -1014,27 +1089,51 @@
     if (!dataPref) { toast('▸ Informe a data de preferência', 'err'); playErr(); return; }
     if (!tema) { toast('▸ Selecione o módulo do teste', 'err'); playErr(); return; }
 
-    S.nome = ficha.nome; S.dataPref = dataPref; S.tema = tema;
+    S.nome = ficha.nome; S.dataPref = dataPref;
     S.candidato = ficha;
 
-    toast('🔄 Carregando perguntas...', '');
+    // Todo candidato percorre uma trilha: o módulo que escolheu e, em
+    // seguida, Informática, Linguagem Positiva e Atendimento ao Cliente.
+    // A trilha vai até o fim independentemente das notas.
+    S.trilha = montarTrilha(tema);
+    S.trilhaIdx = 0;
+    S.resultadosTrilha = [];
+
+    await iniciarModulo();
+  };
+
+  // Carrega e inicia o módulo atual da trilha.
+  async function iniciarModulo() {
+    const modulo = S.trilha[S.trilhaIdx];
+    S.tema = modulo;
+    toast(`🔄 Carregando ${modulo}...`, '');
     try {
-      const perguntas = await carregarPerguntasDoModulo(tema);
+      const perguntas = await carregarPerguntasDoModulo(modulo);
       S.perguntas = perguntas;
       S.respostas = new Array(perguntas.length).fill(null);
       S.idx = 0;
-      S._tempoLimite = tempoLimiteParaModulo(tema);
+      S._tempoLimite = tempoLimiteParaModulo(modulo);
 
+      atualizarBadgeTrilha();
       startMonitoring();
       beginQuizTimer();
       renderQ();
       show('s-quiz');
-      toast('✅ Teste iniciado!', 'ok');
+      toast(`✅ ${modulo} — etapa ${S.trilhaIdx + 1} de ${S.trilha.length}`, 'ok');
     } catch (err) {
       console.error(err);
-      toast(`❌ Falha ao iniciar: ${err.message}`, 'err'); playErr();
+      toast(`❌ Falha ao iniciar ${modulo}: ${err.message}`, 'err'); playErr();
     }
-  };
+  }
+
+  function atualizarBadgeTrilha() {
+    const el = document.getElementById('trilhaBadge');
+    if (!el || !S.trilha) return;
+    el.innerHTML = S.trilha.map((m, i) => {
+      const cls = i < S.trilhaIdx ? 'tp-ok' : i === S.trilhaIdx ? 'tp-now' : 'tp-next';
+      return `<span class="tp ${cls}" title="${m}">${i < S.trilhaIdx ? '✓' : i + 1}</span>`;
+    }).join('') + `<span class="tp-lbl">Etapa ${S.trilhaIdx + 1}/${S.trilha.length} · ${S.trilha[S.trilhaIdx]}</span>`;
+  }
 
   function beginQuizTimer() {
     const isASG = (S.tema || '').trim().toLowerCase() === 'asg';
@@ -1123,18 +1222,18 @@
         perguntas: S.perguntas, respostas: S.respostas,
         candidato: S.candidato
       });
-      document.getElementById('rNome').textContent = S.nome;
-      document.getElementById('rCerto').textContent = acertos;
-      document.getElementById('rErro').textContent = total - acertos;
-      document.getElementById('rPct').textContent = pct + '%';
-      const offset = 364 - (pct / 100) * 364;
-      setTimeout(() => {
-        const c = document.getElementById('rCircle');
-        c.style.transition = 'stroke-dashoffset 1.2s cubic-bezier(.4,0,.2,1)';
-        c.style.strokeDashoffset = offset;
-      }, 100);
       playDone();
-      toast('✅ Resultado registrado!', 'ok');
+      S.resultadosTrilha.push({ modulo: S.tema, acertos, total, pct });
+
+      // Ainda há etapas na trilha? Emenda no próximo módulo.
+      if (S.trilha && S.trilhaIdx < S.trilha.length - 1) {
+        S.trilhaIdx++;
+        mostrarTransicao(pct);
+        return;
+      }
+
+      renderResultadoFinal();
+      toast('✅ Avaliação concluída!', 'ok');
       show('s-result-quiz');
     } catch (err) {
       console.error(err);
@@ -1142,8 +1241,71 @@
     }
   }
 
+  // Tela de transição entre módulos da trilha.
+  function mostrarTransicao(pctAnterior) {
+    const prox = S.trilha[S.trilhaIdx];
+    document.getElementById('tzFeito').textContent = S.resultadosTrilha[S.resultadosTrilha.length - 1].modulo;
+    document.getElementById('tzProx').textContent = prox;
+    document.getElementById('tzEtapa').textContent = `Etapa ${S.trilhaIdx + 1} de ${S.trilha.length}`;
+    const lista = document.getElementById('tzLista');
+    lista.innerHTML = S.trilha.map((m, i) => {
+      const feito = S.resultadosTrilha.find(r => r.modulo === m);
+      const st = feito ? `<span class="tz-ok">✓ ${feito.pct}%</span>`
+                       : i === S.trilhaIdx ? '<span class="tz-now">agora</span>'
+                       : '<span class="tz-next">aguardando</span>';
+      return `<div class="tz-item"><span>${m}</span>${st}</div>`;
+    }).join('');
+    show('s-transicao');
+    // Auto-avança em 8s, mas o candidato pode seguir antes pelo botão.
+    clearTimeout(S._tzTimer);
+    let restante = 8;
+    const cd = document.getElementById('tzCount');
+    cd.textContent = restante;
+    clearInterval(S._tzInterval);
+    S._tzInterval = setInterval(() => {
+      restante--;
+      cd.textContent = restante;
+      if (restante <= 0) { clearInterval(S._tzInterval); continuarTrilha(); }
+    }, 1000);
+  }
+
+  window.continuarTrilha = function() {
+    clearInterval(S._tzInterval);
+    iniciarModulo();
+  };
+
+  function renderResultadoFinal() {
+    const rs = S.resultadosTrilha;
+    const acertosTot = rs.reduce((a, r) => a + r.acertos, 0);
+    const totalTot = rs.reduce((a, r) => a + r.total, 0);
+    const media = totalTot ? Math.round((acertosTot / totalTot) * 100) : 0;
+
+    document.getElementById('rNome').textContent = S.nome;
+    document.getElementById('rCerto').textContent = acertosTot;
+    document.getElementById('rErro').textContent = totalTot - acertosTot;
+    document.getElementById('rPct').textContent = media + '%';
+
+    const det = document.getElementById('rDetalhe');
+    if (det) {
+      det.innerHTML = rs.map(r => `
+        <div class="rd-row">
+          <span class="rd-mod">${r.modulo}</span>
+          <span class="rd-pct">${r.acertos}/${r.total} · <b>${r.pct}%</b></span>
+        </div>`).join('');
+    }
+
+    const offset = 364 - (media / 100) * 364;
+    setTimeout(() => {
+      const c = document.getElementById('rCircle');
+      c.style.transition = 'stroke-dashoffset 1.2s cubic-bezier(.4,0,.2,1)';
+      c.style.strokeDashoffset = offset;
+    }, 100);
+  }
+
   window.resetAndGoHome = function() {
-    S.perguntas = []; S.respostas = []; S.testActive = false; show('s-launcher');
+    S.perguntas = []; S.respostas = []; S.testActive = false;
+    S.trilha = null; S.trilhaIdx = 0; S.resultadosTrilha = [];
+    show('s-launcher');
   };
 
   // ========== VIOLAÇÕES ==========
