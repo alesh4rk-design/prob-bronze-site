@@ -391,8 +391,11 @@
 
   // ── Solicitações pendentes (só admin vê e decide) ───────────────────────
   const pendentesPanel = document.getElementById('pendentesPanel');
-  if (me && me.perfil === 'admin') {
-    assinarPendentes((lista) => {
+  if (!(me && me.perfil === 'admin') && pendentesPanel) {
+    pendentesPanel.style.display = 'none';
+  }
+
+  function renderPendentes(lista) {
       document.getElementById('pendBadge').textContent = lista.length;
       const tbody = document.getElementById('pendTableBody');
       if (!lista.length) {
@@ -411,9 +414,6 @@
           </td>
           <td><button class="btn-sm" style="background:transparent;color:var(--red);border:1px solid var(--red);border-radius:6px;padding:6px 10px;cursor:pointer;" onclick="recusarPendente('${p.uid}')">✕</button></td>
         </tr>`).join('');
-    });
-  } else if (pendentesPanel) {
-    pendentesPanel.style.display = 'none';
   }
 
   window.aprovarPendente = async function(uid, perfil) {
@@ -618,14 +618,37 @@
   };
 
   // ── Assinaturas em tempo real ───────────────────────────────────────
-  try {
-    assinarResultados((lista) => { ALL_RESULTADOS = lista; renderAll(); statusDot(true, 'Firestore online'); });
-    assinarViolacoes((lista) => { ALL_VIOLACOES = lista; renderViolacoes(); });
-  } catch (e) {
-    console.error(e);
-    statusDot(false, 'Falha ao conectar ao Firestore');
-    toast('Erro ao conectar ao Firestore. Verifique js/firebase-config.js', 'err');
+  // Navegadores de celular suspendem a conexão do Firestore quando a aba
+  // fica em segundo plano, e ao voltar o listener pode não reconectar
+  // sozinho. Por isso guardamos os "unsubscribe" e refazemos as assinaturas
+  // sempre que a aba volta ao foco (ou a rede volta).
+  let unsubs = [];
+
+  function conectar() {
+    unsubs.forEach(u => { try { u(); } catch (_) {} });
+    unsubs = [];
+    try {
+      unsubs.push(assinarResultados(
+        (lista) => { ALL_RESULTADOS = lista; renderAll(); statusDot(true, 'Firestore online'); },
+        () => statusDot(false, 'Conexão perdida — reconectando...')
+      ));
+      unsubs.push(assinarViolacoes(
+        (lista) => { ALL_VIOLACOES = lista; renderViolacoes(); },
+        () => statusDot(false, 'Conexão perdida — reconectando...')
+      ));
+      if (me && me.perfil === 'admin') unsubs.push(assinarPendentes(renderPendentes));
+    } catch (e) {
+      console.error(e);
+      statusDot(false, 'Falha ao conectar ao Firestore');
+      toast('Erro ao conectar ao Firestore. Verifique js/firebase-config.js', 'err');
+    }
   }
+
+  conectar();
+
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) conectar(); });
+  window.addEventListener('online', conectar);
+  window.addEventListener('focus', conectar);
 </script>
 </body>
 </html>

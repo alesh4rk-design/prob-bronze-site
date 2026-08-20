@@ -18,23 +18,23 @@ import {
 // Assina a coleção `resultados` em tempo real (substitui o polling de 10s do
 // dashboard original por atualização instantânea via onSnapshot).
 // callback recebe um array de { id, ...dados }.
-export function assinarResultados(callback) {
+export function assinarResultados(callback, onError) {
   const q = query(collection(db, "resultados"), orderBy("data_conclusao", "desc"));
   return onSnapshot(q, (snap) => {
     const lista = [];
     snap.forEach((d) => lista.push({ id: d.id, ...d.data() }));
     callback(lista);
-  });
+  }, (err) => { console.error("assinarResultados:", err); if (onError) onError(err); });
 }
 
 // Assina a coleção `violacoes` em tempo real.
-export function assinarViolacoes(callback) {
+export function assinarViolacoes(callback, onError) {
   const q = query(collection(db, "violacoes"), orderBy("data", "desc"));
   return onSnapshot(q, (snap) => {
     const lista = [];
     snap.forEach((d) => lista.push({ id: d.id, ...d.data() }));
     callback(lista);
-  });
+  }, (err) => { console.error("assinarViolacoes:", err); if (onError) onError(err); });
 }
 
 // Grava a decisão do avaliador sobre um candidato: "apto", "nao_apto" ou
@@ -57,13 +57,13 @@ export async function definirDecisao(resultadoId, decisao, avaliador) {
 // existindo, mas sem doc em `usuarios` ela não passa em requireDashboardAccess()).
 
 // Assina em tempo real a lista de contas aguardando aprovação.
-export function assinarPendentes(callback) {
+export function assinarPendentes(callback, onError) {
   const q = query(collection(db, "usuarios"), where("perfil", "==", "pendente"));
   return onSnapshot(q, (snap) => {
     const lista = [];
     snap.forEach((d) => lista.push({ uid: d.id, ...d.data() }));
     callback(lista);
-  });
+  }, (err) => { console.error("assinarPendentes:", err); if (onError) onError(err); });
 }
 
 // Aprova uma conta pendente, definindo perfil "admin" ou "viewer".
