@@ -298,7 +298,11 @@
     .hud-hex { width: 28px; height: 28px; }
     .hud-hex svg { width: 28px; height: 28px; }
     .hud-hex-icon { font-size: 12px; }
-    .font-zoom-ctrl { display: none; }
+    /* Antes ficava oculto no celular; agora só encolhe para caber no header. */
+    .font-zoom-ctrl { height: 28px; padding: 1px 4px; gap: 2px; }
+    .zoom-btn { font-size: 10px; padding: 2px 4px; }
+    .zoom-level { font-size: 8px; min-width: 24px; }
+    .hud-right { gap: 6px; }
     .theme-toggle { width: 32px; height: 32px; font-size: 14px; }
     .hud-foot { height: 28px; padding: 0 14px; }
     .screen { inset: 50px 0 28px; }
@@ -367,6 +371,9 @@
     .opt { min-height: 52px; padding: 12px 10px; }
     .panel-title { font-size: 19px; }
     .field-input { font-size: 15px; }
+    .hud-name { font-size: 13px; letter-spacing: 1px; }
+    .zoom-level { display: none; }
+    .zoom-btn { padding: 2px 3px; }
   }
 
   /* ── Ficha do candidato ── */
@@ -378,6 +385,12 @@
   .form-sec:first-of-type { margin-top:4px; }
   .form-grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
   @media (max-width:520px) { .form-grid-2 { grid-template-columns:1fr; gap:0; } }
+
+  /* Data de nascimento: dia/mês/ano em três selects — muito mais rápido de
+     preencher que o calendário nativo do <input type="date">, que obriga
+     clicar mês a mês para voltar até o ano de nascimento. */
+  .nasc-grid { display:grid; grid-template-columns:0.8fr 1.3fr 1fr; gap:8px; }
+  .nasc-grid select.field-input { padding-left:10px; padding-right:28px; text-align:center; text-align-last:center; }
 
   .field-msg {
     font-family:'Share Tech Mono',monospace; font-size:9px; letter-spacing:1px;
@@ -491,7 +504,7 @@
         <div class="rules-footer">⛔ Violações podem causar ELIMINAÇÃO IMEDIATA</div>
         <div class="lgpd-header">🔒 LGPD – Proteção de dados</div>
         <div class="lgpd-text">
-          Para o processo seletivo, coletamos os dados da ficha do candidato (nome, CPF, data de nascimento, telefone, cidade, altura, cargo pretendido, experiência, disponibilidade e certificações) e os resultados dos testes (respostas e desempenho). Esses dados são usados <strong>exclusivamente para avaliar sua candidatura</strong>, não são compartilhados com terceiros e ficam armazenados por <strong>6 meses</strong>. Você pode solicitar acesso, correção ou exclusão a qualquer momento pelo e-mail <strong>Sistemavirtus1@gmail.com</strong>.
+          Para o processo seletivo, coletamos os dados da ficha do candidato (nome, CPF, data de nascimento, telefone, bairro/região, altura, cargo pretendido, experiência, disponibilidade e certificações) e os resultados dos testes (respostas e desempenho). Esses dados são usados <strong>exclusivamente para avaliar sua candidatura</strong>, não são compartilhados com terceiros e ficam armazenados por <strong>6 meses</strong>. Você pode solicitar acesso, correção ou exclusão a qualquer momento pelo e-mail <strong>Sistemavirtus1@gmail.com</strong>.
         </div>
         <label class="unified-check">
           <input type="checkbox" id="modalConsentCheck">
@@ -656,17 +669,26 @@
         <input class="field-input" type="text" id="inNome" placeholder="Como consta no documento" autocomplete="name">
       </div>
 
-      <div class="form-grid-2">
-        <div class="field-group">
-          <span class="field-label">CPF *</span>
-          <input class="field-input" type="tel" id="inCpf" placeholder="000.000.000-00" inputmode="numeric" maxlength="14">
-          <div class="field-msg" id="msgCpf"></div>
+      <div class="field-group">
+        <span class="field-label">CPF *</span>
+        <input class="field-input" type="tel" id="inCpf" placeholder="000.000.000-00" inputmode="numeric" maxlength="14">
+        <div class="field-msg" id="msgCpf"></div>
+      </div>
+
+      <div class="field-group">
+        <span class="field-label">Data de nascimento *</span>
+        <div class="nasc-grid">
+          <select class="field-input" id="inNascDia" aria-label="Dia">
+            <option value="">Dia</option>
+          </select>
+          <select class="field-input" id="inNascMes" aria-label="Mês">
+            <option value="">Mês</option>
+          </select>
+          <select class="field-input" id="inNascAno" aria-label="Ano">
+            <option value="">Ano</option>
+          </select>
         </div>
-        <div class="field-group">
-          <span class="field-label">Data de nascimento *</span>
-          <input class="field-input" type="date" id="inNasc">
-          <div class="field-msg" id="msgIdade"></div>
-        </div>
+        <div class="field-msg" id="msgIdade"></div>
       </div>
 
       <div class="form-grid-2">
@@ -681,8 +703,8 @@
       </div>
 
       <div class="field-group">
-        <span class="field-label">Cidade / Bairro *</span>
-        <input class="field-input" type="text" id="inCidade" placeholder="Ex: Belo Horizonte / Savassi">
+        <span class="field-label">Bairro / Região onde mora *</span>
+        <input class="field-input" type="text" id="inCidade" placeholder="Ex: Savassi">
       </div>
 
       <div class="form-sec">▸ Perfil profissional</div>
@@ -980,12 +1002,64 @@
     return idade;
   }
 
+  const MESES = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+
+  // Monta o valor ISO (aaaa-mm-dd) a partir dos três selects, ou '' se
+  // algum estiver vazio.
+  function lerNascimentoISO() {
+    const d = document.getElementById('inNascDia').value;
+    const m = document.getElementById('inNascMes').value;
+    const a = document.getElementById('inNascAno').value;
+    if (!d || !m || !a) return '';
+    return `${a}-${m}-${d}`;
+  }
+
+  // Popula dia/mês/ano. O dia se ajusta ao mês escolhido (ex: fevereiro
+  // não mostra 30/31), preservando o dia já selecionado quando possível.
+  function popularNascimento() {
+    const selDia = document.getElementById('inNascDia');
+    const selMes = document.getElementById('inNascMes');
+    const selAno = document.getElementById('inNascAno');
+
+    if (!selMes.dataset.populado) {
+      MESES.forEach((nome, i) => {
+        const opt = document.createElement('option');
+        opt.value = String(i + 1).padStart(2, '0');
+        opt.textContent = nome;
+        selMes.appendChild(opt);
+      });
+      selMes.dataset.populado = '1';
+    }
+    if (!selAno.dataset.populado) {
+      const anoAtual = new Date().getFullYear();
+      // De 18 a 90 anos atrás — cobre a faixa etária válida do formulário.
+      for (let ano = anoAtual - 18; ano >= anoAtual - 90; ano--) {
+        const opt = document.createElement('option');
+        opt.value = String(ano);
+        opt.textContent = String(ano);
+        selAno.appendChild(opt);
+      }
+    }
+
+    const mes = selMes.value ? Number(selMes.value) : 1;
+    const ano = selAno.value ? Number(selAno.value) : new Date().getFullYear();
+    const diasNoMes = new Date(ano, mes, 0).getDate();
+    const diaAtual = selDia.value;
+    selDia.innerHTML = '<option value="">Dia</option>';
+    for (let dia = 1; dia <= diasNoMes; dia++) {
+      const opt = document.createElement('option');
+      opt.value = String(dia).padStart(2, '0');
+      opt.textContent = String(dia);
+      selDia.appendChild(opt);
+    }
+    if (diaAtual && Number(diaAtual) <= diasNoMes) selDia.value = diaAtual;
+  }
+
   // Máscaras ao digitar
   (function bindMascaras() {
     const cpf = document.getElementById('inCpf');
     const tel = document.getElementById('inTel');
     const alt = document.getElementById('inAltura');
-    const nasc = document.getElementById('inNasc');
 
     cpf.addEventListener('input', () => {
       cpf.value = maskCPF(cpf.value);
@@ -1000,14 +1074,19 @@
     tel.addEventListener('input', () => { tel.value = maskTel(tel.value); });
     alt.addEventListener('input', () => { alt.value = maskAltura(alt.value); });
 
-    nasc.addEventListener('input', () => {
+    popularNascimento();
+    const atualizarIdade = () => {
+      popularNascimento();
       const msg = document.getElementById('msgIdade');
-      const idade = calcIdade(nasc.value);
+      const iso = lerNascimentoISO();
+      const idade = iso ? calcIdade(iso) : null;
       if (idade === null) { msg.textContent = ''; msg.className = 'field-msg'; return; }
       if (idade < 18) { msg.textContent = `✕ ${idade} anos — mínimo 18`; msg.className = 'field-msg err'; }
       else if (idade > 90) { msg.textContent = '✕ Data improvável'; msg.className = 'field-msg err'; }
       else { msg.textContent = `✓ ${idade} anos`; msg.className = 'field-msg ok'; }
-    });
+    };
+    ['inNascDia', 'inNascMes', 'inNascAno'].forEach(id =>
+      document.getElementById(id).addEventListener('change', atualizarIdade));
 
     // Pills de experiência (sim/não)
     document.querySelectorAll('#inExp .pill').forEach(p => {
@@ -1035,11 +1114,11 @@
     const cpf = document.getElementById('inCpf').value.trim();
     if (!cpfValido(cpf)) return falha('CPF inválido', 'inCpf');
 
-    const nascimento = document.getElementById('inNasc').value;
-    const idade = calcIdade(nascimento);
-    if (idade === null) return falha('Informe a data de nascimento', 'inNasc');
-    if (idade < 18) return falha('Candidato deve ter no mínimo 18 anos', 'inNasc');
-    if (idade > 90) return falha('Data de nascimento improvável', 'inNasc');
+    const nascimento = lerNascimentoISO();
+    const idade = nascimento ? calcIdade(nascimento) : null;
+    if (idade === null) return falha('Informe a data de nascimento completa', 'inNascDia');
+    if (idade < 18) return falha('Candidato deve ter no mínimo 18 anos', 'inNascAno');
+    if (idade > 90) return falha('Data de nascimento improvável', 'inNascAno');
 
     const telefone = document.getElementById('inTel').value.trim();
     if (onlyDigits(telefone).length < 10) return falha('Informe um telefone válido com DDD', 'inTel');
@@ -1048,8 +1127,8 @@
     const alturaNum = parseFloat(alturaTxt.replace(',', '.'));
     if (!alturaNum || alturaNum < 1.3 || alturaNum > 2.3) return falha('Informe a altura (ex: 1,75)', 'inAltura');
 
-    const cidade = document.getElementById('inCidade').value.trim();
-    if (cidade.length < 3) return falha('Informe cidade e bairro', 'inCidade');
+    const bairro = document.getElementById('inCidade').value.trim();
+    if (bairro.length < 3) return falha('Informe o bairro/região onde mora', 'inCidade');
 
     const cargo = document.getElementById('inCargo').value.trim();
     if (cargo.length < 3) return falha('Informe o cargo pretendido', 'inCargo');
@@ -1069,7 +1148,7 @@
       idade,
       telefone,
       altura: alturaNum,
-      cidade,
+      bairro,
       cargo_pretendido: cargo,
       experiencia: pillSel.dataset.val === 'sim',
       turno,

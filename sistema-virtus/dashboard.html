@@ -779,7 +779,7 @@
         ['Nascimento', `${fmtNasc(f.nascimento)}${f.idade != null ? ` (${f.idade} anos)` : ''}`],
         ['Telefone', f.telefone],
         ['Altura', f.altura ? String(f.altura).replace('.', ',') + ' m' : '—'],
-        ['Cidade / Bairro', f.cidade],
+        ['Bairro / Região', f.bairro],
         ['Cargo pretendido', f.cargo_pretendido],
         ['Experiência na área', f.experiencia ? '✓ Sim' : '✕ Não'],
         ['Turno disponível', f.turno]
@@ -956,7 +956,7 @@
         ['Data de nascimento', `${fmtNasc(f.nascimento)}${f.idade != null ? ` — ${f.idade} anos` : ''}`],
         ['Telefone / WhatsApp', f.telefone],
         ['Altura', f.altura ? String(f.altura).replace('.', ',') + ' m' : '—'],
-        ['Cidade / Bairro', f.cidade],
+        ['Bairro / Região', f.bairro],
         ['Cargo pretendido', f.cargo_pretendido],
         ['Experiência na área', f.experiencia ? 'Sim' : 'Não'],
         ['Disponibilidade de turno', f.turno]
@@ -1199,7 +1199,7 @@
           <div class="sk-p-cell"><div class="sk-p-lbl">Experiência na área</div><div class="sk-p-val">${f.experiencia ? 'Sim' : 'Não'}</div></div>
           <div class="sk-p-cell"><div class="sk-p-lbl">Idade</div><div class="sk-p-val">${f.idade != null ? f.idade + ' anos' : '—'}</div></div>
           <div class="sk-p-cell"><div class="sk-p-lbl">Altura</div><div class="sk-p-val">${f.altura ? String(f.altura).replace('.', ',') + ' m' : '—'}</div></div>
-          <div class="sk-p-cell"><div class="sk-p-lbl">Localização</div><div class="sk-p-val">${escapeHtml(f.cidade || '—')}</div></div>
+          <div class="sk-p-cell"><div class="sk-p-lbl">Bairro / Região</div><div class="sk-p-val">${escapeHtml(f.bairro || '—')}</div></div>
           <div class="sk-p-cell"><div class="sk-p-lbl">Contato</div><div class="sk-p-val">${escapeHtml(f.telefone || '—')}</div></div>
         </div>
         <div class="pr-f-certs" style="margin-top:10px;">
