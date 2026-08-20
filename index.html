@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Virtus — Acesso Restrito</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:        #0f1117;
+    --surface:   #1e2229;
+    --border:    #2d3340;
+    --gold:      #e8a000;
+    --gold-dim:  #b07800;
+    --text:      #c0cbd6;
+    --text-dim:  #7f8c8d;
+    --red:       #e74c3c;
+    --green:     #2ecc71;
+    --radius:    12px;
+  }
+
+  body {
+    font-family: 'Inter', system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+  }
+
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background-image:
+      linear-gradient(rgba(232,160,0,.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(232,160,0,.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+  }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 48px 44px;
+    width: 100%;
+    max-width: 400px;
+    box-shadow: 0 24px 60px rgba(0,0,0,.5);
+    position: relative;
+  }
+
+  .card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 50%; transform: translateX(-50%);
+    width: 60%; height: 2px;
+    background: linear-gradient(90deg, transparent, var(--gold), transparent);
+    border-radius: 0 0 4px 4px;
+  }
+
+  .logo-wrap { text-align: center; margin-bottom: 32px; }
+
+  .logo-icon {
+    width: 56px; height: 56px;
+    background: linear-gradient(135deg, var(--gold), #c87800);
+    border-radius: 14px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 26px;
+    margin-bottom: 14px;
+    box-shadow: 0 8px 24px rgba(232,160,0,.25);
+  }
+
+  h1 { font-size: 1.5rem; font-weight: 700; color: #fff; letter-spacing: -0.5px; }
+  .subtitle { font-size: 0.82rem; color: var(--text-dim); margin-top: 4px; }
+  .field { margin-bottom: 18px; }
+  label { display: block; font-size: 0.8rem; font-weight: 500; color: var(--text-dim); margin-bottom: 6px; letter-spacing: .3px; }
+
+  input {
+    width: 100%;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 11px 14px;
+    font-size: 0.95rem;
+    color: var(--text);
+    font-family: inherit;
+    outline: none;
+    transition: border-color .2s;
+  }
+  input:focus { border-color: var(--gold); box-shadow: 0 0 0 3px rgba(232,160,0,.12); }
+
+  .pass-wrap { position: relative; }
+  .pass-toggle {
+    position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
+    cursor: pointer; background: none; border: none; color: var(--text-dim);
+    font-size: 1rem; padding: 4px; transition: color .2s;
+  }
+  .pass-toggle:hover { color: var(--gold); }
+
+  .btn-login {
+    width: 100%; padding: 12px; background: var(--gold); color: #0f1117;
+    font-weight: 700; font-size: 0.95rem; border: none; border-radius: 8px;
+    cursor: pointer; font-family: inherit; transition: background .2s, transform .1s;
+    margin-top: 8px; letter-spacing: .3px;
+  }
+  .btn-login:hover  { background: #ffb800; }
+  .btn-login:active { transform: scale(.98); }
+  .btn-login:disabled { opacity: .5; cursor: not-allowed; transform: none; }
+
+  .alert {
+    padding: 10px 14px; border-radius: 8px; font-size: 0.84rem;
+    margin-bottom: 18px; display: none;
+  }
+  .alert.error   { background: rgba(231,76,60,.15); border: 1px solid rgba(231,76,60,.3); color: #ff8a80; }
+  .alert.show    { display: block; }
+
+  .footer-note { text-align: center; margin-top: 24px; font-size: 0.75rem; color: var(--text-dim); }
+
+  .spinner {
+    display: inline-block; width: 14px; height: 14px;
+    border: 2px solid rgba(15,17,23,.3); border-top-color: #0f1117;
+    border-radius: 50%; animation: spin .6s linear infinite;
+    vertical-align: middle; margin-right: 6px; display: none;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .nav-links { display:flex; justify-content:center; gap:16px; margin-top:14px; }
+  .nav-links a { color: var(--gold-dim); font-size: 0.78rem; text-decoration: none; }
+  .nav-links a:hover { color: var(--gold); text-decoration: underline; }
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="logo-wrap">
+    <div class="logo-icon">⚙</div>
+    <h1>Sistema Virtus</h1>
+    <p class="subtitle">Acesso restrito — avaliadores autorizados</p>
+  </div>
+
+  <div class="alert error" id="alertErr"></div>
+
+  <div class="field">
+    <label for="inp_user">Usuário</label>
+    <input type="text" id="inp_user" placeholder="seu usuário" autocomplete="username" spellcheck="false">
+  </div>
+
+  <div class="field">
+    <label for="inp_pass">Senha</label>
+    <div class="pass-wrap">
+      <input type="password" id="inp_pass" placeholder="••••••••" autocomplete="current-password">
+      <button class="pass-toggle" id="btn_show" type="button" title="Mostrar/ocultar senha">👁</button>
+    </div>
+  </div>
+
+  <button class="btn-login" id="btn_login">
+    <span class="spinner" id="spinner"></span>
+    Entrar no Dashboard
+  </button>
+
+  <div class="nav-links">
+    <a href="./quiz.html">Iniciar avaliação (candidato) →</a>
+  </div>
+
+  <p class="footer-note">Sistema Virtus · Uso interno · Confidencial</p>
+</div>
+
+<script type="module">
+  import { virtusLogin, virtusGetCurrentUser } from "./js/auth.js";
+
+  const $ = id => document.getElementById(id);
+
+  // Se já existe uma sessão Firebase válida com perfil, vai direto ao dashboard.
+  (async () => {
+    const me = await virtusGetCurrentUser();
+    if (me && (me.perfil === "admin" || me.perfil === "viewer")) {
+      window.location.replace("./dashboard.html");
+    }
+  })();
+
+  $('btn_show').onclick = () => {
+    const inp = $('inp_pass');
+    inp.type = inp.type === 'password' ? 'text' : 'password';
+  };
+
+  async function doLogin() {
+    const usuario = $('inp_user').value.trim();
+    const senha   = $('inp_pass').value;
+    const alertEl = $('alertErr');
+    const btn     = $('btn_login');
+    const spin    = $('spinner');
+
+    alertEl.className = 'alert'; alertEl.textContent = '';
+
+    if (!usuario || !senha) {
+      alertEl.textContent = 'Preencha usuário e senha.';
+      alertEl.className = 'alert error show'; return;
+    }
+
+    btn.disabled = true;
+    spin.style.display = 'inline-block';
+
+    try {
+      await virtusLogin(usuario, senha);
+      window.location.replace('./dashboard.html');
+    } catch (err) {
+      console.error(err);
+      alertEl.textContent = 'Credenciais inválidas ou servidor indisponível.';
+      alertEl.className = 'alert error show';
+      btn.disabled = false;
+      spin.style.display = 'none';
+    }
+  }
+
+  $('btn_login').onclick = doLogin;
+  document.addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+  $('inp_user').focus();
+</script>
+</body>
+</html>

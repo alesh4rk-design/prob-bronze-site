@@ -1,0 +1,1024 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+<title>Sistema Virtus — Avaliação</title>
+<style>
+  :root {
+    --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    --font-mono: 'Share Tech Mono', 'Courier New', 'Consolas', monospace;
+    --font-display: 'Rajdhani', 'Segoe UI', sans-serif;
+  }
+  body { font-family: var(--font-sans); }
+  .hud-name, .launcher-name, .panel-title, .modal-title, .btn, .btn-modal { font-family: var(--font-display); }
+  .hud-sub, .hud-time, .launcher-tagline, .field-label, .panel-module, .panel-desc,
+  .quiz-header, .hud-foot-item, .toast, .q-nivel-tag, .ring-pct-sub,
+  #quizTimerVal, #hudClock, .stat-lbl { font-family: var(--font-mono); }
+</style>
+<style>
+  :root {
+    --ink:      #05080F;
+    --ink2:     #090D17;
+    --ink3:     #0E1420;
+    --ink4:     #141B2B;
+    --ink5:     #1A2236;
+    --line:     rgba(255,255,255,0.05);
+    --line2:    rgba(255,255,255,0.10);
+    --line3:    rgba(255,255,255,0.18);
+    --amber:    #E8A000;
+    --amber2:   #FFB800;
+    --amber3:   #FFC93C;
+    --amberdim: rgba(232,160,0,0.08);
+    --ambermid: rgba(232,160,0,0.18);
+    --amberglow:rgba(232,160,0,0.30);
+    --cyan:     #00C8E8;
+    --cyandim:  rgba(0,200,232,0.08);
+    --cyanmid:  rgba(0,200,232,0.18);
+    --red:      #FF3B30;
+    --reddim:   rgba(255,59,48,0.12);
+    --green:    #00E580;
+    --greendim: rgba(0,229,128,0.10);
+    --purple:   #9B6DFF;
+    --purpledim:rgba(155,109,255,0.10);
+    --purplemid:rgba(155,109,255,0.20);
+    --text:     #C8D0E0;
+    --text2:    #8090A8;
+    --text3:    #4A5568;
+    --text4:    #2D3748;
+  }
+
+  body.light-theme {
+    --ink:      #F8F9FC;
+    --ink2:     #FFFFFF;
+    --ink3:     #F0F2F8;
+    --ink4:     #E6E9F0;
+    --ink5:     #DCE0E8;
+    --line:     rgba(0,0,0,0.05);
+    --line2:    rgba(0,0,0,0.10);
+    --line3:    rgba(0,0,0,0.18);
+    --amber:    #D48F00;
+    --amber2:   #E89C00;
+    --amber3:   #F5B000;
+    --amberdim: rgba(212,143,0,0.08);
+    --ambermid: rgba(212,143,0,0.15);
+    --amberglow:rgba(212,143,0,0.25);
+    --cyan:     #00A0B8;
+    --cyandim:  rgba(0,160,184,0.08);
+    --cyanmid:  rgba(0,160,184,0.12);
+    --purple:   #7A4DE8;
+    --purpledim:rgba(122,77,232,0.08);
+    --purplemid:rgba(122,77,232,0.15);
+    --text:     #1A202C;
+    --text2:    #2D3748;
+    --text3:    #4A5568;
+    --text4:    #718096;
+  }
+
+  *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+  html, body { height:100%; background:var(--ink); color:var(--text); font-family:'Inter',sans-serif; overflow:hidden; }
+
+  body::before {
+    content:''; position:fixed; inset:0;
+    background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");
+    background-size:256px; opacity:0.6; pointer-events:none; z-index:999;
+  }
+  body.light-theme::before { opacity:0.2; }
+  body::after {
+    content:''; position:fixed; inset:0;
+    background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.04) 2px,rgba(0,0,0,0.04) 4px);
+    pointer-events:none; z-index:998;
+  }
+  body.light-theme::after { background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.02) 2px,rgba(0,0,0,0.02) 4px); }
+
+  .grid-bg { position:fixed; inset:0; pointer-events:none; z-index:0; overflow:hidden; }
+  .grid-bg::before {
+    content:''; position:absolute; inset:-100%;
+    background-image:linear-gradient(var(--line) 1px,transparent 1px),linear-gradient(90deg,var(--line) 1px,transparent 1px);
+    background-size:48px 48px; animation:gridDrift 40s linear infinite;
+  }
+  @keyframes gridDrift { from{transform:translate(0,0)} to{transform:translate(48px,48px)} }
+  .grid-bg::after {
+    content:''; position:absolute; inset:0;
+    background:
+      radial-gradient(ellipse 70% 60% at 20% 10%,rgba(232,160,0,0.05) 0%,transparent 60%),
+      radial-gradient(ellipse 50% 50% at 80% 80%,rgba(0,200,232,0.04) 0%,transparent 60%),
+      radial-gradient(ellipse 40% 60% at 50% 50%,rgba(5,8,15,0.7) 0%,transparent 100%);
+  }
+  body.light-theme .grid-bg::after {
+    background:
+      radial-gradient(ellipse 70% 60% at 20% 10%,rgba(212,143,0,0.03) 0%,transparent 60%),
+      radial-gradient(ellipse 50% 50% at 80% 80%,rgba(0,160,184,0.02) 0%,transparent 60%),
+      radial-gradient(ellipse 40% 60% at 50% 50%,rgba(255,255,255,0.8) 0%,transparent 100%);
+  }
+
+  .corner-tl,.corner-tr,.corner-bl,.corner-br { position:fixed; width:60px; height:60px; pointer-events:none; z-index:5; }
+  .corner-tl{top:0;left:0;border-top:1px solid var(--amber);border-left:1px solid var(--amber);}
+  .corner-tr{top:0;right:0;border-top:1px solid var(--amber);border-right:1px solid var(--amber);}
+  .corner-bl{bottom:0;left:0;border-bottom:1px solid var(--amber);border-left:1px solid var(--amber);}
+  .corner-br{bottom:0;right:0;border-bottom:1px solid var(--amber);border-right:1px solid var(--amber);}
+
+  .hud { position:fixed; top:0; left:0; right:0; height:56px; display:flex; align-items:center; padding:0 20px; background:linear-gradient(180deg,var(--ink) 0%,rgba(5,8,15,0.85) 100%); border-bottom:1px solid var(--line2); z-index:100; }
+  body.light-theme .hud { background:rgba(255,255,255,0.96); border-bottom-color:var(--line2); }
+  .hud::after { content:''; position:absolute; bottom:-1px; left:0; right:0; height:1px; background:linear-gradient(90deg,transparent,var(--amber),var(--amber3),var(--amber),transparent); opacity:0.6; }
+  .hud-logo { display:flex; align-items:center; gap:10px; flex-shrink:0; }
+  .hud-hex { width:34px; height:34px; position:relative; display:flex; align-items:center; justify-content:center; }
+  .hud-hex svg { position:absolute; }
+  .hud-hex-icon { position:relative; z-index:1; font-size:14px; }
+  .hud-brand { display:flex; flex-direction:column; }
+  .hud-name { font-family:'Rajdhani',sans-serif; font-size:18px; font-weight:700; letter-spacing:4px; color:var(--amber2); line-height:1; text-transform:uppercase; }
+  .hud-sub  { font-family:'Share Tech Mono',monospace; font-size:9px; letter-spacing:3px; color:var(--text3); text-transform:uppercase; line-height:1; margin-top:2px; }
+  .hud-sep  { width:1px; height:28px; background:var(--line2); margin:0 16px; flex-shrink:0; }
+  .hud-status { display:flex; align-items:center; gap:6px; }
+  .hud-dot  { width:6px; height:6px; border-radius:50%; background:var(--green); box-shadow:0 0 6px var(--green); animation:blink 2s ease-in-out infinite; }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+  .hud-status-text { font-family:'Share Tech Mono',monospace; font-size:10px; letter-spacing:2px; color:var(--text3); text-transform:uppercase; }
+  .hud-right { margin-left:auto; display:flex; align-items:center; gap:10px; }
+  .hud-time { font-family:'Share Tech Mono',monospace; font-size:11px; color:var(--text3); letter-spacing:1px; }
+  .hud-btn  { width:32px; height:32px; border-radius:4px; border:1px solid var(--line2); background:var(--ink3); color:var(--text2); font-size:14px; cursor:pointer; transition:all 0.15s; display:flex; align-items:center; justify-content:center; }
+  .hud-btn:hover { border-color:var(--amber); color:var(--amber); background:var(--amberdim); }
+  .theme-toggle { background:var(--ink3); border:1px solid var(--line2); border-radius:30px; width:36px; height:36px; display:flex; align-items:center; justify-content:center; cursor:pointer; transition:all 0.2s; color:var(--text2); font-size:16px; }
+  .theme-toggle:hover { border-color:var(--amber); color:var(--amber); background:var(--amberdim); }
+
+  .hud-foot { position:fixed; bottom:0; left:0; right:0; height:32px; display:flex; align-items:center; padding:0 20px; background:rgba(5,8,15,0.9); border-top:1px solid var(--line); z-index:100; gap:16px; }
+  body.light-theme .hud-foot { background:rgba(255,255,255,0.96); border-top-color:var(--line2); }
+  .hud-foot::before { content:''; position:absolute; top:-1px; left:0; right:0; height:1px; background:linear-gradient(90deg,transparent,rgba(232,160,0,0.3),transparent); }
+  .hud-foot-item { font-family:'Share Tech Mono',monospace; font-size:9px; letter-spacing:2px; color:var(--text4); text-transform:uppercase; }
+  .hud-foot-item span { color:var(--text3); }
+
+  .screen { position:fixed; inset:56px 0 32px; display:flex; align-items:center; justify-content:center; z-index:10; opacity:0; transform:translateY(12px) scale(0.99); pointer-events:none; transition:opacity 0.35s cubic-bezier(.4,0,.2,1),transform 0.35s cubic-bezier(.4,0,.2,1); overflow-y:auto; padding:20px; }
+  .screen.active { opacity:1; transform:translateY(0) scale(1); pointer-events:all; }
+
+  #s-launcher { background: radial-gradient(ellipse 80% 60% at 50% 40%, rgba(232,160,0,0.06) 0%, transparent 70%); }
+  body.light-theme #s-launcher { background: radial-gradient(ellipse 80% 60% at 50% 40%, rgba(212,143,0,0.04) 0%, transparent 70%); }
+  .launcher-wrap { text-align:center; max-width:560px; width:100%; }
+  .launcher-logo { display:inline-flex; flex-direction:column; align-items:center; gap:6px; margin-bottom:40px; }
+  .launcher-hex { width:72px; height:72px; position:relative; display:flex; align-items:center; justify-content:center; margin-bottom:4px; }
+  .launcher-hex svg { position:absolute; }
+  .launcher-hex-icon { position:relative; z-index:1; font-size:30px; }
+  .launcher-name { font-family:'Rajdhani',sans-serif; font-size:42px; font-weight:700; letter-spacing:10px; color:var(--text); text-transform:uppercase; line-height:1; text-shadow: 0 0 40px rgba(232,160,0,0.3); }
+  body.light-theme .launcher-name { text-shadow: 0 0 20px rgba(212,143,0,0.2); }
+  .launcher-name em { color:var(--amber2); font-style:normal; }
+  .launcher-tagline { font-family:'Share Tech Mono',monospace; font-size:10px; letter-spacing:4px; color:var(--text3); text-transform:uppercase; margin-top:6px; }
+  .launcher-divider { height:1px; background:linear-gradient(90deg,transparent,var(--ambermid),transparent); margin:0 auto 40px; width:280px; }
+  .launcher-btns { display:flex; flex-direction:column; gap:12px; align-items:center; }
+  .launcher-btn-main { display:flex; align-items:center; justify-content:center; gap:12px; width:320px; padding:18px 32px; border-radius:3px; cursor:pointer; border:none; background:linear-gradient(135deg,var(--amber) 0%,var(--amber2) 100%); color:var(--ink); font-family:'Rajdhani',sans-serif; font-size:16px; font-weight:700; letter-spacing:4px; text-transform:uppercase; transition:all 0.15s; position:relative; overflow:hidden; }
+  .launcher-btn-main::after { content:''; position:absolute; inset:0; background:linear-gradient(135deg,rgba(255,255,255,0.08) 0%,transparent 50%); pointer-events:none; }
+  .launcher-btn-main:hover { transform:translateY(-2px); box-shadow:0 8px 32px var(--amberglow); }
+  .launcher-btn-main:active { transform:translateY(0); }
+  .launcher-btn-main:disabled { opacity:0.4; cursor:not-allowed; transform:none !important; box-shadow:none !important; filter:grayscale(0.5); }
+
+  .modal-overlay { position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); backdrop-filter:blur(4px); z-index:1000; display:flex; align-items:center; justify-content:center; }
+  body.light-theme .modal-overlay { background:rgba(0,0,0,0.6); }
+  .modal-container { max-width:560px; width:90%; background:var(--ink2); border:1px solid var(--line2); border-radius:2px; box-shadow:0 20px 40px rgba(0,0,0,0.5); position:relative; overflow:hidden; max-height: 90vh; display: flex; flex-direction: column; }
+  .modal-container::before { content:''; position:absolute; top:0; left:0; right:0; height:2px; background:linear-gradient(90deg,transparent,var(--amber),var(--amber3),var(--amber),transparent); }
+  .modal-header { padding:20px 28px 0; display:flex; gap:16px; align-items:center; flex-shrink:0; }
+  .modal-icon { width:48px; height:48px; background:var(--amberdim); border:1px solid var(--ambermid); display:flex; align-items:center; justify-content:center; font-size:26px; border-radius:2px; }
+  .modal-title { font-family:'Rajdhani',sans-serif; font-size:22px; font-weight:700; letter-spacing:2px; color:var(--text); text-transform:uppercase; }
+  .modal-sub { font-family:'Share Tech Mono',monospace; font-size:10px; letter-spacing:2px; color:var(--text3); margin-top:4px; }
+  .modal-divider { height:1px; background:linear-gradient(90deg,var(--amberdim),var(--ambermid),var(--amberdim)); margin:16px 28px; flex-shrink:0; }
+  .modal-body { padding:0 28px 20px; overflow-y: auto; flex: 1; }
+  .unified-card { background: rgba(255,255,255,0.03); border: 1px solid var(--line2); border-radius: 6px; padding: 16px 18px; }
+  .rules-header, .lgpd-header { font-family: 'Rajdhani', sans-serif; font-size: 13px; font-weight: 700; letter-spacing: 2px; margin: 0 0 8px 0; text-transform: uppercase; }
+  .rules-header { color: var(--red); }
+  .lgpd-header { color: var(--cyan); margin-top: 16px; }
+  .rules-list { list-style: none; margin-bottom: 12px; }
+  .rules-list li { font-family: 'Share Tech Mono', monospace; font-size: 11px; color: var(--text2); padding: 4px 0; display: flex; gap: 6px; }
+  .rules-list li::before { content: '⚠️'; font-size: 10px; flex-shrink: 0; }
+  .rules-footer { text-align: center; font-size: 11px; font-weight: bold; color: var(--red); border-top: 1px solid rgba(255,59,48,0.3); padding-top: 8px; margin-top: 6px; }
+  .lgpd-text { font-size: 11px; line-height: 1.4; color: var(--text2); margin-bottom: 16px; }
+  .unified-check { display: flex; align-items: flex-start; gap: 12px; background: var(--amberdim); border: 1px solid var(--ambermid); border-radius: 4px; padding: 10px 12px; margin-top: 12px; cursor: pointer; font-size: 12px; }
+  .unified-check input { margin-top: 2px; flex-shrink: 0; accent-color: var(--amber); }
+  .unified-check span { color: var(--text); line-height: 1.3; }
+  .modal-footer { display:flex; justify-content:flex-end; gap:12px; padding:16px 28px 28px; background:var(--ink3); border-top:1px solid var(--line); flex-shrink:0; }
+  .btn-modal { font-family:'Rajdhani',sans-serif; font-weight:700; letter-spacing:2px; padding:10px 20px; border:none; border-radius:2px; cursor:pointer; transition:0.15s; text-transform:uppercase; font-size:12px; }
+  .btn-modal-cancel { background:transparent; border:1px solid var(--line3); color:var(--text2); }
+  .btn-modal-cancel:hover { border-color:var(--amber); color:var(--amber); background:var(--amberdim); }
+  .btn-modal-confirm { background:linear-gradient(135deg,var(--amber),var(--amber2)); color:var(--ink); }
+  .btn-modal-confirm:disabled { opacity:0.5; cursor:not-allowed; }
+  .btn-modal-confirm:not(:disabled):hover { transform:translateY(-1px); box-shadow:0 6px 20px var(--amberglow); }
+
+  .panel { background:var(--ink2); border:1px solid var(--line2); border-radius:2px; position:relative; overflow:hidden; width:100%; }
+  .panel::before { content:''; position:absolute; top:0; left:0; right:0; height:2px; background:linear-gradient(90deg,transparent 5%,var(--amber) 20%,var(--amber3) 50%,var(--amber) 80%,transparent 95%); }
+  .panel-sm{max-width:480px;} .panel-md{max-width:600px;} .panel-lg{max-width:860px;}
+  .panel-body { padding:32px 36px; }
+  .panel::after { content:''; position:absolute; bottom:0; right:0; width:40px; height:40px; border-bottom:1px solid var(--line3); border-right:1px solid var(--line3); pointer-events:none; }
+  .panel-header { padding:20px 36px 0; display:flex; align-items:flex-start; gap:16px; position:relative; }
+  .panel-header-icon { width:48px; height:48px; border-radius:2px; background:var(--amberdim); border:1px solid var(--ambermid); display:flex; align-items:center; justify-content:center; font-size:22px; flex-shrink:0; position:relative; }
+  .panel-header-icon::before { content:''; position:absolute; inset:4px; border:1px solid rgba(232,160,0,0.2); border-radius:1px; }
+  .panel-module { font-family:'Share Tech Mono',monospace; font-size:9px; letter-spacing:3px; color:var(--amber); text-transform:uppercase; margin-bottom:4px; opacity:0.8; }
+  .panel-title { font-family:'Rajdhani',sans-serif; font-size:28px; font-weight:700; letter-spacing:3px; color:var(--text); text-transform:uppercase; line-height:1; }
+  .panel-desc { font-size:12px; color:var(--text3); letter-spacing:2px; text-transform:uppercase; margin-top:4px; font-family:'Share Tech Mono',monospace; }
+  .panel-divider { height:1px; background:linear-gradient(90deg,var(--amberdim),var(--ambermid),var(--amberdim)); margin:20px 36px; }
+
+  .field-group { margin-bottom:16px; }
+  .field-label { font-family:'Share Tech Mono',monospace; font-size:9px; letter-spacing:3px; color:var(--text3); text-transform:uppercase; margin-bottom:6px; display:block; }
+  .field-input { width:100%; background:var(--ink3); border:1px solid var(--line2); border-radius:2px; padding:11px 14px; color:var(--text); font-family:'Inter',sans-serif; font-size:14px; font-weight:400; outline:none; transition:border-color 0.2s,background 0.2s,box-shadow 0.2s; appearance:none; letter-spacing:0.3px; }
+  .field-input:focus { border-color:var(--amber); background:var(--ink4); box-shadow:0 0 0 3px var(--amberdim); }
+  .field-input::placeholder { color:var(--text4); }
+  .field-input option { background:var(--ink3); }
+  select.field-input { cursor:pointer; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%234A5568' d='M6 8L0 0h12z'/%3E%3C/svg%3E"); background-repeat:no-repeat; background-position:right 14px center; padding-right:36px; }
+
+  .btn { display:inline-flex; align-items:center; justify-content:center; gap:8px; font-family:'Rajdhani',sans-serif; font-size:14px; font-weight:700; letter-spacing:3px; text-transform:uppercase; cursor:pointer; border:none; border-radius:2px; padding:13px 28px; transition:all 0.15s; position:relative; overflow:hidden; }
+  .btn::after { content:''; position:absolute; inset:0; background:linear-gradient(135deg,rgba(255,255,255,0.05) 0%,transparent 50%); pointer-events:none; }
+  .btn-amber { background:linear-gradient(135deg,var(--amber) 0%,var(--amber2) 100%); color:var(--ink); width:100%; margin-top:8px; }
+  .btn-amber:hover { transform:translateY(-1px); box-shadow:0 6px 24px var(--amberglow); }
+  .btn-amber:active { transform:translateY(0); }
+  .btn-outline { background:transparent; border:1px solid var(--line3); color:var(--text2); padding:10px 20px; }
+  .btn-outline:hover { border-color:var(--amber); color:var(--amber); background:var(--amberdim); }
+  .btn-ghost { background:var(--ink3); border:1px solid var(--line2); color:var(--text2); padding:12px 24px; width:100%; margin-top:8px; }
+  .btn-ghost:hover { border-color:var(--line3); color:var(--text); }
+  .btn-row { display:flex; gap:10px; }
+  .btn-row .btn-amber { flex:1; margin-top:0; }
+  .btn-sm { padding:9px 18px; font-size:12px; width:auto; margin-top:0; }
+
+  .quiz-panel { max-width:800px; width:100%; }
+  .quiz-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:24px; font-family:'Share Tech Mono',monospace; font-size:13px; color:var(--text3); border-bottom:1px solid var(--line2); padding-bottom:12px; }
+  #quizTimerVal { font-family:'Rajdhani',sans-serif; font-size:22px; font-weight:700; color:var(--amber); letter-spacing:2px; background:var(--amberdim); border:1px solid var(--ambermid); border-radius:4px; padding:4px 12px; }
+  #quizTimerVal.timer-warning { color:var(--red); background:var(--reddim); border-color:var(--red); animation:timerPulse 0.6s ease infinite; }
+  @keyframes timerPulse { 50%{opacity:0.5;} }
+  .q-nivel-tag { font-size:9px; letter-spacing:2px; padding:2px 8px; border-radius:20px; background:var(--ink4); color:var(--text2); }
+  .q-nivel-tag.facil { color:var(--green); border-left:2px solid var(--green); }
+  .q-nivel-tag.medio { color:var(--amber); border-left:2px solid var(--amber); }
+  .q-nivel-tag.dificil { color:var(--red); border-left:2px solid var(--red); }
+  .quiz-question { font-size:22px; font-weight:500; margin-bottom:32px; line-height:1.3; }
+  .opts-grid { display:flex; flex-direction:column; gap:12px; margin:24px 0; }
+  .opt { display:flex; align-items:center; gap:16px; padding:12px 16px; background:var(--ink3); border:1px solid var(--line2); cursor:pointer; transition:0.1s; border-radius:2px; }
+  .opt:hover { background:var(--ink4); border-color:var(--ambermid); }
+  .opt.selected { background:var(--amberdim); border-color:var(--amber); }
+  .opt-key { width:32px; height:32px; background:var(--ink4); border-radius:2px; display:flex; align-items:center; justify-content:center; font-weight:700; color:var(--amber); font-family:'Rajdhani'; font-size:16px; }
+  .opt-text { flex:1; font-size:15px; }
+
+  .nav-buttons { display: flex; gap: 12px; margin-top: 8px; }
+  .nav-buttons .btn { flex: 1; margin-top: 0; }
+  .btn-finish { background: linear-gradient(135deg, var(--green), #00b35e); color: var(--ink); }
+  .btn-finish:hover { transform: translateY(-1px); box-shadow: 0 6px 24px rgba(0,229,128,0.4); }
+
+  .ring-wrap { display:flex; justify-content:center; margin-bottom:32px; }
+  .ring { position:relative; width:140px; height:140px; }
+  .ring-label { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; }
+  .ring-pct { font-size:32px; font-weight:800; font-family:'Rajdhani'; color:var(--amber); }
+  .ring-pct-sub { font-size:10px; letter-spacing:2px; color:var(--text3); }
+  .stat-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin:20px 0; }
+  .stat-cell { background:var(--ink3); padding:14px; text-align:center; border:1px solid var(--line2); }
+  .stat-num { font-size:28px; font-weight:700; font-family:'Rajdhani'; color:var(--amber); }
+  .sep { height:1px; background:var(--line2); margin:20px 0; }
+
+  .font-zoom-ctrl { display: flex; align-items: center; gap: 4px; background: var(--ink3); border: 1px solid var(--line2); border-radius: 4px; padding: 2px 6px; height: 32px; }
+  .zoom-btn { background: none; border: none; color: var(--text2); font-family: 'Inter', sans-serif; font-size: 11px; font-weight: 700; cursor: pointer; padding: 2px 5px; border-radius: 3px; transition: all 0.15s; line-height: 1; white-space: nowrap; }
+  .zoom-btn:hover { color: var(--amber); background: var(--amberdim); }
+  .zoom-level { font-family: 'Share Tech Mono', monospace; font-size: 9px; color: var(--text3); min-width: 30px; text-align: center; letter-spacing: 1px; }
+
+  .quiz-question { font-family: 'Inter', sans-serif; font-weight: 500; line-height: 1.5; }
+  .opt-text { font-family: 'Inter', sans-serif; font-weight: 400; line-height: 1.4; }
+  .modal-body, .panel-body { font-family: 'Inter', sans-serif; }
+  .rules-list li { font-family: 'Inter', sans-serif; line-height: 1.5; }
+  .lgpd-text { font-family: 'Inter', sans-serif; line-height: 1.6; }
+
+  .toast { position:fixed; bottom:70px; left:50%; transform:translateX(-50%) scale(0.9); background:var(--ink3); border:1px solid var(--amber); padding:10px 24px; font-family:'Share Tech Mono',monospace; font-size:12px; letter-spacing:1px; color:var(--amber); z-index:200; opacity:0; transition:0.2s; pointer-events:none; white-space:nowrap; }
+  .toast.show { opacity:1; transform:translateX(-50%) scale(1); }
+  .toast.err { border-color:var(--red); color:var(--red); background:var(--reddim); }
+  .toast.ok { border-color:var(--green); color:var(--green); background:var(--greendim); }
+
+  .server-status-bar { display:flex; align-items:center; gap:8px; margin-top:20px; font-family:'Share Tech Mono',monospace; font-size:10px; letter-spacing:2px; text-transform:uppercase; justify-content:center; }
+  .server-status-bar .dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+  .server-status-bar.online  .dot { background:var(--green); box-shadow:0 0 6px var(--green); animation:blink 2s ease-in-out infinite; }
+  .server-status-bar.offline .dot { background:var(--red); box-shadow:0 0 6px var(--red); }
+  .launcher-status { display:flex; align-items:center; gap:8px; justify-content:center; margin-top:20px; font-family:'Share Tech Mono',monospace; font-size:9px; letter-spacing:2px; color:var(--text3); text-transform:uppercase; }
+  .launcher-status .dot-green { width:6px; height:6px; border-radius:50%; background:var(--green); box-shadow:0 0 6px var(--green); animation:blink 2s ease-in-out infinite; }
+
+  @media (max-width: 768px) {
+    html, body { overflow: hidden; }
+    .screen { overflow-y: auto; -webkit-overflow-scrolling: touch; align-items: flex-start; padding: 12px 12px 80px; }
+    .screen.active { display: flex; }
+    .hud { height: 50px; padding: 0 14px; }
+    .hud-name { font-size: 15px; letter-spacing: 2px; }
+    .hud-sub { display: none; }
+    .hud-sep { display: none; }
+    .hud-hex { width: 28px; height: 28px; }
+    .hud-hex svg { width: 28px; height: 28px; }
+    .hud-hex-icon { font-size: 12px; }
+    .font-zoom-ctrl { display: none; }
+    .theme-toggle { width: 32px; height: 32px; font-size: 14px; }
+    .hud-foot { height: 28px; padding: 0 14px; }
+    .screen { inset: 50px 0 28px; }
+    .corner-tl,.corner-tr,.corner-bl,.corner-br { display: none; }
+    .launcher-wrap { padding: 16px 0 24px; }
+    .launcher-hex { width: 56px; height: 56px; }
+    .launcher-hex svg { width: 56px; height: 56px; }
+    .launcher-hex-icon { font-size: 22px; }
+    .launcher-name { font-size: 28px; letter-spacing: 5px; }
+    .launcher-tagline { font-size: 9px; letter-spacing: 2px; }
+    .launcher-divider { margin: 0 auto 24px; width: 200px; }
+    .launcher-btn-main { width: 100%; max-width: 320px; padding: 16px 24px; font-size: 15px; min-height: 54px; }
+    .server-status-bar { font-size: 9px; letter-spacing: 1px; }
+    .panel { border-radius: 4px; }
+    .panel-header { padding: 16px 16px 0; gap: 12px; }
+    .panel-header-icon { width: 40px; height: 40px; font-size: 18px; flex-shrink: 0; }
+    .panel-title { font-size: 22px; letter-spacing: 2px; }
+    .panel-desc { font-size: 10px; letter-spacing: 1px; }
+    .panel-divider { margin: 14px 16px; }
+    .panel-body { padding: 0 16px 20px; }
+    .field-input { padding: 14px 14px; font-size: 16px; border-radius: 4px; min-height: 50px; }
+    .field-label { font-size: 10px; letter-spacing: 2px; margin-bottom: 8px; }
+    .field-group { margin-bottom: 18px; }
+    .btn { padding: 16px 20px; font-size: 15px; min-height: 52px; border-radius: 4px; }
+    .btn-ghost { padding: 14px 20px; min-height: 48px; }
+    .btn-outline { min-height: 52px; }
+    .quiz-panel { max-width: 100%; border-radius: 4px; }
+    .quiz-panel .panel-body { padding: 14px 14px 16px; }
+    .quiz-header { flex-direction: row; justify-content: space-between; align-items: center; flex-wrap: nowrap; gap: 8px; margin-bottom: 14px; padding-bottom: 10px; }
+    #qThemeTag { font-size: 10px; letter-spacing: 1px; flex-shrink: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 50%; }
+    #quizTimerVal { font-size: 20px; letter-spacing: 1px; padding: 4px 10px; flex-shrink: 0; }
+    .quiz-panel [style*="justify-content:space-between"] { margin-bottom: 12px; font-size: 12px; }
+    .q-nivel-tag { font-size: 10px; padding: 3px 8px; }
+    .quiz-question { font-size: 17px; line-height: 1.55; margin-bottom: 20px; }
+    .opts-grid { gap: 10px; margin: 0 0 18px; }
+    .opt { padding: 14px 14px; gap: 14px; border-radius: 4px; min-height: 56px; -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
+    .opt-key { width: 34px; height: 34px; font-size: 15px; border-radius: 4px; flex-shrink: 0; }
+    .opt-text { font-size: 15px; line-height: 1.4; }
+    .nav-buttons { flex-direction: column; gap: 10px; margin-top: 4px; }
+    .nav-buttons .btn { width: 100%; flex: none; margin-top: 0; }
+    #btnFinish { margin-top: 10px; }
+    .ring { width: 120px; height: 120px; }
+    .ring svg { width: 120px; height: 120px; }
+    .ring-pct { font-size: 28px; }
+    .stat-grid { gap: 10px; margin: 16px 0; }
+    .stat-cell { padding: 12px; }
+    .stat-num { font-size: 26px; }
+    .modal-container { width: 94%; max-height: 88vh; border-radius: 4px; }
+    .modal-header { padding: 14px 16px 0; gap: 12px; }
+    .modal-icon { width: 42px; height: 42px; font-size: 20px; }
+    .modal-title { font-size: 18px; letter-spacing: 1px; }
+    .modal-body { padding: 0 16px 16px; }
+    .modal-footer { padding: 12px 16px 20px; gap: 10px; }
+    .btn-modal { padding: 13px 18px; font-size: 13px; min-height: 46px; }
+    .unified-card { padding: 12px 14px; }
+    .unified-check { padding: 10px 12px; gap: 10px; }
+    .unified-check span { font-size: 13px; }
+    .rules-list li { font-size: 12px; padding: 5px 0; }
+    .lgpd-text { font-size: 12px; }
+    .toast { white-space: normal; text-align: center; max-width: 88%; width: auto; font-size: 11px; bottom: 60px; }
+  }
+  @media (max-width: 380px) {
+    .launcher-name { font-size: 24px; letter-spacing: 3px; }
+    .quiz-question { font-size: 15px; }
+    .opt-text { font-size: 14px; }
+    .opt { min-height: 52px; padding: 12px 10px; }
+    .panel-title { font-size: 19px; }
+    .field-input { font-size: 15px; }
+  }
+</style>
+</head>
+<body class="dark-theme">
+<div class="grid-bg"></div>
+<div class="corner-tl"></div><div class="corner-tr"></div>
+<div class="corner-bl"></div><div class="corner-br"></div>
+
+<!-- MODAL DE CONSENTIMENTO (UNIFICADO) -->
+<div id="consentModal" class="modal-overlay" style="display: none;">
+  <div class="modal-container">
+    <div class="modal-header">
+      <div class="modal-icon">⚠️</div>
+      <div>
+        <div class="modal-title">Regras e LGPD</div>
+        <div class="modal-sub">Leia e concorde para prosseguir</div>
+      </div>
+    </div>
+    <div class="modal-divider"></div>
+    <div class="modal-body">
+      <div class="unified-card">
+        <div class="rules-header">📌 Regras obrigatórias</div>
+        <ul class="rules-list">
+          <li>❌ Não saia da aba ou minimize a janela</li>
+          <li>❌ Não use Ctrl+C / Ctrl+V / Ctrl+X</li>
+          <li>❌ Não abra ferramentas do desenvolvedor (F12)</li>
+          <li>❌ Não pressione ESC</li>
+          <li>⚠️ Cada violação é registrada (máx. 3)</li>
+        </ul>
+        <div class="rules-footer">⛔ Violações podem causar ELIMINAÇÃO IMEDIATA</div>
+        <div class="lgpd-header">🔒 LGPD – Proteção de dados</div>
+        <div class="lgpd-text">
+          Coletamos seu nome, data, respostas e desempenho para avaliação. Dados armazenados por <strong>6 meses</strong>. Você pode solicitar exclusão ou correção pelo e-mail <strong>Sistemavirtus1@gmail.com</strong>.
+        </div>
+        <label class="unified-check">
+          <input type="checkbox" id="modalConsentCheck">
+          <span>Li e concordo com <strong>todas as regras</strong> e estou ciente das consequências.</span>
+        </label>
+        <label class="unified-check">
+          <input type="checkbox" id="modalLgpdCheck">
+          <span>Concordo com a <strong>Política de Privacidade (LGPD)</strong> e autorizo o tratamento dos meus dados conforme descrito.</span>
+        </label>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-modal btn-modal-cancel" id="modalCancelBtn">Cancelar</button>
+      <button class="btn-modal btn-modal-confirm" id="modalConfirmBtn" disabled>Prosseguir →</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL DE CONFIRMAÇÃO DE FINALIZAÇÃO -->
+<div id="finishConfirmModal" class="modal-overlay" style="display: none;">
+  <div class="modal-container" style="max-width: 450px;">
+    <div class="modal-header">
+      <div class="modal-icon">✅</div>
+      <div>
+        <div class="modal-title">Finalizar teste</div>
+        <div class="modal-sub">Confirme antes de enviar</div>
+      </div>
+    </div>
+    <div class="modal-divider"></div>
+    <div class="modal-body" style="text-align: center;">
+      <p id="finishConfirmMessage" style="margin-bottom: 20px; font-size: 16px;">Você respondeu todas as questões. Deseja finalizar e enviar suas respostas?</p>
+      <p style="font-size: 12px; color: var(--text3);">⚠️ Após confirmar, você não poderá alterar as respostas.</p>
+    </div>
+    <div class="modal-footer" style="justify-content: center; gap: 16px;">
+      <button class="btn-modal btn-modal-cancel" id="finishCancelBtn">Voltar</button>
+      <button class="btn-modal btn-modal-confirm" id="finishConfirmBtn">Finalizar →</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL DE BLOQUEIO POR VIOLAÇÃO -->
+<div id="violationBlockModal" class="modal-overlay" style="display:none;">
+  <div class="modal-container" style="max-width:480px;">
+    <div style="position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--red),transparent);"></div>
+    <div class="modal-header">
+      <div class="modal-icon" style="background:var(--reddim);border-color:rgba(255,59,48,0.3);">🚫</div>
+      <div>
+        <div class="modal-title" style="color:var(--red);">Teste Bloqueado</div>
+        <div class="modal-sub">Número máximo de violações atingido</div>
+      </div>
+    </div>
+    <div class="modal-divider" style="background:linear-gradient(90deg,var(--reddim),rgba(255,59,48,0.3),var(--reddim));"></div>
+    <div class="modal-body">
+      <div class="unified-card" style="border-color:rgba(255,59,48,0.2);background:var(--reddim);margin-bottom:20px;">
+        <div style="font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--red);letter-spacing:2px;text-transform:uppercase;margin-bottom:8px;">⛔ Acesso suspenso</div>
+        <p style="font-size:13px;color:var(--text2);line-height:1.6;">Você atingiu o número máximo de violações permitidas. O teste foi pausado.<br><br><strong style="color:var(--text);">Chame o avaliador</strong> e aguarde a liberação para continuar.</p>
+      </div>
+      <div class="field-group">
+        <label class="field-label" for="violationPassword">🔑 Senha do avaliador</label>
+        <input type="password" id="violationPassword" class="field-input" placeholder="Digite a senha para liberar" autocomplete="off">
+        <div id="violationPasswordError" style="display:none;margin-top:6px;font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--red);letter-spacing:1px;">❌ Senha incorreta. Tente novamente.</div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-modal btn-modal-confirm" id="violationUnlockBtn" onclick="tryUnlockTest()">Liberar Teste →</button>
+    </div>
+  </div>
+</div>
+
+<!-- HUD HEADER -->
+<header class="hud">
+  <div class="hud-logo">
+    <div class="hud-hex">
+      <svg width="34" height="34" viewBox="0 0 34 34" fill="none">
+        <path d="M17 2L31 9.5V24.5L17 32L3 24.5V9.5L17 2Z" fill="rgba(232,160,0,0.08)" stroke="rgba(232,160,0,0.5)" stroke-width="1"/>
+        <path d="M17 6L28 12V24L17 30L6 24V12L17 6Z" fill="none" stroke="rgba(232,160,0,0.2)" stroke-width="0.5"/>
+      </svg>
+      <span class="hud-hex-icon">⚡</span>
+    </div>
+    <div class="hud-brand">
+      <div class="hud-name">Virtus</div>
+      <div class="hud-sub">Sistema de Avaliação</div>
+    </div>
+  </div>
+  <div class="hud-sep"></div>
+  <div class="hud-right">
+    <div class="theme-toggle" id="themeToggle" onclick="toggleTheme()" title="Alternar tema">🌙</div>
+    <div class="font-zoom-ctrl" id="fontZoomCtrl" title="Tamanho do texto">
+      <button class="zoom-btn" id="zoomOut" onclick="changeFontSize(-1)" title="Diminuir texto">A−</button>
+      <span class="zoom-level" id="zoomLevel">100%</span>
+      <button class="zoom-btn" id="zoomIn" onclick="changeFontSize(1)" title="Aumentar texto">A+</button>
+    </div>
+  </div>
+</header>
+
+<div class="toast" id="toast"></div>
+
+<footer class="hud-foot">
+  <span class="hud-time" id="hudClock" style="font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--text3);letter-spacing:1px;">--:--:--</span>
+  <button class="hud-btn" id="audioBtn" onclick="toggleAudio()" title="Áudio" style="margin-left:auto;">🔊</button>
+</footer>
+
+<!-- TELA DE CARREGAMENTO -->
+<div class="screen active" id="s-loading">
+  <div class="loading-inner" style="text-align:center;">
+    <div class="loading-spinner" style="width:40px;height:40px;border:3px solid var(--line2);border-top-color:var(--amber);border-radius:50%;animation:spin 1s linear infinite;margin:0 auto 16px;"></div>
+    <div class="loading-text" style="font-family:'Share Tech Mono',monospace;">Carregando perguntas...</div>
+  </div>
+</div>
+
+<!-- TELA LAUNCHER -->
+<div class="screen" id="s-launcher">
+  <div class="launcher-wrap">
+    <div class="launcher-logo">
+      <div class="launcher-hex">
+        <svg width="72" height="72" viewBox="0 0 72 72" fill="none">
+          <path d="M36 4L66 21V51L36 68L6 51V21L36 4Z" fill="rgba(232,160,0,0.07)" stroke="rgba(232,160,0,0.5)" stroke-width="1.5"/>
+          <path d="M36 10L60 24V48L36 62L12 48V24L36 10Z" fill="none" stroke="rgba(232,160,0,0.2)" stroke-width="0.8"/>
+          <path d="M36 18L52 28V44L36 54L20 44V28L36 18Z" fill="none" stroke="rgba(232,160,0,0.1)" stroke-width="0.5"/>
+        </svg>
+        <span class="launcher-hex-icon">⚡</span>
+      </div>
+      <div class="launcher-name">Sistema <em>Virtus</em></div>
+      <div class="launcher-tagline">Plataforma de Avaliação de Candidatos</div>
+    </div>
+    <div class="launcher-divider"></div>
+    <div class="launcher-btns">
+      <button class="launcher-btn-main" id="btnIniciar" onclick="requestConsentAndStart()" disabled>
+        <span>▶</span>
+        <span>Iniciar Avaliação</span>
+      </button>
+    </div>
+    <div class="server-status-bar offline" id="serverStatusBar">
+      <div class="dot"></div>
+      <span id="serverStatusText">Verificando Firestore...</span>
+    </div>
+    <div class="launcher-status">
+      <div class="dot-green"></div>
+      <span id="launcherQCount">perguntas carregadas</span>
+    </div>
+  </div>
+</div>
+
+<!-- TELA DADOS DO CANDIDATO -->
+<div class="screen" id="s-home">
+  <div class="panel panel-md">
+    <div class="panel-header">
+      <div class="panel-header-icon">🎯</div>
+      <div>
+        <div class="panel-module">Sistema Virtus</div>
+        <div class="panel-title">Teste de<br>Candidatos</div>
+        <div class="panel-desc">Processo Seletivo — Avaliação</div>
+      </div>
+    </div>
+    <div class="panel-divider"></div>
+    <div class="panel-body" style="padding-top:0;">
+      <div class="field-group">
+        <span class="field-label">▸ Nome completo</span>
+        <input class="field-input" type="text" id="inNome" placeholder="Nome do candidato">
+      </div>
+      <div class="field-group">
+        <span class="field-label">▸ Data de preferência</span>
+        <input class="field-input" type="date" id="inData" value="">
+      </div>
+      <div class="field-group" style="margin-bottom:24px;">
+        <span class="field-label">▸ Módulo do teste</span>
+        <select class="field-input" id="inTema">
+          <option value="">— Selecionar módulo —</option>
+        </select>
+      </div>
+      <button class="btn btn-amber" onclick="startTest()">
+        <span>Iniciar Avaliação</span>
+        <span style="opacity:0.7;">→</span>
+      </button>
+      <button class="btn btn-ghost" onclick="show('s-launcher')" style="margin-top:8px;">← Voltar</button>
+    </div>
+  </div>
+</div>
+
+<!-- TELA QUIZ -->
+<div class="screen" id="s-quiz">
+  <div class="panel quiz-panel">
+    <div class="panel-body">
+      <div class="quiz-header"><span id="qThemeTag">▸ MÓDULO</span><span style="display:flex;align-items:center;gap:8px;font-size:11px;letter-spacing:1px;">⏱ TEMPO<span id="quizTimerVal">05:00</span></span></div>
+      <div style="display:flex; justify-content:space-between; align-items:center;"><div><span class="q-nivel-tag" id="qNivelTag">● FÁCIL</span></div><div>Questão <span id="qN">1</span>/<span id="qTotal">0</span></div></div>
+      <div class="quiz-question" id="qText">Carregando...</div>
+      <div class="opts-grid" id="opts"></div>
+      <div class="nav-buttons">
+        <button class="btn btn-outline" id="btnPrev" onclick="navigatePrev()" style="flex:1;">← Anterior</button>
+        <button class="btn btn-amber" id="btnNext" onclick="navigateNext()" style="flex:1;">Próximo →</button>
+      </div>
+      <button class="btn btn-finish" id="btnFinish" onclick="requestFinishConfirmation()" style="margin-top:12px; display:none;">✅ Finalizar Teste</button>
+    </div>
+  </div>
+</div>
+
+<!-- TELA RESULTADO -->
+<div class="screen" id="s-result-quiz">
+  <div class="panel panel-md">
+    <div class="panel-header">
+      <div class="panel-header-icon">📋</div>
+      <div>
+        <div class="panel-module">Avaliação Concluída</div>
+        <div class="panel-title">Resultado</div>
+      </div>
+    </div>
+    <div class="panel-divider"></div>
+    <div class="panel-body" style="padding-top:0;">
+      <div class="ring-wrap">
+        <div class="ring">
+          <svg width="140" height="140" viewBox="0 0 140 140">
+            <circle cx="70" cy="70" r="58" fill="none" stroke="var(--ink4)" stroke-width="8"/>
+            <circle cx="70" cy="70" r="58" fill="none" stroke="var(--amber)" stroke-width="8" stroke-linecap="round" stroke-dasharray="364" id="rCircle" stroke-dashoffset="364"/>
+          </svg>
+          <div class="ring-label">
+            <div class="ring-pct" id="rPct">0%</div>
+            <div class="ring-pct-sub">acertos</div>
+          </div>
+        </div>
+      </div>
+      <div class="stat-grid">
+        <div class="stat-cell primary">
+          <div class="stat-num" id="rCerto">0</div>
+          <div class="stat-lbl">Corretas</div>
+        </div>
+        <div class="stat-cell">
+          <div class="stat-num" id="rErro">0</div>
+          <div class="stat-lbl">Erradas</div>
+        </div>
+        <div class="stat-cell" style="grid-column:1/-1;">
+          <div class="stat-num" style="font-size:16px; letter-spacing:1px;" id="rNome">—</div>
+          <div class="stat-lbl">Candidato</div>
+        </div>
+      </div>
+      <div class="sep"></div>
+      <button class="btn btn-ghost" onclick="resetAndGoHome()">← Nova Avaliação</button>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+  import { listarModulos, carregarPerguntasDoModulo, salvarResultadoQuiz, registrarViolacao, tempoLimiteParaModulo } from "./js/quiz.js";
+
+  let globalConsentGiven = false;
+  let globalLgpdAccepted = false;
+
+  const S = {
+    nome: '', dataPref: '', tema: '',
+    perguntas: [],   // perguntas completas do módulo (com gabarito, ficam só no client)
+    idx: 0,
+    respostas: [],
+    qTimer: null, qLeft: 300,
+    audioOn: true,
+    testActive: false,
+    violationCount: 0
+  };
+
+  const MAX_VIOLATIONS = 3;
+
+  async function loadModules() {
+    try {
+      const data = await listarModulos();
+      const sel = document.getElementById('inTema');
+      for (const mod of data.modulos) {
+        const opt = document.createElement('option');
+        opt.value = mod.nome;
+        opt.textContent = mod.nome;
+        sel.appendChild(opt);
+      }
+      document.getElementById('launcherQCount').textContent =
+        `${data.total_perguntas} perguntas · ${data.modulos.length} módulos`;
+      document.getElementById('btnIniciar').disabled = data.modulos.length === 0;
+      document.getElementById('serverStatusBar').className = 'server-status-bar online';
+      document.getElementById('serverStatusText').textContent = 'Firestore conectado — avaliação liberada';
+      show('s-launcher');
+    } catch (e) {
+      console.error(e);
+      document.getElementById('serverStatusBar').className = 'server-status-bar offline';
+      document.getElementById('serverStatusText').textContent = 'Falha ao conectar ao Firestore — verifique js/firebase-config.js';
+      document.querySelector('.loading-text').textContent = 'Erro ao carregar módulos.';
+    }
+  }
+
+  const modal = document.getElementById('consentModal');
+  const consentCheck = document.getElementById('modalConsentCheck');
+  const lgpdCheck = document.getElementById('modalLgpdCheck');
+  const confirmBtn = document.getElementById('modalConfirmBtn');
+  const cancelBtn = document.getElementById('modalCancelBtn');
+
+  function checkModalConsent() { confirmBtn.disabled = !(consentCheck.checked && lgpdCheck.checked); }
+  consentCheck.addEventListener('change', checkModalConsent);
+  lgpdCheck.addEventListener('change', checkModalConsent);
+  confirmBtn.addEventListener('click', () => {
+    if (consentCheck.checked && lgpdCheck.checked) {
+      globalConsentGiven = true; globalLgpdAccepted = true;
+      hideConsentModal(); show('s-home'); playOk();
+    }
+  });
+  cancelBtn.addEventListener('click', () => { hideConsentModal(); playErr(); });
+
+  function showConsentModal() {
+    consentCheck.checked = false; lgpdCheck.checked = false;
+    confirmBtn.disabled = true; modal.style.display = 'flex';
+  }
+  function hideConsentModal() { modal.style.display = 'none'; }
+
+  window.requestConsentAndStart = function() {
+    const btn = document.getElementById('btnIniciar');
+    if (btn.disabled) { toast('⛔ Firestore indisponível. Verifique a configuração.', 'err'); playErr(); return; }
+    if (!globalConsentGiven || !globalLgpdAccepted) showConsentModal();
+    else show('s-home');
+  };
+
+  const finishModal = document.getElementById('finishConfirmModal');
+  const finishMsg = document.getElementById('finishConfirmMessage');
+  const finishConfirm = document.getElementById('finishConfirmBtn');
+  const finishCancel = document.getElementById('finishCancelBtn');
+
+  function showFinishConfirmation(isTimeout = false) {
+    finishMsg.innerHTML = isTimeout
+      ? '⏰ O tempo do teste expirou. Deseja finalizar e enviar suas respostas?'
+      : '✅ Você revisou todas as questões. Deseja finalizar e enviar suas respostas?';
+    finishModal.style.display = 'flex';
+  }
+  function hideFinishConfirmation() { finishModal.style.display = 'none'; }
+  finishConfirm.onclick = () => { hideFinishConfirmation(); endQuiz(); };
+  finishCancel.onclick = () => { hideFinishConfirmation(); };
+
+  window.startTest = async function() {
+    if (!globalConsentGiven || !globalLgpdAccepted) {
+      toast('É necessário concordar com as regras e com a LGPD antes de iniciar.', 'err'); playErr(); return;
+    }
+    const nome = document.getElementById('inNome').value.trim();
+    const dataPref = document.getElementById('inData').value;
+    const tema = document.getElementById('inTema').value;
+    if (!nome) { toast('▸ Informe o nome do candidato', 'err'); playErr(); return; }
+    if (!dataPref) { toast('▸ Informe a data de preferência', 'err'); playErr(); return; }
+    if (!tema) { toast('▸ Selecione o módulo do teste', 'err'); playErr(); return; }
+
+    S.nome = nome; S.dataPref = dataPref; S.tema = tema;
+
+    toast('🔄 Carregando perguntas...', '');
+    try {
+      const perguntas = await carregarPerguntasDoModulo(tema);
+      S.perguntas = perguntas;
+      S.respostas = new Array(perguntas.length).fill(null);
+      S.idx = 0;
+      S._tempoLimite = tempoLimiteParaModulo(tema);
+
+      startMonitoring();
+      beginQuizTimer();
+      renderQ();
+      show('s-quiz');
+      toast('✅ Teste iniciado!', 'ok');
+    } catch (err) {
+      console.error(err);
+      toast(`❌ Falha ao iniciar: ${err.message}`, 'err'); playErr();
+    }
+  };
+
+  function beginQuizTimer() {
+    const isASG = (S.tema || '').trim().toLowerCase() === 'asg';
+    S.qLeft = S._tempoLimite || (isASG ? 480 : 300);
+    clearInterval(S.qTimer);
+    S.qTimer = setInterval(() => {
+      if (!S.testActive) return;
+      S.qLeft--;
+      renderQuizTimer();
+      if (S.qLeft <= 0) { clearInterval(S.qTimer); playErr(); showFinishConfirmation(true); }
+    }, 1000);
+  }
+
+  function renderQuizTimer() {
+    const m = Math.floor(S.qLeft / 60), s = S.qLeft % 60;
+    const el = document.getElementById('quizTimerVal');
+    el.textContent = `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+    if (S.qLeft <= 60) el.classList.add('timer-warning'); else el.classList.remove('timer-warning');
+  }
+
+  function renderQ() {
+    const total = S.perguntas.length;
+    document.getElementById('qN').textContent = S.idx + 1;
+    document.getElementById('qTotal').textContent = total;
+    document.getElementById('qThemeTag').textContent = '▸ ' + S.tema.toUpperCase();
+    const q = S.perguntas[S.idx];
+    const nivelMap = { facil: '● FÁCIL', medio: '●● MÉDIO', dificil: '●●● DIFÍCIL' };
+    const nivelEl = document.getElementById('qNivelTag');
+    nivelEl.textContent = nivelMap[q.n] || (q.n || '').toUpperCase();
+    nivelEl.className = 'q-nivel-tag ' + q.n;
+    document.getElementById('qText').textContent = q.q;
+    const keys = ['A', 'B', 'C', 'D'];
+    const grid = document.getElementById('opts');
+    grid.innerHTML = '';
+    q.o.forEach((opt, i) => {
+      const div = document.createElement('div');
+      div.className = 'opt';
+      div.dataset.val = opt;
+      div.innerHTML = `<div class="opt-key" style="pointer-events:none;">${keys[i]}</div><div class="opt-text" style="pointer-events:none;">${opt}</div>`;
+      div.onclick = (e) => { e.stopPropagation(); selectOpt(div); };
+      if (S.respostas[S.idx] === opt) div.classList.add('selected');
+      grid.appendChild(div);
+    });
+
+    const btnPrev = document.getElementById('btnPrev');
+    const btnNext = document.getElementById('btnNext');
+    const btnFinish = document.getElementById('btnFinish');
+    btnPrev.disabled = (S.idx === 0);
+    if (S.idx === total - 1) { btnNext.style.display = 'none'; btnFinish.style.display = 'flex'; }
+    else { btnNext.style.display = 'flex'; btnFinish.style.display = 'none'; }
+  }
+
+  function selectOpt(el) {
+    const selectedValue = el.dataset.val;
+    if (!selectedValue) return;
+    document.querySelectorAll('.opt').forEach(o => o.classList.remove('selected'));
+    el.classList.add('selected');
+    S.respostas[S.idx] = selectedValue;
+    playTick();
+    // Sem gravação incremental no servidor nesta versão (ver comentário no topo de js/quiz.js)
+  }
+
+  window.navigatePrev = function() { if (S.idx > 0) { S.idx--; renderQ(); } };
+  window.navigateNext = function() {
+    if (S.idx < S.perguntas.length - 1) {
+      if (!S.respostas[S.idx]) { toast('▸ Selecione uma opção antes de avançar', 'err'); playErr(); return; }
+      S.idx++; renderQ();
+    }
+  };
+
+  window.requestFinishConfirmation = function() {
+    const unanswered = S.respostas.some(r => r === null);
+    if (unanswered) {
+      if (!confirm('⚠️ Você deixou algumas questões sem resposta. Deseja finalizar mesmo assim?')) return;
+    }
+    showFinishConfirmation(false);
+  };
+
+  async function endQuiz() {
+    clearInterval(S.qTimer);
+    stopMonitoring();
+    toast('📤 Enviando respostas e calculando resultado...', '');
+    try {
+      const { acertos, total, pct } = await salvarResultadoQuiz({
+        nome: S.nome, modulo: S.tema, dataPreferencia: S.dataPref,
+        perguntas: S.perguntas, respostas: S.respostas
+      });
+      document.getElementById('rNome').textContent = S.nome;
+      document.getElementById('rCerto').textContent = acertos;
+      document.getElementById('rErro').textContent = total - acertos;
+      document.getElementById('rPct').textContent = pct + '%';
+      const offset = 364 - (pct / 100) * 364;
+      setTimeout(() => {
+        const c = document.getElementById('rCircle');
+        c.style.transition = 'stroke-dashoffset 1.2s cubic-bezier(.4,0,.2,1)';
+        c.style.strokeDashoffset = offset;
+      }, 100);
+      playDone();
+      toast('✅ Resultado registrado!', 'ok');
+      show('s-result-quiz');
+    } catch (err) {
+      console.error(err);
+      toast(`❌ Falha ao finalizar: ${err.message}`, 'err'); playErr();
+    }
+  }
+
+  window.resetAndGoHome = function() {
+    S.perguntas = []; S.respostas = []; S.testActive = false; show('s-launcher');
+  };
+
+  // ========== VIOLAÇÕES ==========
+  async function reportViolation(tipo, detalhe = '') {
+    if (!S.testActive) return;
+    S.violationCount++;
+    playViolation();
+    try {
+      await registrarViolacao({ nome: S.nome, modulo: S.tema, tipo, detalhe, contagem: S.violationCount });
+    } catch (e) { console.warn('Falha ao reportar violação:', e); }
+
+    if (S.violationCount <= MAX_VIOLATIONS) {
+      toast(`⚠️ Atenção! ${tipo === 'perda_foco' ? 'Você saiu da tela de teste.' : 'Ação não permitida detectada.'} (${S.violationCount}/${MAX_VIOLATIONS})`, 'err');
+      if (S.violationCount >= MAX_VIOLATIONS) {
+        toast('❌ Número máximo de violações atingido. O teste será encerrado.', 'err');
+        finalizarTestePorViolacao();
+      }
+    }
+  }
+
+  const AVALIADOR_SENHA = 'sistemavirtus';
+
+  function finalizarTestePorViolacao() {
+    if (!S.testActive) return;
+    S.testActive = false;
+    clearInterval(S.qTimer);
+    const violModal = document.getElementById('violationBlockModal');
+    document.getElementById('violationPassword').value = '';
+    document.getElementById('violationPasswordError').style.display = 'none';
+    violModal.style.display = 'flex';
+    setTimeout(() => document.getElementById('violationPassword').focus(), 100);
+  }
+
+  window.tryUnlockTest = function() {
+    const senha = document.getElementById('violationPassword').value;
+    const errEl = document.getElementById('violationPasswordError');
+    if (senha === AVALIADOR_SENHA) {
+      document.getElementById('violationBlockModal').style.display = 'none';
+      document.getElementById('violationPassword').value = '';
+      errEl.style.display = 'none';
+      S.violationCount = 0; S.testActive = true;
+      S.qTimer = setInterval(() => {
+        if (!S.testActive) return;
+        S.qLeft--; renderQuizTimer();
+        if (S.qLeft <= 0) { clearInterval(S.qTimer); playErr(); showFinishConfirmation(true); }
+      }, 1000);
+      toast('✅ Teste liberado pelo avaliador.', 'ok'); playOk();
+    } else {
+      errEl.style.display = 'block';
+      document.getElementById('violationPassword').value = '';
+      document.getElementById('violationPassword').focus();
+      playErr();
+    }
+  };
+
+  document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('violationPassword').addEventListener('keydown', (e) => { if (e.key === 'Enter') tryUnlockTest(); });
+  });
+
+  function startMonitoring() { S.testActive = true; S.violationCount = 0; }
+  function stopMonitoring() { S.testActive = false; }
+
+  document.addEventListener('visibilitychange', () => { if (S.testActive && document.hidden) reportViolation('perda_foco'); });
+  window.addEventListener('blur', () => {
+    if (!S.testActive) return;
+    const focused = document.activeElement;
+    if (focused && (focused.tagName === 'INPUT' || focused.tagName === 'TEXTAREA' || focused.tagName === 'SELECT')) return;
+    setTimeout(() => {
+      if (S.testActive && document.visibilityState === 'visible' && document.hasFocus && !document.hasFocus()) reportViolation('perda_foco');
+    }, 300);
+  });
+  document.addEventListener('copy', (e) => { if (S.testActive) { e.preventDefault(); reportViolation('tentativa_copia'); } });
+  document.addEventListener('contextmenu', (e) => { if (S.testActive) { e.preventDefault(); reportViolation('menu_contexto'); return false; } });
+  document.addEventListener('keydown', (e) => {
+    if (!S.testActive) return;
+    if (e.key === 'F12' || (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'J' || e.key === 'C')) || (e.ctrlKey && e.key === 'U')) {
+      e.preventDefault(); reportViolation('devtools', 'Tentativa de abrir ferramentas do desenvolvedor'); return;
+    }
+    if (e.ctrlKey && (e.key === 'c' || e.key === 'v' || e.key === 'x')) {
+      e.preventDefault(); reportViolation('teclas_bloqueadas', `Tentativa de ${e.key.toUpperCase()}`);
+    }
+    if (e.key === 'Escape') {
+      if (document.getElementById('violationBlockModal').style.display !== 'none') { e.preventDefault(); return; }
+      reportViolation('tecla_escape', 'Tentativa de sair do teste com ESC');
+      e.preventDefault();
+    }
+  });
+
+  // ========== AUXILIARES ==========
+  window.show = function(id) { document.querySelectorAll('.screen').forEach(s => s.classList.remove('active')); document.getElementById(id).classList.add('active'); };
+  function toast(msg, type = '') { const el = document.getElementById('toast'); el.textContent = msg; el.className = 'toast show ' + type; setTimeout(() => el.classList.remove('show'), 3000); }
+  function beep(f, d, vol = 0.25) { if (!S.audioOn) return; try { const ctx = new (window.AudioContext || window.webkitAudioContext)(), o = ctx.createOscillator(), g = ctx.createGain(); o.connect(g); g.connect(ctx.destination); o.type = 'sine'; o.frequency.value = f; g.gain.setValueAtTime(vol, ctx.currentTime); g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + d / 1000); o.start(); o.stop(ctx.currentTime + d / 1000); } catch (e) {} }
+  const playOk = () => { beep(900, 80, 0.2); setTimeout(() => beep(1200, 120, 0.15), 90); };
+  const playErr = () => { beep(300, 180, 0.2); setTimeout(() => beep(220, 250, 0.15), 190); };
+  const playDone = () => ([523, 659, 784, 1047].forEach((f, i) => setTimeout(() => beep(f, 160, 0.18), i * 180)));
+  const playTick = () => beep(800, 40, 0.08);
+  const playViolation = () => { beep(180, 300, 0.4); setTimeout(() => beep(150, 300, 0.4), 320); setTimeout(() => beep(120, 500, 0.5), 640); };
+  window.toggleAudio = function() { S.audioOn = !S.audioOn; document.getElementById('audioBtn').textContent = S.audioOn ? '🔊' : '🔇'; if (S.audioOn) beep(1000, 80, 0.15); };
+
+  // ========== ZOOM ==========
+  const FONT_STEPS = [80, 90, 100, 115, 130, 150];
+  let fontStepIdx = 3;
+  const _zoomStyle = document.createElement('style');
+  _zoomStyle.id = 'virtus-zoom-style';
+  document.head.appendChild(_zoomStyle);
+  function applyFontScale(pct) {
+    const s = pct / 100;
+    _zoomStyle.textContent = [
+      '.quiz-question{font-size:' + (26 * s) + 'px!important}',
+      '.opt-text{font-size:' + (17 * s) + 'px!important}',
+      '.field-input{font-size:' + (16 * s) + 'px!important}',
+      '.field-label{font-size:' + (11 * s) + 'px!important}',
+      '.modal-body p,.lgpd-text,.unified-check span{font-size:' + (16 * s) + 'px!important}',
+      '.rules-list li{font-size:' + (14 * s) + 'px!important}',
+      '.panel-title{font-size:' + (32 * s) + 'px!important}',
+      '.btn{font-size:' + (16 * s) + 'px!important}',
+      '.stat-lbl{font-size:' + (13 * s) + 'px!important}'
+    ].join('');
+  }
+  window.changeFontSize = function(dir) {
+    fontStepIdx = Math.max(0, Math.min(FONT_STEPS.length - 1, fontStepIdx + dir));
+    const pct = FONT_STEPS[fontStepIdx];
+    document.getElementById('zoomLevel').textContent = pct + '%';
+    applyFontScale(pct);
+    localStorage.setItem('virtus_font_step', fontStepIdx);
+  };
+  function initFontScale() {
+    const saved = localStorage.getItem('virtus_font_step');
+    if (saved !== null) fontStepIdx = parseInt(saved);
+    const pct = FONT_STEPS[fontStepIdx];
+    document.getElementById('zoomLevel').textContent = pct + '%';
+    applyFontScale(pct);
+  }
+  initFontScale();
+
+  function updateClock() { const n = new Date(); document.getElementById('hudClock').textContent = [n.getHours(), n.getMinutes(), n.getSeconds()].map(v => String(v).padStart(2, '0')).join(':'); }
+  setInterval(updateClock, 1000); updateClock();
+
+  window.toggleTheme = function() {
+    const isLight = document.body.classList.contains('light-theme');
+    if (isLight) { document.body.classList.remove('light-theme'); document.body.classList.add('dark-theme'); localStorage.setItem('virtus_theme', 'dark'); document.getElementById('themeToggle').textContent = '🌙'; }
+    else { document.body.classList.remove('dark-theme'); document.body.classList.add('light-theme'); localStorage.setItem('virtus_theme', 'light'); document.getElementById('themeToggle').textContent = '☀️'; }
+  };
+  function initTheme() {
+    const saved = localStorage.getItem('virtus_theme'), prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches, isDark = saved === 'dark' || (saved === null && prefersDark);
+    if (isDark) { document.body.classList.add('dark-theme'); document.body.classList.remove('light-theme'); document.getElementById('themeToggle').textContent = '🌙'; }
+    else { document.body.classList.add('light-theme'); document.body.classList.remove('dark-theme'); document.getElementById('themeToggle').textContent = '☀️'; }
+  }
+  initTheme();
+
+  document.getElementById('inData').value = new Date().toISOString().slice(0, 10);
+  loadModules();
+</script>
+</body>
+</html>

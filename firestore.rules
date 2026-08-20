@@ -1,0 +1,64 @@
+rules_version = '2';
+
+// Regras de segurança do Firestore para o Sistema Virtus.
+// Este projeto Firebase é INDEPENDENTE do usado pelo Pro'Bronze — não
+// combine estas regras com o firestore.rules da raiz do repositório.
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // usuarios/{uid}: perfil (admin | viewer) de cada avaliador autenticado.
+    // Só o próprio usuário (ou um admin) pode ler seu doc; escrita é feita
+    // manualmente pelo administrador via console do Firebase (não há tela
+    // de "criar usuário" no app — ver README.md).
+    match /usuarios/{uid} {
+      allow read: if request.auth != null &&
+                     (request.auth.uid == uid || isAdmin());
+      allow write: if request.auth != null && isAdmin();
+    }
+
+    // perguntas/{modulo}: banco de questões por módulo. Não é sensível,
+    // mas só administradores podem escrever (usado por seed-perguntas.html).
+    // Leitura liberada mesmo sem login, pois o candidato faz o quiz sem
+    // estar autenticado (ver decisão abaixo sobre `resultados`/`violacoes`).
+    match /perguntas/{modulo} {
+      allow read: if true;
+      allow write: if request.auth != null && isAdmin();
+    }
+
+    // resultados/{id}: um documento por tentativa de quiz ou teste de
+    // digitação.
+    // DECISÃO: a escrita é liberada para qualquer client (inclusive não
+    // autenticado / anônimo), porque o candidato que faz o teste NÃO tem
+    // login no sistema — só os avaliadores (admin/viewer) fazem login.
+    // Isso reproduz o comportamento do server.pyw original, que aceitava
+    // POST /api/finalizar e /api/digitacao sem exigir autenticação do
+    // candidato. Se quiser exigir Firebase Auth anônimo antes de escrever,
+    // troque a condição de create para `request.auth != null`.
+    // Leitura é restrita a admin/viewer (só o dashboard lê).
+    match /resultados/{id} {
+      allow create: if true;
+      allow update, delete: if request.auth != null && isAdmin();
+      allow read: if request.auth != null && isAvaliador();
+    }
+
+    // violacoes/{id}: mesma lógica de `resultados` — escrita liberada
+    // (evento de anti-fraude reportado durante o teste do candidato),
+    // leitura restrita aos avaliadores.
+    match /violacoes/{id} {
+      allow create: if true;
+      allow update, delete: if request.auth != null && isAdmin();
+      allow read: if request.auth != null && isAvaliador();
+    }
+
+    function isAdmin() {
+      return exists(/databases/$(database)/documents/usuarios/$(request.auth.uid)) &&
+             get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.perfil == 'admin';
+    }
+
+    function isAvaliador() {
+      return exists(/databases/$(database)/documents/usuarios/$(request.auth.uid)) &&
+             get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.perfil in ['admin', 'viewer'];
+    }
+  }
+}

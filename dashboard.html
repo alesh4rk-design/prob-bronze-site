@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sistema Virtus — Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@300;400;500;600;700&family=Exo+2:ital,wght@0,100;0,300;0,400;0,600;0,800;1,300&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink:      #05080F;
+    --ink2:     #0C1120;
+    --ink3:     #111828;
+    --ink4:     #182030;
+    --ink5:     #1E2840;
+    --line:     rgba(255,255,255,0.07);
+    --line2:    rgba(255,255,255,0.13);
+    --line3:    rgba(255,255,255,0.22);
+    --amber:    #F0A800;
+    --amber2:   #FFB800;
+    --amber3:   #FFCA40;
+    --amberdim: rgba(240,168,0,0.10);
+    --ambermid: rgba(240,168,0,0.22);
+    --amberglow:rgba(240,168,0,0.35);
+    --cyan:     #00D4F0;
+    --cyandim:  rgba(0,212,240,0.10);
+    --cyanmid:  rgba(0,212,240,0.22);
+    --red:      #FF5549;
+    --reddim:   rgba(255,85,73,0.14);
+    --green:    #00EE88;
+    --greendim: rgba(0,238,136,0.12);
+    --purple:   #A880FF;
+    --purpledim:rgba(168,128,255,0.12);
+    --purplemid:rgba(168,128,255,0.24);
+    --text:     #E8EDF8;
+    --text2:    #B8C4D8;
+    --text3:    #7A8EA8;
+    --text4:    #506070;
+  }
+  body.light-theme {
+    --ink:      #F2F5FC;
+    --ink2:     #FFFFFF;
+    --ink3:     #EAEEf8;
+    --ink4:     #DDE3F0;
+    --ink5:     #CED6E8;
+    --line:     rgba(0,0,50,0.07);
+    --line2:    rgba(0,0,50,0.13);
+    --line3:    rgba(0,0,50,0.22);
+    --amber:    #D48000;
+    --amber2:   #F09000;
+    --amber3:   #FFB300;
+    --amberdim: rgba(212,128,0,0.10);
+    --ambermid: rgba(212,128,0,0.22);
+    --amberglow:rgba(212,128,0,0.38);
+    --cyan:     #0099BB;
+    --cyandim:  rgba(0,153,187,0.10);
+    --cyanmid:  rgba(0,153,187,0.22);
+    --purple:   #7040E0;
+    --purpledim:rgba(112,64,224,0.10);
+    --purplemid:rgba(112,64,224,0.25);
+    --red:      #E82020;
+    --reddim:   rgba(232,32,32,0.10);
+    --green:    #00AA55;
+    --greendim: rgba(0,170,85,0.10);
+    --text:     #080E1C;
+    --text2:    #1C2C4A;
+    --text3:    #3A5070;
+    --text4:    #607090;
+  }
+  *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+  html { scroll-behavior: smooth; }
+  body { min-height:100%; background:var(--ink); color:var(--text); font-family:'Exo 2',sans-serif; }
+
+  .grid-bg { position:fixed; inset:0; pointer-events:none; z-index:0; overflow:hidden; }
+  .grid-bg::before {
+    content:''; position:absolute; inset:-100%;
+    background-image:linear-gradient(var(--line) 1px,transparent 1px),linear-gradient(90deg,var(--line) 1px,transparent 1px);
+    background-size:48px 48px; animation:gridDrift 40s linear infinite;
+  }
+  @keyframes gridDrift { from{transform:translate(0,0)} to{transform:translate(48px,48px)} }
+
+  .hud {
+    position:fixed; top:0; left:0; right:0; height:56px;
+    display:flex; align-items:center; padding:0 20px;
+    background:var(--ink2); border-bottom:1px solid var(--line2); z-index:100;
+    box-shadow:0 1px 12px rgba(0,0,0,0.15);
+  }
+  .hud-logo { display:flex; align-items:center; gap:10px; flex-shrink:0; }
+  .hud-hex { width:34px; height:34px; position:relative; display:flex; align-items:center; justify-content:center; }
+  .hud-hex svg { position:absolute; }
+  .hud-hex-icon { position:relative; z-index:1; font-size:14px; }
+  .hud-brand { display:flex; flex-direction:column; }
+  .hud-name { font-family:'Rajdhani',sans-serif; font-size:18px; font-weight:700; letter-spacing:4px; color:var(--amber2); line-height:1; text-transform:uppercase; }
+  .hud-sub  { font-family:'Share Tech Mono',monospace; font-size:10px; letter-spacing:2px; color:var(--text3); text-transform:uppercase; line-height:1; margin-top:2px; }
+  .hud-sep  { width:1px; height:28px; background:var(--line2); margin:0 16px; flex-shrink:0; }
+  .hud-status { display:flex; align-items:center; gap:6px; }
+  .hud-dot  { width:6px; height:6px; border-radius:50%; background:var(--green); box-shadow:0 0 6px var(--green); animation:blink 2s ease-in-out infinite; }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+  .hud-status-text { font-family:'Share Tech Mono',monospace; font-size:11px; letter-spacing:1.5px; color:var(--text2); text-transform:uppercase; font-weight:600; }
+  .hud-right { margin-left:auto; display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+  .hud-time { font-family:'Share Tech Mono',monospace; font-size:13px; color:var(--text2); letter-spacing:1px; font-weight:600; }
+  .hud-btn  { height:32px; border-radius:4px; border:1px solid var(--line2); background:var(--ink3); color:var(--text2); font-size:11px; font-family:'Share Tech Mono',monospace; letter-spacing:1px; cursor:pointer; transition:all 0.15s; display:flex; align-items:center; justify-content:center; padding:0 12px; gap:6px; white-space:nowrap; text-decoration:none; }
+  .hud-btn:hover { border-color:var(--amber); color:var(--amber); background:var(--amberdim); }
+  .theme-toggle { background:var(--ink3); border:1px solid var(--line2); border-radius:30px; width:36px; height:36px; display:flex; align-items:center; justify-content:center; cursor:pointer; transition:all 0.2s; color:var(--text2); font-size:16px; }
+  .theme-toggle:hover { border-color:var(--amber); color:var(--amber); background:var(--amberdim); }
+
+  .hud-foot { position:fixed; bottom:0; left:0; right:0; height:32px; display:flex; align-items:center; padding:0 20px; background:var(--ink2); border-top:1px solid var(--line2); z-index:100; gap:16px; }
+  .hud-foot-item { font-family:'Share Tech Mono',monospace; font-size:10px; letter-spacing:1.5px; color:var(--text3); text-transform:uppercase; font-weight:600; }
+  .hud-foot-item span { color:var(--text2); }
+
+  .main { padding: 76px 24px 52px; position:relative; z-index:10; max-width:1400px; margin:0 auto; }
+  .page-title-area { margin-bottom:28px; display:flex; align-items:flex-end; justify-content:space-between; flex-wrap:wrap; gap:12px; }
+  .page-title { font-family:'Rajdhani',sans-serif; font-size:32px; font-weight:700; letter-spacing:6px; color:var(--text); text-transform:uppercase; line-height:1; }
+  .page-title em { color:var(--amber2); font-style:normal; }
+  .page-subtitle { font-family:'Share Tech Mono',monospace; font-size:11px; letter-spacing:2px; color:var(--text2); text-transform:uppercase; margin-top:4px; font-weight:600; }
+  .page-actions { display:flex; gap:8px; flex-wrap:wrap; }
+
+  .kpi-bar-5 { display:grid; grid-template-columns:repeat(5,1fr); gap:12px; margin-bottom:24px; }
+  @media(max-width:1100px){.kpi-bar-5{grid-template-columns:repeat(3,1fr);}}
+  @media(max-width:600px){.kpi-bar-5{grid-template-columns:1fr 1fr;}}
+  .kpi-card { background:var(--ink2); border:1px solid var(--line2); border-radius:2px; padding:18px 20px; position:relative; overflow:hidden; }
+  .kpi-card::before { content:''; position:absolute; top:0; left:0; right:0; height:3px; }
+  .kpi-card.amber::before { background: linear-gradient(90deg, transparent, #7a4a00 10%, #c77400 25%, #ffb300 45%, #ffd700 65%, #ffb300 85%, #c07000 98%, transparent); }
+  .kpi-card.green::before { background: linear-gradient(90deg, transparent, #004d1a 10%, #00882e 25%, #00cc44 45%, #00ff55 65%, #00cc44 85%, #007722 98%, transparent); }
+  .kpi-card.cyan::before { background: linear-gradient(90deg, transparent, #003366 10%, #0055cc 25%, #0099ee 45%, #00ccff 65%, #0099ee 85%, #004499 98%, transparent); }
+  .kpi-card.red::before { background: linear-gradient(90deg, transparent, #660000 10%, #cc1111 25%, #ee3333 45%, #ff5555 65%, #ee3333 85%, #cc1111 98%, transparent); }
+  .kpi-card.purple::before { background: linear-gradient(90deg, transparent, #2a0060 10%, #6600cc 25%, #9933ff 45%, #cc66ff 65%, #9933ff 85%, #6600cc 98%, transparent); }
+  .kpi-icon { font-size:20px; margin-bottom:10px; opacity:0.85; }
+  .kpi-val  { font-family:'Rajdhani',sans-serif; font-size:40px; font-weight:700; line-height:1; letter-spacing:2px; }
+  .kpi-card.amber .kpi-val { color:var(--amber3); }
+  .kpi-card.green .kpi-val { color:var(--green); }
+  .kpi-card.cyan  .kpi-val { color:var(--cyan); }
+  .kpi-card.purple .kpi-val{ color:var(--purple); }
+  .kpi-card.red   .kpi-val { color:var(--red); }
+  .kpi-lbl  { font-family:'Share Tech Mono',monospace; font-size:10px; letter-spacing:1.5px; color:var(--text2); text-transform:uppercase; margin-top:5px; font-weight:600; }
+
+  .panel { background:var(--ink2); border:1px solid var(--line2); border-radius:2px; position:relative; overflow:hidden; }
+  .panel::before { content:''; position:absolute; top:0; left:0; right:0; height:2px; background:linear-gradient(90deg,transparent 5%,var(--amber) 20%,var(--amber3) 50%,var(--amber) 80%,transparent 95%); }
+  .panel-head { padding:18px 24px 14px; display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid var(--line); flex-wrap:wrap; gap:10px; }
+  .panel-title-sm { font-family:'Rajdhani',sans-serif; font-size:16px; font-weight:700; letter-spacing:3px; text-transform:uppercase; color:var(--text); display:flex; align-items:center; gap:10px; }
+  .panel-title-sm .badge { font-family:'Share Tech Mono',monospace; font-size:10px; letter-spacing:1.5px; padding:3px 9px; border-radius:2px; background:var(--amberdim); border:1px solid var(--ambermid); color:var(--amber); font-weight:700; }
+  .panel-title-sm .badge.green { background:var(--greendim); border-color:var(--green); color:var(--green); }
+  .panel-title-sm .badge.cyan  { background:var(--cyandim); border-color:var(--cyanmid); color:var(--cyan); }
+  .panel-body { padding:20px 24px; }
+
+  .toolbar { display:flex; gap:10px; flex-wrap:wrap; }
+  .field-input { background:var(--ink3); border:1px solid var(--line2); border-radius:2px; padding:9px 14px; color:var(--text); font-family:'Exo 2',sans-serif; font-size:13px; font-weight:500; outline:none; transition:border-color 0.2s,box-shadow 0.2s; appearance:none; letter-spacing:0.3px; }
+  .field-input:focus { border-color:var(--amber); box-shadow:0 0 0 3px var(--amberdim); }
+  input[type="search"].field-input { min-width:220px; }
+
+  .btn { display:inline-flex; align-items:center; justify-content:center; gap:8px; font-family:'Rajdhani',sans-serif; font-size:13px; font-weight:700; letter-spacing:2px; text-transform:uppercase; cursor:pointer; border:none; border-radius:2px; padding:9px 20px; transition:all 0.15s; }
+  .btn-amber { background:linear-gradient(135deg,var(--amber) 0%,var(--amber2) 100%); color:var(--ink); }
+  .btn-amber:hover { transform:translateY(-1px); box-shadow:0 6px 24px var(--amberglow); }
+  .btn-outline { background:transparent; border:1px solid var(--line3); color:var(--text2); }
+  .btn-outline:hover { border-color:var(--amber); color:var(--amber); background:var(--amberdim); }
+
+  .results-table-wrap { overflow-x:auto; }
+  table { width:100%; border-collapse:collapse; font-size:14px; }
+  thead tr { border-bottom:2px solid var(--line3); }
+  th { font-family:'Share Tech Mono',monospace; font-size:10px; letter-spacing:1.5px; color:var(--text2); text-transform:uppercase; padding:11px 14px; text-align:left; font-weight:700; white-space:nowrap; position:sticky; top:0; background:var(--ink2); z-index:2; }
+  tbody tr { border-bottom:1px solid var(--line2); transition:background 0.12s; }
+  tbody tr:hover { background:var(--ink3); }
+  td { padding:13px 14px; color:var(--text2); vertical-align:middle; font-size:14px; }
+  td.td-nome { color:var(--text); font-weight:700; font-size:15px; }
+  td.td-pct { font-family:'Rajdhani',sans-serif; font-size:22px; font-weight:700; letter-spacing:1px; }
+  td.td-time { font-family:'Share Tech Mono',monospace; font-size:11px; color:var(--text3); font-weight:600; }
+  .pct-bar-wrap { display:flex; align-items:center; gap:10px; min-width:130px; }
+  .pct-bar-track { flex:1; height:4px; background:var(--ink4); border-radius:2px; overflow:hidden; }
+  .pct-bar-fill { height:100%; border-radius:2px; transition:width 0.6s cubic-bezier(.4,0,.2,1); }
+  .pct-high { background:var(--green); }
+  .pct-mid  { background:var(--amber); }
+  .pct-low  { background:var(--red); }
+  .badge-modulo { display:inline-block; padding:3px 9px; border-radius:2px; font-family:'Share Tech Mono',monospace; font-size:9px; letter-spacing:1.5px; text-transform:uppercase; border:1px solid; border-color:var(--ambermid); color:var(--amber); background:var(--amberdim); }
+  .empty-state { text-align:center; padding:60px 20px; font-family:'Share Tech Mono',monospace; font-size:11px; letter-spacing:2px; color:var(--text4); text-transform:uppercase; }
+  .empty-state .empty-icon { font-size:40px; margin-bottom:14px; opacity:0.3; }
+
+  .charts-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:16px; }
+  @media(max-width:860px){.charts-grid{grid-template-columns:1fr;}}
+  .chart-wrap { padding:16px 20px 20px; }
+  .mod-bar-list { display:flex; flex-direction:column; gap:12px; }
+  .mod-bar-header { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:5px; }
+  .mod-bar-name { font-size:13px; color:var(--text); font-weight:600; }
+  .mod-bar-stats { font-family:'Share Tech Mono',monospace; font-size:11px; color:var(--text2); font-weight:600; }
+  .mod-bar-track { height:7px; background:var(--ink4); border-radius:2px; overflow:hidden; }
+  .mod-bar-fill  { height:100%; border-radius:2px; background:linear-gradient(90deg,var(--amber),var(--amber3)); transition:width 0.8s cubic-bezier(.4,0,.2,1); }
+  .hist-wrap { display:flex; align-items:flex-end; gap:4px; height:80px; }
+  .hist-col { flex:1; display:flex; flex-direction:column; align-items:center; gap:4px; height:100%; justify-content:flex-end; }
+  .hist-bar { width:100%; border-radius:2px 2px 0 0; min-height:2px; background:var(--amber); opacity:0.7; transition:height 0.6s, opacity 0.2s; }
+
+  .typing-collab-list { display:flex; flex-direction:column; gap:8px; }
+  .typing-collab-row { background:var(--ink3); border:1px solid var(--line2); border-radius:2px; padding:12px 16px; display:flex; align-items:center; gap:12px; }
+  .typing-collab-name { font-size:14px; font-weight:700; color:var(--text); flex:1; }
+  .typing-collab-stats { display:flex; gap:12px; align-items:center; }
+  .typing-collab-stat { text-align:center; }
+  .typing-collab-stat-val { font-family:'Rajdhani',sans-serif; font-size:18px; font-weight:700; line-height:1; }
+  .typing-collab-stat-lbl { font-family:'Share Tech Mono',monospace; font-size:8px; color:var(--text3); letter-spacing:1px; }
+
+  .toast { position:fixed; top:68px; right:16px; background:var(--ink2); border:1px solid var(--line3); border-radius:2px; padding:12px 16px; font-family:'Share Tech Mono',monospace; font-size:11px; color:var(--text); letter-spacing:1px; z-index:500; transform:translateX(110%); transition:transform 0.3s cubic-bezier(.4,0,.2,1),opacity 0.3s; max-width:280px; opacity:0; box-shadow:0 8px 32px rgba(0,0,0,0.5); }
+  .toast.show { transform:translateX(0); opacity:1; }
+
+  ::-webkit-scrollbar { width:4px; height:4px; }
+  ::-webkit-scrollbar-track { background:var(--ink); }
+  ::-webkit-scrollbar-thumb { background:var(--ink5); border-radius:2px; }
+</style>
+</head>
+<body class="dark-theme">
+
+<div class="grid-bg"></div>
+
+<header class="hud">
+  <div class="hud-logo">
+    <div class="hud-hex">
+      <svg width="34" height="34" viewBox="0 0 34 34" fill="none">
+        <path d="M17 2L31 9.5V24.5L17 32L3 24.5V9.5L17 2Z" fill="rgba(232,160,0,0.08)" stroke="rgba(232,160,0,0.5)" stroke-width="1"/>
+        <path d="M17 6L28 12V24L17 30L6 24V12L17 6Z" fill="none" stroke="rgba(232,160,0,0.2)" stroke-width="0.5"/>
+      </svg>
+      <span class="hud-hex-icon">⚡</span>
+    </div>
+    <div class="hud-brand">
+      <div class="hud-name">Virtus</div>
+      <div class="hud-sub">Dashboard de Resultados</div>
+    </div>
+  </div>
+  <div class="hud-sep"></div>
+  <div class="hud-status" id="serverStatusBadge">
+    <div class="hud-dot" id="serverDot" style="background:var(--amber);box-shadow:0 0 6px var(--amber);"></div>
+    <span class="hud-status-text" id="serverStatusText">Conectando...</span>
+  </div>
+  <div class="hud-right">
+    <span class="hud-time" id="hudClock">--:--:--</span>
+    <div class="theme-toggle" id="themeToggle" onclick="toggleTheme()" title="Alternar tema">🌙</div>
+    <button class="hud-btn" onclick="window.print()" title="Imprimir dashboard">🖨 Imprimir</button>
+    <a href="./digitacao.html" class="hud-btn">⌨️ Digitação</a>
+    <span id="authUserBadge" style="display:inline-flex;align-items:center;gap:6px;height:32px;padding:0 12px;border-radius:4px;border:1px solid rgba(232,160,0,0.4);background:rgba(232,160,0,0.08);color:#E8A000;font-size:11px;font-family:'Share Tech Mono',monospace;letter-spacing:1px;">👤 <span id="authUserName">...</span></span>
+    <button class="hud-btn" id="btnLogout" style="border-color:rgba(248,81,73,0.4);color:#f85149;">⏻ Sair</button>
+  </div>
+</header>
+
+<div class="toast" id="toast"></div>
+
+<footer class="hud-foot">
+  <span class="hud-foot-item">Sistema <span>Virtus</span></span>
+  <span class="hud-foot-item" id="serverModeLabel">Firestore (tempo real)</span>
+  <span class="hud-foot-item" style="margin-left:auto;">Perfil: <span id="authUserPerfil">—</span></span>
+  <span class="hud-foot-item">Versão <span>3.0 (Firebase)</span></span>
+</footer>
+
+<main class="main">
+
+  <div class="page-title-area">
+    <div>
+      <div class="page-title">Dashboard <em>Virtus</em></div>
+      <div class="page-subtitle">Resultados em tempo real · Processo Seletivo</div>
+    </div>
+    <div class="page-actions">
+      <button class="btn btn-amber" onclick="exportCSV()">⬇ Exportar CSV</button>
+      <button class="btn btn-outline" onclick="clearAllFilters()">🗑 Limpar Filtros</button>
+    </div>
+  </div>
+
+  <div class="kpi-bar-5">
+    <div class="kpi-card amber"><div class="kpi-icon">📋</div><div class="kpi-val" id="kpiTotal">0</div><div class="kpi-lbl">Testes Realizados</div></div>
+    <div class="kpi-card green"><div class="kpi-icon">✅</div><div class="kpi-val" id="kpiAprov">0</div><div class="kpi-lbl">Aprovados (≥70%)</div></div>
+    <div class="kpi-card cyan"><div class="kpi-icon">📈</div><div class="kpi-val" id="kpiMedia">—</div><div class="kpi-lbl">Média Geral</div></div>
+    <div class="kpi-card red"><div class="kpi-icon">⚠️</div><div class="kpi-val" id="kpiReprov">0</div><div class="kpi-lbl">Reprovados (&lt;70%)</div></div>
+    <div class="kpi-card purple"><div class="kpi-icon">🏆</div><div class="kpi-val" id="kpiTaxa">—</div><div class="kpi-lbl">Taxa de Aprovação</div></div>
+  </div>
+
+  <div class="panel" style="margin-bottom:24px;">
+    <div class="panel-head">
+      <div class="panel-title-sm">👥 Candidatos <span class="badge green" id="tableCountBadge">0 registros</span></div>
+      <div class="toolbar">
+        <input type="search" class="field-input" id="searchInput" placeholder="🔍  Buscar candidato..." oninput="applyFilters()">
+        <select class="field-input" id="filterModulo" onchange="applyFilters()"><option value="">Todos os módulos</option></select>
+        <select class="field-input" id="filterStatus" onchange="applyFilters()">
+          <option value="">Todos</option>
+          <option value="aprovado">Aprovados</option>
+          <option value="reprovado">Reprovados</option>
+        </select>
+      </div>
+    </div>
+    <div class="results-table-wrap">
+      <table id="resultsTable">
+        <thead>
+          <tr>
+            <th style="width:44px;text-align:center;">#</th>
+            <th>Candidato</th>
+            <th>Módulo</th>
+            <th>Acertos</th>
+            <th>Nota %</th>
+            <th>Status</th>
+            <th>Concluído</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody">
+          <tr><td colspan="7"><div class="empty-state"><div class="empty-icon">📭</div>Nenhum resultado ainda.</div></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="charts-grid">
+    <div class="panel">
+      <div class="panel-head"><div class="panel-title-sm">📊 Desempenho por Módulo</div></div>
+      <div class="chart-wrap"><div class="mod-bar-list" id="moduloBars"><div class="empty-state"><div class="empty-icon">📊</div>Sem dados ainda</div></div></div>
+    </div>
+    <div class="panel">
+      <div class="panel-head"><div class="panel-title-sm">📉 Distribuição de Notas</div></div>
+      <div class="chart-wrap">
+        <div class="hist-wrap" id="histWrap"><div class="empty-state" style="padding:20px;"><div class="empty-icon">📉</div></div></div>
+        <div style="display:flex;justify-content:space-between;margin-top:4px;">
+          <span style="font-family:'Share Tech Mono',monospace;font-size:8px;color:var(--text4);">0%</span>
+          <span style="font-family:'Share Tech Mono',monospace;font-size:8px;color:var(--text4);">50%</span>
+          <span style="font-family:'Share Tech Mono',monospace;font-size:8px;color:var(--text4);">100%</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" style="margin-bottom:16px;">
+    <div class="panel-head"><div class="panel-title-sm">⌨️ Teste de Digitação — Candidatos <span class="badge cyan" id="typingBadge">0 registros</span></div></div>
+    <div class="panel-body">
+      <div class="typing-collab-list" id="typingList"><div class="empty-state"><div class="empty-icon">⌨️</div>Sem testes de digitação ainda</div></div>
+    </div>
+  </div>
+
+  <div class="panel" style="margin-bottom:16px;">
+    <div class="panel-head"><div class="panel-title-sm">🚨 Violações Registradas <span class="badge" id="violBadge" style="background:var(--reddim);border-color:rgba(255,85,73,0.4);color:var(--red);">0 eventos</span></div></div>
+    <div class="results-table-wrap">
+      <table>
+        <thead><tr><th>Candidato</th><th>Módulo</th><th>Tipo</th><th>Detalhe</th><th>Data/Hora</th></tr></thead>
+        <tbody id="violTableBody"><tr><td colspan="5"><div class="empty-state"><div class="empty-icon">🚨</div>Nenhuma violação registrada</div></td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+</main>
+
+<script type="module">
+  import { requireDashboardAccess, virtusLogout } from "./js/auth.js";
+  import { assinarResultados, assinarViolacoes } from "./js/dashboard.js";
+
+  let ALL_RESULTADOS = [];
+  let ALL_VIOLACOES = [];
+
+  function toast(msg, type='') {
+    const el = document.getElementById('toast');
+    el.textContent = msg; el.className = 'toast show ' + type;
+    setTimeout(() => el.classList.remove('show'), 3500);
+  }
+
+  function updateClock(){ const n=new Date(); document.getElementById('hudClock').textContent=[n.getHours(),n.getMinutes(),n.getSeconds()].map(v=>String(v).padStart(2,'0')).join(':'); }
+  setInterval(updateClock,1000); updateClock();
+
+  window.toggleTheme = function(){
+    const isLight=document.body.classList.contains('light-theme');
+    if(isLight){ document.body.classList.remove('light-theme'); document.body.classList.add('dark-theme'); localStorage.setItem('virtus_theme','dark'); document.getElementById('themeToggle').textContent='🌙'; }
+    else { document.body.classList.remove('dark-theme'); document.body.classList.add('light-theme'); localStorage.setItem('virtus_theme','light'); document.getElementById('themeToggle').textContent='☀️'; }
+  };
+  (function initTheme(){
+    const saved=localStorage.getItem('virtus_theme'), prefersDark=window.matchMedia('(prefers-color-scheme: dark)').matches, isDark=saved==='dark'||(saved===null&&prefersDark);
+    if(isDark){ document.body.classList.add('dark-theme'); document.body.classList.remove('light-theme'); } else { document.body.classList.add('light-theme'); document.body.classList.remove('dark-theme'); document.getElementById('themeToggle').textContent='☀️'; }
+  })();
+
+  function statusDot(ok, label) {
+    const dot = document.getElementById('serverDot');
+    const txt = document.getElementById('serverStatusText');
+    dot.style.background = ok ? 'var(--green)' : 'var(--red)';
+    dot.style.boxShadow = ok ? '0 0 6px var(--green)' : '0 0 6px var(--red)';
+    txt.textContent = label;
+  }
+
+  // ── Auth gate ─────────────────────────────────────────────────────────
+  const me = await requireDashboardAccess();
+  if (me) {
+    document.getElementById('authUserName').textContent = me.usuario;
+    document.getElementById('authUserPerfil').textContent = me.perfil;
+  }
+  document.getElementById('btnLogout').onclick = async () => { await virtusLogout(); window.location.replace('./index.html'); };
+
+  // ── Filtros ──────────────────────────────────────────────────────────
+  window.applyFilters = function() { renderAll(); };
+  window.clearAllFilters = function() {
+    document.getElementById('searchInput').value = '';
+    document.getElementById('filterModulo').value = '';
+    document.getElementById('filterStatus').value = '';
+    renderAll();
+  };
+
+  function getFiltered() {
+    const busca = (document.getElementById('searchInput').value || '').toLowerCase();
+    const modulo = document.getElementById('filterModulo').value;
+    const status = document.getElementById('filterStatus').value;
+    return ALL_RESULTADOS.filter(r => {
+      if (r.tipo === 'typing') return false; // exibido na seção própria
+      if (busca && !(r.nome || '').toLowerCase().includes(busca)) return false;
+      if (modulo && r.modulo !== modulo) return false;
+      const aprovado = (r.pct || 0) >= 70;
+      if (status === 'aprovado' && !aprovado) return false;
+      if (status === 'reprovado' && aprovado) return false;
+      return true;
+    });
+  }
+
+  function renderModuleOptions() {
+    const sel = document.getElementById('filterModulo');
+    const atual = sel.value;
+    const modulos = [...new Set(ALL_RESULTADOS.filter(r => r.tipo !== 'typing').map(r => r.modulo))].sort();
+    sel.innerHTML = '<option value="">Todos os módulos</option>' + modulos.map(m => `<option value="${m}">${m}</option>`).join('');
+    sel.value = atual;
+  }
+
+  function renderKPIs(lista) {
+    const total = lista.length;
+    const aprov = lista.filter(r => (r.pct || 0) >= 70).length;
+    const reprov = total - aprov;
+    const media = total ? Math.round(lista.reduce((a, r) => a + (r.pct || 0), 0) / total) : null;
+    document.getElementById('kpiTotal').textContent = total;
+    document.getElementById('kpiAprov').textContent = aprov;
+    document.getElementById('kpiReprov').textContent = reprov;
+    document.getElementById('kpiMedia').textContent = media === null ? '—' : media + '%';
+    document.getElementById('kpiTaxa').textContent = total ? Math.round((aprov / total) * 100) + '%' : '—';
+  }
+
+  function pctClass(pct) { return pct >= 70 ? 'pct-high' : pct >= 50 ? 'pct-mid' : 'pct-low'; }
+
+  function renderTable(lista) {
+    const tbody = document.getElementById('tableBody');
+    document.getElementById('tableCountBadge').textContent = lista.length + ' registros';
+    if (!lista.length) {
+      tbody.innerHTML = '<tr><td colspan="7"><div class="empty-state"><div class="empty-icon">📭</div>Nenhum resultado encontrado.</div></td></tr>';
+      return;
+    }
+    tbody.innerHTML = lista.map((r, i) => {
+      const pct = r.pct || 0;
+      const aprovado = pct >= 70;
+      const dt = r.data_conclusao ? new Date(r.data_conclusao).toLocaleString('pt-BR') : '—';
+      return `<tr>
+        <td style="text-align:center;color:var(--text3);">${i + 1}</td>
+        <td class="td-nome">${escapeHtml(r.nome || '—')}</td>
+        <td><span class="badge-modulo">${escapeHtml(r.modulo || '—')}</span></td>
+        <td>${r.acertos ?? '—'} / ${r.total ?? '—'}</td>
+        <td>
+          <div class="pct-bar-wrap">
+            <span class="td-pct" style="color:${aprovado ? 'var(--green)' : pct >= 50 ? 'var(--amber)' : 'var(--red)'}">${pct}%</span>
+            <div class="pct-bar-track"><div class="pct-bar-fill ${pctClass(pct)}" style="width:${pct}%"></div></div>
+          </div>
+        </td>
+        <td>${aprovado ? '<span style="color:var(--green);font-weight:700;">✅ Aprovado</span>' : '<span style="color:var(--red);font-weight:700;">❌ Reprovado</span>'}</td>
+        <td class="td-time">${dt}</td>
+      </tr>`;
+    }).join('');
+  }
+
+  function renderModuloBars(lista) {
+    const el = document.getElementById('moduloBars');
+    if (!lista.length) { el.innerHTML = '<div class="empty-state"><div class="empty-icon">📊</div>Sem dados ainda</div>'; return; }
+    const porModulo = {};
+    lista.forEach(r => {
+      if (!porModulo[r.modulo]) porModulo[r.modulo] = [];
+      porModulo[r.modulo].push(r.pct || 0);
+    });
+    el.innerHTML = Object.entries(porModulo).map(([mod, pcts]) => {
+      const media = Math.round(pcts.reduce((a, b) => a + b, 0) / pcts.length);
+      return `<div>
+        <div class="mod-bar-header"><span class="mod-bar-name">${escapeHtml(mod)}</span><span class="mod-bar-stats">${media}% · ${pcts.length} testes</span></div>
+        <div class="mod-bar-track"><div class="mod-bar-fill" style="width:${media}%"></div></div>
+      </div>`;
+    }).join('');
+  }
+
+  function renderHistogram(lista) {
+    const el = document.getElementById('histWrap');
+    if (!lista.length) { el.innerHTML = '<div class="empty-state" style="padding:20px;"><div class="empty-icon">📉</div></div>'; return; }
+    const buckets = new Array(10).fill(0);
+    lista.forEach(r => { const idx = Math.min(9, Math.floor((r.pct || 0) / 10)); buckets[idx]++; });
+    const max = Math.max(...buckets, 1);
+    el.innerHTML = buckets.map(v => `<div class="hist-col"><div class="hist-bar" style="height:${(v / max) * 100}%" title="${v}"></div></div>`).join('');
+  }
+
+  function renderTyping() {
+    const lista = ALL_RESULTADOS.filter(r => r.tipo === 'typing');
+    document.getElementById('typingBadge').textContent = lista.length + ' registros';
+    const el = document.getElementById('typingList');
+    if (!lista.length) { el.innerHTML = '<div class="empty-state"><div class="empty-icon">⌨️</div>Sem testes de digitação ainda</div>'; return; }
+    el.innerHTML = lista.slice(0, 30).map(r => `
+      <div class="typing-collab-row">
+        <div class="typing-collab-name">${escapeHtml(r.nome || '—')}</div>
+        <div class="typing-collab-stats">
+          <div class="typing-collab-stat"><div class="typing-collab-stat-val" style="color:var(--amber);">${r.wpm ?? '—'}</div><div class="typing-collab-stat-lbl">WPM</div></div>
+          <div class="typing-collab-stat"><div class="typing-collab-stat-val" style="color:var(--cyan);">${r.pct ?? '—'}%</div><div class="typing-collab-stat-lbl">Precisão</div></div>
+          <div class="typing-collab-stat"><div class="typing-collab-stat-val" style="color:var(--red);">${r.deleteCount ?? 0}</div><div class="typing-collab-stat-lbl">⌫</div></div>
+        </div>
+      </div>`).join('');
+  }
+
+  function renderViolacoes() {
+    const tbody = document.getElementById('violTableBody');
+    document.getElementById('violBadge').textContent = ALL_VIOLACOES.length + ' eventos';
+    if (!ALL_VIOLACOES.length) { tbody.innerHTML = '<tr><td colspan="5"><div class="empty-state"><div class="empty-icon">🚨</div>Nenhuma violação registrada</div></td></tr>'; return; }
+    tbody.innerHTML = ALL_VIOLACOES.slice(0, 100).map(v => `
+      <tr>
+        <td class="td-nome">${escapeHtml(v.nome || '—')}</td>
+        <td><span class="badge-modulo">${escapeHtml(v.modulo || '—')}</span></td>
+        <td>${escapeHtml(v.tipo || '—')}</td>
+        <td>${escapeHtml(v.detalhe || '—')}</td>
+        <td class="td-time">${escapeHtml(v.data || '')} ${escapeHtml(v.hora_recebimento || '')}</td>
+      </tr>`).join('');
+  }
+
+  function escapeHtml(s) { return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
+
+  function renderAll() {
+    renderModuleOptions();
+    const filtrada = getFiltered();
+    renderKPIs(filtrada);
+    renderTable(filtrada);
+    renderModuloBars(filtrada);
+    renderHistogram(filtrada);
+    renderTyping();
+    renderViolacoes();
+  }
+
+  window.exportCSV = function() {
+    const lista = getFiltered();
+    if (!lista.length) { toast('Nada para exportar', 'err'); return; }
+    const header = ['Nome', 'Modulo', 'Acertos', 'Total', 'Pct', 'Data'];
+    const rows = lista.map(r => [r.nome, r.modulo, r.acertos, r.total, r.pct, r.data_conclusao]);
+    const csv = [header, ...rows].map(row => row.map(v => `"${String(v ?? '').replace(/"/g, '""')}"`).join(',')).join('\n');
+    const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = `virtus_resultados_${Date.now()}.csv`; a.click();
+    URL.revokeObjectURL(url);
+    toast('CSV exportado!', 'ok');
+  };
+
+  // ── Assinaturas em tempo real ───────────────────────────────────────
+  try {
+    assinarResultados((lista) => { ALL_RESULTADOS = lista; renderAll(); statusDot(true, 'Firestore online'); });
+    assinarViolacoes((lista) => { ALL_VIOLACOES = lista; renderViolacoes(); });
+  } catch (e) {
+    console.error(e);
+    statusDot(false, 'Falha ao conectar ao Firestore');
+    toast('Erro ao conectar ao Firestore. Verifique js/firebase-config.js', 'err');
+  }
+</script>
+</body>
+</html>
