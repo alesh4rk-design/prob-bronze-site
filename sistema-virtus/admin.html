@@ -313,11 +313,14 @@
 <main class="main">
 
   <div class="admin-tabs">
-    <div class="admin-tab active" data-tab="usuarios" onclick="switchTab('usuarios')">
+    <div class="admin-tab active" data-tab="usuarios" id="tabBtnUsuarios" onclick="switchTab('usuarios')">
       👥 Usuários <span class="tab-count" id="cntPendentes">0</span>
     </div>
-    <div class="admin-tab" data-tab="perguntas" onclick="switchTab('perguntas')">
+    <div class="admin-tab" data-tab="perguntas" id="tabBtnPerguntas" onclick="switchTab('perguntas')">
       📚 Perguntas <span class="tab-count" id="cntModulos">0</span>
+    </div>
+    <div class="admin-tab" data-tab="codigos" id="tabBtnCodigos" onclick="switchTab('codigos')">
+      🔑 Códigos de Acesso <span class="tab-count" id="cntCodigosDisp">0</span>
     </div>
   </div>
 
@@ -408,6 +411,33 @@
 
   </section>
 
+  <!-- ══════════ ABA: CÓDIGOS DE ACESSO ══════════ -->
+  <section class="admin-section" id="sec-codigos">
+    <div class="panel">
+      <div class="panel-head">
+        <div class="panel-title-sm">🔑 Código de Acesso do Candidato</div>
+      </div>
+      <div class="panel-body" style="padding:16px 20px;">
+        <div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap;">
+          <button class="btn-act btn-approve-admin" id="btnGerarCodigo" style="padding:11px 20px;font-size:13px;">▶ Gerar novo código</button>
+          <div id="codigoGerado" style="display:none;align-items:center;gap:10px;">
+            <span style="font-family:'Share Tech Mono',monospace;font-size:32px;font-weight:700;letter-spacing:8px;color:var(--amber);background:var(--amberdim);border:1px solid var(--ambermid);border-radius:6px;padding:6px 18px;" id="codigoValorGrande"></span>
+            <span style="font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--text3);letter-spacing:1px;">Uso único · entregue ao candidato presencialmente</span>
+          </div>
+        </div>
+        <div class="warn-note" style="margin-top:14px;">
+          Cada código só funciona <strong>uma vez</strong>. Gere um código novo para cada candidato, na hora, para impedir que o teste seja feito de fora da empresa. Admin e viewer podem gerar.
+        </div>
+        <div class="results-table-wrap" style="margin-top:12px;">
+          <table>
+            <thead><tr><th>Código</th><th>Status</th><th>Gerado por</th><th>Quando</th></tr></thead>
+            <tbody id="codigosTableBody"><tr><td colspan="4"><div class="empty-state"><div class="empty-icon">🔑</div>Nenhum código gerado ainda</div></td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </section>
+
 </main>
 
 <footer class="hud-foot">
@@ -421,7 +451,8 @@
   import { requireDashboardAccess, virtusLogout } from "./js/auth.js";
   import {
     assinarPendentes, assinarUsuarios, aprovarUsuario, removerUsuario,
-    assinarModulos, definirModuloAtivo
+    assinarModulos, definirModuloAtivo,
+    gerarCodigoAcesso, assinarCodigosAcesso, cancelarCodigoAcesso
   } from "./js/dashboard.js";
   import { db } from "./js/firebase-config.js";
   import { doc, setDoc } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
@@ -472,25 +503,35 @@
       s.classList.toggle('active', s.id === 'sec-' + tab));
   };
 
-  // ── Portão de acesso: SOMENTE admin ───────────────────────────────────
+  // ── Portão de acesso ────────────────────────────────────────────────────
+  // Admin usa o painel inteiro. Viewer entra só para gerar código de acesso
+  // (mesma coisa que já podia fazer no dashboard antes) — as abas Usuários e
+  // Perguntas ficam ocultas e inacessíveis para ele; se tentar forçar via
+  // switchTab no console, as firestore.rules ainda bloqueiam a escrita real.
   const me = await requireDashboardAccess();
   if (!me) throw new Error('sem acesso');
-  if (me.perfil !== 'admin') {
+  if (me.perfil !== 'admin' && me.perfil !== 'viewer') {
     document.querySelector('.main').innerHTML =
       '<div class="panel"><div class="panel-body" style="padding:40px;text-align:center;">' +
       '<div style="font-size:44px;margin-bottom:14px;">🔒</div>' +
       '<div style="font-family:Rajdhani,sans-serif;font-size:22px;font-weight:700;color:var(--red);letter-spacing:2px;">ACESSO RESTRITO</div>' +
-      '<p style="margin-top:12px;color:var(--text3);">Esta área é exclusiva para administradores.<br>' +
-      'Seu perfil atual é <strong>' + escapeHtml(me.perfil) + '</strong>.</p>' +
-      '<a href="./dashboard.html" class="btn-act btn-neutral" style="display:inline-block;margin-top:20px;text-decoration:none;">← Voltar ao Dashboard</a>' +
+      '<p style="margin-top:12px;color:var(--text3);">Esta área é exclusiva para avaliadores autorizados.</p>' +
+      '<a href="./index.html" class="btn-act btn-neutral" style="display:inline-block;margin-top:20px;text-decoration:none;">← Voltar ao Login</a>' +
       '</div></div>';
-    throw new Error('não é admin');
+    throw new Error('sem perfil de avaliador');
   }
   document.getElementById('authUserName').textContent = me.usuario;
   document.getElementById('authUserPerfil').textContent = me.perfil;
   document.getElementById('btnLogout').onclick = async () => {
     await virtusLogout(); window.location.replace('./index.html');
   };
+
+  if (me.perfil !== 'admin') {
+    // Viewer: some com as abas administrativas, deixa só Códigos visível e ativa.
+    document.getElementById('tabBtnUsuarios').style.display = 'none';
+    document.getElementById('tabBtnPerguntas').style.display = 'none';
+    switchTab('codigos');
+  }
 
   // ── Solicitações pendentes ────────────────────────────────────────────
   function renderPendentes(lista) {
@@ -618,16 +659,79 @@
     btn.disabled = false;
   };
 
+  // ── Código de acesso presencial (admin e viewer podem gerar) ────────────
+  document.getElementById('btnGerarCodigo').onclick = async () => {
+    const btn = document.getElementById('btnGerarCodigo');
+    btn.disabled = true;
+    try {
+      const codigo = await gerarCodigoAcesso(me.usuario);
+      document.getElementById('codigoValorGrande').textContent = codigo;
+      document.getElementById('codigoGerado').style.display = 'flex';
+      toast('✅ Código gerado — entregue ao candidato', 'ok');
+    } catch (e) {
+      console.error(e);
+      toast('❌ Falha ao gerar código: ' + e.message, 'err');
+    } finally {
+      btn.disabled = false;
+    }
+  };
+
+  function fmtDataHora(ts) {
+    if (!ts) return '—';
+    const d = ts.toDate ? ts.toDate() : new Date(ts);
+    return isNaN(d) ? '—' : d.toLocaleString('pt-BR');
+  }
+
+  function renderCodigos(lista) {
+    document.getElementById('cntCodigosDisp').textContent =
+      lista.filter(c => !c.usado && !c.cancelado).length;
+    const tbody = document.getElementById('codigosTableBody');
+    if (!lista.length) {
+      tbody.innerHTML = '<tr><td colspan="4"><div class="empty-state"><div class="empty-icon">🔑</div>Nenhum código gerado ainda</div></td></tr>';
+      return;
+    }
+    tbody.innerHTML = lista.map(c => {
+      const status = c.cancelado
+        ? '<span style="color:var(--text4);">✕ Cancelado</span>'
+        : c.usado
+          ? '<span style="color:var(--text3);">● Usado</span>'
+          : '<span style="color:var(--green);font-weight:700;">✓ Disponível</span>';
+      const acao = (!c.usado && !c.cancelado)
+        ? `<button class="btn-act btn-danger" onclick="cancelarCodigo('${c.codigo}')">Cancelar</button>`
+        : '';
+      return `<tr>
+        <td style="font-family:'Share Tech Mono',monospace;font-weight:700;letter-spacing:2px;">${escapeHtml(c.codigo)}</td>
+        <td>${status}</td>
+        <td>${escapeHtml(c.criado_por || '—')}</td>
+        <td>${fmtDataHora(c.criado_em)} ${acao}</td>
+      </tr>`;
+    }).join('');
+  }
+
+  window.cancelarCodigo = async function (codigo) {
+    if (!confirm(`Cancelar o código ${codigo}? Ele deixará de funcionar.`)) return;
+    try { await cancelarCodigoAcesso(codigo); toast('Código cancelado', 'ok'); }
+    catch (e) { console.error(e); toast('❌ Falha: ' + e.message, 'err'); }
+  };
+
   // ── Assinaturas em tempo real (com reconexão ao voltar ao foco) ────────
   let unsubs = [];
   function conectar() {
     unsubs.forEach(u => { try { u(); } catch (_) {} });
     unsubs = [];
     try {
-      unsubs.push(assinarPendentes(renderPendentes, () => statusDot(false, 'Reconectando...')));
-      unsubs.push(assinarUsuarios(renderUsuarios, () => statusDot(false, 'Reconectando...')));
-      unsubs.push(assinarModulos(lista => { renderModulos(lista); statusDot(true, 'Firestore online'); },
-                                 () => statusDot(false, 'Reconectando...')));
+      // Usuários/Perguntas: só admin tem permissão de leitura nas regras.
+      if (me.perfil === 'admin') {
+        unsubs.push(assinarPendentes(renderPendentes, () => statusDot(false, 'Reconectando...')));
+        unsubs.push(assinarUsuarios(renderUsuarios, () => statusDot(false, 'Reconectando...')));
+        unsubs.push(assinarModulos(lista => { renderModulos(lista); statusDot(true, 'Firestore online'); },
+                                   () => statusDot(false, 'Reconectando...')));
+      }
+      // Códigos de acesso: admin e viewer têm permissão (isAvaliador()).
+      unsubs.push(assinarCodigosAcesso(
+        lista => { renderCodigos(lista); statusDot(true, 'Firestore online'); },
+        () => statusDot(false, 'Reconectando...')
+      ));
     } catch (e) {
       console.error(e);
       statusDot(false, 'Falha ao conectar');

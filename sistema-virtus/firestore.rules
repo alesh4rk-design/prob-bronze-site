@@ -54,7 +54,10 @@ service cloud.firestore {
                        request.resource.data.diff(resource.data).affectedKeys()
                          .hasOnly(['decisao', 'decisao_por', 'decisao_em']))
                     );
-      allow delete: if request.auth != null && isAdmin();
+      // Excluir candidato: liberado para admin E viewer (decisão do dono do
+      // sistema — diferente da edição parcial acima, aqui qualquer avaliador
+      // logado pode apagar o resultado inteiro).
+      allow delete: if request.auth != null && isAvaliador();
     }
 
     // codigos_acesso/{codigo}: código de uso único que impede o candidato de

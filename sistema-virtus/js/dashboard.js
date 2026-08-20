@@ -50,6 +50,14 @@ export async function definirDecisao(resultadoId, decisao, avaliador) {
   }
 }
 
+// Exclui um resultado (uma tentativa de quiz ou digitação). Admin e viewer
+// podem (firestore.rules: resultados/{id} allow delete para isAvaliador()).
+// Usado no modal de detalhe do candidato para excluir TODAS as tentativas
+// dele — o chamador itera sobre os ids e chama esta função para cada um.
+export async function excluirResultado(id) {
+  await deleteDoc(doc(db, "resultados", id));
+}
+
 // ── Gerenciamento de acesso de avaliadores (usuarios/{uid}) ────────────────
 // Autocadastro cria contas com perfil "pendente" (cadastro.html); estas
 // funções permitem que um admin veja a fila e aprove (definindo admin ou

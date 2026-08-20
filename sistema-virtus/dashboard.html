@@ -276,6 +276,17 @@
   }
   .btn-pdf:hover { transform:translateY(-1px); box-shadow:0 6px 20px var(--amberglow); }
 
+  .btn-act {
+    border:none; border-radius:6px; padding:12px 20px; cursor:pointer;
+    font-family:'Rajdhani',sans-serif; font-weight:700; font-size:13px;
+    letter-spacing:1px; text-transform:uppercase; transition:all .15s;
+  }
+  .btn-act:hover { transform:translateY(-1px); }
+  .btn-act:disabled { opacity:.4; cursor:not-allowed; transform:none; }
+  .btn-danger  { background:transparent; color:var(--red); border:1px solid var(--red); }
+  .btn-danger:hover { background:var(--reddim); }
+  .btn-neutral { background:var(--ink4); color:var(--text2); border:1px solid var(--line2); }
+
   /* ══════════ RELATÓRIO PARA PDF / IMPRESSÃO ══════════ */
   #printReport { display:none; }
 
@@ -523,6 +534,7 @@
       <button class="btn-pdf" onclick="gerarPDF()">📄 Relatório completo</button>
       <button class="btn-pdf" style="background:linear-gradient(135deg,#0088B0,#00C8E8);color:#02222c;" onclick="gerarResumoSkills()">📊 Resumo de competências</button>
       <button class="btn-act btn-neutral" style="padding:12px 20px;border-radius:6px;" onclick="fecharCandidato()">Fechar</button>
+      <button class="btn-act btn-danger" id="btnExcluirCandidato" style="padding:12px 20px;border-radius:6px;margin-left:auto;" onclick="excluirCandidatoAtual()">🗑 Excluir candidato</button>
     </div>
   </div>
 </div>
@@ -550,31 +562,6 @@
     </div>
   </div>
 
-  <!-- ══ CÓDIGO DE ACESSO PRESENCIAL ══ -->
-  <div class="panel" style="margin-bottom:16px;">
-    <div class="panel-head">
-      <div class="panel-title-sm">🔑 Código de Acesso do Candidato</div>
-    </div>
-    <div class="panel-body" style="padding:16px 20px;">
-      <div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap;">
-        <button class="btn btn-amber" id="btnGerarCodigo" style="width:auto;">▶ Gerar novo código</button>
-        <div id="codigoGerado" style="display:none;align-items:center;gap:10px;">
-          <span style="font-family:'Share Tech Mono',monospace;font-size:32px;font-weight:700;letter-spacing:8px;color:var(--amber);background:var(--amberdim);border:1px solid var(--ambermid);border-radius:6px;padding:6px 18px;" id="codigoValorGrande"></span>
-          <span style="font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--text3);letter-spacing:1px;">Uso único · entregue ao candidato presencialmente</span>
-        </div>
-      </div>
-      <div class="warn-note" style="margin-top:14px;">
-        Cada código só funciona <strong>uma vez</strong>. Gere um código novo para cada candidato, na hora, para impedir que o teste seja feito de fora da empresa.
-      </div>
-      <div class="results-table-wrap" style="margin-top:12px;">
-        <table>
-          <thead><tr><th>Código</th><th>Status</th><th>Gerado por</th><th>Quando</th></tr></thead>
-          <tbody id="codigosTableBody"><tr><td colspan="4"><div class="empty-state"><div class="empty-icon">🔑</div>Nenhum código gerado ainda</div></td></tr></tbody>
-        </table>
-      </div>
-    </div>
-  </div>
-
   <div class="kpi-bar-5">
     <div class="kpi-card amber"><div class="kpi-icon">📋</div><div class="kpi-val" id="kpiTotal">0</div><div class="kpi-lbl">Testes Realizados</div></div>
     <div class="kpi-card green"><div class="kpi-icon">✅</div><div class="kpi-val" id="kpiAprov">0</div><div class="kpi-lbl">Aprovados (≥70%)</div></div>
@@ -594,6 +581,16 @@
           <option value="aprovado">Aprovados</option>
           <option value="reprovado">Reprovados</option>
         </select>
+        <select class="field-input" id="filterPeriodo" onchange="onChangePeriodo()">
+          <option value="hoje">📅 Hoje</option>
+          <option value="ontem">📅 Ontem</option>
+          <option value="7dias">📅 Últimos 7 dias</option>
+          <option value="mes">📅 Este mês</option>
+          <option value="personalizado">📅 Período personalizado…</option>
+          <option value="todos">📅 Todos os dias</option>
+        </select>
+        <input type="date" class="field-input" id="filterDataDe" style="display:none;max-width:150px;" onchange="applyFilters()">
+        <input type="date" class="field-input" id="filterDataAte" style="display:none;max-width:150px;" onchange="applyFilters()">
       </div>
     </div>
     <div class="results-table-wrap">
@@ -656,7 +653,7 @@
 
 <script type="module">
   import { requireDashboardAccess, virtusLogout } from "./js/auth.js";
-  import { assinarResultados, assinarViolacoes, definirDecisao, gerarCodigoAcesso, assinarCodigosAcesso, cancelarCodigoAcesso } from "./js/dashboard.js";
+  import { assinarResultados, assinarViolacoes, definirDecisao, excluirResultado } from "./js/dashboard.js";
 
   let ALL_RESULTADOS = [];
   let ALL_VIOLACOES = [];
@@ -772,6 +769,30 @@
   window.fecharCandidato = function () {
     document.getElementById('candModal').classList.remove('show');
     document.body.style.overflow = '';
+  };
+
+  // Exclui TODAS as tentativas (quiz e digitação) do candidato aberto no
+  // modal. Admin e viewer podem — reforçado em firestore.rules.
+  window.excluirCandidatoAtual = async function () {
+    const tents = tentativasDe(CAND_ATUAL);
+    if (!tents.length) return;
+    const nome = tents[0].nome || CAND_ATUAL;
+    if (!confirm(`Excluir TODOS os testes de "${nome}" (${tents.length} registro(s))?\n\nEssa ação não pode ser desfeita.`)) return;
+
+    const btn = document.getElementById('btnExcluirCandidato');
+    btn.disabled = true;
+    btn.textContent = '⏳ Excluindo...';
+    try {
+      for (const t of tents) await excluirResultado(t.id);
+      toast(`🗑️ ${tents.length} registro(s) de "${nome}" excluído(s)`, 'ok');
+      fecharCandidato();
+    } catch (e) {
+      console.error(e);
+      toast('❌ Falha ao excluir: ' + e.message, 'err');
+    } finally {
+      btn.disabled = false;
+      btn.textContent = '🗑 Excluir candidato';
+    }
   };
   window.setFiltroQ = function (modo) {
     FILTRO_Q = modo;
@@ -1315,18 +1336,62 @@
   }
 
   // ── Filtros ──────────────────────────────────────────────────────────
+  const LS_PERIODO = 'virtus_dashboard_periodo';
+
   window.applyFilters = function() { renderAll(); };
   window.clearAllFilters = function() {
     document.getElementById('searchInput').value = '';
     document.getElementById('filterModulo').value = '';
     document.getElementById('filterStatus').value = '';
+    document.getElementById('filterPeriodo').value = 'todos';
+    localStorage.setItem(LS_PERIODO, 'todos');
+    onChangePeriodo();
+  };
+
+  window.onChangePeriodo = function() {
+    const periodo = document.getElementById('filterPeriodo').value;
+    localStorage.setItem(LS_PERIODO, periodo);
+    const custom = periodo === 'personalizado';
+    document.getElementById('filterDataDe').style.display = custom ? '' : 'none';
+    document.getElementById('filterDataAte').style.display = custom ? '' : 'none';
     renderAll();
   };
+
+  // Retorna [inicioISO, fimISO] (yyyy-mm-dd) representando o período
+  // selecionado, ou null para "todos os dias" (sem filtro de data).
+  function calcularIntervaloPeriodo() {
+    const periodo = document.getElementById('filterPeriodo').value;
+    const toISO = d => d.toISOString().slice(0, 10);
+    const hoje = new Date();
+
+    if (periodo === 'todos') return null;
+    if (periodo === 'hoje') { const s = toISO(hoje); return [s, s]; }
+    if (periodo === 'ontem') {
+      const ontem = new Date(hoje); ontem.setDate(ontem.getDate() - 1);
+      const s = toISO(ontem); return [s, s];
+    }
+    if (periodo === '7dias') {
+      const seteDiasAtras = new Date(hoje); seteDiasAtras.setDate(seteDiasAtras.getDate() - 6);
+      return [toISO(seteDiasAtras), toISO(hoje)];
+    }
+    if (periodo === 'mes') {
+      const inicioMes = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
+      return [toISO(inicioMes), toISO(hoje)];
+    }
+    if (periodo === 'personalizado') {
+      const de = document.getElementById('filterDataDe').value;
+      const ate = document.getElementById('filterDataAte').value;
+      if (!de && !ate) return null;
+      return [de || '0000-01-01', ate || '9999-12-31'];
+    }
+    return null;
+  }
 
   function getFiltered() {
     const busca = (document.getElementById('searchInput').value || '').toLowerCase();
     const modulo = document.getElementById('filterModulo').value;
     const status = document.getElementById('filterStatus').value;
+    const intervalo = calcularIntervaloPeriodo();
     return ALL_RESULTADOS.filter(r => {
       if (r.tipo === 'typing') return false; // exibido na seção própria
       if (busca && !(r.nome || '').toLowerCase().includes(busca)) return false;
@@ -1334,6 +1399,10 @@
       const aprovado = (r.pct || 0) >= 70;
       if (status === 'aprovado' && !aprovado) return false;
       if (status === 'reprovado' && aprovado) return false;
+      if (intervalo) {
+        const dataR = (r.data_conclusao || '').slice(0, 10); // yyyy-mm-dd
+        if (!dataR || dataR < intervalo[0] || dataR > intervalo[1]) return false;
+      }
       return true;
     });
   }
@@ -1429,7 +1498,13 @@
   }
 
   function renderTyping() {
-    const lista = ALL_RESULTADOS.filter(r => r.tipo === 'typing');
+    const intervalo = calcularIntervaloPeriodo();
+    const lista = ALL_RESULTADOS.filter(r => {
+      if (r.tipo !== 'typing') return false;
+      if (!intervalo) return true;
+      const dataR = (r.data_conclusao || '').slice(0, 10);
+      return dataR && dataR >= intervalo[0] && dataR <= intervalo[1];
+    });
     document.getElementById('typingBadge').textContent = lista.length + ' registros';
     const el = document.getElementById('typingList');
     if (!lista.length) { el.innerHTML = '<div class="empty-state"><div class="empty-icon">⌨️</div>Sem testes de digitação ainda</div>'; return; }
@@ -1446,9 +1521,13 @@
 
   function renderViolacoes() {
     const tbody = document.getElementById('violTableBody');
-    document.getElementById('violBadge').textContent = ALL_VIOLACOES.length + ' eventos';
-    if (!ALL_VIOLACOES.length) { tbody.innerHTML = '<tr><td colspan="5"><div class="empty-state"><div class="empty-icon">🚨</div>Nenhuma violação registrada</div></td></tr>'; return; }
-    tbody.innerHTML = ALL_VIOLACOES.slice(0, 100).map(v => `
+    const intervalo = calcularIntervaloPeriodo();
+    const lista = intervalo
+      ? ALL_VIOLACOES.filter(v => v.data && v.data >= intervalo[0] && v.data <= intervalo[1])
+      : ALL_VIOLACOES;
+    document.getElementById('violBadge').textContent = lista.length + ' eventos';
+    if (!lista.length) { tbody.innerHTML = '<tr><td colspan="5"><div class="empty-state"><div class="empty-icon">🚨</div>Nenhuma violação registrada</div></td></tr>'; return; }
+    tbody.innerHTML = lista.slice(0, 100).map(v => `
       <tr>
         <td class="td-nome">${escapeHtml(v.nome || '—')}</td>
         <td><span class="badge-modulo">${escapeHtml(v.modulo || '—')}</span></td>
@@ -1485,58 +1564,7 @@
     toast('CSV exportado!', 'ok');
   };
 
-  // ── Código de acesso presencial (admin e viewer podem gerar) ────────────
-  document.getElementById('btnGerarCodigo').onclick = async () => {
-    const btn = document.getElementById('btnGerarCodigo');
-    btn.disabled = true;
-    try {
-      const codigo = await gerarCodigoAcesso(me.usuario);
-      document.getElementById('codigoValorGrande').textContent = codigo;
-      document.getElementById('codigoGerado').style.display = 'flex';
-      toast('✅ Código gerado — entregue ao candidato', 'ok');
-    } catch (e) {
-      console.error(e);
-      toast('❌ Falha ao gerar código: ' + e.message, 'err');
-    } finally {
-      btn.disabled = false;
-    }
-  };
-
-  function fmtDataHora(ts) {
-    if (!ts) return '—';
-    const d = ts.toDate ? ts.toDate() : new Date(ts);
-    return isNaN(d) ? '—' : d.toLocaleString('pt-BR');
-  }
-
-  function renderCodigos(lista) {
-    const tbody = document.getElementById('codigosTableBody');
-    if (!lista.length) {
-      tbody.innerHTML = '<tr><td colspan="4"><div class="empty-state"><div class="empty-icon">🔑</div>Nenhum código gerado ainda</div></td></tr>';
-      return;
-    }
-    tbody.innerHTML = lista.map(c => {
-      const status = c.cancelado
-        ? '<span style="color:var(--text4);">✕ Cancelado</span>'
-        : c.usado
-          ? '<span style="color:var(--text3);">● Usado</span>'
-          : '<span style="color:var(--green);font-weight:700;">✓ Disponível</span>';
-      const acao = (!c.usado && !c.cancelado)
-        ? `<button class="btn-act btn-danger" onclick="cancelarCodigo('${c.codigo}')">Cancelar</button>`
-        : '';
-      return `<tr>
-        <td style="font-family:'Share Tech Mono',monospace;font-weight:700;letter-spacing:2px;">${escapeHtml(c.codigo)}</td>
-        <td>${status}</td>
-        <td>${escapeHtml(c.criado_por || '—')}</td>
-        <td class="td-time">${fmtDataHora(c.criado_em)} ${acao}</td>
-      </tr>`;
-    }).join('');
-  }
-
-  window.cancelarCodigo = async function (codigo) {
-    if (!confirm(`Cancelar o código ${codigo}? Ele deixará de funcionar.`)) return;
-    try { await cancelarCodigoAcesso(codigo); toast('Código cancelado', 'ok'); }
-    catch (e) { console.error(e); toast('❌ Falha: ' + e.message, 'err'); }
-  };
+  // Código de acesso presencial: gestão movida para admin.html.
 
   // ── Assinaturas em tempo real ───────────────────────────────────────
   // Navegadores de celular suspendem a conexão do Firestore quando a aba
@@ -1557,15 +1585,19 @@
         (lista) => { ALL_VIOLACOES = lista; renderViolacoes(); },
         () => statusDot(false, 'Conexão perdida — reconectando...')
       ));
-      unsubs.push(assinarCodigosAcesso(
-        renderCodigos,
-        () => statusDot(false, 'Conexão perdida — reconectando...')
-      ));
     } catch (e) {
       console.error(e);
       statusDot(false, 'Falha ao conectar ao Firestore');
       toast('Erro ao conectar ao Firestore. Verifique js/firebase-config.js', 'err');
     }
+  }
+
+  // Por padrão mostra só hoje, para não misturar candidatos de dias
+  // diferentes na mesma lista; lembra a última escolha entre sessões.
+  document.getElementById('filterPeriodo').value = localStorage.getItem(LS_PERIODO) || 'hoje';
+  if (document.getElementById('filterPeriodo').value === 'personalizado') {
+    document.getElementById('filterDataDe').style.display = '';
+    document.getElementById('filterDataAte').style.display = '';
   }
 
   conectar();
