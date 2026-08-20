@@ -77,6 +77,42 @@ export async function removerUsuario(uid) {
   await deleteDoc(doc(db, "usuarios", uid));
 }
 
+// Assina TODOS os avaliadores cadastrados (pendentes, admins e viewers),
+// usado no painel de administração para gerenciar acessos.
+export function assinarUsuarios(callback, onError) {
+  return onSnapshot(collection(db, "usuarios"), (snap) => {
+    const lista = [];
+    snap.forEach((d) => lista.push({ uid: d.id, ...d.data() }));
+    callback(lista);
+  }, (err) => { console.error("assinarUsuarios:", err); if (onError) onError(err); });
+}
+
+// ── Gerenciamento do banco de perguntas (perguntas/{modulo}) ───────────────
+// Cada doc tem { questoes: [...], ativo: bool }. Módulos com ativo === false
+// não aparecem para o candidato escolher no quiz, mas continuam salvos.
+
+// Assina a lista de módulos com contagem de questões e status ativo/inativo.
+export function assinarModulos(callback, onError) {
+  return onSnapshot(collection(db, "perguntas"), (snap) => {
+    const lista = [];
+    snap.forEach((d) => {
+      const data = d.data();
+      lista.push({
+        nome: d.id,
+        total: (data.questoes || []).length,
+        ativo: data.ativo !== false // ausente = ativo (compatível com seed antigo)
+      });
+    });
+    lista.sort((a, b) => a.nome.localeCompare(b.nome));
+    callback(lista);
+  }, (err) => { console.error("assinarModulos:", err); if (onError) onError(err); });
+}
+
+// Liga/desliga um módulo para os candidatos.
+export async function definirModuloAtivo(modulo, ativo) {
+  await updateDoc(doc(db, "perguntas", modulo), { ativo });
+}
+
 // Leitura pontual (sem realtime), útil para exportações (CSV/Excel).
 export async function buscarResultadosUmaVez() {
   const snap = await getDocs(collection(db, "resultados"));

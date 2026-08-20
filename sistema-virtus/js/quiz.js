@@ -44,7 +44,11 @@ export async function listarModulos() {
   const modulos = [];
   let total = 0;
   snap.forEach((d) => {
-    const questoes = d.data().questoes || [];
+    const data = d.data();
+    // Módulos desativados pelo admin (ativo === false) não são oferecidos ao
+    // candidato. Docs sem o campo `ativo` contam como ativos.
+    if (data.ativo === false) return;
+    const questoes = data.questoes || [];
     modulos.push({ nome: d.id, total: questoes.length });
     total += questoes.length;
   });

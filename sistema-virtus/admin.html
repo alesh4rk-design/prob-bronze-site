@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sistema Virtus — Administração</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@300;400;500;600;700&family=Exo+2:ital,wght@0,100;0,300;0,400;0,600;0,800;1,300&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink:      #05080F;
+    --ink2:     #0C1120;
+    --ink3:     #111828;
+    --ink4:     #182030;
+    --ink5:     #1E2840;
+    --line:     rgba(255,255,255,0.07);
+    --line2:    rgba(255,255,255,0.13);
+    --line3:    rgba(255,255,255,0.22);
+    --amber:    #F0A800;
+    --amber2:   #FFB800;
+    --amber3:   #FFCA40;
+    --amberdim: rgba(240,168,0,0.10);
+    --ambermid: rgba(240,168,0,0.22);
+    --amberglow:rgba(240,168,0,0.35);
+    --cyan:     #00D4F0;
+    --cyandim:  rgba(0,212,240,0.10);
+    --cyanmid:  rgba(0,212,240,0.22);
+    --red:      #FF5549;
+    --reddim:   rgba(255,85,73,0.14);
+    --green:    #00EE88;
+    --greendim: rgba(0,238,136,0.12);
+    --purple:   #A880FF;
+    --purpledim:rgba(168,128,255,0.12);
+    --purplemid:rgba(168,128,255,0.24);
+    --text:     #E8EDF8;
+    --text2:    #B8C4D8;
+    --text3:    #7A8EA8;
+    --text4:    #506070;
+  }
+  body.light-theme {
+    --ink:      #F2F5FC;
+    --ink2:     #FFFFFF;
+    --ink3:     #EAEEf8;
+    --ink4:     #DDE3F0;
+    --ink5:     #CED6E8;
+    --line:     rgba(0,0,50,0.07);
+    --line2:    rgba(0,0,50,0.13);
+    --line3:    rgba(0,0,50,0.22);
+    --amber:    #D48000;
+    --amber2:   #F09000;
+    --amber3:   #FFB300;
+    --amberdim: rgba(212,128,0,0.10);
+    --ambermid: rgba(212,128,0,0.22);
+    --amberglow:rgba(212,128,0,0.38);
+    --cyan:     #0099BB;
+    --cyandim:  rgba(0,153,187,0.10);
+    --cyanmid:  rgba(0,153,187,0.22);
+    --purple:   #7040E0;
+    --purpledim:rgba(112,64,224,0.10);
+    --purplemid:rgba(112,64,224,0.25);
+    --red:      #E82020;
+    --reddim:   rgba(232,32,32,0.10);
+    --green:    #00AA55;
+    --greendim: rgba(0,170,85,0.10);
+    --text:     #080E1C;
+    --text2:    #1C2C4A;
+    --text3:    #3A5070;
+    --text4:    #607090;
+  }
+  *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+  html { scroll-behavior: smooth; }
+  body { min-height:100%; background:var(--ink); color:var(--text); font-family:'Exo 2',sans-serif; }
+
+  .grid-bg { position:fixed; inset:0; pointer-events:none; z-index:0; overflow:hidden; }
+  .grid-bg::before {
+    content:''; position:absolute; inset:-100%;
+    background-image:linear-gradient(var(--line) 1px,transparent 1px),linear-gradient(90deg,var(--line) 1px,transparent 1px);
+    background-size:48px 48px; animation:gridDrift 40s linear infinite;
+  }
+  @keyframes gridDrift { from{transform:translate(0,0)} to{transform:translate(48px,48px)} }
+
+  .hud {
+    position:fixed; top:0; left:0; right:0; height:56px;
+    display:flex; align-items:center; padding:0 20px;
+    background:var(--ink2); border-bottom:1px solid var(--line2); z-index:100;
+    box-shadow:0 1px 12px rgba(0,0,0,0.15);
+  }
+  .hud-logo { display:flex; align-items:center; gap:10px; flex-shrink:0; }
+  .hud-hex { width:34px; height:34px; position:relative; display:flex; align-items:center; justify-content:center; }
+  .hud-hex svg { position:absolute; }
+  .hud-hex-icon { position:relative; z-index:1; font-size:14px; }
+  .hud-brand { display:flex; flex-direction:column; }
+  .hud-name { font-family:'Rajdhani',sans-serif; font-size:18px; font-weight:700; letter-spacing:4px; color:var(--amber2); line-height:1; text-transform:uppercase; }
+  .hud-sub  { font-family:'Share Tech Mono',monospace; font-size:10px; letter-spacing:2px; color:var(--text3); text-transform:uppercase; line-height:1; margin-top:2px; }
+  .hud-sep  { width:1px; height:28px; background:var(--line2); margin:0 16px; flex-shrink:0; }
+  .hud-status { display:flex; align-items:center; gap:6px; }
+  .hud-dot  { width:6px; height:6px; border-radius:50%; background:var(--green); box-shadow:0 0 6px var(--green); animation:blink 2s ease-in-out infinite; }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+  .hud-status-text { font-family:'Share Tech Mono',monospace; font-size:11px; letter-spacing:1.5px; color:var(--text2); text-transform:uppercase; font-weight:600; }
+  .hud-right { margin-left:auto; display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+  .hud-time { font-family:'Share Tech Mono',monospace; font-size:13px; color:var(--text2); letter-spacing:1px; font-weight:600; }
+  .hud-btn  { height:32px; border-radius:4px; border:1px solid var(--line2); background:var(--ink3); color:var(--text2); font-size:11px; font-family:'Share Tech Mono',monospace; letter-spacing:1px; cursor:pointer; transition:all 0.15s; display:flex; align-items:center; justify-content:center; padding:0 12px; gap:6px; white-space:nowrap; text-decoration:none; }
+  .hud-btn:hover { border-color:var(--amber); color:var(--amber); background:var(--amberdim); }
+  .theme-toggle { background:var(--ink3); border:1px solid var(--line2); border-radius:30px; width:36px; height:36px; display:flex; align-items:center; justify-content:center; cursor:pointer; transition:all 0.2s; color:var(--text2); font-size:16px; }
+  .theme-toggle:hover { border-color:var(--amber); color:var(--amber); background:var(--amberdim); }
+
+  .hud-foot { position:fixed; bottom:0; left:0; right:0; height:32px; display:flex; align-items:center; padding:0 20px; background:var(--ink2); border-top:1px solid var(--line2); z-index:100; gap:16px; }
+  .hud-foot-item { font-family:'Share Tech Mono',monospace; font-size:10px; letter-spacing:1.5px; color:var(--text3); text-transform:uppercase; font-weight:600; }
+  .hud-foot-item span { color:var(--text2); }
+
+  .main { padding: 76px 24px 52px; position:relative; z-index:10; max-width:1400px; margin:0 auto; }
+  .page-title-area { margin-bottom:28px; display:flex; align-items:flex-end; justify-content:space-between; flex-wrap:wrap; gap:12px; }
+  .page-title { font-family:'Rajdhani',sans-serif; font-size:32px; font-weight:700; letter-spacing:6px; color:var(--text); text-transform:uppercase; line-height:1; }
+  .page-title em { color:var(--amber2); font-style:normal; }
+  .page-subtitle { font-family:'Share Tech Mono',monospace; font-size:11px; letter-spacing:2px; color:var(--text2); text-transform:uppercase; margin-top:4px; font-weight:600; }
+  .page-actions { display:flex; gap:8px; flex-wrap:wrap; }
+
+  .kpi-bar-5 { display:grid; grid-template-columns:repeat(5,1fr); gap:12px; margin-bottom:24px; }
+  @media(max-width:1100px){.kpi-bar-5{grid-template-columns:repeat(3,1fr);}}
+  @media(max-width:600px){.kpi-bar-5{grid-template-columns:1fr 1fr;}}
+  .kpi-card { background:var(--ink2); border:1px solid var(--line2); border-radius:2px; padding:18px 20px; position:relative; overflow:hidden; }
+  .kpi-card::before { content:''; position:absolute; top:0; left:0; right:0; height:3px; }
+  .kpi-card.amber::before { background: linear-gradient(90deg, transparent, #7a4a00 10%, #c77400 25%, #ffb300 45%, #ffd700 65%, #ffb300 85%, #c07000 98%, transparent); }
+  .kpi-card.green::before { background: linear-gradient(90deg, transparent, #004d1a 10%, #00882e 25%, #00cc44 45%, #00ff55 65%, #00cc44 85%, #007722 98%, transparent); }
+  .kpi-card.cyan::before { background: linear-gradient(90deg, transparent, #003366 10%, #0055cc 25%, #0099ee 45%, #00ccff 65%, #0099ee 85%, #004499 98%, transparent); }
+  .kpi-card.red::before { background: linear-gradient(90deg, transparent, #660000 10%, #cc1111 25%, #ee3333 45%, #ff5555 65%, #ee3333 85%, #cc1111 98%, transparent); }
+  .kpi-card.purple::before { background: linear-gradient(90deg, transparent, #2a0060 10%, #6600cc 25%, #9933ff 45%, #cc66ff 65%, #9933ff 85%, #6600cc 98%, transparent); }
+  .kpi-icon { font-size:20px; margin-bottom:10px; opacity:0.85; }
+  .kpi-val  { font-family:'Rajdhani',sans-serif; font-size:40px; font-weight:700; line-height:1; letter-spacing:2px; }
+  .kpi-card.amber .kpi-val { color:var(--amber3); }
+  .kpi-card.green .kpi-val { color:var(--green); }
+  .kpi-card.cyan  .kpi-val { color:var(--cyan); }
+  .kpi-card.purple .kpi-val{ color:var(--purple); }
+  .kpi-card.red   .kpi-val { color:var(--red); }
+  .kpi-lbl  { font-family:'Share Tech Mono',monospace; font-size:10px; letter-spacing:1.5px; color:var(--text2); text-transform:uppercase; margin-top:5px; font-weight:600; }
+
+  .panel { background:var(--ink2); border:1px solid var(--line2); border-radius:2px; position:relative; overflow:hidden; }
+  .panel::before { content:''; position:absolute; top:0; left:0; right:0; height:2px; background:linear-gradient(90deg,transparent 5%,var(--amber) 20%,var(--amber3) 50%,var(--amber) 80%,transparent 95%); }
+  .panel-head { padding:18px 24px 14px; display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid var(--line); flex-wrap:wrap; gap:10px; }
+  .panel-title-sm { font-family:'Rajdhani',sans-serif; font-size:16px; font-weight:700; letter-spacing:3px; text-transform:uppercase; color:var(--text); display:flex; align-items:center; gap:10px; }
+  .panel-title-sm .badge { font-family:'Share Tech Mono',monospace; font-size:10px; letter-spacing:1.5px; padding:3px 9px; border-radius:2px; background:var(--amberdim); border:1px solid var(--ambermid); color:var(--amber); font-weight:700; }
+  .panel-title-sm .badge.green { background:var(--greendim); border-color:var(--green); color:var(--green); }
+  .panel-title-sm .badge.cyan  { background:var(--cyandim); border-color:var(--cyanmid); color:var(--cyan); }
+  .panel-body { padding:20px 24px; }
+
+  .toolbar { display:flex; gap:10px; flex-wrap:wrap; }
+  .field-input { background:var(--ink3); border:1px solid var(--line2); border-radius:2px; padding:9px 14px; color:var(--text); font-family:'Exo 2',sans-serif; font-size:13px; font-weight:500; outline:none; transition:border-color 0.2s,box-shadow 0.2s; appearance:none; letter-spacing:0.3px; }
+  .field-input:focus { border-color:var(--amber); box-shadow:0 0 0 3px var(--amberdim); }
+  input[type="search"].field-input { min-width:220px; }
+
+  .btn { display:inline-flex; align-items:center; justify-content:center; gap:8px; font-family:'Rajdhani',sans-serif; font-size:13px; font-weight:700; letter-spacing:2px; text-transform:uppercase; cursor:pointer; border:none; border-radius:2px; padding:9px 20px; transition:all 0.15s; }
+  .btn-amber { background:linear-gradient(135deg,var(--amber) 0%,var(--amber2) 100%); color:var(--ink); }
+  .btn-amber:hover { transform:translateY(-1px); box-shadow:0 6px 24px var(--amberglow); }
+  .btn-outline { background:transparent; border:1px solid var(--line3); color:var(--text2); }
+  .btn-outline:hover { border-color:var(--amber); color:var(--amber); background:var(--amberdim); }
+
+  .results-table-wrap { overflow-x:auto; }
+  table { width:100%; border-collapse:collapse; font-size:14px; }
+  thead tr { border-bottom:2px solid var(--line3); }
+  th { font-family:'Share Tech Mono',monospace; font-size:10px; letter-spacing:1.5px; color:var(--text2); text-transform:uppercase; padding:11px 14px; text-align:left; font-weight:700; white-space:nowrap; position:sticky; top:0; background:var(--ink2); z-index:2; }
+  tbody tr { border-bottom:1px solid var(--line2); transition:background 0.12s; }
+  tbody tr:hover { background:var(--ink3); }
+  td { padding:13px 14px; color:var(--text2); vertical-align:middle; font-size:14px; }
+  td.td-nome { color:var(--text); font-weight:700; font-size:15px; }
+  td.td-pct { font-family:'Rajdhani',sans-serif; font-size:22px; font-weight:700; letter-spacing:1px; }
+  td.td-time { font-family:'Share Tech Mono',monospace; font-size:11px; color:var(--text3); font-weight:600; }
+  .pct-bar-wrap { display:flex; align-items:center; gap:10px; min-width:130px; }
+  .pct-bar-track { flex:1; height:4px; background:var(--ink4); border-radius:2px; overflow:hidden; }
+  .pct-bar-fill { height:100%; border-radius:2px; transition:width 0.6s cubic-bezier(.4,0,.2,1); }
+  .pct-high { background:var(--green); }
+  .pct-mid  { background:var(--amber); }
+  .pct-low  { background:var(--red); }
+  .badge-modulo { display:inline-block; padding:3px 9px; border-radius:2px; font-family:'Share Tech Mono',monospace; font-size:9px; letter-spacing:1.5px; text-transform:uppercase; border:1px solid; border-color:var(--ambermid); color:var(--amber); background:var(--amberdim); }
+  .empty-state { text-align:center; padding:60px 20px; font-family:'Share Tech Mono',monospace; font-size:11px; letter-spacing:2px; color:var(--text4); text-transform:uppercase; }
+  .empty-state .empty-icon { font-size:40px; margin-bottom:14px; opacity:0.3; }
+
+  .charts-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:16px; }
+  @media(max-width:860px){.charts-grid{grid-template-columns:1fr;}}
+  .chart-wrap { padding:16px 20px 20px; }
+  .mod-bar-list { display:flex; flex-direction:column; gap:12px; }
+  .mod-bar-header { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:5px; }
+  .mod-bar-name { font-size:13px; color:var(--text); font-weight:600; }
+  .mod-bar-stats { font-family:'Share Tech Mono',monospace; font-size:11px; color:var(--text2); font-weight:600; }
+  .mod-bar-track { height:7px; background:var(--ink4); border-radius:2px; overflow:hidden; }
+  .mod-bar-fill  { height:100%; border-radius:2px; background:linear-gradient(90deg,var(--amber),var(--amber3)); transition:width 0.8s cubic-bezier(.4,0,.2,1); }
+  .hist-wrap { display:flex; align-items:flex-end; gap:4px; height:80px; }
+  .hist-col { flex:1; display:flex; flex-direction:column; align-items:center; gap:4px; height:100%; justify-content:flex-end; }
+  .hist-bar { width:100%; border-radius:2px 2px 0 0; min-height:2px; background:var(--amber); opacity:0.7; transition:height 0.6s, opacity 0.2s; }
+
+  .typing-collab-list { display:flex; flex-direction:column; gap:8px; }
+  .typing-collab-row { background:var(--ink3); border:1px solid var(--line2); border-radius:2px; padding:12px 16px; display:flex; align-items:center; gap:12px; }
+  .typing-collab-name { font-size:14px; font-weight:700; color:var(--text); flex:1; }
+  .typing-collab-stats { display:flex; gap:12px; align-items:center; }
+  .typing-collab-stat { text-align:center; }
+  .typing-collab-stat-val { font-family:'Rajdhani',sans-serif; font-size:18px; font-weight:700; line-height:1; }
+  .typing-collab-stat-lbl { font-family:'Share Tech Mono',monospace; font-size:8px; color:var(--text3); letter-spacing:1px; }
+
+  .toast { position:fixed; top:68px; right:16px; background:var(--ink2); border:1px solid var(--line3); border-radius:2px; padding:12px 16px; font-family:'Share Tech Mono',monospace; font-size:11px; color:var(--text); letter-spacing:1px; z-index:500; transform:translateX(110%); transition:transform 0.3s cubic-bezier(.4,0,.2,1),opacity 0.3s; max-width:280px; opacity:0; box-shadow:0 8px 32px rgba(0,0,0,0.5); }
+  .toast.show { transform:translateX(0); opacity:1; }
+
+  ::-webkit-scrollbar { width:4px; height:4px; }
+  ::-webkit-scrollbar-track { background:var(--ink); }
+  ::-webkit-scrollbar-thumb { background:var(--ink5); border-radius:2px; }
+  /* ── Painel de administração ── */
+  .admin-tabs { display:flex; gap:8px; margin-bottom:18px; flex-wrap:wrap; }
+  .admin-tab {
+    display:inline-flex; align-items:center; gap:8px;
+    padding:11px 20px; border-radius:6px; cursor:pointer;
+    background:var(--ink3); border:1px solid var(--line2); color:var(--text2);
+    font-family:'Rajdhani',sans-serif; font-size:14px; font-weight:700;
+    letter-spacing:1.5px; text-transform:uppercase; transition:all .15s;
+  }
+  .admin-tab:hover { border-color:var(--ambermid); color:var(--text); }
+  .admin-tab.active { background:var(--amberdim); border-color:var(--amber); color:var(--amber); }
+  .admin-tab .tab-count {
+    font-family:'Share Tech Mono',monospace; font-size:10px;
+    background:var(--ink); border-radius:20px; padding:2px 8px; color:var(--text3);
+  }
+  .admin-tab.active .tab-count { background:rgba(0,0,0,.3); color:var(--amber); }
+  .admin-section { display:none; }
+  .admin-section.active { display:block; }
+
+  .perfil-chip {
+    display:inline-block; padding:3px 10px; border-radius:20px;
+    font-family:'Share Tech Mono',monospace; font-size:10px; letter-spacing:1px;
+  }
+  .perfil-admin    { background:var(--greendim); color:var(--green); border:1px solid rgba(0,238,136,.4); }
+  .perfil-viewer   { background:var(--cyandim);  color:var(--cyan);  border:1px solid rgba(0,212,240,.4); }
+  .perfil-pendente { background:var(--amberdim); color:var(--amber); border:1px solid rgba(240,168,0,.4); }
+
+  .btn-act {
+    border:none; border-radius:6px; padding:7px 12px; cursor:pointer;
+    font-family:'Rajdhani',sans-serif; font-weight:700; font-size:12px;
+    letter-spacing:1px; text-transform:uppercase; transition:all .15s;
+  }
+  .btn-act:hover { transform:translateY(-1px); }
+  .btn-approve-admin  { background:var(--green); color:#04170e; }
+  .btn-approve-viewer { background:var(--cyan);  color:#04202a; }
+  .btn-danger  { background:transparent; color:var(--red); border:1px solid var(--red); }
+  .btn-neutral { background:var(--ink4); color:var(--text2); border:1px solid var(--line2); }
+
+  /* Switch de módulo ativo/inativo */
+  .mod-row {
+    display:flex; align-items:center; gap:14px; padding:14px 16px;
+    background:var(--ink3); border:1px solid var(--line2); border-radius:8px;
+    margin-bottom:8px; flex-wrap:wrap;
+  }
+  .mod-row.inativo { opacity:.55; }
+  .mod-nome { font-family:'Rajdhani',sans-serif; font-size:17px; font-weight:700; letter-spacing:.5px; color:var(--text); flex:1; min-width:140px; }
+  .mod-qtd { font-family:'Share Tech Mono',monospace; font-size:11px; color:var(--text3); }
+  .switch { position:relative; width:52px; height:28px; flex-shrink:0; }
+  .switch input { opacity:0; width:0; height:0; }
+  .switch .slider {
+    position:absolute; inset:0; cursor:pointer; border-radius:28px;
+    background:var(--ink5); border:1px solid var(--line2); transition:.25s;
+  }
+  .switch .slider::before {
+    content:''; position:absolute; height:20px; width:20px; left:3px; bottom:3px;
+    background:var(--text3); border-radius:50%; transition:.25s;
+  }
+  .switch input:checked + .slider { background:var(--greendim); border-color:var(--green); }
+  .switch input:checked + .slider::before { transform:translateX(24px); background:var(--green); }
+
+  .seed-box {
+    background:var(--ink3); border:1px solid var(--line2); border-radius:8px;
+    padding:18px 20px; margin-top:16px;
+  }
+  .seed-log {
+    white-space:pre-wrap; background:var(--ink); border:1px solid var(--line);
+    border-radius:6px; padding:12px; margin-top:14px; font-family:'Share Tech Mono',monospace;
+    font-size:11px; max-height:220px; overflow:auto; color:var(--text2); display:none;
+  }
+  .seed-log.show { display:block; }
+  .warn-note {
+    font-family:'Share Tech Mono',monospace; font-size:11px; line-height:1.7;
+    color:var(--text3); background:var(--amberdim); border:1px solid var(--ambermid);
+    border-radius:6px; padding:12px 14px; margin-bottom:14px;
+  }
+</style>
+</head>
+<body class="dark-theme">
+
+<header class="hud">
+  <div class="hud-logo">
+    <div class="hud-hex">
+      <svg width="34" height="34" viewBox="0 0 34 34" fill="none">
+        <path d="M17 2L31 9.5V24.5L17 32L3 24.5V9.5L17 2Z" fill="rgba(232,160,0,0.08)" stroke="rgba(232,160,0,0.5)" stroke-width="1"/>
+        <path d="M17 6L28 12V24L17 30L6 24V12L17 6Z" fill="none" stroke="rgba(232,160,0,0.2)" stroke-width="0.5"/>
+      </svg>
+      <span class="hud-hex-icon">⚡</span>
+    </div>
+    <div class="hud-brand">
+      <div class="hud-name">Virtus</div>
+      <div class="hud-sub">Painel de Administração</div>
+    </div>
+  </div>
+  <div class="hud-sep"></div>
+  <div class="hud-status" id="serverStatusBadge">
+    <div class="hud-dot" id="serverDot" style="background:var(--amber);box-shadow:0 0 6px var(--amber);"></div>
+    <span class="hud-status-text" id="serverStatusText">Conectando...</span>
+  </div>
+  <div class="hud-right">
+    <span class="hud-time" id="hudClock">--:--:--</span>
+    <div class="theme-toggle" id="themeToggle" onclick="toggleTheme()" title="Alternar tema">🌙</div>
+    <a href="./dashboard.html" class="hud-btn" style="width:auto;padding:0 12px;">📊 Dashboard</a>
+    <span id="authUserBadge" style="display:inline-flex;align-items:center;gap:6px;height:32px;padding:0 12px;border-radius:4px;border:1px solid rgba(232,160,0,0.4);background:rgba(232,160,0,0.08);color:#E8A000;font-size:11px;font-family:'Share Tech Mono',monospace;letter-spacing:1px;">👤 <span id="authUserName">...</span></span>
+    <button class="hud-btn" id="btnLogout" style="border-color:rgba(248,81,73,0.4);color:#f85149;">⏻ Sair</button>
+  </div>
+</header>
+
+<div class="toast" id="toast"></div>
+
+<main class="main">
+
+  <div class="admin-tabs">
+    <div class="admin-tab active" data-tab="usuarios" onclick="switchTab('usuarios')">
+      👥 Usuários <span class="tab-count" id="cntPendentes">0</span>
+    </div>
+    <div class="admin-tab" data-tab="perguntas" onclick="switchTab('perguntas')">
+      📚 Perguntas <span class="tab-count" id="cntModulos">0</span>
+    </div>
+  </div>
+
+  <!-- ══════════ ABA: USUÁRIOS ══════════ -->
+  <section class="admin-section active" id="sec-usuarios">
+
+    <div class="panel" style="margin-bottom:16px;">
+      <div class="panel-head">
+        <div class="panel-title-sm">🔑 Solicitações de Acesso Pendentes
+          <span class="badge" id="pendBadge" style="background:var(--amberdim);border-color:var(--ambermid);color:var(--amber);">0</span>
+        </div>
+      </div>
+      <div class="panel-body" style="padding:16px 20px;">
+        <div class="warn-note">
+          Quem se cadastra em <strong>cadastro.html</strong> entra nesta fila sem nenhum acesso.
+          Aprove como <strong>Admin</strong> (gerencia tudo) ou <strong>Viewer</strong>
+          (vê resultados e decide apto/não apto, mas não administra).
+        </div>
+        <div class="results-table-wrap">
+          <table>
+            <thead><tr><th>Nome</th><th>E-mail</th><th>Aprovar como</th><th style="width:60px;">Recusar</th></tr></thead>
+            <tbody id="pendTableBody">
+              <tr><td colspan="4"><div class="empty-state"><div class="empty-icon">🔑</div>Nenhuma solicitação pendente</div></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head">
+        <div class="panel-title-sm">👥 Avaliadores com Acesso
+          <span class="badge cyan" id="ativosBadge">0</span>
+        </div>
+      </div>
+      <div class="results-table-wrap">
+        <table>
+          <thead><tr><th>Nome</th><th>E-mail</th><th>Perfil</th><th>Alterar</th></tr></thead>
+          <tbody id="usersTableBody">
+            <tr><td colspan="4"><div class="empty-state"><div class="empty-icon">👥</div>Carregando...</div></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </section>
+
+  <!-- ══════════ ABA: PERGUNTAS ══════════ -->
+  <section class="admin-section" id="sec-perguntas">
+
+    <div class="panel" style="margin-bottom:16px;">
+      <div class="panel-head">
+        <div class="panel-title-sm">📚 Módulos Disponíveis
+          <span class="badge cyan" id="modBadge">0 módulos</span>
+        </div>
+      </div>
+      <div class="panel-body" style="padding:16px 20px;">
+        <div class="warn-note">
+          Desligue um módulo para que ele <strong>deixe de aparecer</strong> para o candidato
+          no quiz. As perguntas continuam salvas — é só uma questão de disponibilidade.
+        </div>
+        <div id="modulosList">
+          <div class="empty-state"><div class="empty-icon">📚</div>Carregando módulos...</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head"><div class="panel-title-sm">⬆️ Importar / Atualizar Banco de Perguntas</div></div>
+      <div class="panel-body" style="padding:16px 20px;">
+        <div class="warn-note">
+          Use apenas na <strong>primeira configuração</strong> do sistema, ou quando o
+          conteúdo das perguntas mudar. A importação <strong>sobrescreve</strong> as questões
+          de cada módulo pela versão que está no código
+          (<code>js/perguntas-seed-data.js</code>). O estado ligado/desligado é preservado.
+        </div>
+        <div class="seed-box">
+          <div id="seedStatus" style="font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--text3);margin-bottom:14px;">
+            Pronto para importar <strong id="seedQtd">…</strong> módulos.
+          </div>
+          <button class="btn-act btn-approve-admin" id="btnSeed" style="padding:11px 20px;font-size:13px;">
+            ▶ Importar perguntas agora
+          </button>
+          <div class="seed-log" id="seedLog"></div>
+        </div>
+      </div>
+    </div>
+
+  </section>
+
+</main>
+
+<footer class="hud-foot">
+  <span class="hud-foot-item">Sistema <span>Virtus</span></span>
+  <span class="hud-foot-item">Administração</span>
+  <span class="hud-foot-item" style="margin-left:auto;">Perfil: <span id="authUserPerfil">—</span></span>
+  <span class="hud-foot-item">Versão <span>3.0 (Firebase)</span></span>
+</footer>
+
+<script type="module">
+  import { requireDashboardAccess, virtusLogout } from "./js/auth.js";
+  import {
+    assinarPendentes, assinarUsuarios, aprovarUsuario, removerUsuario,
+    assinarModulos, definirModuloAtivo
+  } from "./js/dashboard.js";
+  import { db } from "./js/firebase-config.js";
+  import { doc, setDoc } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+  import { PERGUNTAS_SEED } from "./js/perguntas-seed-data.js";
+
+  // ── Utilidades ────────────────────────────────────────────────────────
+  function escapeHtml(s) {
+    return String(s ?? '').replace(/[&<>"']/g, c =>
+      ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+  }
+  function toast(msg, type = '') {
+    const el = document.getElementById('toast');
+    el.textContent = msg; el.className = 'toast show ' + type;
+    setTimeout(() => el.classList.remove('show'), 3500);
+  }
+  function statusDot(ok, label) {
+    const dot = document.getElementById('serverDot');
+    dot.style.background = ok ? 'var(--green)' : 'var(--red)';
+    dot.style.boxShadow = ok ? '0 0 6px var(--green)' : '0 0 6px var(--red)';
+    document.getElementById('serverStatusText').textContent = label;
+  }
+  function updateClock() {
+    const n = new Date();
+    document.getElementById('hudClock').textContent =
+      [n.getHours(), n.getMinutes(), n.getSeconds()].map(v => String(v).padStart(2, '0')).join(':');
+  }
+  setInterval(updateClock, 1000); updateClock();
+
+  window.toggleTheme = function () {
+    const isLight = document.body.classList.contains('light-theme');
+    document.body.classList.toggle('light-theme', !isLight);
+    document.body.classList.toggle('dark-theme', isLight);
+    localStorage.setItem('virtus_theme', isLight ? 'dark' : 'light');
+    document.getElementById('themeToggle').textContent = isLight ? '🌙' : '☀️';
+  };
+  (function initTheme() {
+    const saved = localStorage.getItem('virtus_theme');
+    const isDark = saved === 'dark' || (saved === null && window.matchMedia('(prefers-color-scheme: dark)').matches);
+    document.body.classList.toggle('dark-theme', isDark);
+    document.body.classList.toggle('light-theme', !isDark);
+    if (!isDark) document.getElementById('themeToggle').textContent = '☀️';
+  })();
+
+  window.switchTab = function (tab) {
+    document.querySelectorAll('.admin-tab').forEach(t =>
+      t.classList.toggle('active', t.dataset.tab === tab));
+    document.querySelectorAll('.admin-section').forEach(s =>
+      s.classList.toggle('active', s.id === 'sec-' + tab));
+  };
+
+  // ── Portão de acesso: SOMENTE admin ───────────────────────────────────
+  const me = await requireDashboardAccess();
+  if (!me) throw new Error('sem acesso');
+  if (me.perfil !== 'admin') {
+    document.querySelector('.main').innerHTML =
+      '<div class="panel"><div class="panel-body" style="padding:40px;text-align:center;">' +
+      '<div style="font-size:44px;margin-bottom:14px;">🔒</div>' +
+      '<div style="font-family:Rajdhani,sans-serif;font-size:22px;font-weight:700;color:var(--red);letter-spacing:2px;">ACESSO RESTRITO</div>' +
+      '<p style="margin-top:12px;color:var(--text3);">Esta área é exclusiva para administradores.<br>' +
+      'Seu perfil atual é <strong>' + escapeHtml(me.perfil) + '</strong>.</p>' +
+      '<a href="./dashboard.html" class="btn-act btn-neutral" style="display:inline-block;margin-top:20px;text-decoration:none;">← Voltar ao Dashboard</a>' +
+      '</div></div>';
+    throw new Error('não é admin');
+  }
+  document.getElementById('authUserName').textContent = me.usuario;
+  document.getElementById('authUserPerfil').textContent = me.perfil;
+  document.getElementById('btnLogout').onclick = async () => {
+    await virtusLogout(); window.location.replace('./index.html');
+  };
+
+  // ── Solicitações pendentes ────────────────────────────────────────────
+  function renderPendentes(lista) {
+    document.getElementById('pendBadge').textContent = lista.length;
+    document.getElementById('cntPendentes').textContent = lista.length;
+    const tbody = document.getElementById('pendTableBody');
+    if (!lista.length) {
+      tbody.innerHTML = '<tr><td colspan="4"><div class="empty-state"><div class="empty-icon">🔑</div>Nenhuma solicitação pendente</div></td></tr>';
+      return;
+    }
+    tbody.innerHTML = lista.map(p => `
+      <tr>
+        <td class="td-nome">${escapeHtml(p.nome || '—')}</td>
+        <td>${escapeHtml(p.email || '—')}</td>
+        <td>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;">
+            <button class="btn-act btn-approve-admin"  onclick="aprovar('${p.uid}','admin')">Admin</button>
+            <button class="btn-act btn-approve-viewer" onclick="aprovar('${p.uid}','viewer')">Viewer</button>
+          </div>
+        </td>
+        <td><button class="btn-act btn-danger" onclick="recusar('${p.uid}','${escapeHtml(p.nome || p.email || '')}')">✕</button></td>
+      </tr>`).join('');
+  }
+
+  // ── Avaliadores já com acesso ─────────────────────────────────────────
+  function renderUsuarios(todos) {
+    const ativos = todos.filter(u => u.perfil === 'admin' || u.perfil === 'viewer');
+    document.getElementById('ativosBadge').textContent = ativos.length;
+    const tbody = document.getElementById('usersTableBody');
+    if (!ativos.length) {
+      tbody.innerHTML = '<tr><td colspan="4"><div class="empty-state"><div class="empty-icon">👥</div>Nenhum avaliador aprovado ainda</div></td></tr>';
+      return;
+    }
+    tbody.innerHTML = ativos.map(u => {
+      const souEu = u.uid === me.uid;
+      const outroPerfil = u.perfil === 'admin' ? 'viewer' : 'admin';
+      return `
+        <tr>
+          <td class="td-nome">${escapeHtml(u.nome || '—')}${souEu ? ' <span style="color:var(--text3);font-size:11px;">(você)</span>' : ''}</td>
+          <td>${escapeHtml(u.email || '—')}</td>
+          <td><span class="perfil-chip perfil-${u.perfil}">${u.perfil}</span></td>
+          <td>
+            <div style="display:flex;gap:6px;flex-wrap:wrap;">
+              ${souEu
+                ? '<span style="color:var(--text4);font-size:11px;font-family:\'Share Tech Mono\',monospace;">—</span>'
+                : `<button class="btn-act btn-neutral" onclick="alterarPerfil('${u.uid}','${outroPerfil}')">→ ${outroPerfil}</button>
+                   <button class="btn-act btn-danger" onclick="recusar('${u.uid}','${escapeHtml(u.nome || u.email || '')}')">Revogar</button>`}
+            </div>
+          </td>
+        </tr>`;
+    }).join('');
+  }
+
+  window.aprovar = async function (uid, perfil) {
+    try { await aprovarUsuario(uid, perfil); toast(`✅ Aprovado como ${perfil}`, 'ok'); }
+    catch (e) { console.error(e); toast('❌ Falha: ' + e.message, 'err'); }
+  };
+  window.alterarPerfil = async function (uid, perfil) {
+    try { await aprovarUsuario(uid, perfil); toast(`✅ Perfil alterado para ${perfil}`, 'ok'); }
+    catch (e) { console.error(e); toast('❌ Falha: ' + e.message, 'err'); }
+  };
+  window.recusar = async function (uid, nome) {
+    if (!confirm(`Remover o acesso de "${nome}"?\n\nA conta continua existindo, mas perde o acesso ao sistema.`)) return;
+    try { await removerUsuario(uid); toast('Acesso removido', 'ok'); }
+    catch (e) { console.error(e); toast('❌ Falha: ' + e.message, 'err'); }
+  };
+
+  // ── Módulos de perguntas ──────────────────────────────────────────────
+  function renderModulos(lista) {
+    document.getElementById('cntModulos').textContent = lista.length;
+    document.getElementById('modBadge').textContent = lista.length + ' módulos';
+    const el = document.getElementById('modulosList');
+    if (!lista.length) {
+      el.innerHTML = '<div class="empty-state"><div class="empty-icon">📚</div>' +
+        'Nenhum módulo no banco ainda.<br>Use a importação abaixo para carregar as perguntas.</div>';
+      return;
+    }
+    el.innerHTML = lista.map(m => `
+      <div class="mod-row ${m.ativo ? '' : 'inativo'}">
+        <div class="mod-nome">${escapeHtml(m.nome)}</div>
+        <div class="mod-qtd">${m.total} perguntas</div>
+        <label class="switch">
+          <input type="checkbox" ${m.ativo ? 'checked' : ''} onchange="alternarModulo('${escapeHtml(m.nome)}', this.checked)">
+          <span class="slider"></span>
+        </label>
+        <span class="mod-qtd" style="min-width:56px;color:${m.ativo ? 'var(--green)' : 'var(--text4)'};">
+          ${m.ativo ? 'ativo' : 'inativo'}
+        </span>
+      </div>`).join('');
+  }
+
+  window.alternarModulo = async function (modulo, ativo) {
+    try {
+      await definirModuloAtivo(modulo, ativo);
+      toast(ativo ? `✅ "${modulo}" ativado` : `⏸ "${modulo}" desativado`, 'ok');
+    } catch (e) { console.error(e); toast('❌ Falha: ' + e.message, 'err'); }
+  };
+
+  // ── Importação do banco de perguntas ──────────────────────────────────
+  document.getElementById('seedQtd').textContent = Object.keys(PERGUNTAS_SEED).length;
+
+  document.getElementById('btnSeed').onclick = async () => {
+    const totalMods = Object.keys(PERGUNTAS_SEED).length;
+    if (!confirm(`Importar/atualizar ${totalMods} módulos?\n\nAs questões atuais de cada módulo serão substituídas pela versão do código.`)) return;
+    const btn = document.getElementById('btnSeed');
+    const logEl = document.getElementById('seedLog');
+    btn.disabled = true;
+    logEl.classList.add('show');
+    logEl.textContent = 'Iniciando importação...\n';
+    const log = m => { logEl.textContent += m + '\n'; logEl.scrollTop = logEl.scrollHeight; };
+    let ok = 0, fail = 0;
+    for (const [modulo, questoes] of Object.entries(PERGUNTAS_SEED)) {
+      try {
+        // merge:true preserva o campo `ativo` já definido pelo admin.
+        await setDoc(doc(db, "perguntas", modulo), { questoes }, { merge: true });
+        log(`✅ ${modulo}: ${questoes.length} perguntas`);
+        ok++;
+      } catch (e) {
+        log(`❌ ${modulo}: ${e.message}`);
+        fail++;
+      }
+    }
+    log(`\nConcluído: ${ok} módulos gravados${fail ? `, ${fail} falharam` : ''}.`);
+    toast(fail ? `Importação concluída com ${fail} falha(s)` : '✅ Perguntas importadas!', fail ? 'err' : 'ok');
+    btn.disabled = false;
+  };
+
+  // ── Assinaturas em tempo real (com reconexão ao voltar ao foco) ────────
+  let unsubs = [];
+  function conectar() {
+    unsubs.forEach(u => { try { u(); } catch (_) {} });
+    unsubs = [];
+    try {
+      unsubs.push(assinarPendentes(renderPendentes, () => statusDot(false, 'Reconectando...')));
+      unsubs.push(assinarUsuarios(renderUsuarios, () => statusDot(false, 'Reconectando...')));
+      unsubs.push(assinarModulos(lista => { renderModulos(lista); statusDot(true, 'Firestore online'); },
+                                 () => statusDot(false, 'Reconectando...')));
+    } catch (e) {
+      console.error(e);
+      statusDot(false, 'Falha ao conectar');
+      toast('Erro ao conectar ao Firestore', 'err');
+    }
+  }
+  conectar();
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) conectar(); });
+  window.addEventListener('online', conectar);
+  window.addEventListener('focus', conectar);
+</script>
+</body>
+</html>

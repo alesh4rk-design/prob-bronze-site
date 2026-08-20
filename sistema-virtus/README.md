@@ -17,7 +17,10 @@ sistema-virtus/
 ├── index.html                  → login (avaliadores)
 ├── quiz.html                   → launcher + quiz do candidato
 ├── digitacao.html              → teste de digitação do candidato
-├── dashboard.html              → painel administrativo (admin/viewer)
+├── dashboard.html              → resultados dos candidatos (admin/viewer)
+├── admin.html                  → painel de administração (só admin):
+│                                 aprovar usuários + gerenciar perguntas
+├── cadastro.html               → autocadastro de avaliadores (fica pendente)
 ├── seed-perguntas.html         → ferramenta de uso único p/ popular Firestore
 ├── firestore.rules             → regras de segurança do Firestore
 ├── js/
@@ -177,3 +180,42 @@ commitado**:
 - [ ] Revisar a senha fixa `AVALIADOR_SENHA = 'sistemavirtus'` em `quiz.html`
       (usada para destravar o teste após 3 violações) — considerar torná-la
       configurável/rotativa em vez de hardcoded no client.
+
+
+---
+
+## Painel de Administração (`admin.html`)
+
+Acessível apenas para contas com perfil `admin`, pelo botão **⚙ Administração**
+no topo do dashboard. Reúne o que antes exigia abrir o console do Firebase:
+
+### Aba 👥 Usuários
+- **Solicitações pendentes** — quem se cadastrou em `cadastro.html` aparece aqui
+  sem nenhum acesso; aprove como **Admin** ou **Viewer**, ou recuse.
+- **Avaliadores com acesso** — lista de quem já está aprovado, com opção de
+  trocar o perfil (admin ⇄ viewer) ou revogar o acesso. Você não consegue
+  alterar/remover a si mesmo, para não perder o próprio acesso por engano.
+
+### Aba 📚 Perguntas
+- **Módulos disponíveis** — liga/desliga cada módulo. Um módulo desligado
+  (`ativo: false`) não aparece para o candidato escolher no quiz, mas as
+  perguntas continuam salvas.
+- **Importar/atualizar banco de perguntas** — grava em Firestore as questões
+  de `js/perguntas-seed-data.js`. É uma operação de **primeira configuração**:
+  depois de rodar uma vez, as perguntas ficam no banco permanentemente e
+  nenhum candidato precisa de qualquer ativação. Só rode de novo se o conteúdo
+  das perguntas mudar. A importação usa `merge`, então o estado ligado/desligado
+  de cada módulo é preservado.
+
+> `seed-perguntas.html` continua existindo como ferramenta avulsa, mas o fluxo
+> recomendado agora é a aba **Perguntas** do painel de administração.
+
+### Permissões resumidas
+
+| Ação | Admin | Viewer |
+|---|:---:|:---:|
+| Ver resultados, gráficos, violações | ✅ | ✅ |
+| Decidir apto / não apto | ✅ | ✅ |
+| Aprovar/revogar avaliadores | ✅ | ❌ |
+| Ligar/desligar módulos e importar perguntas | ✅ | ❌ |
+| Apagar ou editar resultados | ✅ | ❌ |

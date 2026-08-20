@@ -231,6 +231,7 @@
     <div class="theme-toggle" id="themeToggle" onclick="toggleTheme()" title="Alternar tema">🌙</div>
     <button class="hud-btn" onclick="window.print()" title="Imprimir dashboard">🖨 Imprimir</button>
     <a href="./digitacao.html" class="hud-btn">⌨️ Digitação</a>
+    <a href="./admin.html" class="hud-btn" id="linkAdmin" style="display:none;width:auto;padding:0 12px;border-color:rgba(240,168,0,0.45);color:var(--amber);">⚙ Administração</a>
     <span id="authUserBadge" style="display:inline-flex;align-items:center;gap:6px;height:32px;padding:0 12px;border-radius:4px;border:1px solid rgba(232,160,0,0.4);background:rgba(232,160,0,0.08);color:#E8A000;font-size:11px;font-family:'Share Tech Mono',monospace;letter-spacing:1px;">👤 <span id="authUserName">...</span></span>
     <button class="hud-btn" id="btnLogout" style="border-color:rgba(248,81,73,0.4);color:#f85149;">⏻ Sair</button>
   </div>
@@ -318,16 +319,6 @@
     </div>
   </div>
 
-  <div class="panel" style="margin-bottom:16px;" id="pendentesPanel">
-    <div class="panel-head"><div class="panel-title-sm">🔑 Solicitações de Acesso Pendentes <span class="badge" id="pendBadge" style="background:var(--amberdim,rgba(232,160,0,.1));border-color:rgba(232,160,0,.4);color:var(--amber);">0</span></div></div>
-    <div class="results-table-wrap">
-      <table>
-        <thead><tr><th>Nome</th><th>E-mail</th><th style="width:280px;">Aprovar como</th><th style="width:90px;">Recusar</th></tr></thead>
-        <tbody id="pendTableBody"><tr><td colspan="4"><div class="empty-state"><div class="empty-icon">🔑</div>Nenhuma solicitação pendente</div></td></tr></tbody>
-      </table>
-    </div>
-  </div>
-
   <div class="panel" style="margin-bottom:16px;">
     <div class="panel-head"><div class="panel-title-sm">⌨️ Teste de Digitação — Candidatos <span class="badge cyan" id="typingBadge">0 registros</span></div></div>
     <div class="panel-body">
@@ -349,7 +340,7 @@
 
 <script type="module">
   import { requireDashboardAccess, virtusLogout } from "./js/auth.js";
-  import { assinarResultados, assinarViolacoes, definirDecisao, assinarPendentes, aprovarUsuario, removerUsuario } from "./js/dashboard.js";
+  import { assinarResultados, assinarViolacoes, definirDecisao } from "./js/dashboard.js";
 
   let ALL_RESULTADOS = [];
   let ALL_VIOLACOES = [];
@@ -389,51 +380,12 @@
   }
   document.getElementById('btnLogout').onclick = async () => { await virtusLogout(); window.location.replace('./index.html'); };
 
-  // ── Solicitações pendentes (só admin vê e decide) ───────────────────────
-  const pendentesPanel = document.getElementById('pendentesPanel');
-  if (!(me && me.perfil === 'admin') && pendentesPanel) {
-    pendentesPanel.style.display = 'none';
+  // Gestão de acessos e do banco de perguntas foi movida para admin.html.
+  // Aqui só exibimos o atalho para quem é admin.
+  if (me && me.perfil === 'admin') {
+    const link = document.getElementById('linkAdmin');
+    if (link) link.style.display = 'flex';
   }
-
-  function renderPendentes(lista) {
-      document.getElementById('pendBadge').textContent = lista.length;
-      const tbody = document.getElementById('pendTableBody');
-      if (!lista.length) {
-        tbody.innerHTML = '<tr><td colspan="4"><div class="empty-state"><div class="empty-icon">🔑</div>Nenhuma solicitação pendente</div></td></tr>';
-        return;
-      }
-      tbody.innerHTML = lista.map(p => `
-        <tr>
-          <td class="td-nome">${escapeHtml(p.nome || '—')}</td>
-          <td>${escapeHtml(p.email || '—')}</td>
-          <td>
-            <div style="display:flex;gap:6px;">
-              <button class="btn-sm" style="background:var(--green);color:#0a1a12;border:none;border-radius:6px;padding:6px 10px;cursor:pointer;font-weight:700;" onclick="aprovarPendente('${p.uid}','admin')">Admin</button>
-              <button class="btn-sm" style="background:var(--cyan,#00c8e8);color:#052430;border:none;border-radius:6px;padding:6px 10px;cursor:pointer;font-weight:700;" onclick="aprovarPendente('${p.uid}','viewer')">Viewer</button>
-            </div>
-          </td>
-          <td><button class="btn-sm" style="background:transparent;color:var(--red);border:1px solid var(--red);border-radius:6px;padding:6px 10px;cursor:pointer;" onclick="recusarPendente('${p.uid}')">✕</button></td>
-        </tr>`).join('');
-  }
-
-  window.aprovarPendente = async function(uid, perfil) {
-    try {
-      await aprovarUsuario(uid, perfil);
-      toast(`✅ Acesso aprovado como ${perfil}`, 'ok');
-    } catch (e) {
-      console.error(e);
-      toast('❌ Falha ao aprovar: ' + e.message, 'err');
-    }
-  };
-  window.recusarPendente = async function(uid) {
-    try {
-      await removerUsuario(uid);
-      toast('🗑️ Solicitação recusada', 'ok');
-    } catch (e) {
-      console.error(e);
-      toast('❌ Falha ao recusar: ' + e.message, 'err');
-    }
-  };
 
   // ── Decisão do avaliador (apto / não apto) ──────────────────────────────
   window.setDecisao = async function(resultadoId, decisao) {
@@ -636,7 +588,6 @@
         (lista) => { ALL_VIOLACOES = lista; renderViolacoes(); },
         () => statusDot(false, 'Conexão perdida — reconectando...')
       ));
-      if (me && me.perfil === 'admin') unsubs.push(assinarPendentes(renderPendentes));
     } catch (e) {
       console.error(e);
       statusDot(false, 'Falha ao conectar ao Firestore');
