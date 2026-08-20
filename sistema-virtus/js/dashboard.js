@@ -43,10 +43,14 @@ export function assinarViolacoes(callback, onError) {
 // `avaliador` é o usuário logado (me.usuario, vindo de virtusGetCurrentUser).
 export async function definirDecisao(resultadoId, decisao, avaliador) {
   const ref = doc(db, "resultados", resultadoId);
+  // Firestore rejeita updateDoc com valor undefined em qualquer campo — o
+  // "|| null" garante que sempre vai um valor gravável, mesmo se a conta do
+  // avaliador não tiver o campo "usuario" salvo em Firestore.
+  const nomeAvaliador = avaliador || null;
   if (decisao === "pendente") {
     await updateDoc(ref, { decisao: null, decisao_por: null, decisao_em: null });
   } else {
-    await updateDoc(ref, { decisao, decisao_por: avaliador, decisao_em: serverTimestamp() });
+    await updateDoc(ref, { decisao, decisao_por: nomeAvaliador, decisao_em: serverTimestamp() });
   }
 }
 
@@ -129,6 +133,9 @@ export async function definirModuloAtivo(modulo, ativo) {
 
 // Gera um código novo de 6 dígitos, evitando colisão com um já existente.
 export async function gerarCodigoAcesso(avaliador) {
+  // Firestore rejeita setDoc/updateDoc com campo undefined — mesma causa do
+  // bug de "Falha ao salvar decisão" (conta sem o campo "usuario" salvo).
+  const nomeAvaliador = avaliador || null;
   let codigo;
   for (let tentativa = 0; tentativa < 5; tentativa++) {
     codigo = String(Math.floor(100000 + Math.random() * 900000));
@@ -137,7 +144,7 @@ export async function gerarCodigoAcesso(avaliador) {
     if (!snap.exists()) {
       await setDoc(ref, {
         usado: false,
-        criado_por: avaliador,
+        criado_por: nomeAvaliador,
         criado_em: serverTimestamp(),
         usado_em: null
       });
