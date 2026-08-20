@@ -201,6 +201,157 @@
   ::-webkit-scrollbar { width:4px; height:4px; }
   ::-webkit-scrollbar-track { background:var(--ink); }
   ::-webkit-scrollbar-thumb { background:var(--ink5); border-radius:2px; }
+
+  /* ══════════ MODAL DE DETALHE DO CANDIDATO ══════════ */
+  #tableBody tr.clickable { cursor:pointer; transition:background .15s; }
+  #tableBody tr.clickable:hover { background:var(--amberdim); }
+  .row-hint { font-family:'Share Tech Mono',monospace; font-size:9px; color:var(--text4); letter-spacing:1px; }
+
+  .modal-back {
+    position:fixed; inset:0; background:rgba(0,0,0,.82); backdrop-filter:blur(4px);
+    z-index:800; display:none; align-items:flex-start; justify-content:center;
+    padding:40px 16px; overflow-y:auto;
+  }
+  .modal-back.show { display:flex; }
+  .modal-card {
+    background:var(--ink2); border:1px solid var(--line2); border-radius:4px;
+    width:100%; max-width:860px; position:relative; box-shadow:0 24px 70px rgba(0,0,0,.6);
+    margin-bottom:40px;
+  }
+  .modal-card::before {
+    content:''; position:absolute; top:0; left:0; right:0; height:3px;
+    background:linear-gradient(90deg,transparent,var(--amber) 20%,var(--amber3) 50%,var(--amber) 80%,transparent);
+  }
+  .modal-top {
+    display:flex; align-items:flex-start; gap:16px; padding:22px 24px 16px;
+    border-bottom:1px solid var(--line); flex-wrap:wrap;
+  }
+  .modal-avatar {
+    width:52px; height:52px; border-radius:4px; flex-shrink:0;
+    background:var(--amberdim); border:1px solid var(--ambermid);
+    display:flex; align-items:center; justify-content:center; font-size:24px;
+  }
+  .modal-cand-nome { font-family:'Rajdhani',sans-serif; font-size:24px; font-weight:700; letter-spacing:1.5px; color:var(--text); line-height:1.1; }
+  .modal-cand-sub { font-family:'Share Tech Mono',monospace; font-size:10px; letter-spacing:1.5px; color:var(--text3); text-transform:uppercase; margin-top:4px; }
+  .modal-close {
+    margin-left:auto; background:transparent; border:1px solid var(--line2); color:var(--text3);
+    width:34px; height:34px; border-radius:4px; cursor:pointer; font-size:16px; transition:all .15s;
+  }
+  .modal-close:hover { border-color:var(--red); color:var(--red); background:var(--reddim); }
+  .modal-scroll { padding:20px 24px 24px; }
+
+  .tent-card { border:1px solid var(--line2); border-radius:6px; margin-bottom:16px; overflow:hidden; }
+  .tent-head {
+    display:flex; align-items:center; gap:12px; padding:12px 16px;
+    background:var(--ink3); border-bottom:1px solid var(--line); flex-wrap:wrap;
+  }
+  .tent-mod { font-family:'Rajdhani',sans-serif; font-size:16px; font-weight:700; letter-spacing:1px; color:var(--text); flex:1; min-width:120px; }
+  .tent-nota { font-family:'Rajdhani',sans-serif; font-size:20px; font-weight:700; }
+  .tent-meta { font-family:'Share Tech Mono',monospace; font-size:10px; color:var(--text3); letter-spacing:1px; }
+  .tent-body { padding:14px 16px; }
+
+  .q-item { padding:11px 13px; border-radius:6px; margin-bottom:8px; border-left:3px solid; }
+  .q-item.err { background:var(--reddim); border-color:var(--red); }
+  .q-item.ok  { background:var(--greendim); border-color:var(--green); }
+  .q-txt { font-size:13px; line-height:1.5; color:var(--text); margin-bottom:7px; font-weight:500; }
+  .q-ans { font-family:'Share Tech Mono',monospace; font-size:11px; line-height:1.7; }
+  .q-ans .lbl { color:var(--text3); }
+  .q-ans .dada-err { color:var(--red); }
+  .q-ans .dada-ok  { color:var(--green); }
+  .q-ans .certa    { color:var(--green); }
+
+  .filtro-q { display:flex; gap:8px; margin-bottom:14px; flex-wrap:wrap; }
+  .fq-btn {
+    padding:7px 14px; border-radius:20px; cursor:pointer; font-family:'Share Tech Mono',monospace;
+    font-size:10px; letter-spacing:1px; text-transform:uppercase;
+    background:var(--ink3); border:1px solid var(--line2); color:var(--text3); transition:all .15s;
+  }
+  .fq-btn.active { background:var(--amberdim); border-color:var(--amber); color:var(--amber); }
+
+  .modal-actions { display:flex; gap:10px; padding:16px 24px; border-top:1px solid var(--line); background:var(--ink3); flex-wrap:wrap; }
+  .btn-pdf {
+    background:linear-gradient(135deg,var(--amber),var(--amber2)); color:#1a1000; border:none;
+    border-radius:6px; padding:12px 22px; cursor:pointer; font-family:'Rajdhani',sans-serif;
+    font-weight:700; font-size:14px; letter-spacing:2px; text-transform:uppercase; transition:all .15s;
+  }
+  .btn-pdf:hover { transform:translateY(-1px); box-shadow:0 6px 20px var(--amberglow); }
+
+  /* ══════════ RELATÓRIO PARA PDF / IMPRESSÃO ══════════ */
+  #printReport { display:none; }
+
+  @media print {
+    @page { size:A4; margin:14mm 12mm; }
+    body { background:#fff !important; }
+    .hud, .hud-foot, .main, .modal-back, .toast, .grid-bg { display:none !important; }
+    #printReport { display:block !important; }
+  }
+
+  #printReport {
+    font-family:'Exo 2',sans-serif; color:#12141c; background:#fff;
+    -webkit-print-color-adjust:exact; print-color-adjust:exact;
+  }
+  .pr-header {
+    display:flex; align-items:center; gap:14px; padding-bottom:14px;
+    border-bottom:3px solid #E8A000; margin-bottom:18px;
+  }
+  .pr-hex { width:46px; height:46px; background:linear-gradient(135deg,#E8A000,#C87800); border-radius:9px;
+            display:flex; align-items:center; justify-content:center; font-size:22px; color:#1a1000; }
+  .pr-brand-name { font-family:'Rajdhani',sans-serif; font-size:26px; font-weight:700; letter-spacing:6px; color:#0d1420; text-transform:uppercase; line-height:1; }
+  .pr-brand-sub  { font-family:'Share Tech Mono',monospace; font-size:9px; letter-spacing:3px; color:#7A8EA8; text-transform:uppercase; margin-top:3px; }
+  .pr-doc-label  { margin-left:auto; text-align:right; font-family:'Share Tech Mono',monospace; font-size:9px; letter-spacing:1.5px; color:#7A8EA8; text-transform:uppercase; line-height:1.7; }
+
+  .pr-cand {
+    background:#F7F9FC; border:1px solid #DCE3EE; border-left:4px solid #E8A000;
+    border-radius:5px; padding:14px 16px; margin-bottom:18px;
+    display:flex; gap:22px; flex-wrap:wrap; align-items:center;
+  }
+  .pr-cand-nome { font-family:'Rajdhani',sans-serif; font-size:21px; font-weight:700; letter-spacing:1px; color:#0d1420; }
+  .pr-cand-item { font-family:'Share Tech Mono',monospace; font-size:10px; color:#5A6880; letter-spacing:1px; }
+  .pr-cand-item b { color:#0d1420; font-size:13px; display:block; margin-top:2px; font-family:'Rajdhani',sans-serif; letter-spacing:.5px; }
+
+  .pr-veredito { margin-left:auto; padding:8px 18px; border-radius:5px; font-family:'Rajdhani',sans-serif;
+                 font-weight:700; font-size:15px; letter-spacing:2px; text-transform:uppercase; }
+  .pr-v-apto     { background:#E3F9EE; color:#00713C; border:1.5px solid #00A85A; }
+  .pr-v-naoapto  { background:#FDE9E7; color:#B32218; border:1.5px solid #E0483C; }
+  .pr-v-pendente { background:#FDF4E0; color:#8A6100; border:1.5px solid #E8A000; }
+
+  .pr-sec-title {
+    font-family:'Rajdhani',sans-serif; font-size:14px; font-weight:700; letter-spacing:3px;
+    color:#0d1420; text-transform:uppercase; margin:20px 0 10px;
+    padding-bottom:6px; border-bottom:1.5px solid #E8EdF4;
+  }
+  .pr-mod { border:1px solid #DCE3EE; border-radius:5px; margin-bottom:14px; page-break-inside:avoid; }
+  .pr-mod-head { display:flex; align-items:center; gap:12px; padding:10px 14px; background:#F2F5FA; border-bottom:1px solid #DCE3EE; flex-wrap:wrap; }
+  .pr-mod-nome { font-family:'Rajdhani',sans-serif; font-size:15px; font-weight:700; letter-spacing:1px; color:#0d1420; flex:1; }
+  .pr-mod-nota { font-family:'Rajdhani',sans-serif; font-size:17px; font-weight:700; }
+  .pr-mod-meta { font-family:'Share Tech Mono',monospace; font-size:9px; color:#7A8EA8; letter-spacing:1px; }
+  .pr-mod-body { padding:10px 14px; }
+
+  .pr-q { padding:9px 11px; border-radius:4px; margin-bottom:7px; border-left:3px solid; page-break-inside:avoid; }
+  .pr-q.err { background:#FDF0EF; border-color:#E0483C; }
+  .pr-q.ok  { background:#EFFAF4; border-color:#00A85A; }
+  .pr-q-txt { font-size:11.5px; line-height:1.45; color:#12141c; margin-bottom:5px; font-weight:600; }
+  .pr-q-ans { font-family:'Share Tech Mono',monospace; font-size:10px; line-height:1.6; }
+  .pr-q-ans .l { color:#7A8EA8; }
+  .pr-q-ans .e { color:#B32218; font-weight:700; }
+  .pr-q-ans .c { color:#00713C; font-weight:700; }
+
+  .pr-typing { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; }
+  .pr-t-cell { background:#F7F9FC; border:1px solid #DCE3EE; border-radius:5px; padding:10px; text-align:center; }
+  .pr-t-val { font-family:'Rajdhani',sans-serif; font-size:20px; font-weight:700; color:#0d1420; }
+  .pr-t-lbl { font-family:'Share Tech Mono',monospace; font-size:8px; letter-spacing:1px; color:#7A8EA8; text-transform:uppercase; margin-top:2px; }
+
+  .pr-viol { background:#FDF0EF; border:1px solid #F0C0BC; border-radius:5px; padding:10px 13px; font-family:'Share Tech Mono',monospace; font-size:10px; color:#B32218; line-height:1.7; }
+
+  .pr-foot {
+    margin-top:24px; padding-top:12px; border-top:2px solid #E8A000;
+    display:flex; justify-content:space-between; flex-wrap:wrap; gap:10px;
+    font-family:'Share Tech Mono',monospace; font-size:8.5px; color:#7A8EA8; letter-spacing:1px;
+  }
+  .pr-assinatura { margin-top:34px; display:flex; gap:40px; page-break-inside:avoid; }
+  .pr-sig { flex:1; border-top:1px solid #9AA8BC; padding-top:6px; text-align:center;
+            font-family:'Share Tech Mono',monospace; font-size:9px; color:#5A6880; letter-spacing:1px; }
+
 </style>
 </head>
 <body class="dark-theme">
@@ -238,6 +389,35 @@
 </header>
 
 <div class="toast" id="toast"></div>
+
+
+<!-- ══════════ MODAL DE DETALHE DO CANDIDATO ══════════ -->
+<div class="modal-back" id="candModal" onclick="if(event.target===this)fecharCandidato()">
+  <div class="modal-card">
+    <div class="modal-top">
+      <div class="modal-avatar">👤</div>
+      <div>
+        <div class="modal-cand-nome" id="cmNome">—</div>
+        <div class="modal-cand-sub" id="cmSub">—</div>
+      </div>
+      <button class="modal-close" onclick="fecharCandidato()" title="Fechar">✕</button>
+    </div>
+    <div class="modal-scroll">
+      <div class="filtro-q">
+        <div class="fq-btn active" id="fqErros" onclick="setFiltroQ('erros')">❌ Só os erros</div>
+        <div class="fq-btn" id="fqTodas" onclick="setFiltroQ('todas')">📋 Todas as questões</div>
+      </div>
+      <div id="cmConteudo"></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-pdf" onclick="gerarPDF()">📄 Exportar relatório em PDF</button>
+      <button class="btn-act btn-neutral" style="padding:12px 20px;border-radius:6px;" onclick="fecharCandidato()">Fechar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ RELATÓRIO (visível apenas na impressão/PDF) ══════════ -->
+<div id="printReport"></div>
 
 <footer class="hud-foot">
   <span class="hud-foot-item">Sistema <span>Virtus</span></span>
@@ -398,6 +578,286 @@
     }
   };
 
+
+  // ══════════ DETALHE DO CANDIDATO + RELATÓRIO PDF ══════════
+  let CAND_ATUAL = null;   // nome do candidato aberto
+  let FILTRO_Q = 'erros';  // 'erros' | 'todas'
+
+  // Agrupa todas as tentativas (quiz + digitação) de um mesmo candidato.
+  // A comparação ignora maiúsculas/acentos porque o nome é digitado à mão
+  // pelo candidato a cada teste (ex: "cobaia 1" e "Cobaia 1").
+  function normNome(n) {
+    return (n || '').trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  }
+  function tentativasDe(nome) {
+    const alvo = normNome(nome);
+    return ALL_RESULTADOS
+      .filter(r => normNome(r.nome) === alvo)
+      .sort((a, b) => String(a.data_conclusao || '').localeCompare(String(b.data_conclusao || '')));
+  }
+  function violacoesDe(nome) {
+    const alvo = normNome(nome);
+    return ALL_VIOLACOES.filter(v => normNome(v.nome) === alvo);
+  }
+  function fmtData(iso) {
+    if (!iso) return '—';
+    const d = new Date(iso);
+    return isNaN(d) ? '—' : d.toLocaleString('pt-BR');
+  }
+  function corNota(pct) {
+    return pct >= 70 ? 'var(--green)' : pct >= 50 ? 'var(--amber)' : 'var(--red)';
+  }
+
+  window.abrirCandidato = function (nome) {
+    CAND_ATUAL = nome;
+    FILTRO_Q = 'erros';
+    document.getElementById('fqErros').classList.add('active');
+    document.getElementById('fqTodas').classList.remove('active');
+    renderModalCandidato();
+    document.getElementById('candModal').classList.add('show');
+    document.body.style.overflow = 'hidden';
+  };
+  window.fecharCandidato = function () {
+    document.getElementById('candModal').classList.remove('show');
+    document.body.style.overflow = '';
+  };
+  window.setFiltroQ = function (modo) {
+    FILTRO_Q = modo;
+    document.getElementById('fqErros').classList.toggle('active', modo === 'erros');
+    document.getElementById('fqTodas').classList.toggle('active', modo === 'todas');
+    renderModalCandidato();
+  };
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') fecharCandidato(); });
+
+  function renderModalCandidato() {
+    const tents = tentativasDe(CAND_ATUAL);
+    if (!tents.length) return;
+
+    const quizzes = tents.filter(t => t.tipo !== 'typing');
+    const typings = tents.filter(t => t.tipo === 'typing');
+    const viols = violacoesDe(CAND_ATUAL);
+
+    document.getElementById('cmNome').textContent = tents[0].nome || CAND_ATUAL;
+    document.getElementById('cmSub').textContent =
+      `${tents.length} teste(s) · ${quizzes.length} quiz · ${typings.length} digitação` +
+      (viols.length ? ` · ⚠ ${viols.length} violação(ões)` : '');
+
+    let html = '';
+
+    for (const t of quizzes) {
+      const pct = t.pct || 0;
+      const det = t.respostas_detalhadas || [];
+      const erradas = det.filter(q => !q.acertou);
+      const mostrar = FILTRO_Q === 'erros' ? erradas : det;
+
+      html += `
+        <div class="tent-card">
+          <div class="tent-head">
+            <div class="tent-mod">${escapeHtml(t.modulo || '—')}</div>
+            <div class="tent-nota" style="color:${corNota(pct)}">${pct}%</div>
+            <div class="tent-meta">${t.acertos ?? '—'}/${t.total ?? '—'} · ${fmtData(t.data_conclusao)}</div>
+          </div>
+          <div class="tent-body">`;
+
+      if (!det.length) {
+        html += `<div style="font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--text3);">
+                   Este teste não guardou o detalhamento das respostas.
+                 </div>`;
+      } else if (!mostrar.length) {
+        html += `<div style="font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--green);">
+                   ✅ Nenhum erro neste módulo — acertou todas as ${det.length} questões.
+                 </div>`;
+      } else {
+        html += mostrar.map(q => `
+          <div class="q-item ${q.acertou ? 'ok' : 'err'}">
+            <div class="q-txt">${escapeHtml(q.pergunta || '—')}</div>
+            <div class="q-ans">
+              <span class="lbl">Respondeu:</span>
+              <span class="${q.acertou ? 'dada-ok' : 'dada-err'}">${escapeHtml(q.resposta_dada || '—')}</span>
+              ${q.acertou ? '' :
+                `<br><span class="lbl">Correta:</span> <span class="certa">${escapeHtml(q.resposta_correta || '—')}</span>`}
+            </div>
+          </div>`).join('');
+      }
+      html += `</div></div>`;
+    }
+
+    for (const t of typings) {
+      html += `
+        <div class="tent-card">
+          <div class="tent-head">
+            <div class="tent-mod">⌨️ Digitação${t.categoria ? ' · ' + escapeHtml(t.categoria) : ''}</div>
+            <div class="tent-nota" style="color:${corNota(t.pct || 0)}">${t.pct || 0}%</div>
+            <div class="tent-meta">${fmtData(t.data_conclusao)}</div>
+          </div>
+          <div class="tent-body">
+            <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;">
+              ${[['WPM', t.wpm ?? '—'], ['CPM', t.cpm ?? '—'],
+                 ['⌫ Apagados', t.deleteCount ?? '—'], ['Tempo', (t.elapsedSec ?? '—') + 's']]
+                .map(([l, v]) => `
+                  <div style="background:var(--ink3);border:1px solid var(--line2);border-radius:6px;padding:10px;text-align:center;">
+                    <div style="font-family:'Rajdhani',sans-serif;font-size:20px;font-weight:700;color:var(--cyan);">${v}</div>
+                    <div style="font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--text3);letter-spacing:1px;margin-top:2px;">${l}</div>
+                  </div>`).join('')}
+            </div>
+          </div>
+        </div>`;
+    }
+
+    if (viols.length) {
+      html += `
+        <div class="tent-card" style="border-color:rgba(255,85,73,.4);">
+          <div class="tent-head" style="background:var(--reddim);">
+            <div class="tent-mod" style="color:var(--red);">🚨 Violações registradas</div>
+            <div class="tent-meta">${viols.length} evento(s)</div>
+          </div>
+          <div class="tent-body">
+            ${viols.map(v => `
+              <div style="font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--text2);padding:5px 0;border-bottom:1px solid var(--line);">
+                <span style="color:var(--red);">${escapeHtml(v.tipo || '—')}</span>
+                ${v.detalhe ? ' · ' + escapeHtml(v.detalhe) : ''}
+                <span style="color:var(--text4);"> — ${escapeHtml(v.modulo || '')} ${escapeHtml(v.hora_recebimento || '')} ${escapeHtml(v.data || '')}</span>
+              </div>`).join('')}
+          </div>
+        </div>`;
+    }
+
+    document.getElementById('cmConteudo').innerHTML = html;
+  }
+
+  // ── Geração do relatório em PDF (via impressão do navegador) ───────────
+  window.gerarPDF = function () {
+    const tents = tentativasDe(CAND_ATUAL);
+    if (!tents.length) return;
+
+    const quizzes = tents.filter(t => t.tipo !== 'typing');
+    const typings = tents.filter(t => t.tipo === 'typing');
+    const viols = violacoesDe(CAND_ATUAL);
+    const nome = tents[0].nome || CAND_ATUAL;
+
+    // Média geral considera apenas os quizzes (digitação tem escala própria).
+    const media = quizzes.length
+      ? Math.round(quizzes.reduce((a, t) => a + (t.pct || 0), 0) / quizzes.length) : null;
+
+    // Decisão registrada mais recente entre as tentativas.
+    const comDecisao = tents.filter(t => t.decisao).slice(-1)[0];
+    const decisao = comDecisao ? comDecisao.decisao : 'pendente';
+    const decisaoPor = comDecisao ? comDecisao.decisao_por : null;
+    const vLabel = decisao === 'apto' ? '✓ Apto' : decisao === 'nao_apto' ? '✕ Não apto' : '⏳ Pendente';
+    const vClass = decisao === 'apto' ? 'pr-v-apto' : decisao === 'nao_apto' ? 'pr-v-naoapto' : 'pr-v-pendente';
+
+    const corPct = p => p >= 70 ? '#00713C' : p >= 50 ? '#8A6100' : '#B32218';
+    const agora = new Date().toLocaleString('pt-BR');
+
+    let h = `
+      <div class="pr-header">
+        <div class="pr-hex">⚡</div>
+        <div>
+          <div class="pr-brand-name">Virtus</div>
+          <div class="pr-brand-sub">Sistema de Avaliação de Candidatos</div>
+        </div>
+        <div class="pr-doc-label">
+          Relatório de Avaliação<br>
+          Emitido em ${agora}<br>
+          Documento confidencial
+        </div>
+      </div>
+
+      <div class="pr-cand">
+        <div>
+          <div class="pr-cand-nome">${escapeHtml(nome)}</div>
+          <div class="pr-cand-item" style="margin-top:4px;">${tents.length} teste(s) realizado(s)</div>
+        </div>
+        <div class="pr-cand-item">Módulos<b>${quizzes.length}</b></div>
+        <div class="pr-cand-item">Média geral<b style="color:${media !== null ? corPct(media) : '#5A6880'}">${media !== null ? media + '%' : '—'}</b></div>
+        <div class="pr-cand-item">Digitação<b>${typings.length ? (typings[typings.length - 1].wpm ?? '—') + ' WPM' : '—'}</b></div>
+        <div class="pr-cand-item">Violações<b style="color:${viols.length ? '#B32218' : '#00713C'}">${viols.length}</b></div>
+        <div class="pr-veredito ${vClass}">${vLabel}</div>
+      </div>`;
+
+    if (quizzes.length) {
+      h += `<div class="pr-sec-title">Desempenho por módulo</div>`;
+      for (const t of quizzes) {
+        const pct = t.pct || 0;
+        const det = t.respostas_detalhadas || [];
+        const erradas = det.filter(q => !q.acertou);
+        h += `
+          <div class="pr-mod">
+            <div class="pr-mod-head">
+              <div class="pr-mod-nome">${escapeHtml(t.modulo || '—')}</div>
+              <div class="pr-mod-nota" style="color:${corPct(pct)}">${pct}%</div>
+              <div class="pr-mod-meta">${t.acertos ?? '—'}/${t.total ?? '—'} acertos · ${fmtData(t.data_conclusao)}</div>
+            </div>
+            <div class="pr-mod-body">`;
+        if (!det.length) {
+          h += `<div class="pr-q-ans"><span class="l">Detalhamento das respostas não disponível para este teste.</span></div>`;
+        } else if (!erradas.length) {
+          h += `<div class="pr-q ok"><div class="pr-q-txt">✓ Acertou todas as ${det.length} questões deste módulo.</div></div>`;
+        } else {
+          h += `<div class="pr-q-ans" style="margin-bottom:8px;"><span class="l">QUESTÕES INCORRETAS (${erradas.length} de ${det.length})</span></div>`;
+          h += erradas.map((q, i) => `
+            <div class="pr-q err">
+              <div class="pr-q-txt">${i + 1}. ${escapeHtml(q.pergunta || '—')}</div>
+              <div class="pr-q-ans">
+                <span class="l">Respondeu:</span> <span class="e">${escapeHtml(q.resposta_dada || '—')}</span><br>
+                <span class="l">Correta:</span> <span class="c">${escapeHtml(q.resposta_correta || '—')}</span>
+              </div>
+            </div>`).join('');
+        }
+        h += `</div></div>`;
+      }
+    }
+
+    if (typings.length) {
+      h += `<div class="pr-sec-title">Teste de digitação</div>`;
+      for (const t of typings) {
+        h += `
+          <div class="pr-mod">
+            <div class="pr-mod-head">
+              <div class="pr-mod-nome">${escapeHtml(t.categoria || 'Digitação')}</div>
+              <div class="pr-mod-nota" style="color:${corPct(t.pct || 0)}">${t.pct || 0}%</div>
+              <div class="pr-mod-meta">${fmtData(t.data_conclusao)}</div>
+            </div>
+            <div class="pr-mod-body">
+              <div class="pr-typing">
+                <div class="pr-t-cell"><div class="pr-t-val">${t.wpm ?? '—'}</div><div class="pr-t-lbl">Palavras/min</div></div>
+                <div class="pr-t-cell"><div class="pr-t-val">${t.cpm ?? '—'}</div><div class="pr-t-lbl">Caracteres/min</div></div>
+                <div class="pr-t-cell"><div class="pr-t-val">${t.deleteCount ?? '—'}</div><div class="pr-t-lbl">Apagamentos</div></div>
+                <div class="pr-t-cell"><div class="pr-t-val">${t.elapsedSec ?? '—'}s</div><div class="pr-t-lbl">Tempo usado</div></div>
+              </div>
+            </div>
+          </div>`;
+      }
+    }
+
+    if (viols.length) {
+      h += `<div class="pr-sec-title">Ocorrências durante os testes</div>
+            <div class="pr-viol">` +
+        viols.map(v => `▸ ${escapeHtml(v.tipo || '—')}${v.detalhe ? ' — ' + escapeHtml(v.detalhe) : ''} · ${escapeHtml(v.modulo || '')} · ${escapeHtml(v.data || '')} ${escapeHtml(v.hora_recebimento || '')}`).join('<br>') +
+        `</div>`;
+    }
+
+    h += `
+      <div class="pr-assinatura">
+        <div class="pr-sig">Avaliador responsável${decisaoPor ? ' — ' + escapeHtml(decisaoPor) : ''}</div>
+        <div class="pr-sig">Data</div>
+      </div>
+      <div class="pr-foot">
+        <span>SISTEMA VIRTUS · Avaliação de candidatos</span>
+        <span>${escapeHtml(nome)}</span>
+        <span>Gerado em ${agora}</span>
+      </div>`;
+
+    document.getElementById('printReport').innerHTML = h;
+    // Nome sugerido do arquivo no "Salvar como PDF" vem do título da página.
+    const tituloOriginal = document.title;
+    document.title = `Virtus - ${nome.replace(/[^\w\s-]/g, '')}`;
+    setTimeout(() => {
+      window.print();
+      document.title = tituloOriginal;
+    }, 120);
+  };
+
   // ── Filtros ──────────────────────────────────────────────────────────
   window.applyFilters = function() { renderAll(); };
   window.clearAllFilters = function() {
@@ -460,7 +920,7 @@
       const dt = r.data_conclusao ? new Date(r.data_conclusao).toLocaleString('pt-BR') : '—';
       const decisao = r.decisao || 'pendente';
       const decisaoSelect = podeDecidir
-        ? `<select class="field-input decisao-select decisao-${decisao}" onchange="setDecisao('${r.id}', this.value)">
+        ? `<select class="field-input decisao-select decisao-${decisao}" onclick="event.stopPropagation()" onchange="event.stopPropagation();setDecisao('${r.id}', this.value)">
              <option value="pendente" ${decisao === 'pendente' ? 'selected' : ''}>⏳ Pendente</option>
              <option value="apto" ${decisao === 'apto' ? 'selected' : ''}>✅ Apto</option>
              <option value="nao_apto" ${decisao === 'nao_apto' ? 'selected' : ''}>❌ Não apto</option>
@@ -468,9 +928,9 @@
         : (decisao === 'apto' ? '<span style="color:var(--green);font-weight:700;">✅ Apto</span>'
            : decisao === 'nao_apto' ? '<span style="color:var(--red);font-weight:700;">❌ Não apto</span>'
            : '<span style="color:var(--text3);">⏳ Pendente</span>');
-      return `<tr>
+      return `<tr class="clickable" onclick="abrirCandidato('${escapeHtml(r.nome || '').replace(/'/g, "\\'")}')" title="Ver detalhamento e exportar PDF">
         <td style="text-align:center;color:var(--text3);">${i + 1}</td>
-        <td class="td-nome">${escapeHtml(r.nome || '—')}</td>
+        <td class="td-nome">${escapeHtml(r.nome || '—')} <span class="row-hint">▸ detalhes</span></td>
         <td><span class="badge-modulo">${escapeHtml(r.modulo || '—')}</span></td>
         <td>${r.acertos ?? '—'} / ${r.total ?? '—'}</td>
         <td>
