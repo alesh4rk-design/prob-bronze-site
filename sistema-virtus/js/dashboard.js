@@ -12,7 +12,7 @@
 
 import { db } from "./firebase-config.js";
 import {
-  collection, query, where, orderBy, onSnapshot, getDocs, doc, updateDoc, deleteDoc, serverTimestamp
+  collection, query, where, orderBy, limit, onSnapshot, getDocs, getDoc, doc, setDoc, updateDoc, deleteDoc, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
 
 // Assina a coleção `resultados` em tempo real (substitui o polling de 10s do
@@ -111,6 +111,49 @@ export function assinarModulos(callback, onError) {
 // Liga/desliga um módulo para os candidatos.
 export async function definirModuloAtivo(modulo, ativo) {
   await updateDoc(doc(db, "perguntas", modulo), { ativo });
+}
+
+// ── Código de acesso presencial (codigos_acesso/{codigo}) ──────────────────
+// Impede o candidato de fazer o teste em casa: admin OU viewer gera um
+// código de 6 dígitos ali na hora, de uso único (as firestore.rules impedem
+// reaproveitar um código já marcado como usado). Ver quiz.js para o lado do
+// candidato (verificarEConsumirCodigoAcesso).
+
+// Gera um código novo de 6 dígitos, evitando colisão com um já existente.
+export async function gerarCodigoAcesso(avaliador) {
+  let codigo;
+  for (let tentativa = 0; tentativa < 5; tentativa++) {
+    codigo = String(Math.floor(100000 + Math.random() * 900000));
+    const ref = doc(db, "codigos_acesso", codigo);
+    const snap = await getDoc(ref);
+    if (!snap.exists()) {
+      await setDoc(ref, {
+        usado: false,
+        criado_por: avaliador,
+        criado_em: serverTimestamp(),
+        usado_em: null
+      });
+      return codigo;
+    }
+  }
+  throw new Error("Não foi possível gerar um código único, tente novamente.");
+}
+
+// Assina os últimos códigos gerados (para a lista no painel), mais recentes
+// primeiro. Usa apenas os 30 mais recentes para não pesar o listener.
+export function assinarCodigosAcesso(callback, onError) {
+  const q = query(collection(db, "codigos_acesso"), orderBy("criado_em", "desc"), limit(30));
+  return onSnapshot(q, (snap) => {
+    const lista = [];
+    snap.forEach((d) => lista.push({ codigo: d.id, ...d.data() }));
+    callback(lista);
+  }, (err) => { console.error("assinarCodigosAcesso:", err); if (onError) onError(err); });
+}
+
+// Cancela um código gerado por engano (evaliador). Diferente de "usar" um
+// código, que só o próprio candidato faz (ver quiz.js).
+export async function cancelarCodigoAcesso(codigo) {
+  await updateDoc(doc(db, "codigos_acesso", codigo), { usado: true, usado_em: serverTimestamp(), cancelado: true });
 }
 
 // Leitura pontual (sem realtime), útil para exportações (CSV/Excel).

@@ -550,6 +550,31 @@
     </div>
   </div>
 
+  <!-- ══ CÓDIGO DE ACESSO PRESENCIAL ══ -->
+  <div class="panel" style="margin-bottom:16px;">
+    <div class="panel-head">
+      <div class="panel-title-sm">🔑 Código de Acesso do Candidato</div>
+    </div>
+    <div class="panel-body" style="padding:16px 20px;">
+      <div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap;">
+        <button class="btn btn-amber" id="btnGerarCodigo" style="width:auto;">▶ Gerar novo código</button>
+        <div id="codigoGerado" style="display:none;align-items:center;gap:10px;">
+          <span style="font-family:'Share Tech Mono',monospace;font-size:32px;font-weight:700;letter-spacing:8px;color:var(--amber);background:var(--amberdim);border:1px solid var(--ambermid);border-radius:6px;padding:6px 18px;" id="codigoValorGrande"></span>
+          <span style="font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--text3);letter-spacing:1px;">Uso único · entregue ao candidato presencialmente</span>
+        </div>
+      </div>
+      <div class="warn-note" style="margin-top:14px;">
+        Cada código só funciona <strong>uma vez</strong>. Gere um código novo para cada candidato, na hora, para impedir que o teste seja feito de fora da empresa.
+      </div>
+      <div class="results-table-wrap" style="margin-top:12px;">
+        <table>
+          <thead><tr><th>Código</th><th>Status</th><th>Gerado por</th><th>Quando</th></tr></thead>
+          <tbody id="codigosTableBody"><tr><td colspan="4"><div class="empty-state"><div class="empty-icon">🔑</div>Nenhum código gerado ainda</div></td></tr></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
   <div class="kpi-bar-5">
     <div class="kpi-card amber"><div class="kpi-icon">📋</div><div class="kpi-val" id="kpiTotal">0</div><div class="kpi-lbl">Testes Realizados</div></div>
     <div class="kpi-card green"><div class="kpi-icon">✅</div><div class="kpi-val" id="kpiAprov">0</div><div class="kpi-lbl">Aprovados (≥70%)</div></div>
@@ -631,7 +656,7 @@
 
 <script type="module">
   import { requireDashboardAccess, virtusLogout } from "./js/auth.js";
-  import { assinarResultados, assinarViolacoes, definirDecisao } from "./js/dashboard.js";
+  import { assinarResultados, assinarViolacoes, definirDecisao, gerarCodigoAcesso, assinarCodigosAcesso, cancelarCodigoAcesso } from "./js/dashboard.js";
 
   let ALL_RESULTADOS = [];
   let ALL_VIOLACOES = [];
@@ -1460,6 +1485,59 @@
     toast('CSV exportado!', 'ok');
   };
 
+  // ── Código de acesso presencial (admin e viewer podem gerar) ────────────
+  document.getElementById('btnGerarCodigo').onclick = async () => {
+    const btn = document.getElementById('btnGerarCodigo');
+    btn.disabled = true;
+    try {
+      const codigo = await gerarCodigoAcesso(me.usuario);
+      document.getElementById('codigoValorGrande').textContent = codigo;
+      document.getElementById('codigoGerado').style.display = 'flex';
+      toast('✅ Código gerado — entregue ao candidato', 'ok');
+    } catch (e) {
+      console.error(e);
+      toast('❌ Falha ao gerar código: ' + e.message, 'err');
+    } finally {
+      btn.disabled = false;
+    }
+  };
+
+  function fmtDataHora(ts) {
+    if (!ts) return '—';
+    const d = ts.toDate ? ts.toDate() : new Date(ts);
+    return isNaN(d) ? '—' : d.toLocaleString('pt-BR');
+  }
+
+  function renderCodigos(lista) {
+    const tbody = document.getElementById('codigosTableBody');
+    if (!lista.length) {
+      tbody.innerHTML = '<tr><td colspan="4"><div class="empty-state"><div class="empty-icon">🔑</div>Nenhum código gerado ainda</div></td></tr>';
+      return;
+    }
+    tbody.innerHTML = lista.map(c => {
+      const status = c.cancelado
+        ? '<span style="color:var(--text4);">✕ Cancelado</span>'
+        : c.usado
+          ? '<span style="color:var(--text3);">● Usado</span>'
+          : '<span style="color:var(--green);font-weight:700;">✓ Disponível</span>';
+      const acao = (!c.usado && !c.cancelado)
+        ? `<button class="btn-act btn-danger" onclick="cancelarCodigo('${c.codigo}')">Cancelar</button>`
+        : '';
+      return `<tr>
+        <td style="font-family:'Share Tech Mono',monospace;font-weight:700;letter-spacing:2px;">${escapeHtml(c.codigo)}</td>
+        <td>${status}</td>
+        <td>${escapeHtml(c.criado_por || '—')}</td>
+        <td class="td-time">${fmtDataHora(c.criado_em)} ${acao}</td>
+      </tr>`;
+    }).join('');
+  }
+
+  window.cancelarCodigo = async function (codigo) {
+    if (!confirm(`Cancelar o código ${codigo}? Ele deixará de funcionar.`)) return;
+    try { await cancelarCodigoAcesso(codigo); toast('Código cancelado', 'ok'); }
+    catch (e) { console.error(e); toast('❌ Falha: ' + e.message, 'err'); }
+  };
+
   // ── Assinaturas em tempo real ───────────────────────────────────────
   // Navegadores de celular suspendem a conexão do Firestore quando a aba
   // fica em segundo plano, e ao voltar o listener pode não reconectar
@@ -1477,6 +1555,10 @@
       ));
       unsubs.push(assinarViolacoes(
         (lista) => { ALL_VIOLACOES = lista; renderViolacoes(); },
+        () => statusDot(false, 'Conexão perdida — reconectando...')
+      ));
+      unsubs.push(assinarCodigosAcesso(
+        renderCodigos,
         () => statusDot(false, 'Conexão perdida — reconectando...')
       ));
     } catch (e) {

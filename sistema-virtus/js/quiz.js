@@ -30,8 +30,33 @@
 
 import { db } from "./firebase-config.js";
 import {
-  collection, doc, getDoc, getDocs, addDoc, serverTimestamp
+  collection, doc, getDoc, getDocs, addDoc, updateDoc, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+
+// ── Código de acesso presencial ─────────────────────────────────────────
+// Confere o código digitado pelo candidato e, se for válido e ainda não
+// tiver sido usado, marca como usado (uso único). As firestore.rules
+// garantem no servidor que só é possível fazer a transição usado:false ->
+// usado:true e nada mais — mesmo que dois candidatos tentem o mesmo código
+// ao mesmo tempo, só o primeiro consegue.
+export async function verificarEConsumirCodigoAcesso(codigoDigitado) {
+  const codigo = (codigoDigitado || "").trim();
+  if (!codigo) return { ok: false, motivo: "vazio" };
+
+  const ref = doc(db, "codigos_acesso", codigo);
+  const snap = await getDoc(ref);
+  if (!snap.exists()) return { ok: false, motivo: "nao_encontrado" };
+  if (snap.data().usado) return { ok: false, motivo: "ja_usado" };
+
+  try {
+    await updateDoc(ref, { usado: true, usado_em: serverTimestamp() });
+    return { ok: true };
+  } catch (e) {
+    // Alguém consumiu o mesmo código um instante antes — a regra do
+    // Firestore rejeita a escrita porque usado já não é mais false.
+    return { ok: false, motivo: "ja_usado" };
+  }
+}
 
 // ── Configuração por módulo ────────────────────────────────────────────────
 // Módulos comportamentais (criados depois): 10 questões em 3min30.

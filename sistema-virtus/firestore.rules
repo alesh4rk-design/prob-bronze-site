@@ -57,6 +57,34 @@ service cloud.firestore {
       allow delete: if request.auth != null && isAdmin();
     }
 
+    // codigos_acesso/{codigo}: código de uso único que impede o candidato de
+    // fazer o teste em casa. Qualquer avaliador (admin OU viewer) gera um
+    // código novo presencialmente e entrega para o candidato ali na hora.
+    // - O ID do documento é o próprio código (ex: "384720"), gerado no client.
+    // - `get` (leitura de UM documento específico, por ID) é liberado sem
+    //   login, pois é assim que o candidato confere se o código existe e
+    //   ainda não foi usado. `list` (listar TODOS os códigos) continua
+    //   restrito a avaliadores — assim ninguém consegue "descobrir" códigos
+    //   válidos sem já saber qual é.
+    // - `create` só por avaliador autenticado (geração do código).
+    // - `update`: um avaliador pode alterar livremente (ex: cancelar um
+    //   código). Um candidato anônimo só pode fazer a transição de
+    //   usado:false -> usado:true, e só pode tocar nos campos usado/usado_em
+    //   — não dá para "desmarcar" um código usado nem alterar outros campos.
+    //   Isso é o que garante o uso único: a segunda tentativa de consumir o
+    //   mesmo código encontra usado:true no servidor e a escrita é negada.
+    match /codigos_acesso/{codigo} {
+      allow get: if true;
+      allow list: if request.auth != null && isAvaliador();
+      allow create: if request.auth != null && isAvaliador();
+      allow update: if (request.auth != null && isAvaliador()) || (
+                      resource.data.usado == false &&
+                      request.resource.data.usado == true &&
+                      request.resource.data.diff(resource.data).affectedKeys().hasOnly(['usado', 'usado_em'])
+                    );
+      allow delete: if request.auth != null && isAdmin();
+    }
+
     // violacoes/{id}: mesma lógica de `resultados` — escrita liberada
     // (evento de anti-fraude reportado durante o teste do candidato),
     // leitura restrita aos avaliadores.

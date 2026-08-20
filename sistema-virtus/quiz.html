@@ -480,6 +480,34 @@
 <div class="corner-tl"></div><div class="corner-tr"></div>
 <div class="corner-bl"></div><div class="corner-br"></div>
 
+<!-- MODAL DE CÓDIGO DE ACESSO (impede fazer o teste fora da empresa) -->
+<div id="codigoModal" class="modal-overlay" style="display: none;">
+  <div class="modal-container" style="max-width:420px;">
+    <div class="modal-header">
+      <div class="modal-icon">🔑</div>
+      <div>
+        <div class="modal-title">Código de Acesso</div>
+        <div class="modal-sub">Solicite ao avaliador presente no local</div>
+      </div>
+    </div>
+    <div class="modal-divider"></div>
+    <div class="modal-body">
+      <p style="font-size:13px;color:var(--text2);line-height:1.6;margin-bottom:16px;">
+        Este teste só pode ser realizado presencialmente. Digite o código informado pelo avaliador para continuar.
+      </p>
+      <div class="field-group">
+        <span class="field-label">Código de acesso</span>
+        <input class="field-input" type="tel" id="inCodigoAcesso" placeholder="000000" inputmode="numeric" maxlength="8" style="text-align:center;font-size:22px;letter-spacing:6px;font-family:'Share Tech Mono',monospace;">
+        <div class="field-msg" id="msgCodigoAcesso"></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-modal btn-modal-cancel" id="codigoCancelBtn">Cancelar</button>
+      <button class="btn-modal btn-modal-confirm" id="codigoConfirmBtn">Validar →</button>
+    </div>
+  </div>
+</div>
+
 <!-- MODAL DE CONSENTIMENTO (UNIFICADO) -->
 <div id="consentModal" class="modal-overlay" style="display: none;">
   <div class="modal-container">
@@ -865,7 +893,7 @@
 </div>
 
 <script type="module">
-  import { listarModulos, carregarPerguntasDoModulo, salvarResultadoQuiz, registrarViolacao, tempoLimiteParaModulo, montarTrilha } from "./js/quiz.js";
+  import { listarModulos, carregarPerguntasDoModulo, salvarResultadoQuiz, registrarViolacao, tempoLimiteParaModulo, montarTrilha, verificarEConsumirCodigoAcesso } from "./js/quiz.js";
 
   let globalConsentGiven = false;
   let globalLgpdAccepted = false;
@@ -930,9 +958,72 @@
   }
   function hideConsentModal() { modal.style.display = 'none'; }
 
+  // ── Código de acesso presencial ─────────────────────────────────────────
+  let globalCodigoValidado = false;
+  const codigoModal = document.getElementById('codigoModal');
+  const inCodigoAcesso = document.getElementById('inCodigoAcesso');
+  const msgCodigoAcesso = document.getElementById('msgCodigoAcesso');
+  const codigoConfirmBtn = document.getElementById('codigoConfirmBtn');
+  const codigoCancelBtn = document.getElementById('codigoCancelBtn');
+
+  inCodigoAcesso.addEventListener('input', () => {
+    inCodigoAcesso.value = inCodigoAcesso.value.replace(/\D/g, '').slice(0, 8);
+  });
+
+  function showCodigoModal() {
+    inCodigoAcesso.value = '';
+    msgCodigoAcesso.textContent = '';
+    msgCodigoAcesso.className = 'field-msg';
+    codigoConfirmBtn.disabled = false;
+    codigoModal.style.display = 'flex';
+    setTimeout(() => inCodigoAcesso.focus(), 100);
+  }
+  function hideCodigoModal() { codigoModal.style.display = 'none'; }
+
+  async function validarCodigoAcesso() {
+    const codigo = inCodigoAcesso.value.trim();
+    if (!codigo) {
+      msgCodigoAcesso.textContent = '✕ Digite o código informado pelo avaliador';
+      msgCodigoAcesso.className = 'field-msg err';
+      return;
+    }
+    codigoConfirmBtn.disabled = true;
+    msgCodigoAcesso.textContent = 'Verificando...';
+    msgCodigoAcesso.className = 'field-msg';
+    try {
+      const r = await verificarEConsumirCodigoAcesso(codigo);
+      if (r.ok) {
+        globalCodigoValidado = true;
+        hideCodigoModal();
+        playOk();
+        if (!globalConsentGiven || !globalLgpdAccepted) showConsentModal();
+        else show('s-home');
+      } else {
+        const msgs = {
+          nao_encontrado: '✕ Código não encontrado. Confira com o avaliador.',
+          ja_usado: '✕ Este código já foi utilizado. Peça um código novo ao avaliador.',
+          vazio: '✕ Digite o código informado pelo avaliador'
+        };
+        msgCodigoAcesso.textContent = msgs[r.motivo] || '✕ Código inválido';
+        msgCodigoAcesso.className = 'field-msg err';
+        codigoConfirmBtn.disabled = false;
+        playErr();
+      }
+    } catch (e) {
+      console.error(e);
+      msgCodigoAcesso.textContent = '✕ Falha ao verificar. Tente novamente.';
+      msgCodigoAcesso.className = 'field-msg err';
+      codigoConfirmBtn.disabled = false;
+    }
+  }
+  codigoConfirmBtn.addEventListener('click', validarCodigoAcesso);
+  inCodigoAcesso.addEventListener('keydown', e => { if (e.key === 'Enter') validarCodigoAcesso(); });
+  codigoCancelBtn.addEventListener('click', () => { hideCodigoModal(); playErr(); });
+
   window.requestConsentAndStart = function() {
     const btn = document.getElementById('btnIniciar');
     if (btn.disabled) { toast('⛔ Firestore indisponível. Verifique a configuração.', 'err'); playErr(); return; }
+    if (!globalCodigoValidado) { showCodigoModal(); return; }
     if (!globalConsentGiven || !globalLgpdAccepted) showConsentModal();
     else show('s-home');
   };
