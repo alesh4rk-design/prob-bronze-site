@@ -21,12 +21,12 @@ import { getAuth } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-aut
 import { getFirestore } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
 
 const firebaseConfig = {
-  apiKey: "COLE_AQUI_A_API_KEY",
-  authDomain: "COLE_AQUI.firebaseapp.com",
-  projectId: "COLE_AQUI_O_PROJECT_ID",
-  storageBucket: "COLE_AQUI.appspot.com",
-  messagingSenderId: "COLE_AQUI_O_SENDER_ID",
-  appId: "COLE_AQUI_O_APP_ID"
+  apiKey: "AIzaSyBWpsCEQZz0iubUV6qi2VP3o-f5JT1qz00",
+  authDomain: "projeto-virtus-f608a.firebaseapp.com",
+  projectId: "projeto-virtus-f608a",
+  storageBucket: "projeto-virtus-f608a.firebasestorage.app",
+  messagingSenderId: "507075219626",
+  appId: "1:507075219626:web:b18c08b893c1d475e340d3"
 };
 
 export const app = initializeApp(firebaseConfig);
