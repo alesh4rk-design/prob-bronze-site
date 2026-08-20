@@ -31,9 +31,14 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
 import { auth, db, VIRTUS_AUTH_DOMAIN } from "./firebase-config.js";
 
-// Converte "usuario" (sem espaços, minúsculo) em e-mail sintético.
+// Converte "usuario" em e-mail para o Firebase Auth.
+// Se o usuário digitar um e-mail de verdade (contém "@"), usa exatamente
+// como digitado — é o caso de contas criadas no Firebase com e-mail real
+// (ex: alelimabrendah@gmail.com). Caso contrário, monta o e-mail sintético
+// "usuario@virtus.local" (contas criadas só com um nome de usuário simples).
 function usuarioToEmail(usuario) {
   const clean = usuario.trim().toLowerCase().replace(/\s+/g, "");
+  if (clean.includes("@")) return clean;
   return `${clean}@${VIRTUS_AUTH_DOMAIN}`;
 }
 
