@@ -352,6 +352,32 @@
   .pr-sig { flex:1; border-top:1px solid #9AA8BC; padding-top:6px; text-align:center;
             font-family:'Share Tech Mono',monospace; font-size:9px; color:#5A6880; letter-spacing:1px; }
 
+
+  /* Ficha do candidato — modal */
+  .ficha-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:11px; }
+  .ficha-item { }
+  .ficha-lbl { font-family:'Share Tech Mono',monospace; font-size:9px; letter-spacing:1.2px; color:var(--text3); text-transform:uppercase; }
+  .ficha-val { font-family:'Rajdhani',sans-serif; font-size:15px; font-weight:600; color:var(--text); letter-spacing:.3px; margin-top:2px; }
+  .cert-chip {
+    display:inline-block; padding:4px 10px; border-radius:20px;
+    background:var(--greendim); border:1px solid rgba(0,238,136,.35); color:var(--green);
+    font-family:'Share Tech Mono',monospace; font-size:9.5px; letter-spacing:.5px;
+  }
+
+  /* Ficha do candidato — PDF */
+  .pr-ficha {
+    display:grid; grid-template-columns:repeat(4,1fr); gap:10px;
+    border:1px solid #DCE3EE; border-radius:5px; padding:12px 14px; page-break-inside:avoid;
+  }
+  .pr-f-item { }
+  .pr-f-lbl { font-family:'Share Tech Mono',monospace; font-size:8px; letter-spacing:1px; color:#7A8EA8; text-transform:uppercase; }
+  .pr-f-val { font-family:'Rajdhani',sans-serif; font-size:13px; font-weight:700; color:#0d1420; margin-top:1px; }
+  .pr-f-certs { margin-top:8px; padding:9px 14px; border:1px solid #DCE3EE; border-radius:5px; page-break-inside:avoid; }
+  .pr-chip {
+    display:inline-block; padding:3px 9px; border-radius:20px; margin:2px 2px 0 0;
+    background:#EFFAF4; border:1px solid #9FDCBE; color:#00713C;
+    font-family:'Share Tech Mono',monospace; font-size:8.5px;
+  }
 </style>
 </head>
 <body class="dark-theme">
@@ -589,15 +615,31 @@
   function normNome(n) {
     return (n || '').trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
   }
-  function tentativasDe(nome) {
-    const alvo = normNome(nome);
+  // Agrupa por CPF quando a ficha do candidato existe (identificador confiável);
+  // cai para o nome normalizado nos registros antigos, anteriores à ficha.
+  function chaveDe(r) {
+    const cpf = (r.cpf || (r.candidato && r.candidato.cpf) || '').replace(/\D/g, '');
+    return cpf ? 'cpf:' + cpf : 'nome:' + normNome(r.nome);
+  }
+  function tentativasDe(chave) {
     return ALL_RESULTADOS
-      .filter(r => normNome(r.nome) === alvo)
+      .filter(r => chaveDe(r) === chave)
       .sort((a, b) => String(a.data_conclusao || '').localeCompare(String(b.data_conclusao || '')));
+  }
+  // Ficha mais recente entre as tentativas (o candidato pode ter refeito o
+  // cadastro com dados atualizados).
+  function fichaDe(tents) {
+    for (let i = tents.length - 1; i >= 0; i--) if (tents[i].candidato) return tents[i].candidato;
+    return null;
   }
   function violacoesDe(nome) {
     const alvo = normNome(nome);
     return ALL_VIOLACOES.filter(v => normNome(v.nome) === alvo);
+  }
+  function fmtNasc(iso) {
+    if (!iso) return '—';
+    const d = new Date(iso + 'T12:00:00');
+    return isNaN(d) ? '—' : d.toLocaleDateString('pt-BR');
   }
   function fmtData(iso) {
     if (!iso) return '—';
@@ -608,8 +650,8 @@
     return pct >= 70 ? 'var(--green)' : pct >= 50 ? 'var(--amber)' : 'var(--red)';
   }
 
-  window.abrirCandidato = function (nome) {
-    CAND_ATUAL = nome;
+  window.abrirCandidato = function (chave) {
+    CAND_ATUAL = chave;
     FILTRO_Q = 'erros';
     document.getElementById('fqErros').classList.add('active');
     document.getElementById('fqTodas').classList.remove('active');
@@ -643,6 +685,53 @@
       (viols.length ? ` · ⚠ ${viols.length} violação(ões)` : '');
 
     let html = '';
+
+    // Ficha preenchida pelo candidato antes do teste
+    const f = fichaDe(tents);
+    if (f) {
+      const campos = [
+        ['CPF', f.cpf],
+        ['Nascimento', `${fmtNasc(f.nascimento)}${f.idade != null ? ` (${f.idade} anos)` : ''}`],
+        ['Telefone', f.telefone],
+        ['Altura', f.altura ? String(f.altura).replace('.', ',') + ' m' : '—'],
+        ['Cidade / Bairro', f.cidade],
+        ['Cargo pretendido', f.cargo_pretendido],
+        ['Experiência na área', f.experiencia ? '✓ Sim' : '✕ Não'],
+        ['Turno disponível', f.turno]
+      ];
+      html += `
+        <div class="tent-card" style="border-color:var(--ambermid);">
+          <div class="tent-head" style="background:var(--amberdim);">
+            <div class="tent-mod" style="color:var(--amber);">📋 Ficha do candidato</div>
+          </div>
+          <div class="tent-body">
+            <div class="ficha-grid">
+              ${campos.map(([l, v]) => `
+                <div class="ficha-item">
+                  <div class="ficha-lbl">${l}</div>
+                  <div class="ficha-val">${escapeHtml(v || '—')}</div>
+                </div>`).join('')}
+            </div>
+            <div class="ficha-item" style="margin-top:10px;">
+              <div class="ficha-lbl">Cursos e certificações</div>
+              <div style="margin-top:5px;display:flex;gap:6px;flex-wrap:wrap;">
+                ${(f.certificacoes && f.certificacoes.length)
+                  ? f.certificacoes.map(c => `<span class="cert-chip">✓ ${escapeHtml(c)}</span>`).join('')
+                  : '<span class="ficha-val" style="color:var(--text4);">Nenhuma informada</span>'}
+              </div>
+            </div>
+          </div>
+        </div>`;
+    } else {
+      html += `
+        <div class="tent-card">
+          <div class="tent-body">
+            <div style="font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--text3);">
+              ℹ️ Teste realizado antes da ficha do candidato existir — só o nome foi registrado.
+            </div>
+          </div>
+        </div>`;
+    }
 
     for (const t of quizzes) {
       const pct = t.pct || 0;
@@ -774,6 +863,35 @@
         <div class="pr-cand-item">Violações<b style="color:${viols.length ? '#B32218' : '#00713C'}">${viols.length}</b></div>
         <div class="pr-veredito ${vClass}">${vLabel}</div>
       </div>`;
+
+    const f = fichaDe(tents);
+    if (f) {
+      const campos = [
+        ['CPF', f.cpf],
+        ['Data de nascimento', `${fmtNasc(f.nascimento)}${f.idade != null ? ` — ${f.idade} anos` : ''}`],
+        ['Telefone / WhatsApp', f.telefone],
+        ['Altura', f.altura ? String(f.altura).replace('.', ',') + ' m' : '—'],
+        ['Cidade / Bairro', f.cidade],
+        ['Cargo pretendido', f.cargo_pretendido],
+        ['Experiência na área', f.experiencia ? 'Sim' : 'Não'],
+        ['Disponibilidade de turno', f.turno]
+      ];
+      h += `
+        <div class="pr-sec-title">Ficha do candidato</div>
+        <div class="pr-ficha">
+          ${campos.map(([l, v]) => `
+            <div class="pr-f-item">
+              <div class="pr-f-lbl">${l}</div>
+              <div class="pr-f-val">${escapeHtml(v || '—')}</div>
+            </div>`).join('')}
+        </div>
+        <div class="pr-f-certs">
+          <span class="pr-f-lbl">Cursos e certificações:</span>
+          ${(f.certificacoes && f.certificacoes.length)
+            ? f.certificacoes.map(c => `<span class="pr-chip">✓ ${escapeHtml(c)}</span>`).join(' ')
+            : '<span class="pr-f-val" style="color:#7A8EA8;">Nenhuma informada</span>'}
+        </div>`;
+    }
 
     if (quizzes.length) {
       h += `<div class="pr-sec-title">Desempenho por módulo</div>`;
@@ -928,7 +1046,7 @@
         : (decisao === 'apto' ? '<span style="color:var(--green);font-weight:700;">✅ Apto</span>'
            : decisao === 'nao_apto' ? '<span style="color:var(--red);font-weight:700;">❌ Não apto</span>'
            : '<span style="color:var(--text3);">⏳ Pendente</span>');
-      return `<tr class="clickable" onclick="abrirCandidato('${escapeHtml(r.nome || '').replace(/'/g, "\\'")}')" title="Ver detalhamento e exportar PDF">
+      return `<tr class="clickable" onclick="abrirCandidato('${chaveDe(r).replace(/'/g, "\\'")}')" title="Ver detalhamento e exportar PDF">
         <td style="text-align:center;color:var(--text3);">${i + 1}</td>
         <td class="td-nome">${escapeHtml(r.nome || '—')} <span class="row-hint">▸ detalhes</span></td>
         <td><span class="badge-modulo">${escapeHtml(r.modulo || '—')}</span></td>

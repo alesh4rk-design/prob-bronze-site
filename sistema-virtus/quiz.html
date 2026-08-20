@@ -368,6 +368,53 @@
     .panel-title { font-size: 19px; }
     .field-input { font-size: 15px; }
   }
+
+  /* ── Ficha do candidato ── */
+  .form-sec {
+    font-family:'Share Tech Mono',monospace; font-size:10px; letter-spacing:3px;
+    color:var(--amber); text-transform:uppercase; margin:20px 0 12px;
+    padding-bottom:7px; border-bottom:1px solid var(--ambermid);
+  }
+  .form-sec:first-of-type { margin-top:4px; }
+  .form-grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  @media (max-width:520px) { .form-grid-2 { grid-template-columns:1fr; gap:0; } }
+
+  .field-msg {
+    font-family:'Share Tech Mono',monospace; font-size:9px; letter-spacing:1px;
+    margin-top:5px; min-height:12px; color:var(--text4);
+  }
+  .field-msg.ok  { color:var(--green); }
+  .field-msg.err { color:var(--red); }
+  .field-input.invalid { border-color:var(--red) !important; box-shadow:0 0 0 3px var(--reddim) !important; }
+
+  .opt-pills { display:flex; gap:10px; }
+  .pill {
+    flex:1; text-align:center; padding:13px 10px; border-radius:4px; cursor:pointer;
+    background:var(--ink3); border:1px solid var(--line2); color:var(--text2);
+    font-family:'Rajdhani',sans-serif; font-weight:700; font-size:15px;
+    letter-spacing:1.5px; transition:all .15s; user-select:none;
+  }
+  .pill:hover { border-color:var(--ambermid); color:var(--text); }
+  .pill.sel { background:var(--amberdim); border-color:var(--amber); color:var(--amber); }
+
+  .cert-list { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+  @media (max-width:520px) { .cert-list { grid-template-columns:1fr; } }
+  .cert-item {
+    display:flex; align-items:center; gap:9px; padding:11px 12px; border-radius:4px;
+    background:var(--ink3); border:1px solid var(--line2); cursor:pointer;
+    font-size:12px; color:var(--text2); transition:all .15s; line-height:1.3;
+  }
+  .cert-item:hover { border-color:var(--ambermid); }
+  .cert-item input { accent-color:var(--amber); flex-shrink:0; width:16px; height:16px; }
+  .cert-item:has(input:checked) { background:var(--amberdim); border-color:var(--amber); color:var(--text); }
+
+  .form-aviso {
+    margin-top:18px; padding:11px 13px; border-radius:4px;
+    background:var(--cyandim); border:1px solid rgba(0,200,232,.25);
+    font-family:'Share Tech Mono',monospace; font-size:10px; line-height:1.7;
+    color:var(--text2); letter-spacing:.5px;
+  }
+
 </style>
 </head>
 <body class="dark-theme">
@@ -399,7 +446,7 @@
         <div class="rules-footer">⛔ Violações podem causar ELIMINAÇÃO IMEDIATA</div>
         <div class="lgpd-header">🔒 LGPD – Proteção de dados</div>
         <div class="lgpd-text">
-          Coletamos seu nome, data, respostas e desempenho para avaliação. Dados armazenados por <strong>6 meses</strong>. Você pode solicitar exclusão ou correção pelo e-mail <strong>Sistemavirtus1@gmail.com</strong>.
+          Para o processo seletivo, coletamos os dados da ficha do candidato (nome, CPF, data de nascimento, telefone, cidade, altura, cargo pretendido, experiência, disponibilidade e certificações) e os resultados dos testes (respostas e desempenho). Esses dados são usados <strong>exclusivamente para avaliar sua candidatura</strong>, não são compartilhados com terceiros e ficam armazenados por <strong>6 meses</strong>. Você pode solicitar acesso, correção ou exclusão a qualquer momento pelo e-mail <strong>Sistemavirtus1@gmail.com</strong>.
         </div>
         <label class="unified-check">
           <input type="checkbox" id="modalConsentCheck">
@@ -550,27 +597,107 @@
       <div class="panel-header-icon">🎯</div>
       <div>
         <div class="panel-module">Sistema Virtus</div>
-        <div class="panel-title">Teste de<br>Candidatos</div>
-        <div class="panel-desc">Processo Seletivo — Avaliação</div>
+        <div class="panel-title">Ficha do<br>Candidato</div>
+        <div class="panel-desc">Processo Seletivo — Preencha antes de iniciar</div>
       </div>
     </div>
     <div class="panel-divider"></div>
     <div class="panel-body" style="padding-top:0;">
+
+      <div class="form-sec">▸ Identificação</div>
+
       <div class="field-group">
-        <span class="field-label">▸ Nome completo</span>
-        <input class="field-input" type="text" id="inNome" placeholder="Nome do candidato">
+        <span class="field-label">Nome completo *</span>
+        <input class="field-input" type="text" id="inNome" placeholder="Como consta no documento" autocomplete="name">
       </div>
+
+      <div class="form-grid-2">
+        <div class="field-group">
+          <span class="field-label">CPF *</span>
+          <input class="field-input" type="tel" id="inCpf" placeholder="000.000.000-00" inputmode="numeric" maxlength="14">
+          <div class="field-msg" id="msgCpf"></div>
+        </div>
+        <div class="field-group">
+          <span class="field-label">Data de nascimento *</span>
+          <input class="field-input" type="date" id="inNasc">
+          <div class="field-msg" id="msgIdade"></div>
+        </div>
+      </div>
+
+      <div class="form-grid-2">
+        <div class="field-group">
+          <span class="field-label">Telefone / WhatsApp *</span>
+          <input class="field-input" type="tel" id="inTel" placeholder="(00) 00000-0000" inputmode="numeric" maxlength="15">
+        </div>
+        <div class="field-group">
+          <span class="field-label">Altura *</span>
+          <input class="field-input" type="tel" id="inAltura" placeholder="1,75 m" inputmode="decimal" maxlength="5">
+        </div>
+      </div>
+
       <div class="field-group">
-        <span class="field-label">▸ Data de preferência</span>
-        <input class="field-input" type="date" id="inData" value="">
+        <span class="field-label">Cidade / Bairro *</span>
+        <input class="field-input" type="text" id="inCidade" placeholder="Ex: Belo Horizonte / Savassi">
       </div>
-      <div class="field-group" style="margin-bottom:24px;">
-        <span class="field-label">▸ Módulo do teste</span>
-        <select class="field-input" id="inTema">
-          <option value="">— Selecionar módulo —</option>
+
+      <div class="form-sec">▸ Perfil profissional</div>
+
+      <div class="field-group">
+        <span class="field-label">Cargo pretendido *</span>
+        <input class="field-input" type="text" id="inCargo" placeholder="Ex: Vigilante Patrimonial">
+      </div>
+
+      <div class="field-group">
+        <span class="field-label">Possui experiência na área? *</span>
+        <div class="opt-pills" id="inExp">
+          <div class="pill" data-val="sim">✓ Sim</div>
+          <div class="pill" data-val="nao">✕ Não</div>
+        </div>
+      </div>
+
+      <div class="field-group">
+        <span class="field-label">Disponibilidade de turno *</span>
+        <select class="field-input" id="inTurno">
+          <option value="">— Selecionar —</option>
+          <option value="Diurno">Diurno</option>
+          <option value="Noturno">Noturno</option>
+          <option value="12x36 Diurno">12x36 — Diurno</option>
+          <option value="12x36 Noturno">12x36 — Noturno</option>
+          <option value="Qualquer">Qualquer turno</option>
         </select>
       </div>
-      <button class="btn btn-amber" onclick="startTest()">
+
+      <div class="field-group">
+        <span class="field-label">Cursos e certificações <span style="color:var(--text4);">(marque os que possui)</span></span>
+        <div class="cert-list" id="inCerts">
+          <label class="cert-item"><input type="checkbox" value="Curso de Formação de Vigilante"><span>Curso de Formação de Vigilante</span></label>
+          <label class="cert-item"><input type="checkbox" value="Reciclagem em dia"><span>Reciclagem em dia</span></label>
+          <label class="cert-item"><input type="checkbox" value="CNH"><span>CNH</span></label>
+          <label class="cert-item"><input type="checkbox" value="NR-35 (trabalho em altura)"><span>NR-35 (trabalho em altura)</span></label>
+        </div>
+      </div>
+
+      <div class="form-sec">▸ Avaliação</div>
+
+      <div class="form-grid-2">
+        <div class="field-group">
+          <span class="field-label">Módulo do teste *</span>
+          <select class="field-input" id="inTema">
+            <option value="">— Selecionar módulo —</option>
+          </select>
+        </div>
+        <div class="field-group">
+          <span class="field-label">Data de preferência *</span>
+          <input class="field-input" type="date" id="inData" value="">
+        </div>
+      </div>
+
+      <div class="form-aviso">
+        🔒 Os dados desta ficha são usados apenas no processo seletivo e ficam
+        armazenados por 6 meses, conforme o aviso de LGPD que você aceitou.
+      </div>
+
+      <button class="btn btn-amber" onclick="startTest()" style="margin-top:14px;">
         <span>Iniciar Avaliação</span>
         <span style="opacity:0.7;">→</span>
       </button>
@@ -728,18 +855,167 @@
   finishConfirm.onclick = () => { hideFinishConfirmation(); endQuiz(); };
   finishCancel.onclick = () => { hideFinishConfirmation(); };
 
+
+  // ══════════ FICHA DO CANDIDATO ══════════
+  // Máscaras, validações e leitura dos campos. Substitui o antigo formulário
+  // de nome/data/módulo — os dados vão junto com o resultado para o Firestore
+  // e aparecem no relatório PDF do dashboard.
+
+  function onlyDigits(v) { return (v || '').replace(/\D/g, ''); }
+
+  function maskCPF(v) {
+    const d = onlyDigits(v).slice(0, 11);
+    return d.replace(/(\d{3})(\d)/, '$1.$2')
+            .replace(/(\d{3})(\d)/, '$1.$2')
+            .replace(/(\d{3})(\d{1,2})$/, '$1-$2');
+  }
+  function maskTel(v) {
+    const d = onlyDigits(v).slice(0, 11);
+    if (d.length <= 10) return d.replace(/(\d{2})(\d)/, '($1) $2').replace(/(\d{4})(\d)/, '$1-$2');
+    return d.replace(/(\d{2})(\d)/, '($1) $2').replace(/(\d{5})(\d)/, '$1-$2');
+  }
+  function maskAltura(v) {
+    let d = onlyDigits(v).slice(0, 3);
+    if (d.length <= 1) return d;
+    return d[0] + ',' + d.slice(1);
+  }
+
+  // Validação real de CPF (dígitos verificadores), não só contagem de dígitos.
+  function cpfValido(cpf) {
+    const d = onlyDigits(cpf);
+    if (d.length !== 11 || /^(\d)\1{10}$/.test(d)) return false;
+    let soma = 0;
+    for (let i = 0; i < 9; i++) soma += Number(d[i]) * (10 - i);
+    let r = (soma * 10) % 11; if (r === 10) r = 0;
+    if (r !== Number(d[9])) return false;
+    soma = 0;
+    for (let i = 0; i < 10; i++) soma += Number(d[i]) * (11 - i);
+    r = (soma * 10) % 11; if (r === 10) r = 0;
+    return r === Number(d[10]);
+  }
+
+  function calcIdade(nascISO) {
+    if (!nascISO) return null;
+    const n = new Date(nascISO + 'T12:00:00');
+    if (isNaN(n)) return null;
+    const hoje = new Date();
+    let idade = hoje.getFullYear() - n.getFullYear();
+    const m = hoje.getMonth() - n.getMonth();
+    if (m < 0 || (m === 0 && hoje.getDate() < n.getDate())) idade--;
+    return idade;
+  }
+
+  // Máscaras ao digitar
+  (function bindMascaras() {
+    const cpf = document.getElementById('inCpf');
+    const tel = document.getElementById('inTel');
+    const alt = document.getElementById('inAltura');
+    const nasc = document.getElementById('inNasc');
+
+    cpf.addEventListener('input', () => {
+      cpf.value = maskCPF(cpf.value);
+      const msg = document.getElementById('msgCpf');
+      const d = onlyDigits(cpf.value);
+      if (!d.length) { msg.textContent = ''; msg.className = 'field-msg'; cpf.classList.remove('invalid'); return; }
+      if (d.length < 11) { msg.textContent = 'Faltam dígitos'; msg.className = 'field-msg'; cpf.classList.remove('invalid'); return; }
+      if (cpfValido(cpf.value)) { msg.textContent = '✓ CPF válido'; msg.className = 'field-msg ok'; cpf.classList.remove('invalid'); }
+      else { msg.textContent = '✕ CPF inválido — confira os números'; msg.className = 'field-msg err'; cpf.classList.add('invalid'); }
+    });
+
+    tel.addEventListener('input', () => { tel.value = maskTel(tel.value); });
+    alt.addEventListener('input', () => { alt.value = maskAltura(alt.value); });
+
+    nasc.addEventListener('input', () => {
+      const msg = document.getElementById('msgIdade');
+      const idade = calcIdade(nasc.value);
+      if (idade === null) { msg.textContent = ''; msg.className = 'field-msg'; return; }
+      if (idade < 18) { msg.textContent = `✕ ${idade} anos — mínimo 18`; msg.className = 'field-msg err'; }
+      else if (idade > 90) { msg.textContent = '✕ Data improvável'; msg.className = 'field-msg err'; }
+      else { msg.textContent = `✓ ${idade} anos`; msg.className = 'field-msg ok'; }
+    });
+
+    // Pills de experiência (sim/não)
+    document.querySelectorAll('#inExp .pill').forEach(p => {
+      p.onclick = () => {
+        document.querySelectorAll('#inExp .pill').forEach(x => x.classList.remove('sel'));
+        p.classList.add('sel');
+      };
+    });
+  })();
+
+  // Monta o objeto do candidato validando tudo. Retorna null se algo falhar
+  // (e já mostra o toast + foca o campo problemático).
+  function coletarFicha() {
+    const falha = (msg, id) => {
+      toast('▸ ' + msg, 'err'); playErr();
+      const el = document.getElementById(id);
+      if (el) { el.focus(); el.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
+      return null;
+    };
+
+    const nome = document.getElementById('inNome').value.trim();
+    if (nome.length < 3) return falha('Informe o nome completo', 'inNome');
+    if (!nome.includes(' ')) return falha('Informe nome e sobrenome', 'inNome');
+
+    const cpf = document.getElementById('inCpf').value.trim();
+    if (!cpfValido(cpf)) return falha('CPF inválido', 'inCpf');
+
+    const nascimento = document.getElementById('inNasc').value;
+    const idade = calcIdade(nascimento);
+    if (idade === null) return falha('Informe a data de nascimento', 'inNasc');
+    if (idade < 18) return falha('Candidato deve ter no mínimo 18 anos', 'inNasc');
+    if (idade > 90) return falha('Data de nascimento improvável', 'inNasc');
+
+    const telefone = document.getElementById('inTel').value.trim();
+    if (onlyDigits(telefone).length < 10) return falha('Informe um telefone válido com DDD', 'inTel');
+
+    const alturaTxt = document.getElementById('inAltura').value.trim();
+    const alturaNum = parseFloat(alturaTxt.replace(',', '.'));
+    if (!alturaNum || alturaNum < 1.3 || alturaNum > 2.3) return falha('Informe a altura (ex: 1,75)', 'inAltura');
+
+    const cidade = document.getElementById('inCidade').value.trim();
+    if (cidade.length < 3) return falha('Informe cidade e bairro', 'inCidade');
+
+    const cargo = document.getElementById('inCargo').value.trim();
+    if (cargo.length < 3) return falha('Informe o cargo pretendido', 'inCargo');
+
+    const pillSel = document.querySelector('#inExp .pill.sel');
+    if (!pillSel) return falha('Informe se possui experiência na área', 'inExp');
+
+    const turno = document.getElementById('inTurno').value;
+    if (!turno) return falha('Selecione a disponibilidade de turno', 'inTurno');
+
+    const certificacoes = [...document.querySelectorAll('#inCerts input:checked')].map(c => c.value);
+
+    return {
+      nome,
+      cpf,
+      nascimento,
+      idade,
+      telefone,
+      altura: alturaNum,
+      cidade,
+      cargo_pretendido: cargo,
+      experiencia: pillSel.dataset.val === 'sim',
+      turno,
+      certificacoes
+    };
+  }
+
   window.startTest = async function() {
     if (!globalConsentGiven || !globalLgpdAccepted) {
       toast('É necessário concordar com as regras e com a LGPD antes de iniciar.', 'err'); playErr(); return;
     }
-    const nome = document.getElementById('inNome').value.trim();
+    const ficha = coletarFicha();
+    if (!ficha) return;   // coletarFicha já avisou qual campo está pendente
+
     const dataPref = document.getElementById('inData').value;
     const tema = document.getElementById('inTema').value;
-    if (!nome) { toast('▸ Informe o nome do candidato', 'err'); playErr(); return; }
     if (!dataPref) { toast('▸ Informe a data de preferência', 'err'); playErr(); return; }
     if (!tema) { toast('▸ Selecione o módulo do teste', 'err'); playErr(); return; }
 
-    S.nome = nome; S.dataPref = dataPref; S.tema = tema;
+    S.nome = ficha.nome; S.dataPref = dataPref; S.tema = tema;
+    S.candidato = ficha;
 
     toast('🔄 Carregando perguntas...', '');
     try {
@@ -844,7 +1120,8 @@
     try {
       const { acertos, total, pct } = await salvarResultadoQuiz({
         nome: S.nome, modulo: S.tema, dataPreferencia: S.dataPref,
-        perguntas: S.perguntas, respostas: S.respostas
+        perguntas: S.perguntas, respostas: S.respostas,
+        candidato: S.candidato
       });
       document.getElementById('rNome').textContent = S.nome;
       document.getElementById('rCerto').textContent = acertos;

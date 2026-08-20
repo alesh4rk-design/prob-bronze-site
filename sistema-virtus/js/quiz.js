@@ -69,7 +69,7 @@ export async function carregarPerguntasDoModulo(modulo) {
 
 // Grava o resultado final do quiz na coleção `resultados`.
 // Shape compatível com o resultados.json original (respostas_detalhadas etc.)
-export async function salvarResultadoQuiz({ nome, modulo, dataPreferencia, perguntas, respostas }) {
+export async function salvarResultadoQuiz({ nome, modulo, dataPreferencia, perguntas, respostas, candidato }) {
   let acertos = 0;
   const respostas_detalhadas = perguntas.map((q, i) => {
     const dada = respostas[i] || null;
@@ -87,6 +87,12 @@ export async function salvarResultadoQuiz({ nome, modulo, dataPreferencia, pergu
 
   const docRef = await addDoc(collection(db, "resultados"), {
     nome,
+    // Ficha preenchida pelo candidato antes do teste (CPF, nascimento,
+    // telefone, altura, cargo pretendido, turno, certificações...). O CPF
+    // também serve para agrupar tentativas da mesma pessoa no dashboard,
+    // já que o nome digitado varia entre um teste e outro.
+    candidato: candidato || null,
+    cpf: candidato ? candidato.cpf : null,
     modulo,
     tipo: "quiz",
     data_preferencia: dataPreferencia || "",
