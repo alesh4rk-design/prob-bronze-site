@@ -27,16 +27,35 @@
   como um usuário admin (as regras em <code>firestore.rules</code> só permitem escrita em
   <code>perguntas</code> para quem tiver perfil <code>admin</code>).
 </p>
-<button id="btnSeed">▶ Popular Firestore agora</button>
+<div id="authStatus" style="padding:12px 14px;border-radius:8px;background:#1e2229;border:1px solid #2d3340;margin-bottom:16px;">⏳ Verificando login...</div>
+<button id="btnSeed" disabled>▶ Popular Firestore agora</button>
 <div id="log"></div>
 
 <script type="module">
   import { db } from "./js/firebase-config.js";
   import { doc, setDoc } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
   import { PERGUNTAS_SEED } from "./js/perguntas-seed-data.js";
+  import { virtusGetCurrentUser } from "./js/auth.js";
 
   const logEl = document.getElementById('log');
   function log(msg) { logEl.textContent += msg + '\n'; logEl.scrollTop = logEl.scrollHeight; }
+
+  // Aguarda o Firebase restaurar a sessão antes de liberar o botão — sem isso,
+  // clicar logo ao abrir a página faz a escrita falhar com "permission-denied",
+  // porque as regras exigem perfil admin e auth.currentUser ainda é null.
+  const statusEl = document.getElementById('authStatus');
+  const me = await virtusGetCurrentUser();
+  if (!me) {
+    statusEl.innerHTML = '❌ <strong>Você não está logado.</strong> Faça login em <a href="./index.html" style="color:#e8a000;">index.html</a> com uma conta <strong>admin</strong> e volte a esta página.';
+    statusEl.style.borderColor = '#e74c3c';
+  } else if (me.perfil !== 'admin') {
+    statusEl.innerHTML = `❌ Logado como <strong>${me.usuario}</strong> (perfil: ${me.perfil}). Apenas contas <strong>admin</strong> podem gravar perguntas.`;
+    statusEl.style.borderColor = '#e74c3c';
+  } else {
+    statusEl.innerHTML = `✅ Logado como <strong>${me.usuario}</strong> (admin). Pronto para importar ${Object.keys(PERGUNTAS_SEED).length} módulos.`;
+    statusEl.style.borderColor = '#2ecc71';
+    document.getElementById('btnSeed').disabled = false;
+  }
 
   document.getElementById('btnSeed').onclick = async () => {
     document.getElementById('btnSeed').disabled = true;
