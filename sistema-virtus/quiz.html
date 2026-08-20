@@ -893,7 +893,7 @@
 </div>
 
 <script type="module">
-  import { listarModulos, carregarPerguntasDoModulo, salvarResultadoQuiz, registrarViolacao, tempoLimiteParaModulo, montarTrilha, verificarEConsumirCodigoAcesso } from "./js/quiz.js";
+  import { listarModulos, carregarPerguntasDoModulo, salvarResultadoQuiz, registrarViolacao, tempoLimiteParaModulo, montarTrilha, verificarCodigoAcesso } from "./js/quiz.js";
 
   let globalConsentGiven = false;
   let globalLgpdAccepted = false;
@@ -991,7 +991,7 @@
     msgCodigoAcesso.textContent = 'Verificando...';
     msgCodigoAcesso.className = 'field-msg';
     try {
-      const r = await verificarEConsumirCodigoAcesso(codigo);
+      const r = await verificarCodigoAcesso(codigo);
       if (r.ok) {
         globalCodigoValidado = true;
         hideCodigoModal();
@@ -1001,7 +1001,8 @@
       } else {
         const msgs = {
           nao_encontrado: '✕ Código não encontrado. Confira com o avaliador.',
-          ja_usado: '✕ Este código já foi utilizado. Peça um código novo ao avaliador.',
+          expirado: '✕ Este código expirou. Peça o código do dia ao avaliador.',
+          desativado: '✕ Este código foi desativado. Peça o código atual ao avaliador.',
           vazio: '✕ Digite o código informado pelo avaliador'
         };
         msgCodigoAcesso.textContent = msgs[r.motivo] || '✕ Código inválido';

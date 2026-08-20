@@ -30,31 +30,38 @@
 
 import { db } from "./firebase-config.js";
 import {
-  collection, doc, getDoc, getDocs, addDoc, updateDoc, serverTimestamp
+  collection, doc, getDoc, getDocs, addDoc, updateDoc, increment, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
 
 // ── Código de acesso presencial ─────────────────────────────────────────
-// Confere o código digitado pelo candidato e, se for válido e ainda não
-// tiver sido usado, marca como usado (uso único). As firestore.rules
-// garantem no servidor que só é possível fazer a transição usado:false ->
-// usado:true e nada mais — mesmo que dois candidatos tentem o mesmo código
-// ao mesmo tempo, só o primeiro consegue.
-export async function verificarEConsumirCodigoAcesso(codigoDigitado) {
+// Confere o código digitado pelo candidato. É um código COMPARTILHADO — o
+// mesmo serve para todos os candidatos da entrevista (não é de uso único),
+// pensado para dias com muita gente (20+ candidatos). Ele expira sozinho
+// 4 horas depois de gerado, ou antes se o avaliador desativar manualmente.
+// A expiração é validada no SERVIDOR pelas firestore.rules
+// (request.time < resource.data.expira_em) — não dá para burlar mudando o
+// relógio do navegador, porque quem decide é o horário do servidor do
+// Firestore no momento da escrita.
+export async function verificarCodigoAcesso(codigoDigitado) {
   const codigo = (codigoDigitado || "").trim();
   if (!codigo) return { ok: false, motivo: "vazio" };
 
   const ref = doc(db, "codigos_acesso", codigo);
   const snap = await getDoc(ref);
   if (!snap.exists()) return { ok: false, motivo: "nao_encontrado" };
-  if (snap.data().usado) return { ok: false, motivo: "ja_usado" };
+  const data = snap.data();
+  if (data.ativo === false) return { ok: false, motivo: "desativado" };
+  const expiraEm = data.expira_em && data.expira_em.toDate ? data.expira_em.toDate() : null;
+  if (expiraEm && expiraEm.getTime() <= Date.now()) return { ok: false, motivo: "expirado" };
 
   try {
-    await updateDoc(ref, { usado: true, usado_em: serverTimestamp() });
+    // Só incrementa o contador de usos — não invalida o código para os
+    // próximos candidatos. Se a regra rejeitar (código expirou no exato
+    // instante entre a leitura e a escrita), cai no catch abaixo.
+    await updateDoc(ref, { usos: increment(1), ultimo_uso_em: serverTimestamp() });
     return { ok: true };
   } catch (e) {
-    // Alguém consumiu o mesmo código um instante antes — a regra do
-    // Firestore rejeita a escrita porque usado já não é mais false.
-    return { ok: false, motivo: "ja_usado" };
+    return { ok: false, motivo: "expirado" };
   }
 }
 

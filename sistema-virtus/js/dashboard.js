@@ -126,12 +126,18 @@ export async function definirModuloAtivo(modulo, ativo) {
 }
 
 // ── Código de acesso presencial (codigos_acesso/{codigo}) ──────────────────
-// Impede o candidato de fazer o teste em casa: admin OU viewer gera um
-// código de 6 dígitos ali na hora, de uso único (as firestore.rules impedem
-// reaproveitar um código já marcado como usado). Ver quiz.js para o lado do
-// candidato (verificarEConsumirCodigoAcesso).
+// Impede o candidato de fazer o teste em casa: admin OU viewer gera UM
+// código compartilhado, que serve para TODOS os candidatos da entrevista
+// (útil em dias com muita gente, ex: 20+ candidatos). O código expira
+// sozinho 4 horas depois de gerado — a expiração é validada no SERVIDOR
+// pelas firestore.rules (request.time < resource.data.expira_em), não só
+// no navegador do candidato, então não dá para simplesmente "esperar" ou
+// ajustar o relógio do celular para continuar usando um código vencido.
+// Ver quiz.js para o lado do candidato (verificarCodigoAcesso).
 
-// Gera um código novo de 6 dígitos, evitando colisão com um já existente.
+const VALIDADE_CODIGO_MS = 4 * 60 * 60 * 1000; // 4 horas
+
+// Gera um código novo de 6 dígitos, válido por 4 horas a partir de agora.
 export async function gerarCodigoAcesso(avaliador) {
   // Firestore rejeita setDoc/updateDoc com campo undefined — mesma causa do
   // bug de "Falha ao salvar decisão" (conta sem o campo "usuario" salvo).
@@ -143,10 +149,12 @@ export async function gerarCodigoAcesso(avaliador) {
     const snap = await getDoc(ref);
     if (!snap.exists()) {
       await setDoc(ref, {
-        usado: false,
+        ativo: true,
+        usos: 0,
         criado_por: nomeAvaliador,
         criado_em: serverTimestamp(),
-        usado_em: null
+        expira_em: new Date(Date.now() + VALIDADE_CODIGO_MS),
+        ultimo_uso_em: null
       });
       return codigo;
     }
@@ -155,9 +163,10 @@ export async function gerarCodigoAcesso(avaliador) {
 }
 
 // Assina os últimos códigos gerados (para a lista no painel), mais recentes
-// primeiro. Usa apenas os 30 mais recentes para não pesar o listener.
+// primeiro. Usa apenas os 10 mais recentes — não há mais um por candidato,
+// então não precisa de uma lista longa.
 export function assinarCodigosAcesso(callback, onError) {
-  const q = query(collection(db, "codigos_acesso"), orderBy("criado_em", "desc"), limit(30));
+  const q = query(collection(db, "codigos_acesso"), orderBy("criado_em", "desc"), limit(10));
   return onSnapshot(q, (snap) => {
     const lista = [];
     snap.forEach((d) => lista.push({ codigo: d.id, ...d.data() }));
@@ -165,10 +174,10 @@ export function assinarCodigosAcesso(callback, onError) {
   }, (err) => { console.error("assinarCodigosAcesso:", err); if (onError) onError(err); });
 }
 
-// Cancela um código gerado por engano (evaliador). Diferente de "usar" um
-// código, que só o próprio candidato faz (ver quiz.js).
+// Desativa um código antes da expiração natural (ex: entrevista encerrou
+// mais cedo, ou o código vazou). Admin ou viewer.
 export async function cancelarCodigoAcesso(codigo) {
-  await updateDoc(doc(db, "codigos_acesso", codigo), { usado: true, usado_em: serverTimestamp(), cancelado: true });
+  await updateDoc(doc(db, "codigos_acesso", codigo), { ativo: false });
 }
 
 // Leitura pontual (sem realtime), útil para exportações (CSV/Excel).

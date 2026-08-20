@@ -419,19 +419,19 @@
       </div>
       <div class="panel-body" style="padding:16px 20px;">
         <div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap;">
-          <button class="btn-act btn-approve-admin" id="btnGerarCodigo" style="padding:11px 20px;font-size:13px;">▶ Gerar novo código</button>
+          <button class="btn-act btn-approve-admin" id="btnGerarCodigo" style="padding:11px 20px;font-size:13px;">▶ Gerar código do dia</button>
           <div id="codigoGerado" style="display:none;align-items:center;gap:10px;">
             <span style="font-family:'Share Tech Mono',monospace;font-size:32px;font-weight:700;letter-spacing:8px;color:var(--amber);background:var(--amberdim);border:1px solid var(--ambermid);border-radius:6px;padding:6px 18px;" id="codigoValorGrande"></span>
-            <span style="font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--text3);letter-spacing:1px;">Uso único · entregue ao candidato presencialmente</span>
+            <span style="font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--text3);letter-spacing:1px;" id="codigoValidadeTxt">válido por 4 horas</span>
           </div>
         </div>
         <div class="warn-note" style="margin-top:14px;">
-          Cada código só funciona <strong>uma vez</strong>. Gere um código novo para cada candidato, na hora, para impedir que o teste seja feito de fora da empresa. Admin e viewer podem gerar.
+          Um único código serve para <strong>todos os candidatos da entrevista</strong> — todos digitam o mesmo. Ele expira sozinho <strong>4 horas</strong> depois de gerado, e você também pode desativá-lo antes disso a qualquer momento. Admin e viewer podem gerar.
         </div>
         <div class="results-table-wrap" style="margin-top:12px;">
           <table>
-            <thead><tr><th>Código</th><th>Status</th><th>Gerado por</th><th>Quando</th></tr></thead>
-            <tbody id="codigosTableBody"><tr><td colspan="4"><div class="empty-state"><div class="empty-icon">🔑</div>Nenhum código gerado ainda</div></td></tr></tbody>
+            <thead><tr><th>Código</th><th>Status</th><th>Usos</th><th>Gerado por</th><th>Expira em</th><th></th></tr></thead>
+            <tbody id="codigosTableBody"><tr><td colspan="6"><div class="empty-state"><div class="empty-icon">🔑</div>Nenhum código gerado ainda</div></td></tr></tbody>
           </table>
         </div>
       </div>
@@ -660,14 +660,17 @@
   };
 
   // ── Código de acesso presencial (admin e viewer podem gerar) ────────────
+  // Modelo: UM código compartilhado por todos os candidatos da entrevista
+  // (bom para dias com 20+ pessoas), expira sozinho 4h depois de gerado.
   document.getElementById('btnGerarCodigo').onclick = async () => {
     const btn = document.getElementById('btnGerarCodigo');
     btn.disabled = true;
     try {
       const codigo = await gerarCodigoAcesso(me.usuario);
       document.getElementById('codigoValorGrande').textContent = codigo;
+      document.getElementById('codigoValidadeTxt').textContent = 'válido por 4 horas · compartilhe com todos os candidatos';
       document.getElementById('codigoGerado').style.display = 'flex';
-      toast('✅ Código gerado — entregue ao candidato', 'ok');
+      toast('✅ Código gerado — entregue aos candidatos', 'ok');
     } catch (e) {
       console.error(e);
       toast('❌ Falha ao gerar código: ' + e.message, 'err');
@@ -682,35 +685,41 @@
     return isNaN(d) ? '—' : d.toLocaleString('pt-BR');
   }
 
+  function statusCodigo(c) {
+    const expiraEm = c.expira_em && c.expira_em.toDate ? c.expira_em.toDate() : null;
+    const expirado = expiraEm && expiraEm.getTime() <= Date.now();
+    if (c.ativo === false) return { txt: '✕ Desativado', cor: 'var(--text4)', ok: false };
+    if (expirado) return { txt: '⏱ Expirado', cor: 'var(--text3)', ok: false };
+    return { txt: '✓ Ativo', cor: 'var(--green)', ok: true };
+  }
+
   function renderCodigos(lista) {
-    document.getElementById('cntCodigosDisp').textContent =
-      lista.filter(c => !c.usado && !c.cancelado).length;
+    const ativos = lista.filter(c => statusCodigo(c).ok);
+    document.getElementById('cntCodigosDisp').textContent = ativos.length;
     const tbody = document.getElementById('codigosTableBody');
     if (!lista.length) {
-      tbody.innerHTML = '<tr><td colspan="4"><div class="empty-state"><div class="empty-icon">🔑</div>Nenhum código gerado ainda</div></td></tr>';
+      tbody.innerHTML = '<tr><td colspan="6"><div class="empty-state"><div class="empty-icon">🔑</div>Nenhum código gerado ainda</div></td></tr>';
       return;
     }
     tbody.innerHTML = lista.map(c => {
-      const status = c.cancelado
-        ? '<span style="color:var(--text4);">✕ Cancelado</span>'
-        : c.usado
-          ? '<span style="color:var(--text3);">● Usado</span>'
-          : '<span style="color:var(--green);font-weight:700;">✓ Disponível</span>';
-      const acao = (!c.usado && !c.cancelado)
-        ? `<button class="btn-act btn-danger" onclick="cancelarCodigo('${c.codigo}')">Cancelar</button>`
+      const st = statusCodigo(c);
+      const acao = st.ok
+        ? `<button class="btn-act btn-danger" onclick="desativarCodigo('${c.codigo}')">Desativar</button>`
         : '';
       return `<tr>
         <td style="font-family:'Share Tech Mono',monospace;font-weight:700;letter-spacing:2px;">${escapeHtml(c.codigo)}</td>
-        <td>${status}</td>
+        <td style="color:${st.cor};font-weight:700;">${st.txt}</td>
+        <td>${c.usos ?? 0}</td>
         <td>${escapeHtml(c.criado_por || '—')}</td>
-        <td>${fmtDataHora(c.criado_em)} ${acao}</td>
+        <td>${fmtDataHora(c.expira_em)}</td>
+        <td>${acao}</td>
       </tr>`;
     }).join('');
   }
 
-  window.cancelarCodigo = async function (codigo) {
-    if (!confirm(`Cancelar o código ${codigo}? Ele deixará de funcionar.`)) return;
-    try { await cancelarCodigoAcesso(codigo); toast('Código cancelado', 'ok'); }
+  window.desativarCodigo = async function (codigo) {
+    if (!confirm(`Desativar o código ${codigo}? Ele deixará de funcionar imediatamente, mesmo antes das 4 horas.`)) return;
+    try { await cancelarCodigoAcesso(codigo); toast('Código desativado', 'ok'); }
     catch (e) { console.error(e); toast('❌ Falha: ' + e.message, 'err'); }
   };
 
