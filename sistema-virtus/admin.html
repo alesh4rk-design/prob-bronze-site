@@ -276,6 +276,39 @@
     color:var(--text3); background:var(--amberdim); border:1px solid var(--ambermid);
     border-radius:6px; padding:12px 14px; margin-bottom:14px;
   }
+
+  /* ── QR Codes: prévia na tela ── */
+  .qr-preview-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(240px,1fr)); gap:16px; }
+  .qr-preview-card {
+    background:var(--ink2); border:1px solid var(--line2); border-radius:8px;
+    padding:20px; text-align:center;
+  }
+  .qr-preview-card canvas { max-width:100%; height:auto; border-radius:4px; }
+  .qr-preview-nome { font-family:'Rajdhani',sans-serif; font-size:16px; font-weight:700; color:var(--text); margin-top:12px; letter-spacing:.5px; }
+  .qr-preview-url { font-family:'Share Tech Mono',monospace; font-size:9px; color:var(--text3); margin-top:4px; word-break:break-all; }
+
+  /* ── QR Codes: folhas A4 reais (só existem visualmente na impressão) ── */
+  #qrPrintSheets { display:none; }
+  @media print {
+    body > *:not(#qrPrintSheets) { display:none !important; }
+    #qrPrintSheets { display:block !important; }
+  }
+  .qr-sheet {
+    width:210mm; min-height:297mm; padding:20mm;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    page-break-after:always; box-sizing:border-box;
+    font-family:'Exo 2',sans-serif; color:#12141c; background:#fff;
+  }
+  .qr-sheet:last-child { page-break-after:auto; }
+  .qr-sheet-brand { display:flex; align-items:center; gap:14px; margin-bottom:40px; }
+  .qr-sheet-hex { width:52px; height:52px; background:linear-gradient(135deg,#E8A000,#C87800); border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:24px; color:#1a1000; }
+  .qr-sheet-brand-name { font-family:'Rajdhani',sans-serif; font-size:30px; font-weight:700; letter-spacing:7px; color:#0d1420; text-transform:uppercase; }
+  .qr-sheet-brand-sub { font-family:'Share Tech Mono',monospace; font-size:10px; letter-spacing:3px; color:#7A8EA8; text-transform:uppercase; margin-top:3px; }
+  .qr-sheet-titulo { font-family:'Rajdhani',sans-serif; font-size:38px; font-weight:700; letter-spacing:2px; color:#0d1420; text-align:center; margin-bottom:8px; }
+  .qr-sheet-sub { font-family:'Share Tech Mono',monospace; font-size:13px; letter-spacing:1px; color:#5A6880; text-align:center; margin-bottom:36px; }
+  .qr-sheet-canvas-wrap { padding:24px; border:3px solid #E8A000; border-radius:16px; }
+  .qr-sheet-instrucao { font-family:'Share Tech Mono',monospace; font-size:12px; letter-spacing:1px; color:#5A6880; text-align:center; margin-top:36px; max-width:420px; line-height:1.8; }
+  .qr-sheet-url { font-family:'Share Tech Mono',monospace; font-size:11px; color:#0d1420; text-align:center; margin-top:14px; word-break:break-all; padding:0 20px; }
 </style>
 </head>
 <body class="dark-theme">
@@ -321,6 +354,9 @@
     </div>
     <div class="admin-tab" data-tab="codigos" id="tabBtnCodigos" onclick="switchTab('codigos')">
       🔑 Códigos de Acesso <span class="tab-count" id="cntCodigosDisp">0</span>
+    </div>
+    <div class="admin-tab" data-tab="qrcodes" id="tabBtnQrcodes" onclick="switchTab('qrcodes')">
+      🖨️ QR Codes para Imprimir
     </div>
   </div>
 
@@ -438,7 +474,30 @@
     </div>
   </section>
 
+  <!-- ══════════ ABA: QR CODES PARA IMPRIMIR ══════════ -->
+  <section class="admin-section" id="sec-qrcodes">
+    <div class="panel" style="margin-bottom:16px;">
+      <div class="panel-head">
+        <div class="panel-title-sm">🖨️ Folhas A4 com QR Code</div>
+      </div>
+      <div class="panel-body" style="padding:16px 20px;">
+        <div class="warn-note">
+          Cada cartaz abaixo é uma folha A4 pronta para imprimir e colar no local da entrevista.
+          O candidato aponta a câmera do celular, o QR abre a página direto — sem precisar digitar
+          endereço nenhum. Clique em <strong>Imprimir</strong> para gerar todas de uma vez (o navegador
+          abre o diálogo de impressão, uma folha por cartaz).
+        </div>
+        <button class="btn-act btn-approve-admin" id="btnImprimirQr" style="padding:11px 20px;font-size:13px;margin-top:6px;">🖨️ Imprimir cartazes</button>
+      </div>
+    </div>
+
+    <div id="qrPreviewGrid" class="qr-preview-grid"></div>
+  </section>
+
 </main>
+
+<!-- ══ FOLHAS A4 — só aparecem na impressão (ver @media print) ══ -->
+<div id="qrPrintSheets"></div>
 
 <footer class="hud-foot">
   <span class="hud-foot-item">Sistema <span>Virtus</span></span>
@@ -721,6 +780,95 @@
     if (!confirm(`Desativar o código ${codigo}? Ele deixará de funcionar imediatamente, mesmo antes das 4 horas.`)) return;
     try { await cancelarCodigoAcesso(codigo); toast('Código desativado', 'ok'); }
     catch (e) { console.error(e); toast('❌ Falha: ' + e.message, 'err'); }
+  };
+
+  // ── QR Codes para imprimir (admin e viewer) ─────────────────────────────
+  // Carrega a lib de QR sob demanda (só quando essa aba é usada), com
+  // fallback igual ao ExcelJS: se o build ESM não colar, tenta o UMD
+  // clássico via <script>, para nunca deixar a função quebrada.
+  function carregarScriptClassico(src) {
+    return new Promise((resolve, reject) => {
+      const s = document.createElement('script');
+      s.src = src;
+      s.onload = resolve;
+      s.onerror = () => reject(new Error('Falha ao carregar ' + src));
+      document.head.appendChild(s);
+    });
+  }
+  async function carregarQRCodeLib() {
+    if (window.QRCode) return window.QRCode;
+    try {
+      const mod = await import('https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js/+esm');
+      const lib = mod.default || mod;
+      if (lib && lib.toDataURL) return lib;
+    } catch (e) { /* cai para o fallback abaixo */ }
+    await carregarScriptClassico('https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js');
+    if (!window.QRCode) throw new Error('Biblioteca de QR Code não carregou');
+    return window.QRCode;
+  }
+
+  let qrGerados = false;
+  async function gerarQRCodes() {
+    if (qrGerados) return;
+    const previewGrid = document.getElementById('qrPreviewGrid');
+    const printSheets = document.getElementById('qrPrintSheets');
+    previewGrid.innerHTML = '<div class="empty-state"><div class="empty-icon">⏳</div>Gerando QR Codes...</div>';
+    try {
+      const QRCode = await carregarQRCodeLib();
+      // Base do site a partir da própria URL do admin.html — funciona tanto
+      // hospedado na raiz quanto num subcaminho (ex: GitHub Pages de projeto).
+      const baseUrl = window.location.href.replace(/admin\.html.*$/, '');
+      const alvos = [
+        { nome: 'Avaliação do Candidato', sub: 'Quiz — perguntas do processo seletivo', url: baseUrl + 'quiz.html' },
+        { nome: 'Teste de Digitação', sub: 'Cronometrado — velocidade e precisão', url: baseUrl + 'digitacao.html' }
+      ];
+      previewGrid.innerHTML = '';
+      printSheets.innerHTML = '';
+      for (const alvo of alvos) {
+        const dataUrl = await QRCode.toDataURL(alvo.url, { width: 320, margin: 1, color: { dark: '#0d1420ff', light: '#ffffffff' } });
+        previewGrid.insertAdjacentHTML('beforeend', `
+          <div class="qr-preview-card">
+            <img src="${dataUrl}" style="width:100%;max-width:220px;border-radius:6px;">
+            <div class="qr-preview-nome">${escapeHtml(alvo.nome)}</div>
+            <div class="qr-preview-url">${escapeHtml(alvo.url)}</div>
+          </div>`);
+        printSheets.insertAdjacentHTML('beforeend', `
+          <div class="qr-sheet">
+            <div class="qr-sheet-brand">
+              <div class="qr-sheet-hex">⚡</div>
+              <div>
+                <div class="qr-sheet-brand-name">Virtus</div>
+                <div class="qr-sheet-brand-sub">Sistema de Avaliação</div>
+              </div>
+            </div>
+            <div class="qr-sheet-titulo">${escapeHtml(alvo.nome)}</div>
+            <div class="qr-sheet-sub">${escapeHtml(alvo.sub)}</div>
+            <div class="qr-sheet-canvas-wrap"><img src="${dataUrl}" width="300" height="300"></div>
+            <div class="qr-sheet-instrucao">Aponte a câmera do celular para o QR Code acima para acessar diretamente. Se preferir, digite o endereço manualmente:</div>
+            <div class="qr-sheet-url">${escapeHtml(alvo.url)}</div>
+          </div>`);
+      }
+      qrGerados = true;
+    } catch (e) {
+      console.error(e);
+      previewGrid.innerHTML = '<div class="empty-state"><div class="empty-icon">❌</div>Falha ao gerar QR Codes. Verifique a conexão e tente novamente.</div>';
+      toast('❌ Falha ao gerar QR Codes: ' + e.message, 'err');
+    }
+  }
+
+  document.getElementById('btnImprimirQr').onclick = async () => {
+    const btn = document.getElementById('btnImprimirQr');
+    btn.disabled = true;
+    await gerarQRCodes();
+    btn.disabled = false;
+    if (qrGerados) window.print();
+  };
+
+  // Gera a prévia assim que a aba é aberta (sem precisar clicar em Imprimir).
+  const switchTabOriginal = window.switchTab;
+  window.switchTab = function (tab) {
+    switchTabOriginal(tab);
+    if (tab === 'qrcodes') gerarQRCodes();
   };
 
   // ── Assinaturas em tempo real (com reconexão ao voltar ao foco) ────────
