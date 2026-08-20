@@ -22,12 +22,15 @@
 
 import {
   signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
   signOut,
   onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
 import {
   doc,
-  getDoc
+  getDoc,
+  setDoc,
+  serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
 import { auth, db, VIRTUS_AUTH_DOMAIN } from "./firebase-config.js";
 
@@ -59,6 +62,23 @@ export async function virtusLogout() {
   await signOut(auth);
 }
 
+// Autocadastro (tela cadastro.html): qualquer pessoa pode criar a própria
+// conta, mas ela nasce com perfil "pendente" — SEM acesso ao dashboard até
+// um admin existente aprovar (definindo perfil "admin" ou "viewer" na tela
+// de Solicitações Pendentes). Reforçado em firestore.rules: o próprio client
+// só pode criar seu doc `usuarios/{uid}` com perfil == "pendente"; só admin
+// pode mudar isso depois.
+export async function virtusCadastrar(nome, email, senha) {
+  const cred = await createUserWithEmailAndPassword(auth, email.trim().toLowerCase(), senha);
+  await setDoc(doc(db, "usuarios", cred.user.uid), {
+    nome: nome.trim(),
+    email: email.trim().toLowerCase(),
+    perfil: "pendente",
+    criado_em: serverTimestamp()
+  });
+  await signOut(auth); // não deixa a pessoa "logada" num estado pendente
+}
+
 // Resolve o usuário atual (aguarda o Firebase inicializar a sessão) e retorna
 // { uid, usuario, perfil } ou null se não autenticado / sem perfil.
 export function virtusGetCurrentUser() {
@@ -82,6 +102,11 @@ export function virtusGetCurrentUser() {
 // Uso típico no topo do dashboard.html: `const me = await requireDashboardAccess();`
 export async function requireDashboardAccess() {
   const me = await virtusGetCurrentUser();
+  if (me && me.perfil === "pendente") {
+    await signOut(auth);
+    window.location.replace("./index.html?pendente=1");
+    return null;
+  }
   if (!me || (me.perfil !== "admin" && me.perfil !== "viewer")) {
     window.location.replace("./index.html");
     return null;

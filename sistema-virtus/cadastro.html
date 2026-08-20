@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Virtus — Acesso Restrito</title>
+<title>Virtus — Criar Conta de Avaliador</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
@@ -119,7 +119,10 @@
     margin-bottom: 18px; display: none;
   }
   .alert.error   { background: rgba(231,76,60,.15); border: 1px solid rgba(231,76,60,.3); color: #ff8a80; }
+  .alert.success { background: rgba(46,204,113,.12); border: 1px solid rgba(46,204,113,.3); color: #69f0ae; }
   .alert.show    { display: block; }
+
+  .hint { font-size: 0.72rem; color: var(--text-dim); margin-top: 6px; }
 
   .footer-note { text-align: center; margin-top: 24px; font-size: 0.75rem; color: var(--text-dim); }
 
@@ -140,95 +143,115 @@
 <div class="card">
   <div class="logo-wrap">
     <div class="logo-icon">⚙</div>
-    <h1>Sistema Virtus</h1>
-    <p class="subtitle">Acesso restrito — avaliadores autorizados</p>
+    <h1>Criar conta</h1>
+    <p class="subtitle">Sistema Virtus · Acesso de avaliador</p>
   </div>
 
   <div class="alert error" id="alertErr"></div>
-  <div class="alert" id="alertInfo" style="background:rgba(232,160,0,.12);border:1px solid rgba(232,160,0,.3);color:#ffd27a;"></div>
+  <div class="alert success" id="alertOk"></div>
 
-  <div class="field">
-    <label for="inp_user">Usuário</label>
-    <input type="text" id="inp_user" placeholder="seu usuário" autocomplete="username" spellcheck="false">
-  </div>
-
-  <div class="field">
-    <label for="inp_pass">Senha</label>
-    <div class="pass-wrap">
-      <input type="password" id="inp_pass" placeholder="••••••••" autocomplete="current-password">
-      <button class="pass-toggle" id="btn_show" type="button" title="Mostrar/ocultar senha">👁</button>
+  <form id="formCadastro">
+    <div class="field">
+      <label for="inp_nome">Nome completo</label>
+      <input type="text" id="inp_nome" placeholder="seu nome" autocomplete="name" required>
     </div>
-  </div>
 
-  <button class="btn-login" id="btn_login">
-    <span class="spinner" id="spinner"></span>
-    Entrar no Dashboard
-  </button>
+    <div class="field">
+      <label for="inp_email">E-mail</label>
+      <input type="email" id="inp_email" placeholder="seu@email.com" autocomplete="email" required>
+    </div>
+
+    <div class="field">
+      <label for="inp_pass">Senha</label>
+      <div class="pass-wrap">
+        <input type="password" id="inp_pass" placeholder="mínimo 6 caracteres" autocomplete="new-password" minlength="6" required>
+        <button class="pass-toggle" id="btn_show" type="button" title="Mostrar/ocultar senha">👁</button>
+      </div>
+    </div>
+
+    <div class="field">
+      <label for="inp_pass2">Confirmar senha</label>
+      <input type="password" id="inp_pass2" placeholder="repita a senha" autocomplete="new-password" minlength="6" required>
+      <p class="hint">Depois de criar a conta, um administrador precisa aprovar seu acesso antes que você consiga entrar no dashboard.</p>
+    </div>
+
+    <button class="btn-login" id="btn_cadastrar" type="submit">
+      <span class="spinner" id="spinner"></span>
+      Criar conta
+    </button>
+  </form>
 
   <div class="nav-links">
-    <a href="./quiz.html">Iniciar avaliação (candidato) →</a>
-    <a href="./cadastro.html">Criar conta de avaliador →</a>
+    <a href="./index.html">← Já tenho conta, fazer login</a>
   </div>
 
   <p class="footer-note">Sistema Virtus · Uso interno · Confidencial</p>
 </div>
 
 <script type="module">
-  import { virtusLogin, virtusGetCurrentUser } from "./js/auth.js";
+  import { virtusCadastrar } from "./js/auth.js";
 
   const $ = id => document.getElementById(id);
 
-  if (new URLSearchParams(location.search).get('pendente') === '1') {
-    const infoEl = $('alertInfo');
-    infoEl.textContent = '⏳ Seu cadastro foi criado, mas ainda está aguardando aprovação de um administrador.';
-    infoEl.className = 'alert show';
-  }
-
-  // Se já existe uma sessão Firebase válida com perfil, vai direto ao dashboard.
-  (async () => {
-    const me = await virtusGetCurrentUser();
-    if (me && (me.perfil === "admin" || me.perfil === "viewer")) {
-      window.location.replace("./dashboard.html");
-    }
-  })();
-
   $('btn_show').onclick = () => {
-    const inp = $('inp_pass');
-    inp.type = inp.type === 'password' ? 'text' : 'password';
+    const p1 = $('inp_pass'), p2 = $('inp_pass2');
+    const show = p1.type === 'password';
+    p1.type = show ? 'text' : 'password';
+    p2.type = show ? 'text' : 'password';
   };
 
-  async function doLogin() {
-    const usuario = $('inp_user').value.trim();
-    const senha   = $('inp_pass').value;
-    const alertEl = $('alertErr');
-    const btn     = $('btn_login');
-    const spin    = $('spinner');
+  $('formCadastro').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const nome  = $('inp_nome').value.trim();
+    const email = $('inp_email').value.trim();
+    const senha = $('inp_pass').value;
+    const senha2 = $('inp_pass2').value;
+    const errEl = $('alertErr');
+    const okEl  = $('alertOk');
+    const btn   = $('btn_cadastrar');
+    const spin  = $('spinner');
 
-    alertEl.className = 'alert'; alertEl.textContent = '';
+    errEl.className = 'alert'; errEl.textContent = '';
+    okEl.className = 'alert'; okEl.textContent = '';
 
-    if (!usuario || !senha) {
-      alertEl.textContent = 'Preencha usuário e senha.';
-      alertEl.className = 'alert error show'; return;
+    if (!nome || !email || !senha) {
+      errEl.textContent = 'Preencha todos os campos.';
+      errEl.className = 'alert error show';
+      return;
+    }
+    if (senha.length < 6) {
+      errEl.textContent = 'A senha precisa ter no mínimo 6 caracteres.';
+      errEl.className = 'alert error show';
+      return;
+    }
+    if (senha !== senha2) {
+      errEl.textContent = 'As senhas não conferem.';
+      errEl.className = 'alert error show';
+      return;
     }
 
     btn.disabled = true;
     spin.style.display = 'inline-block';
 
     try {
-      await virtusLogin(usuario, senha);
-      window.location.replace('./dashboard.html');
+      await virtusCadastrar(nome, email, senha);
+      okEl.textContent = '✅ Conta criada! Aguarde um administrador aprovar seu acesso.';
+      okEl.className = 'alert success show';
+      $('formCadastro').reset();
+      setTimeout(() => window.location.replace('./index.html?pendente=1'), 1800);
     } catch (err) {
       console.error(err);
-      alertEl.textContent = 'Credenciais inválidas ou servidor indisponível.';
-      alertEl.className = 'alert error show';
+      let msg = 'Não foi possível criar a conta.';
+      if (err.code === 'auth/email-already-in-use') msg = 'Esse e-mail já está cadastrado.';
+      else if (err.code === 'auth/invalid-email') msg = 'E-mail inválido.';
+      else if (err.code === 'auth/weak-password') msg = 'Senha muito fraca (mínimo 6 caracteres).';
+      errEl.textContent = msg;
+      errEl.className = 'alert error show';
+    } finally {
       btn.disabled = false;
       spin.style.display = 'none';
     }
-  }
-
-  $('btn_login').onclick = doLogin;
-  document.addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
-  $('inp_user').focus();
+  });
 </script>
 </body>
 </html>

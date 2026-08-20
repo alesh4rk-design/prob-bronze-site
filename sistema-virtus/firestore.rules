@@ -7,14 +7,17 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // usuarios/{uid}: perfil (admin | viewer) de cada avaliador autenticado.
-    // Só o próprio usuário (ou um admin) pode ler seu doc; escrita é feita
-    // manualmente pelo administrador via console do Firebase (não há tela
-    // de "criar usuário" no app — ver README.md).
+    // usuarios/{uid}: perfil (pendente | admin | viewer) de cada avaliador.
+    // Autocadastro (cadastro.html): a própria pessoa cria seu doc, mas SÓ
+    // com perfil "pendente" — não pode se autopromover a admin/viewer na
+    // criação. Só um admin existente pode mudar o perfil depois (aprovação),
+    // via tela "Solicitações pendentes" no dashboard.
     match /usuarios/{uid} {
       allow read: if request.auth != null &&
                      (request.auth.uid == uid || isAdmin());
-      allow write: if request.auth != null && isAdmin();
+      allow create: if request.auth != null && request.auth.uid == uid &&
+                       request.resource.data.perfil == 'pendente';
+      allow update, delete: if request.auth != null && isAdmin();
     }
 
     // perguntas/{modulo}: banco de questões por módulo. Não é sensível,

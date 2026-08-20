@@ -12,7 +12,7 @@
 
 import { db } from "./firebase-config.js";
 import {
-  collection, query, orderBy, onSnapshot, getDocs, doc, updateDoc, serverTimestamp
+  collection, query, where, orderBy, onSnapshot, getDocs, doc, updateDoc, deleteDoc, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
 
 // Assina a coleção `resultados` em tempo real (substitui o polling de 10s do
@@ -48,6 +48,33 @@ export async function definirDecisao(resultadoId, decisao, avaliador) {
   } else {
     await updateDoc(ref, { decisao, decisao_por: avaliador, decisao_em: serverTimestamp() });
   }
+}
+
+// ── Gerenciamento de acesso de avaliadores (usuarios/{uid}) ────────────────
+// Autocadastro cria contas com perfil "pendente" (cadastro.html); estas
+// funções permitem que um admin veja a fila e aprove (definindo admin ou
+// viewer) ou recuse (apaga o doc — a conta no Firebase Auth continua
+// existindo, mas sem doc em `usuarios` ela não passa em requireDashboardAccess()).
+
+// Assina em tempo real a lista de contas aguardando aprovação.
+export function assinarPendentes(callback) {
+  const q = query(collection(db, "usuarios"), where("perfil", "==", "pendente"));
+  return onSnapshot(q, (snap) => {
+    const lista = [];
+    snap.forEach((d) => lista.push({ uid: d.id, ...d.data() }));
+    callback(lista);
+  });
+}
+
+// Aprova uma conta pendente, definindo perfil "admin" ou "viewer".
+export async function aprovarUsuario(uid, perfil) {
+  await updateDoc(doc(db, "usuarios", uid), { perfil, aprovado_em: serverTimestamp() });
+}
+
+// Recusa/remove uma conta pendente (ou revoga acesso de admin/viewer já
+// aprovado). Não apaga a conta no Firebase Auth, só o doc de perfil.
+export async function removerUsuario(uid) {
+  await deleteDoc(doc(db, "usuarios", uid));
 }
 
 // Leitura pontual (sem realtime), útil para exportações (CSV/Excel).

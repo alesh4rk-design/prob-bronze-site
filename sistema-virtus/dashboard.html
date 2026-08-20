@@ -318,6 +318,16 @@
     </div>
   </div>
 
+  <div class="panel" style="margin-bottom:16px;" id="pendentesPanel">
+    <div class="panel-head"><div class="panel-title-sm">🔑 Solicitações de Acesso Pendentes <span class="badge" id="pendBadge" style="background:var(--amberdim,rgba(232,160,0,.1));border-color:rgba(232,160,0,.4);color:var(--amber);">0</span></div></div>
+    <div class="results-table-wrap">
+      <table>
+        <thead><tr><th>Nome</th><th>E-mail</th><th style="width:280px;">Aprovar como</th><th style="width:90px;">Recusar</th></tr></thead>
+        <tbody id="pendTableBody"><tr><td colspan="4"><div class="empty-state"><div class="empty-icon">🔑</div>Nenhuma solicitação pendente</div></td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
   <div class="panel" style="margin-bottom:16px;">
     <div class="panel-head"><div class="panel-title-sm">⌨️ Teste de Digitação — Candidatos <span class="badge cyan" id="typingBadge">0 registros</span></div></div>
     <div class="panel-body">
@@ -339,7 +349,7 @@
 
 <script type="module">
   import { requireDashboardAccess, virtusLogout } from "./js/auth.js";
-  import { assinarResultados, assinarViolacoes, definirDecisao } from "./js/dashboard.js";
+  import { assinarResultados, assinarViolacoes, definirDecisao, assinarPendentes, aprovarUsuario, removerUsuario } from "./js/dashboard.js";
 
   let ALL_RESULTADOS = [];
   let ALL_VIOLACOES = [];
@@ -378,6 +388,52 @@
     document.getElementById('authUserPerfil').textContent = me.perfil;
   }
   document.getElementById('btnLogout').onclick = async () => { await virtusLogout(); window.location.replace('./index.html'); };
+
+  // ── Solicitações pendentes (só admin vê e decide) ───────────────────────
+  const pendentesPanel = document.getElementById('pendentesPanel');
+  if (me && me.perfil === 'admin') {
+    assinarPendentes((lista) => {
+      document.getElementById('pendBadge').textContent = lista.length;
+      const tbody = document.getElementById('pendTableBody');
+      if (!lista.length) {
+        tbody.innerHTML = '<tr><td colspan="4"><div class="empty-state"><div class="empty-icon">🔑</div>Nenhuma solicitação pendente</div></td></tr>';
+        return;
+      }
+      tbody.innerHTML = lista.map(p => `
+        <tr>
+          <td class="td-nome">${escapeHtml(p.nome || '—')}</td>
+          <td>${escapeHtml(p.email || '—')}</td>
+          <td>
+            <div style="display:flex;gap:6px;">
+              <button class="btn-sm" style="background:var(--green);color:#0a1a12;border:none;border-radius:6px;padding:6px 10px;cursor:pointer;font-weight:700;" onclick="aprovarPendente('${p.uid}','admin')">Admin</button>
+              <button class="btn-sm" style="background:var(--cyan,#00c8e8);color:#052430;border:none;border-radius:6px;padding:6px 10px;cursor:pointer;font-weight:700;" onclick="aprovarPendente('${p.uid}','viewer')">Viewer</button>
+            </div>
+          </td>
+          <td><button class="btn-sm" style="background:transparent;color:var(--red);border:1px solid var(--red);border-radius:6px;padding:6px 10px;cursor:pointer;" onclick="recusarPendente('${p.uid}')">✕</button></td>
+        </tr>`).join('');
+    });
+  } else if (pendentesPanel) {
+    pendentesPanel.style.display = 'none';
+  }
+
+  window.aprovarPendente = async function(uid, perfil) {
+    try {
+      await aprovarUsuario(uid, perfil);
+      toast(`✅ Acesso aprovado como ${perfil}`, 'ok');
+    } catch (e) {
+      console.error(e);
+      toast('❌ Falha ao aprovar: ' + e.message, 'err');
+    }
+  };
+  window.recusarPendente = async function(uid) {
+    try {
+      await removerUsuario(uid);
+      toast('🗑️ Solicitação recusada', 'ok');
+    } catch (e) {
+      console.error(e);
+      toast('❌ Falha ao recusar: ' + e.message, 'err');
+    }
+  };
 
   // ── Decisão do avaliador (apto / não apto) ──────────────────────────────
   window.setDecisao = async function(resultadoId, decisao) {
