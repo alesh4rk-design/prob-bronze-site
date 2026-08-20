@@ -703,7 +703,7 @@
   // ── Decisão do avaliador (apto / não apto) ──────────────────────────────
   window.setDecisao = async function(resultadoId, decisao) {
     try {
-      await definirDecisao(resultadoId, decisao, me ? me.usuario : 'desconhecido');
+      await definirDecisao(resultadoId, decisao, (me && me.usuario) || (me && me.uid) || 'desconhecido');
       toast(decisao === 'apto' ? '✅ Marcado como Apto' : decisao === 'nao_apto' ? '❌ Marcado como Não apto' : '⏳ Voltou para Pendente', 'ok');
     } catch (e) {
       console.error(e);
