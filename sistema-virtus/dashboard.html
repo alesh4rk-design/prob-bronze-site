@@ -557,7 +557,7 @@
       <div class="page-subtitle">Resultados em tempo real · Processo Seletivo</div>
     </div>
     <div class="page-actions">
-      <button class="btn btn-amber" onclick="exportCSV()">⬇ Exportar CSV</button>
+      <button class="btn btn-amber" id="btnExportExcel" onclick="exportCSV()">⬇ Exportar Excel</button>
       <button class="btn btn-outline" onclick="clearAllFilters()">🗑 Limpar Filtros</button>
     </div>
   </div>
@@ -1315,7 +1315,7 @@
 
     h += `
       <div class="pr-assinatura">
-        <div class="pr-sig">Supervisor responsável</div>
+        <div class="pr-sig">Liderança responsável</div>
         <div class="pr-sig">Data</div>
       </div>
       <div class="pr-foot">
@@ -1550,19 +1550,174 @@
     renderViolacoes();
   }
 
-  window.exportCSV = function() {
-    const lista = getFiltered();
-    if (!lista.length) { toast('Nada para exportar', 'err'); return; }
+  // Planilha .xlsx de verdade (cabeçalho colorido, colunas largas, filtro,
+  // congelamento da 1ª linha), no lugar do CSV cru anterior. Usa ExcelJS via
+  // CDN, carregado só quando o botão é clicado (não pesa o carregamento do
+  // dashboard). Se a biblioteca não carregar (sem internet, CDN bloqueado),
+  // cai de volta para um CSV simples, para nunca deixar o botão quebrado.
+  function carregarScriptClassico(src) {
+    return new Promise((resolve, reject) => {
+      const s = document.createElement('script');
+      s.src = src;
+      s.onload = resolve;
+      s.onerror = () => reject(new Error('Falha ao carregar ' + src));
+      document.head.appendChild(s);
+    });
+  }
+
+  async function carregarExcelJS() {
+    if (window.ExcelJS) return window.ExcelJS;
+    try {
+      // Build ESM: captura o export diretamente, sem depender de globals.
+      const mod = await import('https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js/+esm');
+      const lib = mod.default || mod.ExcelJS || mod;
+      if (lib && lib.Workbook) return lib;
+    } catch (e) { /* cai para o fallback abaixo */ }
+
+    // Fallback: bundle UMD clássico, que expõe window.ExcelJS.
+    await carregarScriptClassico('https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js');
+    if (!window.ExcelJS) throw new Error('ExcelJS não carregou');
+    return window.ExcelJS;
+  }
+
+  function exportarCSVFallback(lista) {
     const header = ['Nome', 'Modulo', 'Acertos', 'Total', 'Pct', 'Data'];
     const rows = lista.map(r => [r.nome, r.modulo, r.acertos, r.total, r.pct, r.data_conclusao]);
-    const csv = [header, ...rows].map(row => row.map(v => `"${String(v ?? '').replace(/"/g, '""')}"`).join(',')).join('\n');
+    const csv = [header, ...rows].map(row => row.map(v => `"${String(v ?? '').replace(/"/g, '""')}"`).join(',')).join('\r\n');
     const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url; a.download = `virtus_resultados_${Date.now()}.csv`; a.click();
     URL.revokeObjectURL(url);
-    toast('CSV exportado!', 'ok');
+    toast('⚠️ Exportado como CSV simples (falha ao carregar gerador de Excel)', 'err');
+  }
+
+  const AMBER_HEX = 'FFE8A000';
+  const HEADER_TXT = 'FF1A1000';
+  const ROW_ALT = 'FFF4F1E8';
+
+  function estilizarCabecalho(row) {
+    row.eachCell(cell => {
+      cell.font = { bold: true, color: { argb: HEADER_TXT }, size: 11 };
+      cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: AMBER_HEX } };
+      cell.alignment = { vertical: 'middle', horizontal: 'center', wrapText: true };
+      cell.border = { bottom: { style: 'thin', color: { argb: 'FFB07800' } } };
+    });
+    row.height = 22;
+  }
+
+  function montarAbaResultados(wb, lista) {
+    const ws = wb.addWorksheet('Resultados', { views: [{ state: 'frozen', ySplit: 1 }] });
+    ws.columns = [
+      { header: 'Candidato', key: 'nome', width: 26 },
+      { header: 'CPF', key: 'cpf', width: 16 },
+      { header: 'Telefone', key: 'telefone', width: 16 },
+      { header: 'Bairro/Região', key: 'bairro', width: 20 },
+      { header: 'Cargo Pretendido', key: 'cargo', width: 22 },
+      { header: 'Módulo', key: 'modulo', width: 20 },
+      { header: 'Acertos', key: 'acertos', width: 10 },
+      { header: 'Total', key: 'total', width: 9 },
+      { header: 'Nota (%)', key: 'pct', width: 11 },
+      { header: 'Status', key: 'status', width: 13 },
+      { header: 'Decisão', key: 'decisao', width: 13 },
+      { header: 'Concluído em', key: 'data', width: 19 }
+    ];
+    estilizarCabecalho(ws.getRow(1));
+
+    lista.forEach((r, i) => {
+      const f = r.candidato || {};
+      const pct = r.pct || 0;
+      const decisaoTxt = r.decisao === 'apto' ? 'Apto' : r.decisao === 'nao_apto' ? 'Não apto' : 'Pendente';
+      const row = ws.addRow({
+        nome: r.nome || '—',
+        cpf: f.cpf || '—',
+        telefone: f.telefone || '—',
+        bairro: f.bairro || '—',
+        cargo: f.cargo_pretendido || '—',
+        modulo: r.modulo || '—',
+        acertos: r.acertos ?? 0,
+        total: r.total ?? 0,
+        pct: pct / 100,
+        status: pct >= 70 ? 'Aprovado' : 'Reprovado',
+        decisao: decisaoTxt,
+        data: r.data_conclusao ? new Date(r.data_conclusao) : null
+      });
+      row.getCell('pct').numFmt = '0%';
+      row.getCell('data').numFmt = 'dd/mm/yyyy hh:mm';
+      const corStatus = pct >= 70 ? 'FF00A85A' : 'FFE0483C';
+      row.getCell('status').font = { bold: true, color: { argb: corStatus } };
+      const corDecisao = r.decisao === 'apto' ? 'FF00A85A' : r.decisao === 'nao_apto' ? 'FFE0483C' : 'FF8A6100';
+      row.getCell('decisao').font = { bold: true, color: { argb: corDecisao } };
+      if (i % 2 === 1) {
+        row.eachCell(c => { if (!c.fill) c.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: ROW_ALT } }; });
+      }
+      row.eachCell(c => { c.alignment = { vertical: 'middle' }; });
+    });
+    ws.autoFilter = { from: 'A1', to: 'L1' };
+  }
+
+  function montarAbaDigitacao(wb, lista) {
+    const ws = wb.addWorksheet('Digitação', { views: [{ state: 'frozen', ySplit: 1 }] });
+    ws.columns = [
+      { header: 'Candidato', key: 'nome', width: 26 },
+      { header: 'Categoria', key: 'categoria', width: 16 },
+      { header: 'WPM', key: 'wpm', width: 9 },
+      { header: 'CPM', key: 'cpm', width: 9 },
+      { header: 'Precisão (%)', key: 'pct', width: 13 },
+      { header: '⌫ Apagamentos', key: 'del', width: 15 },
+      { header: 'Tempo (s)', key: 'tempo', width: 11 },
+      { header: 'Concluído em', key: 'data', width: 19 }
+    ];
+    estilizarCabecalho(ws.getRow(1));
+    lista.forEach((r, i) => {
+      const row = ws.addRow({
+        nome: r.nome || '—',
+        categoria: r.categoria || '—',
+        wpm: r.wpm ?? 0,
+        cpm: r.cpm ?? 0,
+        pct: (r.pct || 0) / 100,
+        del: r.deleteCount ?? 0,
+        tempo: r.elapsedSec ?? 0,
+        data: r.data_conclusao ? new Date(r.data_conclusao) : null
+      });
+      row.getCell('pct').numFmt = '0%';
+      row.getCell('data').numFmt = 'dd/mm/yyyy hh:mm';
+      if (i % 2 === 1) row.eachCell(c => { c.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: ROW_ALT } }; });
+    });
+    ws.autoFilter = { from: 'A1', to: 'H1' };
+  }
+
+  window.exportCSV = async function() {
+    const lista = getFiltered();
+    const typing = ALL_RESULTADOS.filter(r => r.tipo === 'typing');
+    if (!lista.length && !typing.length) { toast('Nada para exportar', 'err'); return; }
+
+    const btn = document.getElementById('btnExportExcel');
+    if (btn) { btn.disabled = true; btn.textContent = '⏳ Gerando planilha...'; }
+
+    try {
+      const ExcelJS = await carregarExcelJS();
+      const wb = new ExcelJS.Workbook();
+      wb.creator = 'Sistema Virtus';
+      wb.created = new Date();
+      if (lista.length) montarAbaResultados(wb, lista);
+      if (typing.length) montarAbaDigitacao(wb, typing);
+
+      const buffer = await wb.xlsx.writeBuffer();
+      const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = `virtus_resultados_${Date.now()}.xlsx`; a.click();
+      URL.revokeObjectURL(url);
+      toast('✅ Planilha exportada!', 'ok');
+    } catch (e) {
+      console.error(e);
+      exportarCSVFallback(lista);
+    } finally {
+      if (btn) { btn.disabled = false; btn.textContent = '⬇ Exportar Excel'; }
+    }
   };
+
 
   // Código de acesso presencial: gestão movida para admin.html.
 
