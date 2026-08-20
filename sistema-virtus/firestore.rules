@@ -36,6 +36,10 @@ service cloud.firestore {
     // candidato. Se quiser exigir Firebase Auth anônimo antes de escrever,
     // troque a condição de create para `request.auth != null`.
     // Leitura é restrita a admin/viewer (só o dashboard lê).
+    // Campos `decisao` / `decisao_por` / `decisao_em`: registram se o
+    // avaliador considerou o candidato apto/não apto a ingressar na empresa
+    // (definido no dashboard, botão de decisão por linha). São gravados via
+    // update, portanto já caem na regra abaixo — só admin decide.
     match /resultados/{id} {
       allow create: if true;
       allow update, delete: if request.auth != null && isAdmin();

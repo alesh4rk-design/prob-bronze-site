@@ -289,6 +289,7 @@
             <th>Acertos</th>
             <th>Nota %</th>
             <th>Status</th>
+            <th>Decisão do avaliador</th>
             <th>Concluído</th>
           </tr>
         </thead>
@@ -338,7 +339,7 @@
 
 <script type="module">
   import { requireDashboardAccess, virtusLogout } from "./js/auth.js";
-  import { assinarResultados, assinarViolacoes } from "./js/dashboard.js";
+  import { assinarResultados, assinarViolacoes, definirDecisao } from "./js/dashboard.js";
 
   let ALL_RESULTADOS = [];
   let ALL_VIOLACOES = [];
@@ -377,6 +378,17 @@
     document.getElementById('authUserPerfil').textContent = me.perfil;
   }
   document.getElementById('btnLogout').onclick = async () => { await virtusLogout(); window.location.replace('./index.html'); };
+
+  // ── Decisão do avaliador (apto / não apto) ──────────────────────────────
+  window.setDecisao = async function(resultadoId, decisao) {
+    try {
+      await definirDecisao(resultadoId, decisao, me ? me.usuario : 'desconhecido');
+      toast(decisao === 'apto' ? '✅ Marcado como Apto' : decisao === 'nao_apto' ? '❌ Marcado como Não apto' : '⏳ Voltou para Pendente', 'ok');
+    } catch (e) {
+      console.error(e);
+      toast('❌ Falha ao salvar decisão: ' + e.message, 'err');
+    }
+  };
 
   // ── Filtros ──────────────────────────────────────────────────────────
   window.applyFilters = function() { renderAll(); };
@@ -428,13 +440,24 @@
     const tbody = document.getElementById('tableBody');
     document.getElementById('tableCountBadge').textContent = lista.length + ' registros';
     if (!lista.length) {
-      tbody.innerHTML = '<tr><td colspan="7"><div class="empty-state"><div class="empty-icon">📭</div>Nenhum resultado encontrado.</div></td></tr>';
+      tbody.innerHTML = '<tr><td colspan="8"><div class="empty-state"><div class="empty-icon">📭</div>Nenhum resultado encontrado.</div></td></tr>';
       return;
     }
+    const podeDecidir = me && me.perfil === 'admin';
     tbody.innerHTML = lista.map((r, i) => {
       const pct = r.pct || 0;
       const aprovado = pct >= 70;
       const dt = r.data_conclusao ? new Date(r.data_conclusao).toLocaleString('pt-BR') : '—';
+      const decisao = r.decisao || 'pendente';
+      const decisaoSelect = podeDecidir
+        ? `<select class="field-input decisao-select decisao-${decisao}" onchange="setDecisao('${r.id}', this.value)">
+             <option value="pendente" ${decisao === 'pendente' ? 'selected' : ''}>⏳ Pendente</option>
+             <option value="apto" ${decisao === 'apto' ? 'selected' : ''}>✅ Apto</option>
+             <option value="nao_apto" ${decisao === 'nao_apto' ? 'selected' : ''}>❌ Não apto</option>
+           </select>`
+        : (decisao === 'apto' ? '<span style="color:var(--green);font-weight:700;">✅ Apto</span>'
+           : decisao === 'nao_apto' ? '<span style="color:var(--red);font-weight:700;">❌ Não apto</span>'
+           : '<span style="color:var(--text3);">⏳ Pendente</span>');
       return `<tr>
         <td style="text-align:center;color:var(--text3);">${i + 1}</td>
         <td class="td-nome">${escapeHtml(r.nome || '—')}</td>
@@ -447,6 +470,7 @@
           </div>
         </td>
         <td>${aprovado ? '<span style="color:var(--green);font-weight:700;">✅ Aprovado</span>' : '<span style="color:var(--red);font-weight:700;">❌ Reprovado</span>'}</td>
+        <td>${decisaoSelect}</td>
         <td class="td-time">${dt}</td>
       </tr>`;
     }).join('');

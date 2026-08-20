@@ -12,7 +12,7 @@
 
 import { db } from "./firebase-config.js";
 import {
-  collection, query, orderBy, onSnapshot, getDocs
+  collection, query, orderBy, onSnapshot, getDocs, doc, updateDoc, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
 
 // Assina a coleção `resultados` em tempo real (substitui o polling de 10s do
@@ -35,6 +35,19 @@ export function assinarViolacoes(callback) {
     snap.forEach((d) => lista.push({ id: d.id, ...d.data() }));
     callback(lista);
   });
+}
+
+// Grava a decisão do avaliador sobre um candidato: "apto", "nao_apto" ou
+// "pendente" (limpa a decisão). Só quem tem perfil admin consegue escrever
+// (reforçado em firestore.rules — resultados/{id} só aceita update de admin).
+// `avaliador` é o usuário logado (me.usuario, vindo de virtusGetCurrentUser).
+export async function definirDecisao(resultadoId, decisao, avaliador) {
+  const ref = doc(db, "resultados", resultadoId);
+  if (decisao === "pendente") {
+    await updateDoc(ref, { decisao: null, decisao_por: null, decisao_em: null });
+  } else {
+    await updateDoc(ref, { decisao, decisao_por: avaliador, decisao_em: serverTimestamp() });
+  }
 }
 
 // Leitura pontual (sem realtime), útil para exportações (CSV/Excel).
