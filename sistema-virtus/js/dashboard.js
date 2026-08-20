@@ -38,8 +38,8 @@ export function assinarViolacoes(callback) {
 }
 
 // Grava a decisão do avaliador sobre um candidato: "apto", "nao_apto" ou
-// "pendente" (limpa a decisão). Só quem tem perfil admin consegue escrever
-// (reforçado em firestore.rules — resultados/{id} só aceita update de admin).
+// "pendente" (limpa a decisão). Admin e viewer podem decidir; as
+// firestore.rules limitam o viewer a alterar SOMENTE estes três campos.
 // `avaliador` é o usuário logado (me.usuario, vindo de virtusGetCurrentUser).
 export async function definirDecisao(resultadoId, decisao, avaliador) {
   const ref = doc(db, "resultados", resultadoId);

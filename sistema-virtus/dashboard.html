@@ -499,7 +499,9 @@
       tbody.innerHTML = '<tr><td colspan="8"><div class="empty-state"><div class="empty-icon">📭</div>Nenhum resultado encontrado.</div></td></tr>';
       return;
     }
-    const podeDecidir = me && me.perfil === 'admin';
+    // Admin e viewer podem decidir apto/não apto (viewer é limitado a esses
+    // campos pelas firestore.rules; só admin edita/apaga o resto).
+    const podeDecidir = me && (me.perfil === 'admin' || me.perfil === 'viewer');
     tbody.innerHTML = lista.map((r, i) => {
       const pct = r.pct || 0;
       const aprovado = pct >= 70;

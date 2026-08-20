@@ -41,12 +41,20 @@ service cloud.firestore {
     // Leitura é restrita a admin/viewer (só o dashboard lê).
     // Campos `decisao` / `decisao_por` / `decisao_em`: registram se o
     // avaliador considerou o candidato apto/não apto a ingressar na empresa
-    // (definido no dashboard, botão de decisão por linha). São gravados via
-    // update, portanto já caem na regra abaixo — só admin decide.
+    // (definido no dashboard, seletor por linha).
+    // Admin e viewer podem decidir, MAS o viewer só consegue tocar nesses
+    // três campos — não pode alterar nota, nome, respostas nem apagar nada.
+    // Admin pode editar o documento inteiro e excluir.
     match /resultados/{id} {
       allow create: if true;
-      allow update, delete: if request.auth != null && isAdmin();
       allow read: if request.auth != null && isAvaliador();
+      allow update: if request.auth != null && (
+                      isAdmin() ||
+                      (isAvaliador() &&
+                       request.resource.data.diff(resource.data).affectedKeys()
+                         .hasOnly(['decisao', 'decisao_por', 'decisao_em']))
+                    );
+      allow delete: if request.auth != null && isAdmin();
     }
 
     // violacoes/{id}: mesma lógica de `resultados` — escrita liberada
