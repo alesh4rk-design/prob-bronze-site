@@ -294,48 +294,92 @@
     #qrPrintSheets { display:block !important; }
   }
   .qr-sheet {
-    width:210mm; min-height:297mm; padding:14mm;
-    display:flex; flex-direction:column; align-items:center; justify-content:center;
-    page-break-after:always; box-sizing:border-box; position:relative;
-    font-family:'Exo 2',sans-serif; color:#12141c;
-    background:
-      radial-gradient(ellipse 70% 50% at 50% 0%, rgba(232,160,0,0.05) 0%, transparent 70%),
-      #fff;
+    width:210mm; height:297mm; box-sizing:border-box; position:relative;
+    page-break-after:always; overflow:hidden;
+    font-family:'Exo 2',sans-serif; color:#E8EDF8;
+    background:#05080F;
   }
   .qr-sheet:last-child { page-break-after:auto; }
 
-  /* moldura decorativa da folha */
-  .qr-sheet-frame { position:absolute; inset:10mm; border:1px solid #E4D9C0; border-radius:2mm; pointer-events:none; }
-  .qr-sheet-corner { position:absolute; width:16mm; height:16mm; border-color:#E8A000; pointer-events:none; }
-  .qr-sheet-corner.tl { top:10mm; left:10mm; border-top:2px solid; border-left:2px solid; border-top-left-radius:2mm; }
-  .qr-sheet-corner.tr { top:10mm; right:10mm; border-top:2px solid; border-right:2px solid; border-top-right-radius:2mm; }
-  .qr-sheet-corner.bl { bottom:10mm; left:10mm; border-bottom:2px solid; border-left:2px solid; border-bottom-left-radius:2mm; }
-  .qr-sheet-corner.br { bottom:10mm; right:10mm; border-bottom:2px solid; border-right:2px solid; border-bottom-right-radius:2mm; }
-
-  .qr-sheet-brand { display:flex; flex-direction:column; align-items:center; gap:10px; margin-bottom:34px; }
-  .qr-sheet-hex { width:60px; height:60px; background:linear-gradient(135deg,#E8A000,#C87800); border-radius:14px; display:flex; align-items:center; justify-content:center; font-size:28px; color:#1a1000; box-shadow:0 6px 18px rgba(232,160,0,0.35); }
-  .qr-sheet-brand-name { font-family:'Rajdhani',sans-serif; font-size:26px; font-weight:700; letter-spacing:9px; color:#0d1420; text-transform:uppercase; text-align:center; }
-  .qr-sheet-brand-sub { font-family:'Share Tech Mono',monospace; font-size:9px; letter-spacing:4px; color:#B08A3A; text-transform:uppercase; margin-top:2px; text-align:center; }
-  .qr-sheet-divider { width:120px; height:2px; background:linear-gradient(90deg,transparent,#E8A000,transparent); margin-bottom:34px; }
-
-  .qr-sheet-titulo { font-family:'Rajdhani',sans-serif; font-size:42px; font-weight:700; letter-spacing:1px; color:#0d1420; text-align:center; margin-bottom:6px; }
-  .qr-sheet-sub { font-family:'Share Tech Mono',monospace; font-size:13px; letter-spacing:1.5px; color:#8A7550; text-align:center; margin-bottom:30px; text-transform:uppercase; }
-
-  .qr-sheet-canvas-wrap { position:relative; padding:22px; background:#fff; border:3px solid #E8A000; border-radius:20px; box-shadow:0 10px 32px rgba(232,160,0,0.18); }
-  .qr-sheet-canvas-wrap::before, .qr-sheet-canvas-wrap::after { content:''; position:absolute; width:22px; height:22px; border-color:#0d1420; }
-  .qr-sheet-canvas-wrap::before { top:-3px; left:-3px; border-top:3px solid; border-left:3px solid; border-top-left-radius:20px; }
-  .qr-sheet-canvas-wrap::after { bottom:-3px; right:-3px; border-bottom:3px solid; border-right:3px solid; border-bottom-right-radius:20px; }
-
-  .qr-sheet-passos { display:flex; gap:22px; margin-top:38px; }
-  .qr-sheet-passo { display:flex; flex-direction:column; align-items:center; gap:8px; max-width:130px; text-align:center; }
-  .qr-sheet-passo-num {
-    width:30px; height:30px; border-radius:50%; background:#0d1420; color:#E8A000;
-    display:flex; align-items:center; justify-content:center;
-    font-family:'Rajdhani',sans-serif; font-size:15px; font-weight:700;
+  /* textura de grade + brilho, igual ao resto do sistema */
+  .qr-sheet-grid {
+    position:absolute; inset:0; pointer-events:none;
+    background-image:
+      linear-gradient(rgba(232,160,0,0.06) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(232,160,0,0.06) 1px, transparent 1px);
+    background-size:12mm 12mm;
   }
-  .qr-sheet-passo-txt { font-family:'Share Tech Mono',monospace; font-size:9.5px; letter-spacing:.5px; color:#5A6880; line-height:1.5; }
+  .qr-sheet-glow {
+    position:absolute; inset:0; pointer-events:none;
+    background:
+      radial-gradient(ellipse 70% 45% at 50% 8%, rgba(232,160,0,0.22) 0%, transparent 65%),
+      radial-gradient(ellipse 60% 40% at 50% 100%, rgba(232,160,0,0.10) 0%, transparent 70%);
+  }
 
-  .qr-sheet-footer { position:absolute; bottom:16mm; left:0; right:0; text-align:center; font-family:'Share Tech Mono',monospace; font-size:8.5px; letter-spacing:2px; color:#B0B8C4; text-transform:uppercase; }
+  /* faixa superior e inferior cheias, cor de destaque */
+  .qr-sheet-topbar, .qr-sheet-botbar {
+    position:absolute; left:0; right:0; height:6mm;
+    background:linear-gradient(90deg,#7a4a00,#E8A000 25%,#FFD060 50%,#E8A000 75%,#7a4a00);
+  }
+  .qr-sheet-topbar { top:0; }
+  .qr-sheet-botbar { bottom:0; }
+
+  .qr-sheet-corner { position:absolute; width:18mm; height:18mm; border-color:rgba(232,160,0,0.6); pointer-events:none; }
+  .qr-sheet-corner.tl { top:14mm; left:12mm; border-top:2px solid; border-left:2px solid; }
+  .qr-sheet-corner.tr { top:14mm; right:12mm; border-top:2px solid; border-right:2px solid; }
+  .qr-sheet-corner.bl { bottom:14mm; left:12mm; border-bottom:2px solid; border-left:2px solid; }
+  .qr-sheet-corner.br { bottom:14mm; right:12mm; border-bottom:2px solid; border-right:2px solid; }
+
+  .qr-sheet-body {
+    position:relative; height:100%; padding:22mm 16mm;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+  }
+
+  .qr-sheet-brand { display:flex; flex-direction:column; align-items:center; gap:12px; margin-bottom:10mm; }
+  .qr-sheet-hex {
+    width:74px; height:74px; background:linear-gradient(135deg,#E8A000,#C87800);
+    border-radius:18px; display:flex; align-items:center; justify-content:center;
+    font-size:34px; color:#1a1000; box-shadow:0 0 40px rgba(232,160,0,0.5);
+  }
+  .qr-sheet-brand-name { font-family:'Rajdhani',sans-serif; font-size:32px; font-weight:700; letter-spacing:11px; color:#fff; text-transform:uppercase; text-align:center; text-shadow:0 0 30px rgba(232,160,0,0.35); }
+  .qr-sheet-brand-sub { font-family:'Share Tech Mono',monospace; font-size:10px; letter-spacing:5px; color:#E8A000; text-transform:uppercase; margin-top:2px; text-align:center; }
+
+  .qr-sheet-titulo {
+    font-family:'Rajdhani',sans-serif; font-size:50px; font-weight:700; letter-spacing:1px;
+    color:#fff; text-align:center; margin-bottom:8px; line-height:1.05;
+  }
+  .qr-sheet-titulo em { color:#E8A000; font-style:normal; }
+  .qr-sheet-sub {
+    font-family:'Share Tech Mono',monospace; font-size:13px; letter-spacing:2px; color:#8090A8;
+    text-align:center; margin-bottom:12mm; text-transform:uppercase;
+  }
+
+  .qr-sheet-canvas-wrap {
+    position:relative; padding:26px; background:#fff; border-radius:24px;
+    box-shadow:0 0 0 3px #E8A000, 0 20px 60px rgba(232,160,0,0.35);
+  }
+  .qr-sheet-canvas-wrap::before, .qr-sheet-canvas-wrap::after {
+    content:''; position:absolute; width:26px; height:26px; border-color:#050810;
+  }
+  .qr-sheet-canvas-wrap::before { top:-4px; left:-4px; border-top:4px solid; border-left:4px solid; border-top-left-radius:24px; }
+  .qr-sheet-canvas-wrap::after  { bottom:-4px; right:-4px; border-bottom:4px solid; border-right:4px solid; border-bottom-right-radius:24px; }
+
+  .qr-sheet-passos { display:flex; gap:14mm; margin-top:14mm; }
+  .qr-sheet-passo { display:flex; flex-direction:column; align-items:center; gap:10px; max-width:38mm; text-align:center; }
+  .qr-sheet-passo-num {
+    width:36px; height:36px; border-radius:50%;
+    background:linear-gradient(135deg,#E8A000,#FFB800); color:#1a1000;
+    display:flex; align-items:center; justify-content:center;
+    font-family:'Rajdhani',sans-serif; font-size:17px; font-weight:700;
+    box-shadow:0 4px 14px rgba(232,160,0,0.4);
+  }
+  .qr-sheet-passo-txt { font-family:'Share Tech Mono',monospace; font-size:10px; letter-spacing:.5px; color:#B8C4D8; line-height:1.5; }
+
+  .qr-sheet-footer {
+    position:absolute; bottom:12mm; left:0; right:0; text-align:center;
+    font-family:'Share Tech Mono',monospace; font-size:9px; letter-spacing:3px;
+    color:#5A6880; text-transform:uppercase;
+  }
 </style>
 </head>
 <body class="dark-theme">
@@ -815,18 +859,36 @@
   // avaliador), o QR é uma <img> apontando para um serviço público de
   // geração de QR Code. É só uma requisição de imagem, sem executar
   // JavaScript externo — muito mais resistente a bloqueios de rede.
-  function urlQrCode(conteudo, tamanho) {
-    return `https://api.qrserver.com/v1/create-qr-code/?size=${tamanho}x${tamanho}&data=${encodeURIComponent(conteudo)}`;
+  // Duas fontes diferentes: se uma estiver bloqueada, tenta a outra.
+  function urlsQrCode(conteudo, tamanho) {
+    const enc = encodeURIComponent(conteudo);
+    return [
+      `https://api.qrserver.com/v1/create-qr-code/?size=${tamanho}x${tamanho}&data=${enc}`,
+      `https://quickchart.io/qr?text=${enc}&size=${tamanho}&margin=1`
+    ];
   }
 
-  // Confere se uma imagem carrega de verdade (não só se o <img> foi criado).
-  function testarImagem(src) {
+  // Confere se uma imagem carrega de verdade (não só se o <img> foi criado),
+  // com um tempo limite — senão uma URL bloqueada pode travar sem nunca
+  // disparar onload nem onerror.
+  function testarImagem(src, timeoutMs = 8000) {
     return new Promise((resolve, reject) => {
       const img = new Image();
-      img.onload = () => resolve();
-      img.onerror = () => reject(new Error('Falha ao carregar ' + src));
+      const timer = setTimeout(() => reject(new Error('Tempo esgotado ao carregar ' + src)), timeoutMs);
+      img.onload = () => { clearTimeout(timer); resolve(); };
+      img.onerror = () => { clearTimeout(timer); reject(new Error('Falha ao carregar ' + src)); };
       img.src = src;
     });
+  }
+
+  // Tenta cada fonte em sequência e retorna a primeira que carregar de verdade.
+  async function primeiraQrDisponivel(conteudo, tamanho) {
+    let ultimoErro;
+    for (const src of urlsQrCode(conteudo, tamanho)) {
+      try { await testarImagem(src); return src; }
+      catch (e) { ultimoErro = e; }
+    }
+    throw ultimoErro || new Error('Nenhuma fonte de QR Code respondeu');
   }
 
   let qrGerados = false;
@@ -840,58 +902,80 @@
       // hospedado na raiz quanto num subcaminho (ex: GitHub Pages de projeto).
       const baseUrl = window.location.href.replace(/admin\.html.*$/, '');
       const alvos = [
-        { nome: 'Avaliação do Candidato', sub: 'Quiz — perguntas do processo seletivo', url: baseUrl + 'quiz.html' },
-        { nome: 'Teste de Digitação', sub: 'Cronometrado — velocidade e precisão', url: baseUrl + 'digitacao.html' }
+        { nome: 'Avaliação do Candidato', tituloHtml: 'Avaliação do <em>Candidato</em>', sub: 'Quiz — perguntas do processo seletivo', url: baseUrl + 'quiz.html' },
+        { nome: 'Teste de Digitação', tituloHtml: 'Teste de <em>Digitação</em>', sub: 'Cronometrado — velocidade e precisão', url: baseUrl + 'digitacao.html' }
       ];
       previewGrid.innerHTML = '';
       printSheets.innerHTML = '';
+      let algumOk = false;
       for (const alvo of alvos) {
-        const imgUrl = urlQrCode(alvo.url, 320);
-        await testarImagem(imgUrl); // se falhar, cai no catch e avisa o usuário
-        previewGrid.insertAdjacentHTML('beforeend', `
-          <div class="qr-preview-card">
-            <img src="${imgUrl}" style="width:100%;max-width:220px;border-radius:6px;">
-            <div class="qr-preview-nome">${escapeHtml(alvo.nome)}</div>
-            <div class="qr-preview-url">${escapeHtml(alvo.url)}</div>
-          </div>`);
-        printSheets.insertAdjacentHTML('beforeend', `
-          <div class="qr-sheet">
-            <div class="qr-sheet-frame"></div>
-            <div class="qr-sheet-corner tl"></div>
-            <div class="qr-sheet-corner tr"></div>
-            <div class="qr-sheet-corner bl"></div>
-            <div class="qr-sheet-corner br"></div>
+        try {
+          const imgPreview = await primeiraQrDisponivel(alvo.url, 320);
+          const imgSheet = await primeiraQrDisponivel(alvo.url, 300);
+          algumOk = true;
+          previewGrid.insertAdjacentHTML('beforeend', `
+            <div class="qr-preview-card">
+              <img src="${imgPreview}" style="width:100%;max-width:220px;border-radius:6px;">
+              <div class="qr-preview-nome">${escapeHtml(alvo.nome)}</div>
+              <div class="qr-preview-url">${escapeHtml(alvo.url)}</div>
+            </div>`);
+          printSheets.insertAdjacentHTML('beforeend', `
+            <div class="qr-sheet">
+              <div class="qr-sheet-grid"></div>
+              <div class="qr-sheet-glow"></div>
+              <div class="qr-sheet-topbar"></div>
+              <div class="qr-sheet-botbar"></div>
+              <div class="qr-sheet-corner tl"></div>
+              <div class="qr-sheet-corner tr"></div>
+              <div class="qr-sheet-corner bl"></div>
+              <div class="qr-sheet-corner br"></div>
 
-            <div class="qr-sheet-brand">
-              <div class="qr-sheet-hex">⚡</div>
-              <div class="qr-sheet-brand-name">Virtus</div>
-              <div class="qr-sheet-brand-sub">Sistema de Avaliação</div>
-            </div>
-            <div class="qr-sheet-divider"></div>
+              <div class="qr-sheet-body">
+                <div class="qr-sheet-brand">
+                  <div class="qr-sheet-hex">⚡</div>
+                  <div class="qr-sheet-brand-name">Virtus</div>
+                  <div class="qr-sheet-brand-sub">Sistema de Avaliação</div>
+                </div>
 
-            <div class="qr-sheet-titulo">${escapeHtml(alvo.nome)}</div>
-            <div class="qr-sheet-sub">${escapeHtml(alvo.sub)}</div>
-            <div class="qr-sheet-canvas-wrap"><img src="${urlQrCode(alvo.url, 300)}" width="300" height="300"></div>
+                <div class="qr-sheet-titulo">${alvo.tituloHtml}</div>
+                <div class="qr-sheet-sub">${escapeHtml(alvo.sub)}</div>
+                <div class="qr-sheet-canvas-wrap"><img src="${imgSheet}" width="300" height="300"></div>
 
-            <div class="qr-sheet-passos">
-              <div class="qr-sheet-passo">
-                <div class="qr-sheet-passo-num">1</div>
-                <div class="qr-sheet-passo-txt">Abra a câmera do celular</div>
+                <div class="qr-sheet-passos">
+                  <div class="qr-sheet-passo">
+                    <div class="qr-sheet-passo-num">1</div>
+                    <div class="qr-sheet-passo-txt">Abra a câmera do celular</div>
+                  </div>
+                  <div class="qr-sheet-passo">
+                    <div class="qr-sheet-passo-num">2</div>
+                    <div class="qr-sheet-passo-txt">Aponte para o QR Code acima</div>
+                  </div>
+                  <div class="qr-sheet-passo">
+                    <div class="qr-sheet-passo-num">3</div>
+                    <div class="qr-sheet-passo-txt">Toque no link que aparecer na tela</div>
+                  </div>
+                </div>
               </div>
-              <div class="qr-sheet-passo">
-                <div class="qr-sheet-passo-num">2</div>
-                <div class="qr-sheet-passo-txt">Aponte para o QR Code acima</div>
-              </div>
-              <div class="qr-sheet-passo">
-                <div class="qr-sheet-passo-num">3</div>
-                <div class="qr-sheet-passo-txt">Toque no link que aparecer na tela</div>
-              </div>
-            </div>
 
-            <div class="qr-sheet-footer">Sistema Virtus · Processo Seletivo</div>
-          </div>`);
+              <div class="qr-sheet-footer">Sistema Virtus · Processo Seletivo</div>
+            </div>`);
+        } catch (e) {
+          console.error('Falha ao gerar QR de', alvo.nome, e);
+          previewGrid.insertAdjacentHTML('beforeend', `
+            <div class="qr-preview-card">
+              <div class="empty-icon">❌</div>
+              <div class="qr-preview-nome">${escapeHtml(alvo.nome)}</div>
+              <div class="qr-preview-url">Falha ao carregar o QR Code. Verifique a conexão.</div>
+            </div>`);
+        }
       }
-      qrGerados = true;
+      if (!previewGrid.children.length) {
+        previewGrid.innerHTML = '<div class="empty-state"><div class="empty-icon">❌</div>Nenhum QR Code pôde ser gerado. Verifique a conexão e tente novamente.</div>';
+      }
+      qrGerados = algumOk;
+      if (!algumOk) {
+        toast('❌ Falha ao gerar todos os QR Codes — verifique a conexão', 'err');
+      }
     } catch (e) {
       console.error(e);
       previewGrid.innerHTML = '<div class="empty-state"><div class="empty-icon">❌</div>Falha ao gerar QR Codes. Verifique a conexão e tente novamente.</div>';
