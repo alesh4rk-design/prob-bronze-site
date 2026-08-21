@@ -12,7 +12,7 @@
 
 import { db } from "./firebase-config.js";
 import {
-  collection, query, where, orderBy, limit, onSnapshot, getDocs, getDoc, doc, setDoc, updateDoc, deleteDoc, serverTimestamp
+  collection, query, where, orderBy, limit, onSnapshot, getDoc, doc, setDoc, updateDoc, deleteDoc, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
 
 // Assina a coleção `resultados` em tempo real (substitui o polling de 10s do
@@ -178,12 +178,4 @@ export function assinarCodigosAcesso(callback, onError) {
 // mais cedo, ou o código vazou). Admin ou viewer.
 export async function cancelarCodigoAcesso(codigo) {
   await updateDoc(doc(db, "codigos_acesso", codigo), { ativo: false });
-}
-
-// Leitura pontual (sem realtime), útil para exportações (CSV/Excel).
-export async function buscarResultadosUmaVez() {
-  const snap = await getDocs(collection(db, "resultados"));
-  const lista = [];
-  snap.forEach((d) => lista.push({ id: d.id, ...d.data() }));
-  return lista;
 }

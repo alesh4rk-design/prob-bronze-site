@@ -797,14 +797,27 @@
   }
   async function carregarQRCodeLib() {
     if (window.QRCode) return window.QRCode;
+    // Tenta o build ESM (jsDelivr), depois o UMD clássico em dois CDNs
+    // diferentes — se um estiver fora do ar ou bloqueado na rede do
+    // avaliador, o outro geralmente funciona.
     try {
       const mod = await import('https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js/+esm');
       const lib = mod.default || mod;
       if (lib && lib.toDataURL) return lib;
-    } catch (e) { /* cai para o fallback abaixo */ }
-    await carregarScriptClassico('https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js');
-    if (!window.QRCode) throw new Error('Biblioteca de QR Code não carregou');
-    return window.QRCode;
+    } catch (e) { /* cai para os fallbacks abaixo */ }
+
+    const candidatos = [
+      'https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js',
+      'https://unpkg.com/qrcode@1.5.3/build/qrcode.min.js'
+    ];
+    let ultimoErro;
+    for (const src of candidatos) {
+      try {
+        await carregarScriptClassico(src);
+        if (window.QRCode) return window.QRCode;
+      } catch (e) { ultimoErro = e; }
+    }
+    throw ultimoErro || new Error('Biblioteca de QR Code não carregou');
   }
 
   let qrGerados = false;

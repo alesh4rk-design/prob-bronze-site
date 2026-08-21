@@ -95,7 +95,8 @@ function ehComportamental(modulo) {
 }
 
 // Quantidade de questões sorteadas do banco para o candidato responder.
-export function totalQuestoesParaModulo(modulo) {
+// (só usada internamente por carregarPerguntasDoModulo, abaixo)
+function totalQuestoesParaModulo(modulo) {
   return ehComportamental(modulo) ? 10 : 15;
 }
 
