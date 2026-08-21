@@ -294,21 +294,48 @@
     #qrPrintSheets { display:block !important; }
   }
   .qr-sheet {
-    width:210mm; min-height:297mm; padding:20mm;
+    width:210mm; min-height:297mm; padding:14mm;
     display:flex; flex-direction:column; align-items:center; justify-content:center;
-    page-break-after:always; box-sizing:border-box;
-    font-family:'Exo 2',sans-serif; color:#12141c; background:#fff;
+    page-break-after:always; box-sizing:border-box; position:relative;
+    font-family:'Exo 2',sans-serif; color:#12141c;
+    background:
+      radial-gradient(ellipse 70% 50% at 50% 0%, rgba(232,160,0,0.05) 0%, transparent 70%),
+      #fff;
   }
   .qr-sheet:last-child { page-break-after:auto; }
-  .qr-sheet-brand { display:flex; align-items:center; gap:14px; margin-bottom:40px; }
-  .qr-sheet-hex { width:52px; height:52px; background:linear-gradient(135deg,#E8A000,#C87800); border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:24px; color:#1a1000; }
-  .qr-sheet-brand-name { font-family:'Rajdhani',sans-serif; font-size:30px; font-weight:700; letter-spacing:7px; color:#0d1420; text-transform:uppercase; }
-  .qr-sheet-brand-sub { font-family:'Share Tech Mono',monospace; font-size:10px; letter-spacing:3px; color:#7A8EA8; text-transform:uppercase; margin-top:3px; }
-  .qr-sheet-titulo { font-family:'Rajdhani',sans-serif; font-size:38px; font-weight:700; letter-spacing:2px; color:#0d1420; text-align:center; margin-bottom:8px; }
-  .qr-sheet-sub { font-family:'Share Tech Mono',monospace; font-size:13px; letter-spacing:1px; color:#5A6880; text-align:center; margin-bottom:36px; }
-  .qr-sheet-canvas-wrap { padding:24px; border:3px solid #E8A000; border-radius:16px; }
-  .qr-sheet-instrucao { font-family:'Share Tech Mono',monospace; font-size:12px; letter-spacing:1px; color:#5A6880; text-align:center; margin-top:36px; max-width:420px; line-height:1.8; }
-  .qr-sheet-url { font-family:'Share Tech Mono',monospace; font-size:11px; color:#0d1420; text-align:center; margin-top:14px; word-break:break-all; padding:0 20px; }
+
+  /* moldura decorativa da folha */
+  .qr-sheet-frame { position:absolute; inset:10mm; border:1px solid #E4D9C0; border-radius:2mm; pointer-events:none; }
+  .qr-sheet-corner { position:absolute; width:16mm; height:16mm; border-color:#E8A000; pointer-events:none; }
+  .qr-sheet-corner.tl { top:10mm; left:10mm; border-top:2px solid; border-left:2px solid; border-top-left-radius:2mm; }
+  .qr-sheet-corner.tr { top:10mm; right:10mm; border-top:2px solid; border-right:2px solid; border-top-right-radius:2mm; }
+  .qr-sheet-corner.bl { bottom:10mm; left:10mm; border-bottom:2px solid; border-left:2px solid; border-bottom-left-radius:2mm; }
+  .qr-sheet-corner.br { bottom:10mm; right:10mm; border-bottom:2px solid; border-right:2px solid; border-bottom-right-radius:2mm; }
+
+  .qr-sheet-brand { display:flex; flex-direction:column; align-items:center; gap:10px; margin-bottom:34px; }
+  .qr-sheet-hex { width:60px; height:60px; background:linear-gradient(135deg,#E8A000,#C87800); border-radius:14px; display:flex; align-items:center; justify-content:center; font-size:28px; color:#1a1000; box-shadow:0 6px 18px rgba(232,160,0,0.35); }
+  .qr-sheet-brand-name { font-family:'Rajdhani',sans-serif; font-size:26px; font-weight:700; letter-spacing:9px; color:#0d1420; text-transform:uppercase; text-align:center; }
+  .qr-sheet-brand-sub { font-family:'Share Tech Mono',monospace; font-size:9px; letter-spacing:4px; color:#B08A3A; text-transform:uppercase; margin-top:2px; text-align:center; }
+  .qr-sheet-divider { width:120px; height:2px; background:linear-gradient(90deg,transparent,#E8A000,transparent); margin-bottom:34px; }
+
+  .qr-sheet-titulo { font-family:'Rajdhani',sans-serif; font-size:42px; font-weight:700; letter-spacing:1px; color:#0d1420; text-align:center; margin-bottom:6px; }
+  .qr-sheet-sub { font-family:'Share Tech Mono',monospace; font-size:13px; letter-spacing:1.5px; color:#8A7550; text-align:center; margin-bottom:30px; text-transform:uppercase; }
+
+  .qr-sheet-canvas-wrap { position:relative; padding:22px; background:#fff; border:3px solid #E8A000; border-radius:20px; box-shadow:0 10px 32px rgba(232,160,0,0.18); }
+  .qr-sheet-canvas-wrap::before, .qr-sheet-canvas-wrap::after { content:''; position:absolute; width:22px; height:22px; border-color:#0d1420; }
+  .qr-sheet-canvas-wrap::before { top:-3px; left:-3px; border-top:3px solid; border-left:3px solid; border-top-left-radius:20px; }
+  .qr-sheet-canvas-wrap::after { bottom:-3px; right:-3px; border-bottom:3px solid; border-right:3px solid; border-bottom-right-radius:20px; }
+
+  .qr-sheet-passos { display:flex; gap:22px; margin-top:38px; }
+  .qr-sheet-passo { display:flex; flex-direction:column; align-items:center; gap:8px; max-width:130px; text-align:center; }
+  .qr-sheet-passo-num {
+    width:30px; height:30px; border-radius:50%; background:#0d1420; color:#E8A000;
+    display:flex; align-items:center; justify-content:center;
+    font-family:'Rajdhani',sans-serif; font-size:15px; font-weight:700;
+  }
+  .qr-sheet-passo-txt { font-family:'Share Tech Mono',monospace; font-size:9.5px; letter-spacing:.5px; color:#5A6880; line-height:1.5; }
+
+  .qr-sheet-footer { position:absolute; bottom:16mm; left:0; right:0; text-align:center; font-family:'Share Tech Mono',monospace; font-size:8.5px; letter-spacing:2px; color:#B0B8C4; text-transform:uppercase; }
 </style>
 </head>
 <body class="dark-theme">
@@ -829,18 +856,39 @@
           </div>`);
         printSheets.insertAdjacentHTML('beforeend', `
           <div class="qr-sheet">
+            <div class="qr-sheet-frame"></div>
+            <div class="qr-sheet-corner tl"></div>
+            <div class="qr-sheet-corner tr"></div>
+            <div class="qr-sheet-corner bl"></div>
+            <div class="qr-sheet-corner br"></div>
+
             <div class="qr-sheet-brand">
               <div class="qr-sheet-hex">⚡</div>
-              <div>
-                <div class="qr-sheet-brand-name">Virtus</div>
-                <div class="qr-sheet-brand-sub">Sistema de Avaliação</div>
-              </div>
+              <div class="qr-sheet-brand-name">Virtus</div>
+              <div class="qr-sheet-brand-sub">Sistema de Avaliação</div>
             </div>
+            <div class="qr-sheet-divider"></div>
+
             <div class="qr-sheet-titulo">${escapeHtml(alvo.nome)}</div>
             <div class="qr-sheet-sub">${escapeHtml(alvo.sub)}</div>
             <div class="qr-sheet-canvas-wrap"><img src="${urlQrCode(alvo.url, 300)}" width="300" height="300"></div>
-            <div class="qr-sheet-instrucao">Aponte a câmera do celular para o QR Code acima para acessar diretamente. Se preferir, digite o endereço manualmente:</div>
-            <div class="qr-sheet-url">${escapeHtml(alvo.url)}</div>
+
+            <div class="qr-sheet-passos">
+              <div class="qr-sheet-passo">
+                <div class="qr-sheet-passo-num">1</div>
+                <div class="qr-sheet-passo-txt">Abra a câmera do celular</div>
+              </div>
+              <div class="qr-sheet-passo">
+                <div class="qr-sheet-passo-num">2</div>
+                <div class="qr-sheet-passo-txt">Aponte para o QR Code acima</div>
+              </div>
+              <div class="qr-sheet-passo">
+                <div class="qr-sheet-passo-num">3</div>
+                <div class="qr-sheet-passo-txt">Toque no link que aparecer na tela</div>
+              </div>
+            </div>
+
+            <div class="qr-sheet-footer">Sistema Virtus · Processo Seletivo</div>
           </div>`);
       }
       qrGerados = true;
