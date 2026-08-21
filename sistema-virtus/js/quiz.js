@@ -203,6 +203,10 @@ export async function salvarResultadoQuiz({ nome, modulo, dataPreferencia, pergu
 // Registra uma violação (perda_foco, tentativa_copia, devtools, etc.)
 export async function registrarViolacao({ nome, modulo, tipo, detalhe, contagem }) {
   const agora = new Date();
+  // Data LOCAL do navegador (não toISOString, que é UTC — no Brasil,
+  // UTC-3, isso fazia violações de fim de tarde/noite gravarem com a data
+  // de amanhã, e sumirem do filtro "Hoje" do dashboard).
+  const dataLocal = `${agora.getFullYear()}-${String(agora.getMonth() + 1).padStart(2, '0')}-${String(agora.getDate()).padStart(2, '0')}`;
   await addDoc(collection(db, "violacoes"), {
     nome,
     modulo,
@@ -211,7 +215,7 @@ export async function registrarViolacao({ nome, modulo, tipo, detalhe, contagem 
     peso: 1.0,
     contagem_ponderada: contagem,
     hora_recebimento: agora.toTimeString().slice(0, 8),
-    data: agora.toISOString().slice(0, 10),
+    data: dataLocal,
     criado_em: serverTimestamp()
   });
 }

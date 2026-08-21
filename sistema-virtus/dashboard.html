@@ -1357,11 +1357,24 @@
     renderAll();
   };
 
-  // Retorna [inicioISO, fimISO] (yyyy-mm-dd) representando o período
-  // selecionado, ou null para "todos os dias" (sem filtro de data).
+  // Data no formato yyyy-mm-dd usando o FUSO LOCAL do navegador — nunca usar
+  // toISOString().slice(0,10) aqui, porque isso converte para UTC e, no
+  // Brasil (UTC-3), a partir das ~21h o "dia UTC" já virou amanhã. Isso
+  // fazia testes de hoje só aparecerem no filtro "Ontem" à noite.
+  function dataLocalYMD(d) {
+    const dt = d instanceof Date ? d : new Date(d);
+    if (isNaN(dt)) return '';
+    const ano = dt.getFullYear();
+    const mes = String(dt.getMonth() + 1).padStart(2, '0');
+    const dia = String(dt.getDate()).padStart(2, '0');
+    return `${ano}-${mes}-${dia}`;
+  }
+
+  // Retorna [inicioISO, fimISO] (yyyy-mm-dd, no fuso local) representando o
+  // período selecionado, ou null para "todos os dias" (sem filtro de data).
   function calcularIntervaloPeriodo() {
     const periodo = document.getElementById('filterPeriodo').value;
-    const toISO = d => d.toISOString().slice(0, 10);
+    const toISO = dataLocalYMD;
     const hoje = new Date();
 
     if (periodo === 'todos') return null;
@@ -1400,7 +1413,7 @@
       if (status === 'aprovado' && !aprovado) return false;
       if (status === 'reprovado' && aprovado) return false;
       if (intervalo) {
-        const dataR = (r.data_conclusao || '').slice(0, 10); // yyyy-mm-dd
+        const dataR = r.data_conclusao ? dataLocalYMD(r.data_conclusao) : '';
         if (!dataR || dataR < intervalo[0] || dataR > intervalo[1]) return false;
       }
       return true;
@@ -1502,7 +1515,7 @@
     const lista = ALL_RESULTADOS.filter(r => {
       if (r.tipo !== 'typing') return false;
       if (!intervalo) return true;
-      const dataR = (r.data_conclusao || '').slice(0, 10);
+      const dataR = r.data_conclusao ? dataLocalYMD(r.data_conclusao) : '';
       return dataR && dataR >= intervalo[0] && dataR <= intervalo[1];
     });
     document.getElementById('typingBadge').textContent = lista.length + ' registros';
