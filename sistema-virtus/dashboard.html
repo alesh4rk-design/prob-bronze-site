@@ -581,16 +581,13 @@
           <option value="aprovado">Aprovados</option>
           <option value="reprovado">Reprovados</option>
         </select>
-        <select class="field-input" id="filterPeriodo" onchange="onChangePeriodo()">
-          <option value="hoje">📅 Hoje</option>
-          <option value="ontem">📅 Ontem</option>
+        <input type="date" class="field-input" id="filterDia" style="max-width:165px;" onchange="onChangeDia()" title="Escolha o dia dos candidatos">
+        <select class="field-input" id="filterPeriodo" onchange="onChangePeriodo()" style="max-width:190px;">
+          <option value="dia">📅 Dia selecionado</option>
           <option value="7dias">📅 Últimos 7 dias</option>
           <option value="mes">📅 Este mês</option>
-          <option value="personalizado">📅 Período personalizado…</option>
           <option value="todos">📅 Todos os dias</option>
         </select>
-        <input type="date" class="field-input" id="filterDataDe" style="display:none;max-width:150px;" onchange="applyFilters()">
-        <input type="date" class="field-input" id="filterDataAte" style="display:none;max-width:150px;" onchange="applyFilters()">
       </div>
     </div>
     <div class="results-table-wrap">
@@ -1345,15 +1342,20 @@
     document.getElementById('filterStatus').value = '';
     document.getElementById('filterPeriodo').value = 'todos';
     localStorage.setItem(LS_PERIODO, 'todos');
-    onChangePeriodo();
+    renderAll();
+  };
+
+  // Selecionar uma data no campo sempre visível volta o modo para "Dia
+  // selecionado" automaticamente — não precisa mexer no menu ao lado.
+  window.onChangeDia = function() {
+    document.getElementById('filterPeriodo').value = 'dia';
+    localStorage.setItem(LS_PERIODO, 'dia');
+    renderAll();
   };
 
   window.onChangePeriodo = function() {
     const periodo = document.getElementById('filterPeriodo').value;
     localStorage.setItem(LS_PERIODO, periodo);
-    const custom = periodo === 'personalizado';
-    document.getElementById('filterDataDe').style.display = custom ? '' : 'none';
-    document.getElementById('filterDataAte').style.display = custom ? '' : 'none';
     renderAll();
   };
 
@@ -1378,10 +1380,9 @@
     const hoje = new Date();
 
     if (periodo === 'todos') return null;
-    if (periodo === 'hoje') { const s = toISO(hoje); return [s, s]; }
-    if (periodo === 'ontem') {
-      const ontem = new Date(hoje); ontem.setDate(ontem.getDate() - 1);
-      const s = toISO(ontem); return [s, s];
+    if (periodo === 'dia') {
+      const v = document.getElementById('filterDia').value || toISO(hoje);
+      return [v, v];
     }
     if (periodo === '7dias') {
       const seteDiasAtras = new Date(hoje); seteDiasAtras.setDate(seteDiasAtras.getDate() - 6);
@@ -1390,12 +1391,6 @@
     if (periodo === 'mes') {
       const inicioMes = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
       return [toISO(inicioMes), toISO(hoje)];
-    }
-    if (periodo === 'personalizado') {
-      const de = document.getElementById('filterDataDe').value;
-      const ate = document.getElementById('filterDataAte').value;
-      if (!de && !ate) return null;
-      return [de || '0000-01-01', ate || '9999-12-31'];
     }
     return null;
   }
@@ -1760,13 +1755,19 @@
     }
   }
 
-  // Por padrão mostra só hoje, para não misturar candidatos de dias
-  // diferentes na mesma lista; lembra a última escolha entre sessões.
-  document.getElementById('filterPeriodo').value = localStorage.getItem(LS_PERIODO) || 'hoje';
-  if (document.getElementById('filterPeriodo').value === 'personalizado') {
-    document.getElementById('filterDataDe').style.display = '';
-    document.getElementById('filterDataAte').style.display = '';
+  // O campo de data começa sempre em hoje; por padrão o modo é "Dia
+  // selecionado", para não misturar candidatos de dias diferentes na mesma
+  // lista. Lembra a última escolha de modo entre sessões (migra valores
+  // antigos 'hoje'/'ontem'/'personalizado' de versões anteriores do filtro).
+  document.getElementById('filterDia').value = dataLocalYMD(new Date());
+  let periodoSalvo = localStorage.getItem(LS_PERIODO) || 'dia';
+  if (periodoSalvo === 'hoje' || periodoSalvo === 'personalizado') periodoSalvo = 'dia';
+  if (periodoSalvo === 'ontem') {
+    periodoSalvo = 'dia';
+    const ontem = new Date(); ontem.setDate(ontem.getDate() - 1);
+    document.getElementById('filterDia').value = dataLocalYMD(ontem);
   }
+  document.getElementById('filterPeriodo').value = periodoSalvo;
 
   conectar();
 
