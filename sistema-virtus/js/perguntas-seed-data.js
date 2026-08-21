@@ -3188,5 +3188,570 @@ export const PERGUNTAS_SEED = {
       "n": "facil",
       "resposta": "Rapidez, clareza na informação e tratamento respeitoso"
     }
+  ],
+  "Liderança de Equipe": [
+    {
+      "q": "Qual é a principal diferença entre chefiar e liderar uma equipe?",
+      "o": [
+        "Liderar inspira e engaja a equipe",
+        "É basicamente a mesma coisa na rotina de trabalho",
+        "Chefiar funciona sempre melhor",
+        "Liderar é não dar nenhuma ordem"
+      ],
+      "n": "facil",
+      "resposta": "Liderar inspira e engaja a equipe"
+    },
+    {
+      "q": "Um colaborador comete um erro na frente dos colegas. O líder deve:",
+      "o": [
+        "Corrigir em particular, depois",
+        "Corrigir ali, na frente de todos",
+        "Ignorar para evitar problema",
+        "Comentar com os outros depois"
+      ],
+      "n": "medio",
+      "resposta": "Corrigir em particular, depois"
+    },
+    {
+      "q": "O que caracteriza a delegação eficaz de uma tarefa?",
+      "o": [
+        "Deixar claro o que e quando fazer",
+        "Passar a tarefa sem explicação",
+        "Delegar o que ninguém quer durante o expediente",
+        "Fazer a tarefa junto até o fim"
+      ],
+      "n": "medio",
+      "resposta": "Deixar claro o que e quando fazer"
+    },
+    {
+      "q": "Qual é a função do feedback construtivo?",
+      "o": [
+        "Ajudar a pessoa a melhorar",
+        "Apontar só os erros cometidos",
+        "Comparar com os outros colegas",
+        "Registrar falha para usar depois"
+      ],
+      "n": "facil",
+      "resposta": "Ajudar a pessoa a melhorar"
+    },
+    {
+      "q": "Dois membros da equipe entram em conflito direto. O líder deve:",
+      "o": [
+        "Mediar e buscar um entendimento",
+        "Escolher logo um lado no dia a dia da equipe",
+        "Deixar que resolvam sozinhos",
+        "Transferir os dois de setor conforme o procedimento"
+      ],
+      "n": "medio",
+      "resposta": "Mediar e buscar um entendimento"
+    },
+    {
+      "q": "O que é liderança situacional?",
+      "o": [
+        "Adaptar o estilo a cada pessoa",
+        "Liderar igual em toda situação",
+        "Trocar de líder a cada tarefa",
+        "Liderar só em momento de crise"
+      ],
+      "n": "dificil",
+      "resposta": "Adaptar o estilo a cada pessoa"
+    },
+    {
+      "q": "Por que a escuta ativa é importante na liderança?",
+      "o": [
+        "Ajuda a entender o real problema",
+        "Torna a reunião mais longa independente da situação",
+        "É exigida só em entrevista logo no início do processo",
+        "Serve só pra agradar a equipe"
+      ],
+      "n": "facil",
+      "resposta": "Ajuda a entender o real problema"
+    },
+    {
+      "q": "Qual atitude fortalece a confiança da equipe no líder?",
+      "o": [
+        "Cumprir o que promete sempre",
+        "Prometer o que for preciso",
+        "Mudar de ideia com pressão",
+        "Evitar se comprometer com prazo"
+      ],
+      "n": "medio",
+      "resposta": "Cumprir o que promete sempre"
+    },
+    {
+      "q": "Um colaborador está desmotivado e produz pouco. O líder deve primeiro:",
+      "o": [
+        "Conversar pra entender a causa",
+        "Reduzir as tarefas sem avisar",
+        "Repreender na frente de todos",
+        "Substituir a pessoa logo na rotina de trabalho"
+      ],
+      "n": "medio",
+      "resposta": "Conversar pra entender a causa"
+    },
+    {
+      "q": "O que significa dar autonomia à equipe?",
+      "o": [
+        "Decidir dentro de limites claros",
+        "Trabalhar sem nenhuma orientação",
+        "Não cobrar prazo nem resultado",
+        "Delegar toda decisão final durante o expediente"
+      ],
+      "n": "medio",
+      "resposta": "Decidir dentro de limites claros"
+    },
+    {
+      "q": "Como o líder deve tratar informações confidenciais da equipe?",
+      "o": [
+        "Manter sigilo sempre",
+        "Compartilhar se achar relevante",
+        "Comentar só com quem confia",
+        "Guardar só se pedirem por escrito"
+      ],
+      "n": "facil",
+      "resposta": "Manter sigilo sempre"
+    },
+    {
+      "q": "Qual é o papel do líder ao definir metas para a equipe?",
+      "o": [
+        "Tornar a meta clara e possível",
+        "Definir meta bem alta sempre no local de trabalho",
+        "Deixar cada um definir a sua",
+        "Copiar meta de outra equipe"
+      ],
+      "n": "medio",
+      "resposta": "Tornar a meta clara e possível"
+    },
+    {
+      "q": "Um novo colaborador entra na equipe. Qual conduta ajuda na integração?",
+      "o": [
+        "Apresentar a rotina e acompanhar",
+        "Deixar que aprenda sozinho no dia a dia da equipe",
+        "Cobrar o mesmo ritmo desde já",
+        "Explicar tudo uma vez só, por escrito"
+      ],
+      "n": "medio",
+      "resposta": "Apresentar a rotina e acompanhar"
+    },
+    {
+      "q": "Por que reconhecer publicamente um bom resultado é importante?",
+      "o": [
+        "Reforça e motiva a equipe",
+        "Cria disputa entre colegas",
+        "É desnecessário com bom salário",
+        "Só vale pro melhor da equipe"
+      ],
+      "n": "facil",
+      "resposta": "Reforça e motiva a equipe"
+    },
+    {
+      "q": "O que fazer quando uma decisão do líder é impopular, mas necessária?",
+      "o": [
+        "Explicar o motivo e manter a decisão",
+        "Recuar com a primeira reclamação conforme o procedimento",
+        "Aplicar sem explicar nada independente da situação",
+        "Esperar a equipe se acostumar logo no início do processo"
+      ],
+      "n": "dificil",
+      "resposta": "Explicar o motivo e manter a decisão"
+    },
+    {
+      "q": "Qual é a vantagem de reuniões curtas e regulares com a equipe?",
+      "o": [
+        "Alinhar prioridades logo cedo",
+        "Ocupar o tempo livre da equipe",
+        "Substituir o contato individual",
+        "Servir só pra cobrar resultado"
+      ],
+      "n": "facil",
+      "resposta": "Alinhar prioridades logo cedo"
+    },
+    {
+      "q": "Como lidar com um colaborador que resiste a mudanças na rotina?",
+      "o": [
+        "Explicar o motivo e ouvir ele",
+        "Impor a mudança sem explicar",
+        "Ignorar a resistência dele",
+        "Excluir ele das próximas decisões"
+      ],
+      "n": "medio",
+      "resposta": "Explicar o motivo e ouvir ele"
+    },
+    {
+      "q": "O que é essencial pra tomar boas decisões sob pressão?",
+      "o": [
+        "Manter a calma e avaliar",
+        "Decidir rápido, sem avaliar",
+        "Esperar a pressão passar",
+        "Delegar toda decisão difícil"
+      ],
+      "n": "medio",
+      "resposta": "Manter a calma e avaliar"
+    },
+    {
+      "q": "Qual comportamento mostra inteligência emocional na liderança?",
+      "o": [
+        "Reconhecer a própria emoção antes de reagir",
+        "Não mostrar emoção nenhuma na rotina de trabalho",
+        "Reagir forte pra mostrar firmeza durante o expediente",
+        "Ignorar como a equipe está no dia a dia da equipe"
+      ],
+      "n": "dificil",
+      "resposta": "Reconhecer a própria emoção antes de reagir"
+    },
+    {
+      "q": "Por que alinhar expectativas no início de um projeto é importante?",
+      "o": [
+        "Evita retrabalho e mal-entendido",
+        "Serve só pra preencher formulário",
+        "É obrigatório só em projeto grande",
+        "Atrasa o início do trabalho conforme o procedimento"
+      ],
+      "n": "facil",
+      "resposta": "Evita retrabalho e mal-entendido"
+    },
+    {
+      "q": "Um membro da equipe se destaca e quer crescer. O líder deve:",
+      "o": [
+        "Apoiar e indicar oportunidades reais",
+        "Segurar pra não perder o funcionário",
+        "Prometer promoção sem previsão independente da situação",
+        "Ignorar até que surja uma vaga logo no início do processo"
+      ],
+      "n": "medio",
+      "resposta": "Apoiar e indicar oportunidades reais"
+    },
+    {
+      "q": "O que significa liderar pelo exemplo?",
+      "o": [
+        "Agir como se espera da equipe",
+        "Fazer o trabalho da equipe às vezes",
+        "Exigir mais da equipe que de si",
+        "Mostrar só os acertos, nunca erro"
+      ],
+      "n": "facil",
+      "resposta": "Agir como se espera da equipe"
+    },
+    {
+      "q": "Como o líder deve reagir a uma crítica justa da equipe?",
+      "o": [
+        "Ouvir e considerar mudar a conduta",
+        "Justificar a atitude sem refletir com atenção redobrada",
+        "Diminuir a importância da crítica",
+        "Evitar aquele colaborador depois"
+      ],
+      "n": "dificil",
+      "resposta": "Ouvir e considerar mudar a conduta"
+    },
+    {
+      "q": "Qual é o risco de um líder centralizar todas as decisões?",
+      "o": [
+        "Sobrecarga e pouca autonomia",
+        "Mais agilidade no trabalho",
+        "Menos erro na execução na rotina de trabalho",
+        "Mais confiança da equipe durante o expediente"
+      ],
+      "n": "medio",
+      "resposta": "Sobrecarga e pouca autonomia"
+    },
+    {
+      "q": "O que é fundamental pra manter coesão numa equipe diversa?",
+      "o": [
+        "Respeitar as diferenças de cada um",
+        "Padronizar o comportamento de todos",
+        "Formar grupo por afinidade só no dia a dia da equipe",
+        "Evitar falar sobre as diferenças"
+      ],
+      "n": "medio",
+      "resposta": "Respeitar as diferenças de cada um"
+    },
+    {
+      "q": "Como o líder deve encerrar um período de meta não atingida?",
+      "o": [
+        "Analisar a causa com a equipe",
+        "Culpar quem teve pior resultado",
+        "Aumentar a meta seguinte conforme o procedimento",
+        "Não comentar o resultado depois"
+      ],
+      "n": "dificil",
+      "resposta": "Analisar a causa com a equipe"
+    }
+  ],
+  "Encarregado de Facilities": [
+    {
+      "q": "Qual é a principal função do encarregado de facilities?",
+      "o": [
+        "Garantir o funcionamento das instalações",
+        "Contratar novos funcionários independente da situação",
+        "Fazer vendas para o prédio logo no início do processo",
+        "Cuidar só da parte financeira na rotina de trabalho"
+      ],
+      "n": "facil",
+      "resposta": "Garantir o funcionamento das instalações"
+    },
+    {
+      "q": "O que é um plano de manutenção preventiva?",
+      "o": [
+        "Intervenções programadas antes da falha",
+        "Reparo feito só quando quebra durante o expediente",
+        "Troca de equipe a cada mês no dia a dia da equipe",
+        "Substituição sem nenhum critério conforme o procedimento"
+      ],
+      "n": "medio",
+      "resposta": "Intervenções programadas antes da falha"
+    },
+    {
+      "q": "Um ar-condicionado apresenta vazamento constante. O procedimento correto é:",
+      "o": [
+        "Registrar, isolar e acionar manutenção",
+        "Ignorar até parar de funcionar independente da situação",
+        "Desligar o prédio inteiro logo no início do processo",
+        "Trocar o equipamento na hora na rotina de trabalho"
+      ],
+      "n": "medio",
+      "resposta": "Registrar, isolar e acionar manutenção"
+    },
+    {
+      "q": "Qual é a diferença entre manutenção preditiva e corretiva?",
+      "o": [
+        "Preditiva antecipa; corretiva conserta depois",
+        "São exatamente a mesma coisa durante o expediente",
+        "Corretiva é sempre mais barata no dia a dia da equipe",
+        "Preditiva só serve pra elevador conforme o procedimento"
+      ],
+      "n": "dificil",
+      "resposta": "Preditiva antecipa; corretiva conserta depois"
+    },
+    {
+      "q": "Como deve ser feita a gestão de fornecedores de serviços prediais?",
+      "o": [
+        "Avaliar prazo, qualidade e custo",
+        "Escolher sempre o mais barato",
+        "Manter só um fornecedor fixo independente da situação",
+        "Trocar de fornecedor todo mês"
+      ],
+      "n": "medio",
+      "resposta": "Avaliar prazo, qualidade e custo"
+    },
+    {
+      "q": "O que é um checklist de rondas prediais?",
+      "o": [
+        "Lista de pontos a inspecionar",
+        "Registro só de reclamações",
+        "Relatório de gastos do mês",
+        "Escala dos funcionários logo no início do processo"
+      ],
+      "n": "facil",
+      "resposta": "Lista de pontos a inspecionar"
+    },
+    {
+      "q": "Qual cuidado é essencial ao lidar com produtos químicos de limpeza?",
+      "o": [
+        "Usar EPI e seguir a ficha técnica",
+        "Misturar produtos pra render mais",
+        "Guardar sem identificação na rotina de trabalho",
+        "Usar sem luva se for pouco durante o expediente"
+      ],
+      "n": "facil",
+      "resposta": "Usar EPI e seguir a ficha técnica"
+    },
+    {
+      "q": "O que fazer ao identificar um risco de incêndio numa área comum?",
+      "o": [
+        "Isolar, comunicar e corrigir logo",
+        "Anotar pra resolver depois no dia a dia da equipe",
+        "Avisar só o síndico por e-mail",
+        "Aguardar a próxima vistoria conforme o procedimento"
+      ],
+      "n": "medio",
+      "resposta": "Isolar, comunicar e corrigir logo"
+    },
+    {
+      "q": "Qual é a importância de manter as saídas de emergência desobstruídas?",
+      "o": [
+        "Garante evacuação segura em crise",
+        "É só uma exigência estética independente da situação",
+        "Facilita a limpeza do local logo no início do processo",
+        "Não tem impacto na segurança na rotina de trabalho"
+      ],
+      "n": "facil",
+      "resposta": "Garante evacuação segura em crise"
+    },
+    {
+      "q": "Como priorizar múltiplos chamados de manutenção ao mesmo tempo?",
+      "o": [
+        "Priorizar risco à segurança primeiro",
+        "Atender por ordem de chegada só durante o expediente",
+        "Atender o mais fácil primeiro no dia a dia da equipe",
+        "Deixar pra decidir no fim do dia conforme o procedimento"
+      ],
+      "n": "dificil",
+      "resposta": "Priorizar risco à segurança primeiro"
+    },
+    {
+      "q": "O que deve constar num relatório de ocorrência predial?",
+      "o": [
+        "Fato, data, local e providência",
+        "Só a opinião de quem registrou",
+        "Apenas o nome do responsável",
+        "Somente o valor do reparo independente da situação"
+      ],
+      "n": "medio",
+      "resposta": "Fato, data, local e providência"
+    },
+    {
+      "q": "Qual é o objetivo de um contrato de SLA com fornecedor?",
+      "o": [
+        "Definir prazo e padrão de serviço",
+        "Reduzir o preço a qualquer custo segundo o protocolo",
+        "Evitar assinar contrato formal",
+        "Trocar de fornecedor toda hora"
+      ],
+      "n": "dificil",
+      "resposta": "Definir prazo e padrão de serviço"
+    },
+    {
+      "q": "Como deve ser feita a gestão de estoque de materiais de limpeza?",
+      "o": [
+        "Controlar entrada, saída e validade",
+        "Comprar tudo de uma vez no ano logo no início do processo",
+        "Deixar sem controle nenhum na rotina de trabalho",
+        "Repor só quando acabar tudo durante o expediente"
+      ],
+      "n": "medio",
+      "resposta": "Controlar entrada, saída e validade"
+    },
+    {
+      "q": "Qual é a função do encarregado na gestão de equipe de limpeza e zeladoria?",
+      "o": [
+        "Organizar escala e cobrar padrão",
+        "Executar toda a limpeza sozinho",
+        "Só repassar reclamações ao síndico",
+        "Contratar sem falar com ninguém"
+      ],
+      "n": "facil",
+      "resposta": "Organizar escala e cobrar padrão"
+    },
+    {
+      "q": "O que fazer diante de uma reclamação recorrente de um mesmo setor?",
+      "o": [
+        "Investigar a causa raiz do problema",
+        "Ignorar por ser repetitiva no dia a dia da equipe",
+        "Responder sempre a mesma coisa conforme o procedimento",
+        "Repassar direto sem analisar independente da situação"
+      ],
+      "n": "medio",
+      "resposta": "Investigar a causa raiz do problema"
+    },
+    {
+      "q": "Qual é a importância de manter registro histórico de manutenções?",
+      "o": [
+        "Ajuda a prever falhas futuras",
+        "Serve só para arquivo morto",
+        "É exigido apenas uma vez ao ano",
+        "Não influencia decisões futuras"
+      ],
+      "n": "medio",
+      "resposta": "Ajuda a prever falhas futuras"
+    },
+    {
+      "q": "Como agir ao identificar uma infiltração em andamento?",
+      "o": [
+        "Isolar a área e acionar manutenção",
+        "Cobrir com um pano e seguir logo no início do processo",
+        "Esperar secar naturalmente na rotina de trabalho",
+        "Registrar só no fim do mês durante o expediente"
+      ],
+      "n": "facil",
+      "resposta": "Isolar a área e acionar manutenção"
+    },
+    {
+      "q": "Qual é o papel do encarregado durante uma auditoria predial?",
+      "o": [
+        "Apresentar registros e corrigir falhas",
+        "Esconder problemas encontrados no dia a dia da equipe",
+        "Delegar tudo para o auditor conforme o procedimento",
+        "Cancelar a rotina normal do prédio independente da situação"
+      ],
+      "n": "dificil",
+      "resposta": "Apresentar registros e corrigir falhas"
+    },
+    {
+      "q": "O que caracteriza um bom indicador de desempenho (KPI) predial?",
+      "o": [
+        "Ser mensurável e ligado à meta",
+        "Ser difícil de entender logo no início do processo",
+        "Mudar de critério todo mês na rotina de trabalho",
+        "Não ter meta definida durante o expediente"
+      ],
+      "n": "dificil",
+      "resposta": "Ser mensurável e ligado à meta"
+    },
+    {
+      "q": "Como deve ser tratada uma solicitação urgente fora do horário comercial?",
+      "o": [
+        "Seguir o protocolo de emergência definido",
+        "Esperar o próximo dia útil sempre no dia a dia da equipe",
+        "Resolver sem registrar depois conforme o procedimento",
+        "Ignorar se não for urgente pra todos independente da situação"
+      ],
+      "n": "medio",
+      "resposta": "Seguir o protocolo de emergência definido"
+    },
+    {
+      "q": "Qual é a vantagem de padronizar processos de manutenção?",
+      "o": [
+        "Reduz erro e melhora a previsibilidade",
+        "Torna tudo mais lento logo no início do processo",
+        "Elimina a necessidade de registro na rotina de trabalho",
+        "Serve só para prédios grandes durante o expediente"
+      ],
+      "n": "medio",
+      "resposta": "Reduz erro e melhora a previsibilidade"
+    },
+    {
+      "q": "O que fazer quando um fornecedor não cumpre o prazo combinado?",
+      "o": [
+        "Cobrar formalmente e reavaliar o contrato",
+        "Aceitar sem nenhuma cobrança no dia a dia da equipe",
+        "Trocar de fornecedor na mesma hora conforme o procedimento",
+        "Ignorar se o atraso for pequeno independente da situação"
+      ],
+      "n": "medio",
+      "resposta": "Cobrar formalmente e reavaliar o contrato"
+    },
+    {
+      "q": "Qual é a importância do treinamento contínuo da equipe operacional?",
+      "o": [
+        "Mantém o padrão e reduz acidentes",
+        "É opcional se a equipe é experiente",
+        "Só serve para equipe nova logo no início do processo",
+        "Atrapalha a rotina do prédio na rotina de trabalho"
+      ],
+      "n": "facil",
+      "resposta": "Mantém o padrão e reduz acidentes"
+    },
+    {
+      "q": "Como o encarregado deve lidar com um orçamento limitado de manutenção?",
+      "o": [
+        "Priorizar o que envolve mais risco",
+        "Gastar tudo logo no início do ano",
+        "Cortar toda manutenção preventiva",
+        "Ignorar o limite se necessário durante o expediente"
+      ],
+      "n": "dificil",
+      "resposta": "Priorizar o que envolve mais risco"
+    },
+    {
+      "q": "Qual atitude ajuda a manter a segurança do trabalho em altura na manutenção predial?",
+      "o": [
+        "Usar equipamento adequado e treinamento",
+        "Trabalhar rápido pra reduzir o risco",
+        "Evitar o uso de EPI se for rápido no dia a dia da equipe",
+        "Fazer sozinho pra não atrasar conforme o procedimento"
+      ],
+      "n": "medio",
+      "resposta": "Usar equipamento adequado e treinamento"
+    }
   ]
 };
