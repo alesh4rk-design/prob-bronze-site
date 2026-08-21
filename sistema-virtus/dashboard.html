@@ -188,7 +188,8 @@
   .hist-bar { width:100%; border-radius:2px 2px 0 0; min-height:2px; background:var(--amber); opacity:0.7; transition:height 0.6s, opacity 0.2s; }
 
   .typing-collab-list { display:flex; flex-direction:column; gap:8px; }
-  .typing-collab-row { background:var(--ink3); border:1px solid var(--line2); border-radius:2px; padding:12px 16px; display:flex; align-items:center; gap:12px; }
+  .typing-collab-row { background:var(--ink3); border:1px solid var(--line2); border-radius:2px; padding:12px 16px; display:flex; align-items:center; gap:12px; cursor:pointer; transition:background .15s; }
+  .typing-collab-row:hover { background:var(--amberdim); }
   .typing-collab-name { font-size:14px; font-weight:700; color:var(--text); flex:1; }
   .typing-collab-stats { display:flex; gap:12px; align-items:center; }
   .typing-collab-stat { text-align:center; }
@@ -1517,8 +1518,8 @@
     const el = document.getElementById('typingList');
     if (!lista.length) { el.innerHTML = '<div class="empty-state"><div class="empty-icon">⌨️</div>Sem testes de digitação ainda</div>'; return; }
     el.innerHTML = lista.slice(0, 30).map(r => `
-      <div class="typing-collab-row">
-        <div class="typing-collab-name">${escapeHtml(r.nome || '—')}</div>
+      <div class="typing-collab-row" onclick="abrirCandidato('${chaveDe(r).replace(/'/g, "\\'")}')" title="Ver detalhamento e exportar PDF">
+        <div class="typing-collab-name">${escapeHtml(r.nome || '—')} <span class="row-hint">▸ detalhes</span></div>
         <div class="typing-collab-stats">
           <div class="typing-collab-stat"><div class="typing-collab-stat-val" style="color:var(--amber);">${r.wpm ?? '—'}</div><div class="typing-collab-stat-lbl">WPM</div></div>
           <div class="typing-collab-stat"><div class="typing-collab-stat-val" style="color:var(--cyan);">${r.pct ?? '—'}%</div><div class="typing-collab-stat-lbl">Precisão</div></div>

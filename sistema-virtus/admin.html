@@ -783,41 +783,23 @@
   };
 
   // ── QR Codes para imprimir (admin e viewer) ─────────────────────────────
-  // Carrega a lib de QR sob demanda (só quando essa aba é usada), com
-  // fallback igual ao ExcelJS: se o build ESM não colar, tenta o UMD
-  // clássico via <script>, para nunca deixar a função quebrada.
-  function carregarScriptClassico(src) {
-    return new Promise((resolve, reject) => {
-      const s = document.createElement('script');
-      s.src = src;
-      s.onload = resolve;
-      s.onerror = () => reject(new Error('Falha ao carregar ' + src));
-      document.head.appendChild(s);
-    });
+  // Em vez de carregar uma biblioteca JS de terceiros (jsDelivr/unpkg
+  // falharam nos testes — provavelmente bloqueados na rede local do
+  // avaliador), o QR é uma <img> apontando para um serviço público de
+  // geração de QR Code. É só uma requisição de imagem, sem executar
+  // JavaScript externo — muito mais resistente a bloqueios de rede.
+  function urlQrCode(conteudo, tamanho) {
+    return `https://api.qrserver.com/v1/create-qr-code/?size=${tamanho}x${tamanho}&data=${encodeURIComponent(conteudo)}`;
   }
-  async function carregarQRCodeLib() {
-    if (window.QRCode) return window.QRCode;
-    // Tenta o build ESM (jsDelivr), depois o UMD clássico em dois CDNs
-    // diferentes — se um estiver fora do ar ou bloqueado na rede do
-    // avaliador, o outro geralmente funciona.
-    try {
-      const mod = await import('https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js/+esm');
-      const lib = mod.default || mod;
-      if (lib && lib.toDataURL) return lib;
-    } catch (e) { /* cai para os fallbacks abaixo */ }
 
-    const candidatos = [
-      'https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js',
-      'https://unpkg.com/qrcode@1.5.3/build/qrcode.min.js'
-    ];
-    let ultimoErro;
-    for (const src of candidatos) {
-      try {
-        await carregarScriptClassico(src);
-        if (window.QRCode) return window.QRCode;
-      } catch (e) { ultimoErro = e; }
-    }
-    throw ultimoErro || new Error('Biblioteca de QR Code não carregou');
+  // Confere se uma imagem carrega de verdade (não só se o <img> foi criado).
+  function testarImagem(src) {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => resolve();
+      img.onerror = () => reject(new Error('Falha ao carregar ' + src));
+      img.src = src;
+    });
   }
 
   let qrGerados = false;
@@ -827,7 +809,6 @@
     const printSheets = document.getElementById('qrPrintSheets');
     previewGrid.innerHTML = '<div class="empty-state"><div class="empty-icon">⏳</div>Gerando QR Codes...</div>';
     try {
-      const QRCode = await carregarQRCodeLib();
       // Base do site a partir da própria URL do admin.html — funciona tanto
       // hospedado na raiz quanto num subcaminho (ex: GitHub Pages de projeto).
       const baseUrl = window.location.href.replace(/admin\.html.*$/, '');
@@ -838,10 +819,11 @@
       previewGrid.innerHTML = '';
       printSheets.innerHTML = '';
       for (const alvo of alvos) {
-        const dataUrl = await QRCode.toDataURL(alvo.url, { width: 320, margin: 1, color: { dark: '#0d1420ff', light: '#ffffffff' } });
+        const imgUrl = urlQrCode(alvo.url, 320);
+        await testarImagem(imgUrl); // se falhar, cai no catch e avisa o usuário
         previewGrid.insertAdjacentHTML('beforeend', `
           <div class="qr-preview-card">
-            <img src="${dataUrl}" style="width:100%;max-width:220px;border-radius:6px;">
+            <img src="${imgUrl}" style="width:100%;max-width:220px;border-radius:6px;">
             <div class="qr-preview-nome">${escapeHtml(alvo.nome)}</div>
             <div class="qr-preview-url">${escapeHtml(alvo.url)}</div>
           </div>`);
@@ -856,7 +838,7 @@
             </div>
             <div class="qr-sheet-titulo">${escapeHtml(alvo.nome)}</div>
             <div class="qr-sheet-sub">${escapeHtml(alvo.sub)}</div>
-            <div class="qr-sheet-canvas-wrap"><img src="${dataUrl}" width="300" height="300"></div>
+            <div class="qr-sheet-canvas-wrap"><img src="${urlQrCode(alvo.url, 300)}" width="300" height="300"></div>
             <div class="qr-sheet-instrucao">Aponte a câmera do celular para o QR Code acima para acessar diretamente. Se preferir, digite o endereço manualmente:</div>
             <div class="qr-sheet-url">${escapeHtml(alvo.url)}</div>
           </div>`);
