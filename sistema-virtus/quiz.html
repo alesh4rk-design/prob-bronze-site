@@ -465,6 +465,17 @@
 
   /* ── Detalhamento por módulo no resultado ── */
   .rd-wrap { display:flex; flex-direction:column; gap:6px; margin:14px 0 4px; }
+  .next-step-notice {
+    display:flex; align-items:center; gap:14px; margin-top:16px; padding:16px;
+    background:var(--amberdim); border:1px solid var(--amber); border-radius:6px;
+  }
+  .next-step-icon { font-size:30px; flex-shrink:0; }
+  .next-step-title {
+    font-family:'Rajdhani',sans-serif; font-size:16px; font-weight:700;
+    letter-spacing:1px; color:var(--amber); text-transform:uppercase;
+  }
+  .next-step-text { font-size:13px; color:var(--text); line-height:1.5; margin-top:3px; }
+  .next-step-text strong { color:var(--amber); }
   .rd-row {
     display:flex; justify-content:space-between; align-items:center; gap:10px;
     padding:9px 13px; background:var(--ink3); border:1px solid var(--line2);
@@ -886,6 +897,15 @@
         </div>
       </div>
       <div class="rd-wrap" id="rDetalhe"></div>
+
+      <div class="next-step-notice" id="nextStepNotice">
+        <div class="next-step-icon">⌨️</div>
+        <div>
+          <div class="next-step-title">Falta uma etapa!</div>
+          <div class="next-step-text">Procure o avaliador para iniciar o <strong>Teste de Digitação</strong> e concluir sua avaliação.</div>
+        </div>
+      </div>
+
       <div class="sep"></div>
       <button class="btn btn-ghost" onclick="resetAndGoHome()">← Nova Avaliação</button>
     </div>
@@ -1464,6 +1484,15 @@
           <span class="rd-pct">${r.acertos}/${r.total} · <b>${r.pct}%</b></span>
         </div>`).join('');
     }
+
+    // O teste de digitação só se aplica a alguns cargos — o aviso "procure
+    // o avaliador" só aparece se o cargo pretendido (texto livre digitado
+    // na ficha) combinar com algum destes.
+    const CARGOS_DIGITACAO = ['porteiro', 'vigia', 'vigilante', 'recepcionista', 'fiscal', 'supervisor'];
+    const cargoDigitado = ((S.candidato && S.candidato.cargo_pretendido) || '').toLowerCase();
+    const precisaDigitacao = CARGOS_DIGITACAO.some(c => cargoDigitado.includes(c));
+    const aviso = document.getElementById('nextStepNotice');
+    if (aviso) aviso.style.display = precisaDigitacao ? 'flex' : 'none';
 
     const offset = 364 - (media / 100) * 364;
     setTimeout(() => {
