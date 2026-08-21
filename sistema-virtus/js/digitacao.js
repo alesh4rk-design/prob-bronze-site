@@ -19,6 +19,11 @@ export async function salvarResultadoDigitacao(resultado) {
   const agora = new Date();
   const docRef = await addDoc(collection(db, "resultados"), {
     nome: resultado.nome,
+    // Mesmo shape usado por quiz.js: `candidato.cpf`/`cpf` no topo, para o
+    // dashboard agrupar corretamente as tentativas da mesma pessoa (quiz +
+    // digitação) mesmo que o nome tenha sido digitado de forma diferente.
+    candidato: resultado.cpf ? { cpf: resultado.cpf } : null,
+    cpf: resultado.cpf || null,
     modulo: "Digitação",
     tipo: "typing",
     data_preferencia: "",

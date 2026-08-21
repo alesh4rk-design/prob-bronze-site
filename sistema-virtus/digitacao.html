@@ -63,6 +63,7 @@ input:focus { border-color:#E8A000; box-shadow:0 0 0 2px rgba(232,160,0,0.15); }
 input::placeholder { color:#3A4E62; }
 .field-hint { font-family:'Share Tech Mono',monospace; font-size:9px; color:#3A4E62; margin-top:5px; letter-spacing:1px; transition:color 0.3s; }
 .field-hint.ok { color:#00D46A; }
+.field-hint.err { color:#FF4A40; }
 
 .info-row {
   display:flex; align-items:center; gap:8px; flex-wrap:wrap;
@@ -253,6 +254,22 @@ textarea::placeholder { color:#4A6078; }
 .overlay.show { display:flex; }
 .overlay-spinner { width:40px; height:40px; border:2px solid rgba(232,160,0,0.2); border-top-color:#E8A000; border-radius:50%; animation:spin 0.8s linear infinite; }
 @keyframes spin { to{transform:rotate(360deg);} }
+
+/* ── Modal de código de acesso — impede fazer o teste em casa ── */
+.codigo-modal-overlay { display:none; position:fixed; inset:0; background:rgba(5,8,15,0.92); z-index:600; align-items:center; justify-content:center; padding:20px; }
+.codigo-modal-overlay.show { display:flex; }
+.codigo-modal-box { background:#0A0E1A; border:1px solid rgba(232,160,0,0.3); border-radius:6px; padding:2rem; max-width:400px; width:100%; text-align:center; box-shadow:0 0 60px rgba(0,0,0,0.8); position:relative; }
+.codigo-modal-box::before { content:''; position:absolute; top:0;left:0;right:0;height:2px; background:linear-gradient(90deg,transparent,#E8A000 30%,#FFD060 50%,#E8A000 70%,transparent); }
+.codigo-modal-icon { font-size:32px; margin-bottom:10px; }
+.codigo-modal-title { font-family:'Rajdhani',sans-serif; font-size:20px; font-weight:700; letter-spacing:2px; color:#E0E8F4; text-transform:uppercase; }
+.codigo-modal-sub { font-family:'Share Tech Mono',monospace; font-size:11px; color:#7A90A8; margin:8px 0 20px; line-height:1.6; }
+.codigo-modal-input { width:100%; background:#0D1220; border:1px solid rgba(255,255,255,0.1); border-radius:4px; padding:14px; color:#E0E8F4; font-family:'Share Tech Mono',monospace; font-size:24px; letter-spacing:6px; text-align:center; outline:none; }
+.codigo-modal-input:focus { border-color:#E8A000; }
+.codigo-modal-msg { font-family:'Share Tech Mono',monospace; font-size:10px; margin-top:10px; min-height:14px; }
+.codigo-modal-msg.err { color:#FF4A40; }
+.codigo-modal-msg.ok { color:#00E080; }
+.codigo-modal-btn { width:100%; margin-top:16px; background:linear-gradient(135deg,#E8A000 0%,#FFB800 100%); border:none; padding:14px; border-radius:4px; color:#050810; font-family:'Rajdhani',sans-serif; font-weight:700; font-size:15px; letter-spacing:2px; text-transform:uppercase; cursor:pointer; }
+.codigo-modal-btn:disabled { opacity:.5; cursor:not-allowed; }
 </style>
 </head>
 <body>
@@ -276,6 +293,12 @@ textarea::placeholder { color:#4A6078; }
       <label>▸ Nome completo</label>
       <input type="text" id="nome" placeholder="Nome do candidato" autocomplete="off" oninput="validateForm()">
       <div class="field-hint" id="nomeHint">Mínimo 3 caracteres</div>
+    </div>
+
+    <div class="field-group">
+      <label>▸ CPF</label>
+      <input type="tel" id="inCpf" placeholder="000.000.000-00" inputmode="numeric" maxlength="14" oninput="validateForm()">
+      <div class="field-hint" id="cpfHint">Usado para identificar você nos outros testes</div>
     </div>
 
     <div class="field-group">
@@ -406,6 +429,18 @@ textarea::placeholder { color:#4A6078; }
   <div class="overlay-spinner"></div>
   <div>ENVIANDO RESULTADO...</div>
 </div>
+
+<!-- MODAL DE CÓDIGO DE ACESSO — impede fazer o teste em casa -->
+<div class="codigo-modal-overlay" id="codigoModal">
+  <div class="codigo-modal-box">
+    <div class="codigo-modal-icon">🔑</div>
+    <div class="codigo-modal-title">Código de Acesso</div>
+    <div class="codigo-modal-sub">Este teste só pode ser feito presencialmente. Solicite o código ao avaliador.</div>
+    <input type="tel" id="inCodigoAcesso" class="codigo-modal-input" placeholder="000000" inputmode="numeric" maxlength="8">
+    <div class="codigo-modal-msg" id="msgCodigoAcesso"></div>
+    <button class="codigo-modal-btn" id="codigoConfirmBtn">Validar →</button>
+  </div>
+</div>
 <div class="toast" id="toast"></div>
 
 <script type="module">
@@ -414,6 +449,7 @@ textarea::placeholder { color:#4A6078; }
 // inferido). Agora grava direto na coleção `resultados` via js/digitacao.js
 // e "status online" reflete apenas se a config do Firebase está OK.
 import { salvarResultadoDigitacao } from "./js/digitacao.js";
+import { verificarCodigoAcesso } from "./js/quiz.js";
 import { db } from "./js/firebase-config.js";
 import { collection, getDocs, limit, query } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
 
@@ -489,14 +525,42 @@ function setToday(){
   validateForm();
 }
 
+// Validação de CPF (dígitos verificadores), igual à usada em quiz.html.
+function onlyDigits(v){ return (v||'').replace(/\D/g,''); }
+function maskCPF(v){
+  const d = onlyDigits(v).slice(0,11);
+  return d.replace(/(\d{3})(\d)/,'$1.$2').replace(/(\d{3})(\d)/,'$1.$2').replace(/(\d{3})(\d{1,2})$/,'$1-$2');
+}
+function cpfValido(cpf){
+  const d = onlyDigits(cpf);
+  if (d.length!==11 || /^(\d)\1{10}$/.test(d)) return false;
+  let soma=0; for(let i=0;i<9;i++) soma+=Number(d[i])*(10-i);
+  let r=(soma*10)%11; if(r===10) r=0;
+  if (r!==Number(d[9])) return false;
+  soma=0; for(let i=0;i<10;i++) soma+=Number(d[i])*(11-i);
+  r=(soma*10)%11; if(r===10) r=0;
+  return r===Number(d[10]);
+}
+document.getElementById('inCpf').addEventListener('input', () => {
+  document.getElementById('inCpf').value = maskCPF(document.getElementById('inCpf').value);
+  validateForm();
+});
+
 function validateForm(){
   const nome = document.getElementById('nome').value.trim();
+  const cpf = document.getElementById('inCpf').value.trim();
   const data = document.getElementById('datateste').value;
   const hint  = document.getElementById('nomeHint');
+  const cpfHint = document.getElementById('cpfHint');
   const dHint = document.getElementById('dataHint');
 
   hint.textContent  = nome.length>=3 ? '✓ Nome válido' : 'Mínimo 3 caracteres';
   hint.className    = 'field-hint'+(nome.length>=3?' ok':'');
+
+  const cpfOk = cpfValido(cpf);
+  cpfHint.textContent = !cpf ? 'Usado para identificar você nos outros testes'
+                       : cpfOk ? '✓ CPF válido' : '✕ CPF inválido';
+  cpfHint.className = 'field-hint' + (cpf ? (cpfOk ? ' ok' : ' err') : '');
 
   if(data){
     const fmt = new Date(data+'T12:00:00').toLocaleDateString('pt-BR',{weekday:'long',day:'2-digit',month:'long',year:'numeric'});
@@ -507,7 +571,7 @@ function validateForm(){
     dHint.className   = 'field-hint';
   }
 
-  document.getElementById('startBtn').disabled = nome.length<3 || !data;
+  document.getElementById('startBtn').disabled = nome.length<3 || !cpfOk || !data;
 }
 
 function toast(msg,type=''){
@@ -613,7 +677,7 @@ function finishTest(){
   const cpm=elapsedSec>0?Math.round((typed.length/elapsedSec)*60):0;
   const wpm=Math.round(cpm/5);
 
-  lastResult={nome:candidate.nome,categoria:textoCategoria,acertos:correct,total:totalChars,pct:prec,wpm,cpm,deleteCount,elapsedSec,data:new Date().toLocaleString('pt-BR')};
+  lastResult={nome:candidate.nome,cpf:candidate.cpf,categoria:textoCategoria,acertos:correct,total:totalChars,pct:prec,wpm,cpm,deleteCount,elapsedSec,data:new Date().toLocaleString('pt-BR')};
   sessionHistory.unshift(lastResult);
   renderHistory();
 
@@ -680,11 +744,63 @@ function beginTiming(){
   setTimeout(()=>document.getElementById('typeArea').focus(),100);
 }
 
+// ── Código de acesso presencial ─────────────────────────────────────────
+let codigoValidado = false;
+const codigoModal = document.getElementById('codigoModal');
+const inCodigoAcesso = document.getElementById('inCodigoAcesso');
+const msgCodigoAcesso = document.getElementById('msgCodigoAcesso');
+const codigoConfirmBtn = document.getElementById('codigoConfirmBtn');
+
+inCodigoAcesso.addEventListener('input', () => {
+  inCodigoAcesso.value = inCodigoAcesso.value.replace(/\D/g,'').slice(0,8);
+});
+inCodigoAcesso.addEventListener('keydown', e => { if(e.key==='Enter') validarCodigoEIniciar(); });
+codigoConfirmBtn.addEventListener('click', validarCodigoEIniciar);
+
+async function validarCodigoEIniciar(){
+  const codigo = inCodigoAcesso.value.trim();
+  if(!codigo){ msgCodigoAcesso.textContent='✕ Digite o código informado pelo avaliador'; msgCodigoAcesso.className='codigo-modal-msg err'; return; }
+  codigoConfirmBtn.disabled = true;
+  msgCodigoAcesso.textContent = 'Verificando...'; msgCodigoAcesso.className = 'codigo-modal-msg';
+  try {
+    const r = await verificarCodigoAcesso(codigo);
+    if (r.ok) {
+      codigoValidado = true;
+      codigoModal.classList.remove('show');
+      iniciarTesteReal();
+    } else {
+      const msgs = { nao_encontrado:'✕ Código não encontrado. Confira com o avaliador.', expirado:'✕ Código expirado. Peça o código atual ao avaliador.', desativado:'✕ Código desativado. Peça o código atual ao avaliador.' };
+      msgCodigoAcesso.textContent = msgs[r.motivo] || '✕ Código inválido';
+      msgCodigoAcesso.className = 'codigo-modal-msg err';
+      codigoConfirmBtn.disabled = false;
+    }
+  } catch(e) {
+    console.error(e);
+    msgCodigoAcesso.textContent = '✕ Falha ao verificar. Tente novamente.';
+    msgCodigoAcesso.className = 'codigo-modal-msg err';
+    codigoConfirmBtn.disabled = false;
+  }
+}
+
 function startTest(){
   const nome=document.getElementById('nome').value.trim();
   if(nome.length<3){toast('Informe o nome completo');return;}
-  candidate={nome};
+  const cpf=document.getElementById('inCpf').value.trim();
+  if(!cpfValido(cpf)){toast('Informe um CPF válido');return;}
+  candidate={nome, cpf};
 
+  if (!codigoValidado) {
+    inCodigoAcesso.value=''; msgCodigoAcesso.textContent=''; msgCodigoAcesso.className='codigo-modal-msg';
+    codigoConfirmBtn.disabled=false;
+    codigoModal.classList.add('show');
+    setTimeout(()=>inCodigoAcesso.focus(),100);
+    return;
+  }
+  iniciarTesteReal();
+}
+
+function iniciarTesteReal(){
+  const nome=candidate.nome;
   const pool=shuffle([...FRASES.lgpd,...FRASES.acesso,...FRASES.numeros]);
   originalText=pool[0];
   textoCategoria=getCategoria(originalText);
