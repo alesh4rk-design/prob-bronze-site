@@ -667,7 +667,7 @@
     </div>
     <div class="server-status-bar offline" id="serverStatusBar">
       <div class="dot"></div>
-      <span id="serverStatusText">Verificando Firestore...</span>
+      <span id="serverStatusText">Verificando conexão...</span>
     </div>
     <div class="launcher-status">
       <div class="dot-green"></div>
@@ -925,12 +925,12 @@
         `${data.total_perguntas} perguntas · ${data.modulos.length} módulos`;
       document.getElementById('btnIniciar').disabled = data.modulos.length === 0;
       document.getElementById('serverStatusBar').className = 'server-status-bar online';
-      document.getElementById('serverStatusText').textContent = 'Firestore conectado — avaliação liberada';
+      document.getElementById('serverStatusText').textContent = 'Conectado — avaliação liberada';
       show('s-launcher');
     } catch (e) {
       console.error(e);
       document.getElementById('serverStatusBar').className = 'server-status-bar offline';
-      document.getElementById('serverStatusText').textContent = 'Falha ao conectar ao Firestore — verifique js/firebase-config.js';
+      document.getElementById('serverStatusText').textContent = 'Falha ao conectar ao servidor — verifique js/firebase-config.js';
       document.querySelector('.loading-text').textContent = 'Erro ao carregar módulos.';
     }
   }
@@ -1023,7 +1023,7 @@
 
   window.requestConsentAndStart = function() {
     const btn = document.getElementById('btnIniciar');
-    if (btn.disabled) { toast('⛔ Firestore indisponível. Verifique a configuração.', 'err'); playErr(); return; }
+    if (btn.disabled) { toast('⛔ Servidor indisponível. Verifique a configuração.', 'err'); playErr(); return; }
     if (!globalCodigoValidado) { showCodigoModal(); return; }
     if (!globalConsentGiven || !globalLgpdAccepted) showConsentModal();
     else show('s-home');

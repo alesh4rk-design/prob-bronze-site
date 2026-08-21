@@ -591,11 +591,11 @@ async function enviarAoServidor(resultado){
   const syncEl=document.getElementById('syncStatus');
   try{
     await salvarResultadoDigitacao(resultado);
-    syncEl.innerHTML='✅ <span style="color:#00E880;">Resultado sincronizado com o Firestore</span>';
+    syncEl.innerHTML='✅ <span style="color:#00E880;">Resultado sincronizado com o servidor</span>';
     toast('Resultado salvo!','ok');
   }catch(e){
     console.error(e);
-    syncEl.innerHTML='⚠️ <span style="color:#E8A000;">Falha ao gravar no Firestore — verifique a configuração</span>';
+    syncEl.innerHTML='⚠️ <span style="color:#E8A000;">Falha ao gravar no servidor — verifique a configuração</span>';
   }finally{
     document.getElementById('sendingOverlay').classList.remove('show');
   }
@@ -755,13 +755,13 @@ async function checkStatus() {
     const ms = Date.now() - t0;
     dot.className     = 'status-dot online';
     label.className   = 'status-label online';
-    label.textContent = '● Firestore online';
+    label.textContent = '● Sistema online';
     ping.textContent  = ms + ' ms';
     ping.className    = ms < 300 ? 'status-ping fast' : ms < 900 ? 'status-ping mid' : 'status-ping slow';
   } catch(e) {
     dot.className     = 'status-dot offline';
     label.className   = 'status-label offline';
-    label.textContent = '● Firestore offline';
+    label.textContent = '● Sistema offline';
     ping.textContent  = 'sem resposta';
     ping.className    = 'status-ping slow';
   }

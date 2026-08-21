@@ -13,13 +13,13 @@
 </style>
 </head>
 <body>
-<h1>⚙ Virtus — Popular banco de perguntas no Firestore</h1>
+<h1>⚙ Virtus — Popular banco de perguntas do sistema</h1>
 <p>
   Esta página é uma ferramenta de <strong>uso único</strong> (ou sempre que o banco de
   perguntas mudar). Ela lê o objeto <code>PERGUNTAS_SEED</code> de
   <code>js/perguntas-seed-data.js</code> (dados migrados do antigo
   <code>perguntas.json</code>) e grava um documento por módulo na coleção
-  Firestore <code>perguntas</code> — campo <code>questoes: [{q,o,n,resposta}]</code>.
+  coleção <code>perguntas</code> — campo <code>questoes: [{q,o,n,resposta}]</code>.
 </p>
 <p>
   <strong>Não deixe esta página publicamente acessível/linkada em produção</strong> sem
@@ -28,7 +28,7 @@
   <code>perguntas</code> para quem tiver perfil <code>admin</code>).
 </p>
 <div id="authStatus" style="padding:12px 14px;border-radius:8px;background:#1e2229;border:1px solid #2d3340;margin-bottom:16px;">⏳ Verificando login...</div>
-<button id="btnSeed" disabled>▶ Popular Firestore agora</button>
+<button id="btnSeed" disabled>▶ Popular sistema agora</button>
 <div id="log"></div>
 
 <script type="module">

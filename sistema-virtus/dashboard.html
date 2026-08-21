@@ -544,7 +544,7 @@
 
 <footer class="hud-foot">
   <span class="hud-foot-item">Sistema <span>Virtus</span></span>
-  <span class="hud-foot-item" id="serverModeLabel">Firestore (tempo real)</span>
+  <span class="hud-foot-item" id="serverModeLabel">Sincronização em tempo real</span>
   <span class="hud-foot-item" style="margin-left:auto;">Perfil: <span id="authUserPerfil">—</span></span>
   <span class="hud-foot-item">Versão <span>3.0 (Firebase)</span></span>
 </footer>
@@ -1733,7 +1733,7 @@
     unsubs = [];
     try {
       unsubs.push(assinarResultados(
-        (lista) => { ALL_RESULTADOS = lista; renderAll(); statusDot(true, 'Firestore online'); },
+        (lista) => { ALL_RESULTADOS = lista; renderAll(); statusDot(true, 'Sistema online'); },
         () => statusDot(false, 'Conexão perdida — reconectando...')
       ));
       unsubs.push(assinarViolacoes(
@@ -1742,8 +1742,8 @@
       ));
     } catch (e) {
       console.error(e);
-      statusDot(false, 'Falha ao conectar ao Firestore');
-      toast('Erro ao conectar ao Firestore. Verifique js/firebase-config.js', 'err');
+      statusDot(false, 'Falha ao conectar ao servidor');
+      toast('Erro ao conectar ao servidor. Verifique js/firebase-config.js', 'err');
     }
   }
 

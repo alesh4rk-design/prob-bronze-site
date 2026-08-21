@@ -881,18 +881,18 @@
       if (me.perfil === 'admin') {
         unsubs.push(assinarPendentes(renderPendentes, () => statusDot(false, 'Reconectando...')));
         unsubs.push(assinarUsuarios(renderUsuarios, () => statusDot(false, 'Reconectando...')));
-        unsubs.push(assinarModulos(lista => { renderModulos(lista); statusDot(true, 'Firestore online'); },
+        unsubs.push(assinarModulos(lista => { renderModulos(lista); statusDot(true, 'Sistema online'); },
                                    () => statusDot(false, 'Reconectando...')));
       }
       // Códigos de acesso: admin e viewer têm permissão (isAvaliador()).
       unsubs.push(assinarCodigosAcesso(
-        lista => { renderCodigos(lista); statusDot(true, 'Firestore online'); },
+        lista => { renderCodigos(lista); statusDot(true, 'Sistema online'); },
         () => statusDot(false, 'Reconectando...')
       ));
     } catch (e) {
       console.error(e);
       statusDot(false, 'Falha ao conectar');
-      toast('Erro ao conectar ao Firestore', 'err');
+      toast('Erro ao conectar ao servidor', 'err');
     }
   }
   conectar();
