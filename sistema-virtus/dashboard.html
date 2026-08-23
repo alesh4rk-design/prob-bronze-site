@@ -692,8 +692,10 @@
   document.getElementById('btnLogout').onclick = async () => { await virtusLogout(); window.location.replace('./index.html'); };
 
   // Gestão de acessos e do banco de perguntas foi movida para admin.html.
-  // Aqui só exibimos o atalho para quem é admin.
-  if (me && me.perfil === 'admin') {
+  // O botão fica visível para admin E viewer: dentro do admin.html, viewer
+  // só enxerga as abas Códigos de Acesso e QR Codes (Usuários/Perguntas
+  // ficam ocultas para ele — ver o portão de acesso em admin.html).
+  if (me && (me.perfil === 'admin' || me.perfil === 'viewer')) {
     const link = document.getElementById('linkAdmin');
     if (link) link.style.display = 'flex';
   }
