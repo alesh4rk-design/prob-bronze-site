@@ -1963,9 +1963,10 @@
       const pct = r.pct || 0;
       const aprovado = pct >= 70;
       const dt = r.data_conclusao ? new Date(r.data_conclusao).toLocaleString('pt-BR') : '—';
+      const temViolacao = violacoesDe(r.nome).length > 0;
       return `<tr class="clickable" onclick="abrirCandidato('${chaveDe(r).replace(/'/g, "\\'")}')" title="Ver detalhamento e exportar PDF">
         <td style="text-align:center;color:var(--text3);">${i + 1}</td>
-        <td class="td-nome">${escapeHtml(r.nome || '—')} <span class="row-hint">▸ detalhes</span></td>
+        <td class="td-nome">${escapeHtml(r.nome || '—')}${temViolacao ? ' <span style="color:var(--red);font-weight:700;" title="Possui violação registrada durante o teste">*</span>' : ''} <span class="row-hint">▸ detalhes</span></td>
         <td><span class="badge-modulo">${escapeHtml(r.modulo || '—')}</span></td>
         <td>${r.acertos ?? '—'} / ${r.total ?? '—'}</td>
         <td>
@@ -2074,14 +2075,17 @@
       tbody.innerHTML = '<tr><td colspan="5"><div class="empty-state"><div class="empty-icon">📭</div>Nenhum aprovado ainda.</div></td></tr>';
       return;
     }
-    tbody.innerHTML = aprovados.map((c, i) => `
+    tbody.innerHTML = aprovados.map((c, i) => {
+      const temViolacao = violacoesDe(c.nome).length > 0;
+      return `
       <tr class="clickable" onclick="abrirCandidato('${c.chave.replace(/'/g, "\\'")}')" title="Ver detalhamento e exportar PDF">
         <td style="text-align:center;color:var(--text3);">${i + 1}</td>
-        <td class="td-nome">${escapeHtml(c.nome)} <span class="row-hint">▸ detalhes</span></td>
+        <td class="td-nome">${escapeHtml(c.nome)}${temViolacao ? ' <span style="color:var(--red);font-weight:700;" title="Possui violação registrada durante o teste">*</span>' : ''} <span class="row-hint">▸ detalhes</span></td>
         <td>${c.modulos.map(m => `<span class="badge-modulo">${escapeHtml(m)}</span>`).join(' ')}</td>
         <td><span class="td-pct" style="color:var(--green);">${c.media}%</span></td>
         <td class="td-time">${fmtData(c.ultima)}</td>
-      </tr>`).join('');
+      </tr>`;
+    }).join('');
   }
 
   function renderAll() {
