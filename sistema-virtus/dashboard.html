@@ -294,8 +294,9 @@
   @media print {
     @page { size:A4; margin:14mm 12mm; }
     body { background:#fff !important; }
-    .hud, .hud-foot, .main, .modal-back, .toast, .grid-bg { display:none !important; }
+    .hud, .hud-foot, .main, .modal-back, .toast, .grid-bg, .sidebar, .sidebar-backdrop { display:none !important; }
     #printReport { display:block !important; }
+    #qrPrintSheets { display:block !important; }
   }
 
   #printReport {
@@ -474,6 +475,248 @@
     background:#FCEBE9; border:1px solid #EFB8B2; border-radius:6px; padding:11px 14px;
     font-size:11px; line-height:1.6; color:#B32218; page-break-inside:avoid;
   }
+
+  /* ── Painel de administração ── */
+  .admin-tabs { display:flex; gap:8px; margin-bottom:18px; flex-wrap:wrap; }
+  .admin-tab {
+    display:inline-flex; align-items:center; gap:8px;
+    padding:11px 20px; border-radius:6px; cursor:pointer;
+    background:var(--ink3); border:1px solid var(--line2); color:var(--text2);
+    font-family:'Rajdhani',sans-serif; font-size:14px; font-weight:700;
+    letter-spacing:1.5px; text-transform:uppercase; transition:all .15s;
+  }
+  .admin-tab:hover { border-color:var(--ambermid); color:var(--text); }
+  .admin-tab.active { background:var(--amberdim); border-color:var(--amber); color:var(--amber); }
+  .admin-tab .tab-count {
+    font-family:'Share Tech Mono',monospace; font-size:10px;
+    background:var(--ink); border-radius:20px; padding:2px 8px; color:var(--text3);
+  }
+  .admin-tab.active .tab-count { background:rgba(0,0,0,.3); color:var(--amber); }
+  .admin-section { display:none; }
+  .admin-section.active { display:block; }
+
+  .perfil-chip {
+    display:inline-block; padding:3px 10px; border-radius:20px;
+    font-family:'Share Tech Mono',monospace; font-size:10px; letter-spacing:1px;
+  }
+  .perfil-admin    { background:var(--greendim); color:var(--green); border:1px solid rgba(0,238,136,.4); }
+  .perfil-viewer   { background:var(--cyandim);  color:var(--cyan);  border:1px solid rgba(0,212,240,.4); }
+  .perfil-pendente { background:var(--amberdim); color:var(--amber); border:1px solid rgba(240,168,0,.4); }
+
+  .btn-act {
+    border:none; border-radius:6px; padding:7px 12px; cursor:pointer;
+    font-family:'Rajdhani',sans-serif; font-weight:700; font-size:12px;
+    letter-spacing:1px; text-transform:uppercase; transition:all .15s;
+  }
+  .btn-act:hover { transform:translateY(-1px); }
+  .btn-approve-admin  { background:var(--green); color:#04170e; }
+  .btn-approve-viewer { background:var(--cyan);  color:#04202a; }
+  .btn-danger  { background:transparent; color:var(--red); border:1px solid var(--red); }
+  .btn-neutral { background:var(--ink4); color:var(--text2); border:1px solid var(--line2); }
+
+  /* Switch de módulo ativo/inativo */
+  .mod-row {
+    display:flex; align-items:center; gap:14px; padding:14px 16px;
+    background:var(--ink3); border:1px solid var(--line2); border-radius:8px;
+    margin-bottom:8px; flex-wrap:wrap;
+  }
+  .mod-row.inativo { opacity:.55; }
+  .mod-nome { font-family:'Rajdhani',sans-serif; font-size:17px; font-weight:700; letter-spacing:.5px; color:var(--text); flex:1; min-width:140px; }
+  .mod-qtd { font-family:'Share Tech Mono',monospace; font-size:11px; color:var(--text3); }
+  .switch { position:relative; width:52px; height:28px; flex-shrink:0; }
+  .switch input { opacity:0; width:0; height:0; }
+  .switch .slider {
+    position:absolute; inset:0; cursor:pointer; border-radius:28px;
+    background:var(--ink5); border:1px solid var(--line2); transition:.25s;
+  }
+  .switch .slider::before {
+    content:''; position:absolute; height:20px; width:20px; left:3px; bottom:3px;
+    background:var(--text3); border-radius:50%; transition:.25s;
+  }
+  .switch input:checked + .slider { background:var(--greendim); border-color:var(--green); }
+  .switch input:checked + .slider::before { transform:translateX(24px); background:var(--green); }
+
+  .seed-box {
+    background:var(--ink3); border:1px solid var(--line2); border-radius:8px;
+    padding:18px 20px; margin-top:16px;
+  }
+  .seed-log {
+    white-space:pre-wrap; background:var(--ink); border:1px solid var(--line);
+    border-radius:6px; padding:12px; margin-top:14px; font-family:'Share Tech Mono',monospace;
+    font-size:11px; max-height:220px; overflow:auto; color:var(--text2); display:none;
+  }
+  .seed-log.show { display:block; }
+  .warn-note {
+    font-family:'Share Tech Mono',monospace; font-size:11px; line-height:1.7;
+    color:var(--text3); background:var(--amberdim); border:1px solid var(--ambermid);
+    border-radius:6px; padding:12px 14px; margin-bottom:14px;
+  }
+
+  /* ── QR Codes: prévia na tela ── */
+  .qr-preview-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(240px,1fr)); gap:16px; }
+  .qr-preview-card {
+    background:var(--ink2); border:1px solid var(--line2); border-radius:8px;
+    padding:20px; text-align:center;
+  }
+  .qr-preview-card canvas { max-width:100%; height:auto; border-radius:4px; }
+  .qr-preview-nome { font-family:'Rajdhani',sans-serif; font-size:16px; font-weight:700; color:var(--text); margin-top:12px; letter-spacing:.5px; }
+  .qr-preview-url { font-family:'Share Tech Mono',monospace; font-size:9px; color:var(--text3); margin-top:4px; word-break:break-all; }
+
+  /* ── QR Codes: folhas A4 reais (só existem visualmente na impressão) ── */
+  #qrPrintSheets { display:none; }
+  .qr-sheet {
+    width:210mm; height:297mm; box-sizing:border-box; position:relative;
+    page-break-after:always; overflow:hidden;
+    font-family:'Exo 2',sans-serif; color:#12141c;
+    background:#fff;
+  }
+  .qr-sheet:last-child { page-break-after:auto; }
+
+  /* textura de grade + brilho, igual ao resto do sistema */
+  .qr-sheet-grid {
+    position:absolute; inset:0; pointer-events:none;
+    background-image:
+      linear-gradient(rgba(232,160,0,0.06) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(232,160,0,0.06) 1px, transparent 1px);
+    background-size:12mm 12mm;
+  }
+  .qr-sheet-glow {
+    position:absolute; inset:0; pointer-events:none;
+    background:
+      radial-gradient(ellipse 70% 45% at 50% 8%, rgba(232,160,0,0.08) 0%, transparent 65%),
+      radial-gradient(ellipse 60% 40% at 50% 100%, rgba(232,160,0,0.05) 0%, transparent 70%);
+  }
+
+  /* faixa superior e inferior cheias, cor de destaque */
+  .qr-sheet-topbar, .qr-sheet-botbar {
+    position:absolute; left:0; right:0; height:6mm;
+    background:linear-gradient(90deg,#7a4a00,#E8A000 25%,#FFD060 50%,#E8A000 75%,#7a4a00);
+  }
+  .qr-sheet-topbar { top:0; }
+  .qr-sheet-botbar { bottom:0; }
+
+  .qr-sheet-corner { position:absolute; width:18mm; height:18mm; border-color:rgba(232,160,0,0.6); pointer-events:none; }
+  .qr-sheet-corner.tl { top:14mm; left:12mm; border-top:2px solid; border-left:2px solid; }
+  .qr-sheet-corner.tr { top:14mm; right:12mm; border-top:2px solid; border-right:2px solid; }
+  .qr-sheet-corner.bl { bottom:14mm; left:12mm; border-bottom:2px solid; border-left:2px solid; }
+  .qr-sheet-corner.br { bottom:14mm; right:12mm; border-bottom:2px solid; border-right:2px solid; }
+
+  .qr-sheet-body {
+    position:relative; height:100%; padding:22mm 16mm;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+  }
+
+  .qr-sheet-brand { display:flex; flex-direction:column; align-items:center; gap:12px; margin-bottom:10mm; }
+  .qr-sheet-hex {
+    width:74px; height:74px; background:linear-gradient(135deg,#E8A000,#C87800);
+    border-radius:18px; display:flex; align-items:center; justify-content:center;
+    font-size:34px; color:#1a1000; box-shadow:0 0 40px rgba(232,160,0,0.5);
+  }
+  .qr-sheet-brand-name { font-family:'Rajdhani',sans-serif; font-size:32px; font-weight:700; letter-spacing:11px; color:#0d1420; text-transform:uppercase; text-align:center; }
+  .qr-sheet-brand-sub { font-family:'Share Tech Mono',monospace; font-size:10px; letter-spacing:5px; color:#E8A000; text-transform:uppercase; margin-top:2px; text-align:center; }
+
+  .qr-sheet-titulo {
+    font-family:'Rajdhani',sans-serif; font-size:50px; font-weight:700; letter-spacing:1px;
+    color:#0d1420; text-align:center; margin-bottom:8px; line-height:1.05;
+  }
+  .qr-sheet-titulo em { color:#C87800; font-style:normal; }
+  .qr-sheet-sub {
+    font-family:'Share Tech Mono',monospace; font-size:13px; letter-spacing:2px; color:#7A8EA8;
+    text-align:center; margin-bottom:12mm; text-transform:uppercase;
+  }
+
+  .qr-sheet-canvas-wrap {
+    position:relative; padding:26px; background:#fff; border-radius:24px;
+    box-shadow:0 0 0 3px #E8A000, 0 20px 60px rgba(232,160,0,0.35);
+  }
+  .qr-sheet-canvas-wrap::before, .qr-sheet-canvas-wrap::after {
+    content:''; position:absolute; width:26px; height:26px; border-color:#050810;
+  }
+  .qr-sheet-canvas-wrap::before { top:-4px; left:-4px; border-top:4px solid; border-left:4px solid; border-top-left-radius:24px; }
+  .qr-sheet-canvas-wrap::after  { bottom:-4px; right:-4px; border-bottom:4px solid; border-right:4px solid; border-bottom-right-radius:24px; }
+
+  .qr-sheet-passos { display:flex; gap:14mm; margin-top:14mm; }
+  .qr-sheet-passo { display:flex; flex-direction:column; align-items:center; gap:10px; max-width:38mm; text-align:center; }
+  .qr-sheet-passo-num {
+    width:36px; height:36px; border-radius:50%;
+    background:linear-gradient(135deg,#E8A000,#FFB800); color:#1a1000;
+    display:flex; align-items:center; justify-content:center;
+    font-family:'Rajdhani',sans-serif; font-size:17px; font-weight:700;
+    box-shadow:0 4px 14px rgba(232,160,0,0.4);
+  }
+  .qr-sheet-passo-txt { font-family:'Share Tech Mono',monospace; font-size:10px; letter-spacing:.5px; color:#4A5568; line-height:1.5; }
+
+  .qr-sheet-footer {
+    position:absolute; bottom:12mm; left:0; right:0; text-align:center;
+    font-family:'Share Tech Mono',monospace; font-size:9px; letter-spacing:3px;
+    color:#8090A8; text-transform:uppercase;
+  }
+
+  /* ══════════ NAVEGAÇÃO LATERAL (SIDEBAR) ══════════ */
+  .hamburger-btn {
+    background:var(--ink3); border:1px solid var(--line2); border-radius:4px;
+    width:36px; height:32px; display:flex; align-items:center; justify-content:center;
+    cursor:pointer; color:var(--text2); font-size:16px; transition:all .15s; flex-shrink:0;
+    margin-right:8px;
+  }
+  .hamburger-btn:hover { border-color:var(--amber); color:var(--amber); background:var(--amberdim); }
+
+  .sidebar-backdrop {
+    position:fixed; inset:0; background:rgba(0,0,0,.55); z-index:290;
+    display:none;
+  }
+  .sidebar-backdrop.show { display:block; }
+
+  .sidebar {
+    position:fixed; top:0; left:0; bottom:0; width:260px; z-index:300;
+    background:var(--ink2); border-right:1px solid var(--line2);
+    box-shadow:8px 0 30px rgba(0,0,0,.35);
+    transform:translateX(-100%); transition:transform .22s cubic-bezier(.4,0,.2,1);
+    display:flex; flex-direction:column; overflow-y:auto;
+  }
+  .sidebar.open { transform:translateX(0); }
+  .sidebar-head {
+    display:flex; align-items:center; gap:10px; padding:16px 18px;
+    border-bottom:1px solid var(--line2); flex-shrink:0;
+  }
+  .sidebar-close {
+    margin-left:auto; background:transparent; border:1px solid var(--line2); color:var(--text3);
+    width:28px; height:28px; border-radius:4px; cursor:pointer; font-size:14px;
+  }
+  .sidebar-close:hover { border-color:var(--red); color:var(--red); }
+  .sidebar-nav { padding:14px 10px; display:flex; flex-direction:column; gap:3px; flex:1; }
+  .sidebar-section-lbl {
+    font-family:'Share Tech Mono',monospace; font-size:9px; letter-spacing:2px;
+    color:var(--text4); text-transform:uppercase; padding:14px 12px 6px;
+  }
+  .sidebar-item {
+    display:flex; align-items:center; gap:12px; padding:11px 14px; border-radius:6px;
+    cursor:pointer; color:var(--text2); font-family:'Rajdhani',sans-serif; font-size:14px;
+    font-weight:600; letter-spacing:.5px; transition:all .15s; user-select:none;
+  }
+  .sidebar-item .si-icon { font-size:16px; width:20px; text-align:center; flex-shrink:0; }
+  .sidebar-item:hover { background:var(--ink3); color:var(--text); }
+  .sidebar-item.active { background:var(--amberdim); color:var(--amber); border:1px solid var(--ambermid); }
+  .sidebar-item.active:hover { background:var(--amberdim); }
+  .sidebar-foot {
+    padding:14px 18px; border-top:1px solid var(--line2); flex-shrink:0;
+    font-family:'Share Tech Mono',monospace; font-size:9px; color:var(--text4);
+    letter-spacing:1px; text-transform:uppercase;
+  }
+
+  .app-view { display:none; }
+  .app-view.active { display:block; }
+
+  .testes-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:16px; }
+  .teste-card {
+    background:var(--ink2); border:1px solid var(--line2); border-radius:8px;
+    padding:26px 22px; text-align:center; text-decoration:none; display:block;
+    transition:all .15s;
+  }
+  .teste-card:hover { border-color:var(--amber); transform:translateY(-2px); box-shadow:0 10px 30px rgba(0,0,0,.25); }
+  .teste-card .tc-icon { font-size:38px; margin-bottom:12px; }
+  .teste-card .tc-nome { font-family:'Rajdhani',sans-serif; font-size:19px; font-weight:700; color:var(--text); letter-spacing:1px; text-transform:uppercase; }
+  .teste-card .tc-desc { font-family:'Share Tech Mono',monospace; font-size:10.5px; color:var(--text3); margin-top:8px; letter-spacing:.5px; }
 </style>
 </head>
 <body class="dark-theme">
@@ -481,6 +724,7 @@
 <div class="grid-bg"></div>
 
 <header class="hud">
+  <div class="hamburger-btn" id="btnHamburger" onclick="toggleSidebar()" title="Menu">☰</div>
   <div class="hud-logo">
     <div class="hud-hex">
       <svg width="34" height="34" viewBox="0 0 34 34" fill="none">
@@ -491,7 +735,7 @@
     </div>
     <div class="hud-brand">
       <div class="hud-name">Virtus</div>
-      <div class="hud-sub">Dashboard de Resultados</div>
+      <div class="hud-sub" id="hudSubTitle">Dashboard de Resultados</div>
     </div>
   </div>
   <div class="hud-sep"></div>
@@ -503,12 +747,33 @@
     <span class="hud-time" id="hudClock">--:--:--</span>
     <div class="theme-toggle" id="themeToggle" onclick="toggleTheme()" title="Alternar tema">🌙</div>
     <button class="hud-btn" onclick="window.print()" title="Imprimir dashboard">🖨 Imprimir</button>
-    <a href="./digitacao.html" class="hud-btn">⌨️ Digitação</a>
-    <a href="./admin.html" class="hud-btn" id="linkAdmin" style="display:none;width:auto;padding:0 12px;border-color:rgba(240,168,0,0.45);color:var(--amber);">⚙ Administração</a>
     <span id="authUserBadge" style="display:inline-flex;align-items:center;gap:6px;height:32px;padding:0 12px;border-radius:4px;border:1px solid rgba(232,160,0,0.4);background:rgba(232,160,0,0.08);color:#E8A000;font-size:11px;font-family:'Share Tech Mono',monospace;letter-spacing:1px;">👤 <span id="authUserName">...</span></span>
     <button class="hud-btn" id="btnLogout" style="border-color:rgba(248,81,73,0.4);color:#f85149;">⏻ Sair</button>
   </div>
 </header>
+
+<div class="sidebar-backdrop" id="sidebarBackdrop" onclick="toggleSidebar(false)"></div>
+<nav class="sidebar" id="sidebar">
+  <div class="sidebar-head">
+    <span class="hud-hex-icon">⚡</span>
+    <div class="hud-name" style="font-size:15px;">Virtus</div>
+    <button class="sidebar-close" onclick="toggleSidebar(false)" title="Fechar">✕</button>
+  </div>
+  <div class="sidebar-nav">
+    <div class="sidebar-section-lbl">Resultados</div>
+    <div class="sidebar-item active" data-view="dashboard" onclick="switchView('dashboard')"><span class="si-icon">📊</span> Dashboard</div>
+    <div class="sidebar-item" data-view="banco" onclick="switchView('banco')"><span class="si-icon">✅</span> Banco de Aprovados</div>
+    <div class="sidebar-item" data-view="violacoes" onclick="switchView('violacoes')"><span class="si-icon">🚨</span> Violações</div>
+    <div class="sidebar-section-lbl">Ferramentas</div>
+    <div class="sidebar-item" data-view="testes" onclick="switchView('testes')"><span class="si-icon">⌨️</span> Testes</div>
+    <div class="sidebar-item" data-view="qrcodes" onclick="switchView('qrcodes')"><span class="si-icon">🖨️</span> QR Codes</div>
+    <div class="sidebar-item" data-view="codigos" onclick="switchView('codigos')"><span class="si-icon">🔑</span> Código de Acesso</div>
+    <div class="sidebar-section-lbl" id="sidebarAdminLbl" style="display:none;">Administração</div>
+    <div class="sidebar-item" data-view="perguntas" id="sidebarItemPerguntas" style="display:none;" onclick="switchView('perguntas')"><span class="si-icon">📚</span> Perguntas</div>
+    <div class="sidebar-item" data-view="usuarios" id="sidebarItemUsuarios" style="display:none;" onclick="switchView('usuarios')"><span class="si-icon">👥</span> Usuários</div>
+  </div>
+  <div class="sidebar-foot">Sistema Virtus · v3.0</div>
+</nav>
 
 <div class="toast" id="toast"></div>
 
@@ -551,6 +816,9 @@
 </footer>
 
 <main class="main">
+
+<!-- ══════════ VIEW: DASHBOARD ══════════ -->
+<section class="app-view active" id="view-dashboard">
 
   <div class="page-title-area">
     <div>
@@ -601,7 +869,6 @@
             <th>Acertos</th>
             <th>Nota %</th>
             <th>Status</th>
-            <th>Decisão do avaliador</th>
             <th>Concluído</th>
           </tr>
         </thead>
@@ -637,6 +904,69 @@
     </div>
   </div>
 
+</section>
+
+<!-- ══════════ VIEW: BANCO DE APROVADOS ══════════ -->
+<section class="app-view" id="view-banco">
+  <div class="page-title-area">
+    <div>
+      <div class="page-title">Banco de <em>Aprovados</em></div>
+      <div class="page-subtitle">Candidatos com média de quiz ≥ 70% · cálculo automático</div>
+    </div>
+  </div>
+  <div class="panel">
+    <div class="panel-head">
+      <div class="panel-title-sm">✅ Aprovados <span class="badge green" id="bancoCountBadge">0 registros</span></div>
+    </div>
+    <div class="results-table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th style="width:44px;text-align:center;">#</th>
+            <th>Candidato</th>
+            <th>Módulos avaliados</th>
+            <th>Média</th>
+            <th>Última tentativa</th>
+          </tr>
+        </thead>
+        <tbody id="bancoTableBody">
+          <tr><td colspan="5"><div class="empty-state"><div class="empty-icon">📭</div>Nenhum aprovado ainda.</div></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ VIEW: TESTES (atalhos) ══════════ -->
+<section class="app-view" id="view-testes">
+  <div class="page-title-area">
+    <div>
+      <div class="page-title">Aplicar <em>Testes</em></div>
+      <div class="page-subtitle">Abra a tela do teste para o candidato preencher</div>
+    </div>
+  </div>
+  <div class="testes-grid">
+    <a class="teste-card" href="./quiz.html" target="_blank" rel="noopener">
+      <div class="tc-icon">📋</div>
+      <div class="tc-nome">Quiz de Conhecimentos</div>
+      <div class="tc-desc">Abre quiz.html em nova aba</div>
+    </a>
+    <a class="teste-card" href="./digitacao.html" target="_blank" rel="noopener">
+      <div class="tc-icon">⌨️</div>
+      <div class="tc-nome">Teste de Digitação</div>
+      <div class="tc-desc">Abre digitacao.html em nova aba</div>
+    </a>
+  </div>
+</section>
+
+<!-- ══════════ VIEW: VIOLAÇÕES ══════════ -->
+<section class="app-view" id="view-violacoes">
+  <div class="page-title-area">
+    <div>
+      <div class="page-title">Violações <em>Registradas</em></div>
+      <div class="page-subtitle">Ocorrências monitoradas durante os testes</div>
+    </div>
+  </div>
   <div class="panel" style="margin-bottom:16px;">
     <div class="panel-head"><div class="panel-title-sm">🚨 Violações Registradas <span class="badge" id="violBadge" style="background:var(--reddim);border-color:rgba(255,85,73,0.4);color:var(--red);">0 eventos</span></div></div>
     <div class="results-table-wrap">
@@ -646,12 +976,177 @@
       </table>
     </div>
   </div>
+</section>
+
+<!-- ══════════ VIEW: QR CODES (de admin.html / sec-qrcodes) ══════════ -->
+<section class="app-view" id="view-qrcodes">
+  <div class="page-title-area">
+    <div>
+      <div class="page-title">QR <em>Codes</em></div>
+      <div class="page-subtitle">Cartazes A4 para imprimir e colar no local da entrevista</div>
+    </div>
+  </div>
+<div class="panel" style="margin-bottom:16px;">
+      <div class="panel-head">
+        <div class="panel-title-sm">🖨️ Folhas A4 com QR Code</div>
+      </div>
+      <div class="panel-body" style="padding:16px 20px;">
+        <div class="warn-note">
+          Cada cartaz abaixo é uma folha A4 pronta para imprimir e colar no local da entrevista.
+          O candidato aponta a câmera do celular, o QR abre a página direto — sem precisar digitar
+          endereço nenhum. Clique em <strong>Imprimir</strong> para gerar todas de uma vez (o navegador
+          abre o diálogo de impressão, uma folha por cartaz).
+        </div>
+        <button class="btn-act btn-approve-admin" id="btnImprimirQr" style="padding:11px 20px;font-size:13px;margin-top:6px;">🖨️ Imprimir cartazes</button>
+      </div>
+    </div>
+
+    <div id="qrPreviewGrid" class="qr-preview-grid"></div>
+</section>
+
+<!-- ══════════ VIEW: CÓDIGO DE ACESSO (de admin.html / sec-codigos) ══════════ -->
+<section class="app-view" id="view-codigos">
+  <div class="page-title-area">
+    <div>
+      <div class="page-title">Código de <em>Acesso</em></div>
+      <div class="page-subtitle">Código presencial para liberar o quiz aos candidatos</div>
+    </div>
+  </div>
+<div class="panel">
+      <div class="panel-head">
+        <div class="panel-title-sm">🔑 Código de Acesso do Candidato</div>
+      </div>
+      <div class="panel-body" style="padding:16px 20px;">
+        <div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap;">
+          <button class="btn-act btn-approve-admin" id="btnGerarCodigo" style="padding:11px 20px;font-size:13px;">▶ Gerar código do dia</button>
+          <div id="codigoGerado" style="display:none;align-items:center;gap:10px;">
+            <span style="font-family:'Share Tech Mono',monospace;font-size:32px;font-weight:700;letter-spacing:8px;color:var(--amber);background:var(--amberdim);border:1px solid var(--ambermid);border-radius:6px;padding:6px 18px;" id="codigoValorGrande"></span>
+            <span style="font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--text3);letter-spacing:1px;" id="codigoValidadeTxt">válido por 4 horas</span>
+          </div>
+        </div>
+        <div class="warn-note" style="margin-top:14px;">
+          Um único código serve para <strong>todos os candidatos da entrevista</strong> — todos digitam o mesmo. Ele expira sozinho <strong>4 horas</strong> depois de gerado, e você também pode desativá-lo antes disso a qualquer momento. Admin e viewer podem gerar.
+        </div>
+        <div class="results-table-wrap" style="margin-top:12px;">
+          <table>
+            <thead><tr><th>Código</th><th>Status</th><th>Usos</th><th>Gerado por</th><th>Expira em</th><th></th></tr></thead>
+            <tbody id="codigosTableBody"><tr><td colspan="6"><div class="empty-state"><div class="empty-icon">🔑</div>Nenhum código gerado ainda</div></td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+</section>
+
+<!-- ══════════ VIEW: PERGUNTAS (admin only, de admin.html / sec-perguntas) ══════════ -->
+<section class="app-view" id="view-perguntas">
+  <div class="page-title-area">
+    <div>
+      <div class="page-title">Banco de <em>Perguntas</em></div>
+      <div class="page-subtitle">Módulos ativos/inativos e importação de perguntas</div>
+    </div>
+  </div>
+<div class="panel" style="margin-bottom:16px;">
+      <div class="panel-head">
+        <div class="panel-title-sm">📚 Módulos Disponíveis
+          <span class="badge cyan" id="modBadge">0 módulos</span>
+        </div>
+      </div>
+      <div class="panel-body" style="padding:16px 20px;">
+        <div class="warn-note">
+          Desligue um módulo para que ele <strong>deixe de aparecer</strong> para o candidato
+          no quiz. As perguntas continuam salvas — é só uma questão de disponibilidade.
+        </div>
+        <div id="modulosList">
+          <div class="empty-state"><div class="empty-icon">📚</div>Carregando módulos...</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head"><div class="panel-title-sm">⬆️ Importar / Atualizar Banco de Perguntas</div></div>
+      <div class="panel-body" style="padding:16px 20px;">
+        <div class="warn-note">
+          Use apenas na <strong>primeira configuração</strong> do sistema, ou quando o
+          conteúdo das perguntas mudar. A importação <strong>sobrescreve</strong> as questões
+          de cada módulo pela versão que está no código
+          (<code>js/perguntas-seed-data.js</code>). O estado ligado/desligado é preservado.
+        </div>
+        <div class="seed-box">
+          <div id="seedStatus" style="font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--text3);margin-bottom:14px;">
+            Pronto para importar <strong id="seedQtd">…</strong> módulos.
+          </div>
+          <button class="btn-act btn-approve-admin" id="btnSeed" style="padding:11px 20px;font-size:13px;">
+            ▶ Importar perguntas agora
+          </button>
+          <div class="seed-log" id="seedLog"></div>
+        </div>
+      </div>
+    </div>
+</section>
+
+<!-- ══════════ VIEW: USUÁRIOS (admin only, de admin.html / sec-usuarios) ══════════ -->
+<section class="app-view" id="view-usuarios">
+  <div class="page-title-area">
+    <div>
+      <div class="page-title">Gestão de <em>Usuários</em></div>
+      <div class="page-subtitle">Solicitações de acesso e avaliadores cadastrados</div>
+    </div>
+  </div>
+<div class="panel" style="margin-bottom:16px;">
+      <div class="panel-head">
+        <div class="panel-title-sm">🔑 Solicitações de Acesso Pendentes
+          <span class="badge" id="pendBadge" style="background:var(--amberdim);border-color:var(--ambermid);color:var(--amber);">0</span>
+        </div>
+      </div>
+      <div class="panel-body" style="padding:16px 20px;">
+        <div class="warn-note">
+          Quem se cadastra em <strong>cadastro.html</strong> entra nesta fila sem nenhum acesso.
+          Aprove como <strong>Admin</strong> (gerencia tudo) ou <strong>Viewer</strong>
+          (vê resultados e gera código de acesso, mas não administra).
+        </div>
+        <div class="results-table-wrap">
+          <table>
+            <thead><tr><th>Nome</th><th>E-mail</th><th>Aprovar como</th><th style="width:60px;">Recusar</th></tr></thead>
+            <tbody id="pendTableBody">
+              <tr><td colspan="4"><div class="empty-state"><div class="empty-icon">🔑</div>Nenhuma solicitação pendente</div></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head">
+        <div class="panel-title-sm">👥 Avaliadores com Acesso
+          <span class="badge cyan" id="ativosBadge">0</span>
+        </div>
+      </div>
+      <div class="results-table-wrap">
+        <table>
+          <thead><tr><th>Nome</th><th>E-mail</th><th>Perfil</th><th>Alterar</th></tr></thead>
+          <tbody id="usersTableBody">
+            <tr><td colspan="4"><div class="empty-state"><div class="empty-icon">👥</div>Carregando...</div></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+</section>
 
 </main>
 
+<div id="qrPrintSheets"></div>
+
 <script type="module">
   import { requireDashboardAccess, virtusLogout } from "./js/auth.js";
-  import { assinarResultados, assinarViolacoes, definirDecisao, excluirResultado } from "./js/dashboard.js";
+  import {
+    assinarResultados, assinarViolacoes, excluirResultado,
+    assinarPendentes, assinarUsuarios, aprovarUsuario, removerUsuario,
+    assinarModulos, definirModuloAtivo,
+    gerarCodigoAcesso, assinarCodigosAcesso, cancelarCodigoAcesso
+  } from "./js/dashboard.js";
+  import { db } from "./js/firebase-config.js";
+  import { doc, setDoc } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+  import { PERGUNTAS_SEED } from "./js/perguntas-seed-data.js";
 
   let ALL_RESULTADOS = [];
   let ALL_VIOLACOES = [];
@@ -691,24 +1186,44 @@
   }
   document.getElementById('btnLogout').onclick = async () => { await virtusLogout(); window.location.replace('./index.html'); };
 
-  // Gestão de acessos e do banco de perguntas foi movida para admin.html.
-  // O botão fica visível para admin E viewer: dentro do admin.html, viewer
-  // só enxerga as abas Códigos de Acesso e QR Codes (Usuários/Perguntas
-  // ficam ocultas para ele — ver o portão de acesso em admin.html).
-  if (me && (me.perfil === 'admin' || me.perfil === 'viewer')) {
-    const link = document.getElementById('linkAdmin');
-    if (link) link.style.display = 'flex';
+  // Perguntas e Usuários são exclusivos do perfil admin — vier oculta essas
+  // duas entradas do menu lateral por completo (não só desabilitada).
+  if (me && me.perfil === 'admin') {
+    document.getElementById('sidebarAdminLbl').style.display = 'block';
+    document.getElementById('sidebarItemPerguntas').style.display = 'flex';
+    document.getElementById('sidebarItemUsuarios').style.display = 'flex';
   }
 
-  // ── Decisão do avaliador (apto / não apto) ──────────────────────────────
-  window.setDecisao = async function(resultadoId, decisao) {
-    try {
-      await definirDecisao(resultadoId, decisao, (me && me.usuario) || (me && me.uid) || 'desconhecido');
-      toast(decisao === 'apto' ? '✅ Marcado como Apto' : decisao === 'nao_apto' ? '❌ Marcado como Não apto' : '⏳ Voltou para Pendente', 'ok');
-    } catch (e) {
-      console.error(e);
-      toast('❌ Falha ao salvar decisão: ' + e.message, 'err');
-    }
+  // ══════════ NAVEGAÇÃO LATERAL (SIDEBAR) — SPA sem reload ══════════
+  const VIEW_TITULOS = {
+    dashboard: 'Dashboard de Resultados',
+    banco: 'Banco de Aprovados',
+    testes: 'Aplicar Testes',
+    violacoes: 'Violações Registradas',
+    qrcodes: 'QR Codes para Imprimir',
+    codigos: 'Código de Acesso',
+    perguntas: 'Banco de Perguntas',
+    usuarios: 'Gestão de Usuários'
+  };
+  const LS_VIEW = 'virtus_dashboard_view';
+
+  window.toggleSidebar = function (force) {
+    const sb = document.getElementById('sidebar');
+    const bd = document.getElementById('sidebarBackdrop');
+    const open = force === undefined ? !sb.classList.contains('open') : force;
+    sb.classList.toggle('open', open);
+    bd.classList.toggle('show', open);
+  };
+
+  window.switchView = function (view) {
+    if ((view === 'perguntas' || view === 'usuarios') && (!me || me.perfil !== 'admin')) view = 'dashboard';
+    document.querySelectorAll('.app-view').forEach(v => v.classList.toggle('active', v.id === 'view-' + view));
+    document.querySelectorAll('.sidebar-item').forEach(i => i.classList.toggle('active', i.dataset.view === view));
+    const sub = document.getElementById('hudSubTitle');
+    if (sub) sub.textContent = VIEW_TITULOS[view] || 'Dashboard de Resultados';
+    localStorage.setItem(LS_VIEW, view);
+    toggleSidebar(false);
+    if (view === 'qrcodes') gerarQRCodes();
   };
 
 
@@ -959,12 +1474,10 @@
     const media = quizzes.length
       ? Math.round(quizzes.reduce((a, t) => a + (t.pct || 0), 0) / quizzes.length) : null;
 
-    // Decisão registrada mais recente entre as tentativas.
-    const comDecisao = tents.filter(t => t.decisao).slice(-1)[0];
-    const decisao = comDecisao ? comDecisao.decisao : 'pendente';
-    const decisaoPor = comDecisao ? comDecisao.decisao_por : null;
-    const vLabel = decisao === 'apto' ? '✓ Apto' : decisao === 'nao_apto' ? '✕ Não apto' : '⏳ Pendente';
-    const vClass = decisao === 'apto' ? 'pr-v-apto' : decisao === 'nao_apto' ? 'pr-v-naoapto' : 'pr-v-pendente';
+    // Veredito puramente automático, a partir da média de quiz (≥70% = aprovado).
+    // Não existe mais decisão manual do avaliador neste sistema.
+    const vLabel = media === null ? '⏳ Sem prova técnica' : media >= 70 ? '✓ Aprovado' : '✕ Não aprovado';
+    const vClass = media === null ? 'pr-v-pendente' : media >= 70 ? 'pr-v-apto' : 'pr-v-naoapto';
 
     const corPct = p => p >= 70 ? '#00713C' : p >= 50 ? '#8A6100' : '#B32218';
     const agora = new Date().toLocaleString('pt-BR');
@@ -1096,7 +1609,7 @@
 
     h += `
       <div class="pr-assinatura">
-        <div class="pr-sig">Avaliador responsável${decisaoPor ? ' — ' + escapeHtml(decisaoPor) : ''}</div>
+        <div class="pr-sig">Avaliador responsável${me && me.usuario ? ' — ' + escapeHtml(me.usuario) : ''}</div>
         <div class="pr-sig">Data</div>
       </div>
       <div class="pr-foot">
@@ -1163,8 +1676,6 @@
     const melhorWpm = typings.length ? Math.max(...typings.map(t => t.wpm || 0)) : null;
     const dig = classificarDigitacao(melhorWpm);
 
-    const comDecisao = tents.filter(t => t.decisao).slice(-1)[0];
-    const decisao = comDecisao ? comDecisao.decisao : 'pendente';
     const agora = new Date().toLocaleString('pt-BR');
 
     // Recomendação de alocação com base no desempenho consolidado.
@@ -1197,8 +1708,9 @@
       recoTxt = 'O candidato não possui avaliação de conhecimento concluída neste sistema.';
     }
 
-    const vLabel = decisao === 'apto' ? 'APROVADO' : decisao === 'nao_apto' ? 'NÃO APROVADO' : 'EM ANÁLISE';
-    const vCor = decisao === 'apto' ? '#00EE88' : decisao === 'nao_apto' ? '#FF7A70' : '#FFB800';
+    // Situação puramente automática (média de quiz), sem decisão manual.
+    const vLabel = media === null ? 'SEM PROVA TÉCNICA' : media >= 70 ? 'APROVADO' : media >= 50 ? 'EM ANÁLISE' : 'NÃO APROVADO';
+    const vCor = media === null ? '#FFB800' : media >= 70 ? '#00EE88' : media >= 50 ? '#FFB800' : '#FF7A70';
 
     let h = `
       <div class="pr-header">
@@ -1444,26 +1956,13 @@
     const tbody = document.getElementById('tableBody');
     document.getElementById('tableCountBadge').textContent = lista.length + ' registros';
     if (!lista.length) {
-      tbody.innerHTML = '<tr><td colspan="8"><div class="empty-state"><div class="empty-icon">📭</div>Nenhum resultado encontrado.</div></td></tr>';
+      tbody.innerHTML = '<tr><td colspan="7"><div class="empty-state"><div class="empty-icon">📭</div>Nenhum resultado encontrado.</div></td></tr>';
       return;
     }
-    // Admin e viewer podem decidir apto/não apto (viewer é limitado a esses
-    // campos pelas firestore.rules; só admin edita/apaga o resto).
-    const podeDecidir = me && (me.perfil === 'admin' || me.perfil === 'viewer');
     tbody.innerHTML = lista.map((r, i) => {
       const pct = r.pct || 0;
       const aprovado = pct >= 70;
       const dt = r.data_conclusao ? new Date(r.data_conclusao).toLocaleString('pt-BR') : '—';
-      const decisao = r.decisao || 'pendente';
-      const decisaoSelect = podeDecidir
-        ? `<select class="field-input decisao-select decisao-${decisao}" onclick="event.stopPropagation()" onchange="event.stopPropagation();setDecisao('${r.id}', this.value)">
-             <option value="pendente" ${decisao === 'pendente' ? 'selected' : ''}>⏳ Pendente</option>
-             <option value="apto" ${decisao === 'apto' ? 'selected' : ''}>✅ Apto</option>
-             <option value="nao_apto" ${decisao === 'nao_apto' ? 'selected' : ''}>❌ Não apto</option>
-           </select>`
-        : (decisao === 'apto' ? '<span style="color:var(--green);font-weight:700;">✅ Apto</span>'
-           : decisao === 'nao_apto' ? '<span style="color:var(--red);font-weight:700;">❌ Não apto</span>'
-           : '<span style="color:var(--text3);">⏳ Pendente</span>');
       return `<tr class="clickable" onclick="abrirCandidato('${chaveDe(r).replace(/'/g, "\\'")}')" title="Ver detalhamento e exportar PDF">
         <td style="text-align:center;color:var(--text3);">${i + 1}</td>
         <td class="td-nome">${escapeHtml(r.nome || '—')} <span class="row-hint">▸ detalhes</span></td>
@@ -1476,7 +1975,6 @@
           </div>
         </td>
         <td>${aprovado ? '<span style="color:var(--green);font-weight:700;">✅ Aprovado</span>' : '<span style="color:var(--red);font-weight:700;">❌ Reprovado</span>'}</td>
-        <td>${decisaoSelect}</td>
         <td class="td-time">${dt}</td>
       </tr>`;
     }).join('');
@@ -1550,6 +2048,42 @@
 
   function escapeHtml(s) { return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
 
+  // ══════════ BANCO DE APROVADOS ══════════
+  // Puramente automático: agrupa por candidato (mesma chave usada no modal de
+  // detalhe) e considera aprovado quem tem média de quiz >= 70%. Não existe
+  // decisão manual — "Aprovado" aqui é só o cálculo da nota.
+  function renderBancoAprovados() {
+    const tbody = document.getElementById('bancoTableBody');
+    const quizzes = ALL_RESULTADOS.filter(r => r.tipo !== 'typing');
+    const porCandidato = {};
+    for (const r of quizzes) {
+      const chave = chaveDe(r);
+      if (!porCandidato[chave]) porCandidato[chave] = [];
+      porCandidato[chave].push(r);
+    }
+    const aprovados = Object.entries(porCandidato).map(([chave, tents]) => {
+      const media = Math.round(tents.reduce((a, t) => a + (t.pct || 0), 0) / tents.length);
+      const modulos = [...new Set(tents.map(t => t.modulo || '—'))];
+      const ultima = tents.reduce((a, t) => (t.data_conclusao || '') > (a || '') ? t.data_conclusao : a, tents[0].data_conclusao);
+      const nome = tents[tents.length - 1].nome || '—';
+      return { chave, nome, media, modulos, ultima };
+    }).filter(c => c.media >= 70).sort((a, b) => b.media - a.media);
+
+    document.getElementById('bancoCountBadge').textContent = aprovados.length + ' registros';
+    if (!aprovados.length) {
+      tbody.innerHTML = '<tr><td colspan="5"><div class="empty-state"><div class="empty-icon">📭</div>Nenhum aprovado ainda.</div></td></tr>';
+      return;
+    }
+    tbody.innerHTML = aprovados.map((c, i) => `
+      <tr class="clickable" onclick="abrirCandidato('${c.chave.replace(/'/g, "\\'")}')" title="Ver detalhamento e exportar PDF">
+        <td style="text-align:center;color:var(--text3);">${i + 1}</td>
+        <td class="td-nome">${escapeHtml(c.nome)} <span class="row-hint">▸ detalhes</span></td>
+        <td>${c.modulos.map(m => `<span class="badge-modulo">${escapeHtml(m)}</span>`).join(' ')}</td>
+        <td><span class="td-pct" style="color:var(--green);">${c.media}%</span></td>
+        <td class="td-time">${fmtData(c.ultima)}</td>
+      </tr>`).join('');
+  }
+
   function renderAll() {
     renderModuleOptions();
     const filtrada = getFiltered();
@@ -1559,6 +2093,7 @@
     renderHistogram(filtrada);
     renderTyping();
     renderViolacoes();
+    renderBancoAprovados();
   }
 
   // Planilha .xlsx de verdade (cabeçalho colorido, colunas largas, filtro,
@@ -1630,7 +2165,6 @@
       { header: 'Total', key: 'total', width: 9 },
       { header: 'Nota (%)', key: 'pct', width: 11 },
       { header: 'Status', key: 'status', width: 13 },
-      { header: 'Decisão', key: 'decisao', width: 13 },
       { header: 'Concluído em', key: 'data', width: 19 }
     ];
     estilizarCabecalho(ws.getRow(1));
@@ -1638,7 +2172,6 @@
     lista.forEach((r, i) => {
       const f = r.candidato || {};
       const pct = r.pct || 0;
-      const decisaoTxt = r.decisao === 'apto' ? 'Apto' : r.decisao === 'nao_apto' ? 'Não apto' : 'Pendente';
       const row = ws.addRow({
         nome: r.nome || '—',
         cpf: f.cpf || '—',
@@ -1650,21 +2183,18 @@
         total: r.total ?? 0,
         pct: pct / 100,
         status: pct >= 70 ? 'Aprovado' : 'Reprovado',
-        decisao: decisaoTxt,
         data: r.data_conclusao ? new Date(r.data_conclusao) : null
       });
       row.getCell('pct').numFmt = '0%';
       row.getCell('data').numFmt = 'dd/mm/yyyy hh:mm';
       const corStatus = pct >= 70 ? 'FF00A85A' : 'FFE0483C';
       row.getCell('status').font = { bold: true, color: { argb: corStatus } };
-      const corDecisao = r.decisao === 'apto' ? 'FF00A85A' : r.decisao === 'nao_apto' ? 'FFE0483C' : 'FF8A6100';
-      row.getCell('decisao').font = { bold: true, color: { argb: corDecisao } };
       if (i % 2 === 1) {
         row.eachCell(c => { if (!c.fill) c.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: ROW_ALT } }; });
       }
       row.eachCell(c => { c.alignment = { vertical: 'middle' }; });
     });
-    ws.autoFilter = { from: 'A1', to: 'L1' };
+    ws.autoFilter = { from: 'A1', to: 'K1' };
   }
 
   function montarAbaDigitacao(wb, lista) {
@@ -1730,7 +2260,333 @@
   };
 
 
-  // Código de acesso presencial: gestão movida para admin.html.
+  // ── Solicitações pendentes ────────────────────────────────────────────
+  function renderPendentes(lista) {
+    document.getElementById('pendBadge').textContent = lista.length;
+    document.getElementById('cntPendentes').textContent = lista.length;
+    const tbody = document.getElementById('pendTableBody');
+    if (!lista.length) {
+      tbody.innerHTML = '<tr><td colspan="4"><div class="empty-state"><div class="empty-icon">🔑</div>Nenhuma solicitação pendente</div></td></tr>';
+      return;
+    }
+    tbody.innerHTML = lista.map(p => `
+      <tr>
+        <td class="td-nome">${escapeHtml(p.nome || '—')}</td>
+        <td>${escapeHtml(p.email || '—')}</td>
+        <td>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;">
+            <button class="btn-act btn-approve-admin"  onclick="aprovar('${p.uid}','admin')">Admin</button>
+            <button class="btn-act btn-approve-viewer" onclick="aprovar('${p.uid}','viewer')">Viewer</button>
+          </div>
+        </td>
+        <td><button class="btn-act btn-danger" onclick="recusar('${p.uid}','${escapeHtml(p.nome || p.email || '')}')">✕</button></td>
+      </tr>`).join('');
+  }
+
+  // ── Avaliadores já com acesso ─────────────────────────────────────────
+  function renderUsuarios(todos) {
+    const ativos = todos.filter(u => u.perfil === 'admin' || u.perfil === 'viewer');
+    document.getElementById('ativosBadge').textContent = ativos.length;
+    const tbody = document.getElementById('usersTableBody');
+    if (!ativos.length) {
+      tbody.innerHTML = '<tr><td colspan="4"><div class="empty-state"><div class="empty-icon">👥</div>Nenhum avaliador aprovado ainda</div></td></tr>';
+      return;
+    }
+    tbody.innerHTML = ativos.map(u => {
+      const souEu = u.uid === me.uid;
+      const outroPerfil = u.perfil === 'admin' ? 'viewer' : 'admin';
+      return `
+        <tr>
+          <td class="td-nome">${escapeHtml(u.nome || '—')}${souEu ? ' <span style="color:var(--text3);font-size:11px;">(você)</span>' : ''}</td>
+          <td>${escapeHtml(u.email || '—')}</td>
+          <td><span class="perfil-chip perfil-${u.perfil}">${u.perfil}</span></td>
+          <td>
+            <div style="display:flex;gap:6px;flex-wrap:wrap;">
+              ${souEu
+                ? '<span style="color:var(--text4);font-size:11px;font-family:\'Share Tech Mono\',monospace;">—</span>'
+                : `<button class="btn-act btn-neutral" onclick="alterarPerfil('${u.uid}','${outroPerfil}')">→ ${outroPerfil}</button>
+                   <button class="btn-act btn-danger" onclick="recusar('${u.uid}','${escapeHtml(u.nome || u.email || '')}')">Revogar</button>`}
+            </div>
+          </td>
+        </tr>`;
+    }).join('');
+  }
+
+  window.aprovar = async function (uid, perfil) {
+    try { await aprovarUsuario(uid, perfil); toast(`✅ Aprovado como ${perfil}`, 'ok'); }
+    catch (e) { console.error(e); toast('❌ Falha: ' + e.message, 'err'); }
+  };
+  window.alterarPerfil = async function (uid, perfil) {
+    try { await aprovarUsuario(uid, perfil); toast(`✅ Perfil alterado para ${perfil}`, 'ok'); }
+    catch (e) { console.error(e); toast('❌ Falha: ' + e.message, 'err'); }
+  };
+  window.recusar = async function (uid, nome) {
+    if (!confirm(`Remover o acesso de "${nome}"?\n\nA conta continua existindo, mas perde o acesso ao sistema.`)) return;
+    try { await removerUsuario(uid); toast('Acesso removido', 'ok'); }
+    catch (e) { console.error(e); toast('❌ Falha: ' + e.message, 'err'); }
+  };
+
+  // ── Módulos de perguntas ──────────────────────────────────────────────
+  function renderModulos(lista) {
+    document.getElementById('cntModulos').textContent = lista.length;
+    document.getElementById('modBadge').textContent = lista.length + ' módulos';
+    const el = document.getElementById('modulosList');
+    if (!lista.length) {
+      el.innerHTML = '<div class="empty-state"><div class="empty-icon">📚</div>' +
+        'Nenhum módulo no banco ainda.<br>Use a importação abaixo para carregar as perguntas.</div>';
+      return;
+    }
+    el.innerHTML = lista.map(m => `
+      <div class="mod-row ${m.ativo ? '' : 'inativo'}">
+        <div class="mod-nome">${escapeHtml(m.nome)}</div>
+        <div class="mod-qtd">${m.total} perguntas</div>
+        <label class="switch">
+          <input type="checkbox" ${m.ativo ? 'checked' : ''} onchange="alternarModulo('${escapeHtml(m.nome)}', this.checked)">
+          <span class="slider"></span>
+        </label>
+        <span class="mod-qtd" style="min-width:56px;color:${m.ativo ? 'var(--green)' : 'var(--text4)'};">
+          ${m.ativo ? 'ativo' : 'inativo'}
+        </span>
+      </div>`).join('');
+  }
+
+  window.alternarModulo = async function (modulo, ativo) {
+    try {
+      await definirModuloAtivo(modulo, ativo);
+      toast(ativo ? `✅ "${modulo}" ativado` : `⏸ "${modulo}" desativado`, 'ok');
+    } catch (e) { console.error(e); toast('❌ Falha: ' + e.message, 'err'); }
+  };
+
+  // ── Importação do banco de perguntas ──────────────────────────────────
+  document.getElementById('seedQtd').textContent = Object.keys(PERGUNTAS_SEED).length;
+
+  document.getElementById('btnSeed').onclick = async () => {
+    const totalMods = Object.keys(PERGUNTAS_SEED).length;
+    if (!confirm(`Importar/atualizar ${totalMods} módulos?\n\nAs questões atuais de cada módulo serão substituídas pela versão do código.`)) return;
+    const btn = document.getElementById('btnSeed');
+    const logEl = document.getElementById('seedLog');
+    btn.disabled = true;
+    logEl.classList.add('show');
+    logEl.textContent = 'Iniciando importação...\n';
+    const log = m => { logEl.textContent += m + '\n'; logEl.scrollTop = logEl.scrollHeight; };
+    let ok = 0, fail = 0;
+    for (const [modulo, questoes] of Object.entries(PERGUNTAS_SEED)) {
+      try {
+        // merge:true preserva o campo `ativo` já definido pelo admin.
+        await setDoc(doc(db, "perguntas", modulo), { questoes }, { merge: true });
+        log(`✅ ${modulo}: ${questoes.length} perguntas`);
+        ok++;
+      } catch (e) {
+        log(`❌ ${modulo}: ${e.message}`);
+        fail++;
+      }
+    }
+    log(`\nConcluído: ${ok} módulos gravados${fail ? `, ${fail} falharam` : ''}.`);
+    toast(fail ? `Importação concluída com ${fail} falha(s)` : '✅ Perguntas importadas!', fail ? 'err' : 'ok');
+    btn.disabled = false;
+  };
+
+  // ── Código de acesso presencial (admin e viewer podem gerar) ────────────
+  // Modelo: UM código compartilhado por todos os candidatos da entrevista
+  // (bom para dias com 20+ pessoas), expira sozinho 4h depois de gerado.
+  document.getElementById('btnGerarCodigo').onclick = async () => {
+    const btn = document.getElementById('btnGerarCodigo');
+    btn.disabled = true;
+    try {
+      const codigo = await gerarCodigoAcesso(me.usuario);
+      document.getElementById('codigoValorGrande').textContent = codigo;
+      document.getElementById('codigoValidadeTxt').textContent = 'válido por 4 horas · compartilhe com todos os candidatos';
+      document.getElementById('codigoGerado').style.display = 'flex';
+      toast('✅ Código gerado — entregue aos candidatos', 'ok');
+    } catch (e) {
+      console.error(e);
+      toast('❌ Falha ao gerar código: ' + e.message, 'err');
+    } finally {
+      btn.disabled = false;
+    }
+  };
+
+  function fmtDataHora(ts) {
+    if (!ts) return '—';
+    const d = ts.toDate ? ts.toDate() : new Date(ts);
+    return isNaN(d) ? '—' : d.toLocaleString('pt-BR');
+  }
+
+  function statusCodigo(c) {
+    const expiraEm = c.expira_em && c.expira_em.toDate ? c.expira_em.toDate() : null;
+    const expirado = expiraEm && expiraEm.getTime() <= Date.now();
+    if (c.ativo === false) return { txt: '✕ Desativado', cor: 'var(--text4)', ok: false };
+    if (expirado) return { txt: '⏱ Expirado', cor: 'var(--text3)', ok: false };
+    return { txt: '✓ Ativo', cor: 'var(--green)', ok: true };
+  }
+
+  function renderCodigos(lista) {
+    const ativos = lista.filter(c => statusCodigo(c).ok);
+    document.getElementById('cntCodigosDisp').textContent = ativos.length;
+    const tbody = document.getElementById('codigosTableBody');
+    if (!lista.length) {
+      tbody.innerHTML = '<tr><td colspan="6"><div class="empty-state"><div class="empty-icon">🔑</div>Nenhum código gerado ainda</div></td></tr>';
+      return;
+    }
+    tbody.innerHTML = lista.map(c => {
+      const st = statusCodigo(c);
+      const acao = st.ok
+        ? `<button class="btn-act btn-danger" onclick="desativarCodigo('${c.codigo}')">Desativar</button>`
+        : '';
+      return `<tr>
+        <td style="font-family:'Share Tech Mono',monospace;font-weight:700;letter-spacing:2px;">${escapeHtml(c.codigo)}</td>
+        <td style="color:${st.cor};font-weight:700;">${st.txt}</td>
+        <td>${c.usos ?? 0}</td>
+        <td>${escapeHtml(c.criado_por || '—')}</td>
+        <td>${fmtDataHora(c.expira_em)}</td>
+        <td>${acao}</td>
+      </tr>`;
+    }).join('');
+  }
+
+  window.desativarCodigo = async function (codigo) {
+    if (!confirm(`Desativar o código ${codigo}? Ele deixará de funcionar imediatamente, mesmo antes das 4 horas.`)) return;
+    try { await cancelarCodigoAcesso(codigo); toast('Código desativado', 'ok'); }
+    catch (e) { console.error(e); toast('❌ Falha: ' + e.message, 'err'); }
+  };
+
+  // ── QR Codes para imprimir (admin e viewer) ─────────────────────────────
+  // Em vez de carregar uma biblioteca JS de terceiros (jsDelivr/unpkg
+  // falharam nos testes — provavelmente bloqueados na rede local do
+  // avaliador), o QR é uma <img> apontando para um serviço público de
+  // geração de QR Code. É só uma requisição de imagem, sem executar
+  // JavaScript externo — muito mais resistente a bloqueios de rede.
+  // Duas fontes diferentes: se uma estiver bloqueada, tenta a outra.
+  function urlsQrCode(conteudo, tamanho) {
+    const enc = encodeURIComponent(conteudo);
+    return [
+      `https://api.qrserver.com/v1/create-qr-code/?size=${tamanho}x${tamanho}&data=${enc}`,
+      `https://quickchart.io/qr?text=${enc}&size=${tamanho}&margin=1`
+    ];
+  }
+
+  // Confere se uma imagem carrega de verdade (não só se o <img> foi criado),
+  // com um tempo limite — senão uma URL bloqueada pode travar sem nunca
+  // disparar onload nem onerror.
+  function testarImagem(src, timeoutMs = 8000) {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      const timer = setTimeout(() => reject(new Error('Tempo esgotado ao carregar ' + src)), timeoutMs);
+      img.onload = () => { clearTimeout(timer); resolve(); };
+      img.onerror = () => { clearTimeout(timer); reject(new Error('Falha ao carregar ' + src)); };
+      img.src = src;
+    });
+  }
+
+  // Tenta cada fonte em sequência e retorna a primeira que carregar de verdade.
+  async function primeiraQrDisponivel(conteudo, tamanho) {
+    let ultimoErro;
+    for (const src of urlsQrCode(conteudo, tamanho)) {
+      try { await testarImagem(src); return src; }
+      catch (e) { ultimoErro = e; }
+    }
+    throw ultimoErro || new Error('Nenhuma fonte de QR Code respondeu');
+  }
+
+  let qrGerados = false;
+  async function gerarQRCodes() {
+    if (qrGerados) return;
+    const previewGrid = document.getElementById('qrPreviewGrid');
+    const printSheets = document.getElementById('qrPrintSheets');
+    previewGrid.innerHTML = '<div class="empty-state"><div class="empty-icon">⏳</div>Gerando QR Codes...</div>';
+    try {
+      // Base do site a partir da própria URL do dashboard.html — funciona
+      // tanto hospedado na raiz quanto num subcaminho (ex: GitHub Pages).
+      const baseUrl = window.location.href.replace(/dashboard\.html.*$/, '');
+      const alvos = [
+        { nome: 'Avaliação do Candidato', tituloHtml: 'Avaliação do <em>Candidato</em>', sub: 'Quiz — perguntas do processo seletivo', url: baseUrl + 'quiz.html' },
+        { nome: 'Teste de Digitação', tituloHtml: 'Teste de <em>Digitação</em>', sub: 'Cronometrado — velocidade e precisão', url: baseUrl + 'digitacao.html' }
+      ];
+      previewGrid.innerHTML = '';
+      printSheets.innerHTML = '';
+      let algumOk = false;
+      for (const alvo of alvos) {
+        try {
+          const imgPreview = await primeiraQrDisponivel(alvo.url, 320);
+          const imgSheet = await primeiraQrDisponivel(alvo.url, 300);
+          algumOk = true;
+          previewGrid.insertAdjacentHTML('beforeend', `
+            <div class="qr-preview-card">
+              <img src="${imgPreview}" style="width:100%;max-width:220px;border-radius:6px;">
+              <div class="qr-preview-nome">${escapeHtml(alvo.nome)}</div>
+              <div class="qr-preview-url">${escapeHtml(alvo.url)}</div>
+            </div>`);
+          printSheets.insertAdjacentHTML('beforeend', `
+            <div class="qr-sheet">
+              <div class="qr-sheet-grid"></div>
+              <div class="qr-sheet-glow"></div>
+              <div class="qr-sheet-topbar"></div>
+              <div class="qr-sheet-botbar"></div>
+              <div class="qr-sheet-corner tl"></div>
+              <div class="qr-sheet-corner tr"></div>
+              <div class="qr-sheet-corner bl"></div>
+              <div class="qr-sheet-corner br"></div>
+
+              <div class="qr-sheet-body">
+                <div class="qr-sheet-brand">
+                  <div class="qr-sheet-hex">⚡</div>
+                  <div class="qr-sheet-brand-name">Virtus</div>
+                  <div class="qr-sheet-brand-sub">Sistema de Avaliação</div>
+                </div>
+
+                <div class="qr-sheet-titulo">${alvo.tituloHtml}</div>
+                <div class="qr-sheet-sub">${escapeHtml(alvo.sub)}</div>
+                <div class="qr-sheet-canvas-wrap"><img src="${imgSheet}" width="300" height="300"></div>
+
+                <div class="qr-sheet-passos">
+                  <div class="qr-sheet-passo">
+                    <div class="qr-sheet-passo-num">1</div>
+                    <div class="qr-sheet-passo-txt">Abra a câmera do celular</div>
+                  </div>
+                  <div class="qr-sheet-passo">
+                    <div class="qr-sheet-passo-num">2</div>
+                    <div class="qr-sheet-passo-txt">Aponte para o QR Code acima</div>
+                  </div>
+                  <div class="qr-sheet-passo">
+                    <div class="qr-sheet-passo-num">3</div>
+                    <div class="qr-sheet-passo-txt">Toque no link que aparecer na tela</div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="qr-sheet-footer">Sistema Virtus · Processo Seletivo</div>
+            </div>`);
+        } catch (e) {
+          console.error('Falha ao gerar QR de', alvo.nome, e);
+          previewGrid.insertAdjacentHTML('beforeend', `
+            <div class="qr-preview-card">
+              <div class="empty-icon">❌</div>
+              <div class="qr-preview-nome">${escapeHtml(alvo.nome)}</div>
+              <div class="qr-preview-url">Falha ao carregar o QR Code. Verifique a conexão.</div>
+            </div>`);
+        }
+      }
+      if (!previewGrid.children.length) {
+        previewGrid.innerHTML = '<div class="empty-state"><div class="empty-icon">❌</div>Nenhum QR Code pôde ser gerado. Verifique a conexão e tente novamente.</div>';
+      }
+      qrGerados = algumOk;
+      if (!algumOk) {
+        toast('❌ Falha ao gerar todos os QR Codes — verifique a conexão', 'err');
+      }
+    } catch (e) {
+      console.error(e);
+      previewGrid.innerHTML = '<div class="empty-state"><div class="empty-icon">❌</div>Falha ao gerar QR Codes. Verifique a conexão e tente novamente.</div>';
+      toast('❌ Falha ao gerar QR Codes: ' + e.message, 'err');
+    }
+  }
+
+  document.getElementById('btnImprimirQr').onclick = async () => {
+    const btn = document.getElementById('btnImprimirQr');
+    btn.disabled = true;
+    await gerarQRCodes();
+    btn.disabled = false;
+    if (qrGerados) window.print();
+  };
 
   // ── Assinaturas em tempo real ───────────────────────────────────────
   // Navegadores de celular suspendem a conexão do Firestore quando a aba
@@ -1750,6 +2606,17 @@
       unsubs.push(assinarViolacoes(
         (lista) => { ALL_VIOLACOES = lista; renderViolacoes(); },
         () => statusDot(false, 'Conexão perdida — reconectando...')
+      ));
+      // Usuários/Perguntas: só admin tem permissão de leitura nas regras.
+      if (me.perfil === 'admin') {
+        unsubs.push(assinarPendentes(renderPendentes, () => statusDot(false, 'Reconectando...')));
+        unsubs.push(assinarUsuarios(renderUsuarios, () => statusDot(false, 'Reconectando...')));
+        unsubs.push(assinarModulos(lista => { renderModulos(lista); }, () => statusDot(false, 'Reconectando...')));
+      }
+      // Códigos de acesso: admin e viewer têm permissão (isAvaliador()).
+      unsubs.push(assinarCodigosAcesso(
+        lista => { renderCodigos(lista); },
+        () => statusDot(false, 'Reconectando...')
       ));
     } catch (e) {
       console.error(e);

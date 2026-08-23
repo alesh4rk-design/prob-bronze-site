@@ -37,23 +37,6 @@ export function assinarViolacoes(callback, onError) {
   }, (err) => { console.error("assinarViolacoes:", err); if (onError) onError(err); });
 }
 
-// Grava a decisão do avaliador sobre um candidato: "apto", "nao_apto" ou
-// "pendente" (limpa a decisão). Admin e viewer podem decidir; as
-// firestore.rules limitam o viewer a alterar SOMENTE estes três campos.
-// `avaliador` é o usuário logado (me.usuario, vindo de virtusGetCurrentUser).
-export async function definirDecisao(resultadoId, decisao, avaliador) {
-  const ref = doc(db, "resultados", resultadoId);
-  // Firestore rejeita updateDoc com valor undefined em qualquer campo — o
-  // "|| null" garante que sempre vai um valor gravável, mesmo se a conta do
-  // avaliador não tiver o campo "usuario" salvo em Firestore.
-  const nomeAvaliador = avaliador || null;
-  if (decisao === "pendente") {
-    await updateDoc(ref, { decisao: null, decisao_por: null, decisao_em: null });
-  } else {
-    await updateDoc(ref, { decisao, decisao_por: nomeAvaliador, decisao_em: serverTimestamp() });
-  }
-}
-
 // Exclui um resultado (uma tentativa de quiz ou digitação). Admin e viewer
 // podem (firestore.rules: resultados/{id} allow delete para isAvaliador()).
 // Usado no modal de detalhe do candidato para excluir TODAS as tentativas
