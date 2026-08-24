@@ -162,3 +162,10 @@ export function assinarCodigosAcesso(callback, onError) {
 export async function cancelarCodigoAcesso(codigo) {
   await updateDoc(doc(db, "codigos_acesso", codigo), { ativo: false });
 }
+
+// Exclui um código da lista (ativo, desativado ou já expirado). Diferente de
+// cancelarCodigoAcesso: aqui o documento some de vez, para não acumular
+// códigos antigos que não servem mais pra nada.
+export async function excluirCodigoAcesso(codigo) {
+  await deleteDoc(doc(db, "codigos_acesso", codigo));
+}

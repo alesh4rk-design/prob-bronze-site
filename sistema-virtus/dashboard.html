@@ -1253,7 +1253,7 @@
     assinarResultados, assinarViolacoes, excluirResultado,
     assinarPendentes, assinarUsuarios, aprovarUsuario, removerUsuario,
     assinarModulos, definirModuloAtivo,
-    gerarCodigoAcesso, assinarCodigosAcesso, cancelarCodigoAcesso
+    gerarCodigoAcesso, assinarCodigosAcesso, cancelarCodigoAcesso, excluirCodigoAcesso
   } from "./js/dashboard.js";
   import { db } from "./js/firebase-config.js";
   import { doc, setDoc } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
@@ -2601,16 +2601,17 @@
     }
     tbody.innerHTML = lista.map(c => {
       const st = statusCodigo(c);
-      const acao = st.ok
-        ? `<button class="btn-act btn-danger" onclick="desativarCodigo('${c.codigo}')">Desativar</button>`
-        : '';
+      const acao = (st.ok
+        ? `<button class="btn-act btn-danger" onclick="desativarCodigo('${c.codigo}')">Desativar</button> `
+        : '') +
+        `<button class="btn-act btn-neutral" onclick="excluirCodigo('${c.codigo}')" title="Remove este código da lista">🗑 Excluir</button>`;
       return `<tr>
         <td style="font-family:'Share Tech Mono',monospace;font-weight:700;letter-spacing:2px;">${escapeHtml(c.codigo)}</td>
         <td style="color:${st.cor};font-weight:700;">${st.txt}</td>
         <td>${c.usos ?? 0}</td>
         <td>${escapeHtml(c.criado_por || '—')}</td>
         <td>${fmtDataHora(c.expira_em)}</td>
-        <td>${acao}</td>
+        <td style="white-space:nowrap;">${acao}</td>
       </tr>`;
     }).join('');
   }
@@ -2618,6 +2619,12 @@
   window.desativarCodigo = async function (codigo) {
     if (!confirm(`Desativar o código ${codigo}? Ele deixará de funcionar imediatamente, mesmo antes das 4 horas.`)) return;
     try { await cancelarCodigoAcesso(codigo); toast('Código desativado', 'ok'); }
+    catch (e) { console.error(e); toast('❌ Falha: ' + e.message, 'err'); }
+  };
+
+  window.excluirCodigo = async function (codigo) {
+    if (!confirm(`Excluir o código ${codigo} da lista? Essa ação não pode ser desfeita.`)) return;
+    try { await excluirCodigoAcesso(codigo); toast('Código excluído', 'ok'); }
     catch (e) { console.error(e); toast('❌ Falha: ' + e.message, 'err'); }
   };
 

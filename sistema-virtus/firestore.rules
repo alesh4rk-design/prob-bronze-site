@@ -88,7 +88,7 @@ service cloud.firestore {
                       request.time < resource.data.expira_em &&
                       request.resource.data.diff(resource.data).affectedKeys().hasOnly(['usos', 'ultimo_uso_em'])
                     );
-      allow delete: if request.auth != null && isAdmin();
+      allow delete: if request.auth != null && isAvaliador();
     }
 
     // violacoes/{id}: mesma lógica de `resultados` — escrita liberada
