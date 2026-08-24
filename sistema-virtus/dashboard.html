@@ -801,8 +801,9 @@
     </div>
     <div class="modal-scroll">
       <div class="filtro-q">
-        <div class="fq-btn active" id="fqErros" onclick="setFiltroQ('erros')">❌ Só os erros</div>
-        <div class="fq-btn" id="fqTodas" onclick="setFiltroQ('todas')">📋 Todas as questões</div>
+        <div class="fq-btn active" id="fqTodas" onclick="setFiltroQ('todas')">📋 Todas as questões</div>
+        <div class="fq-btn" id="fqErros" onclick="setFiltroQ('erros')">❌ Só os erros</div>
+        <div class="fq-btn" id="fqAcertos" onclick="setFiltroQ('acertos')">✅ Só os acertos</div>
       </div>
       <div id="cmConteudo"></div>
     </div>
@@ -1256,7 +1257,7 @@
 
   // ══════════ DETALHE DO CANDIDATO + RELATÓRIO PDF ══════════
   let CAND_ATUAL = null;   // nome do candidato aberto
-  let FILTRO_Q = 'erros';  // 'erros' | 'todas'
+  let FILTRO_Q = 'todas';  // 'todas' | 'erros' | 'acertos'
 
   // Agrupa todas as tentativas (quiz + digitação) de um mesmo candidato.
   // A comparação ignora maiúsculas/acentos porque o nome é digitado à mão
@@ -1301,9 +1302,10 @@
 
   window.abrirCandidato = function (chave) {
     CAND_ATUAL = chave;
-    FILTRO_Q = 'erros';
-    document.getElementById('fqErros').classList.add('active');
-    document.getElementById('fqTodas').classList.remove('active');
+    FILTRO_Q = 'todas';
+    document.getElementById('fqTodas').classList.add('active');
+    document.getElementById('fqErros').classList.remove('active');
+    document.getElementById('fqAcertos').classList.remove('active');
     renderModalCandidato();
     document.getElementById('candModal').classList.add('show');
     document.body.style.overflow = 'hidden';
@@ -1338,8 +1340,9 @@
   };
   window.setFiltroQ = function (modo) {
     FILTRO_Q = modo;
-    document.getElementById('fqErros').classList.toggle('active', modo === 'erros');
     document.getElementById('fqTodas').classList.toggle('active', modo === 'todas');
+    document.getElementById('fqErros').classList.toggle('active', modo === 'erros');
+    document.getElementById('fqAcertos').classList.toggle('active', modo === 'acertos');
     renderModalCandidato();
   };
   document.addEventListener('keydown', e => { if (e.key === 'Escape') fecharCandidato(); });
@@ -1410,7 +1413,8 @@
       const pct = t.pct || 0;
       const det = t.respostas_detalhadas || [];
       const erradas = det.filter(q => !q.acertou);
-      const mostrar = FILTRO_Q === 'erros' ? erradas : det;
+      const acertadas = det.filter(q => q.acertou);
+      const mostrar = FILTRO_Q === 'erros' ? erradas : FILTRO_Q === 'acertos' ? acertadas : det;
 
       html += `
         <div class="tent-card">
@@ -1425,9 +1429,13 @@
         html += `<div style="font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--text3);">
                    Este teste não guardou o detalhamento das respostas.
                  </div>`;
-      } else if (!mostrar.length) {
+      } else if (!mostrar.length && FILTRO_Q === 'erros') {
         html += `<div style="font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--green);">
                    ✅ Nenhum erro neste módulo — acertou todas as ${det.length} questões.
+                 </div>`;
+      } else if (!mostrar.length && FILTRO_Q === 'acertos') {
+        html += `<div style="font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--red);">
+                   ❌ Nenhum acerto neste módulo — errou todas as ${det.length} questões.
                  </div>`;
       } else {
         html += mostrar.map(q => `
