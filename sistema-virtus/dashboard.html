@@ -204,8 +204,10 @@
   ::-webkit-scrollbar-thumb { background:var(--ink5); border-radius:2px; }
 
   /* ══════════ MODAL DE DETALHE DO CANDIDATO ══════════ */
-  #tableBody tr.clickable { cursor:pointer; transition:background .15s; }
-  #tableBody tr.clickable:hover { background:var(--amberdim); }
+  #tableBody tr.clickable, #bancoTableBody tr.clickable { cursor:pointer; transition:background .15s; }
+  #tableBody tr.clickable:hover, #bancoTableBody tr.clickable:hover { background:var(--amberdim) !important; }
+  #tableBody tr.row-aprovado, #bancoTableBody tr.row-aprovado { background:rgba(0,222,120,.08); }
+  #tableBody tr.row-reprovado { background:rgba(255,85,73,.08); }
   .row-hint { font-family:'Share Tech Mono',monospace; font-size:9px; color:var(--text4); letter-spacing:1px; }
   .email-hover { font-family:'Share Tech Mono',monospace; font-size:11px; color:var(--text3); cursor:default; position:relative; }
   .email-hover::after {
@@ -922,7 +924,7 @@
   <div class="page-title-area">
     <div>
       <div class="page-title">Banco de <em>Aprovados</em></div>
-      <div class="page-subtitle">Candidatos com média de quiz ≥ 70% · cálculo automático</div>
+      <div class="page-subtitle">Candidatos com nota ≥ 70% em algum módulo · cálculo automático</div>
     </div>
   </div>
   <div class="panel">
@@ -946,7 +948,7 @@
             <th style="width:44px;text-align:center;">#</th>
             <th>Candidato</th>
             <th>Módulos avaliados</th>
-            <th>Média</th>
+            <th>Melhor nota</th>
             <th>Última tentativa</th>
           </tr>
         </thead>
@@ -1999,7 +2001,8 @@
       const aprovado = pct >= 70;
       const dt = r.data_conclusao ? new Date(r.data_conclusao).toLocaleString('pt-BR') : '—';
       const temViolacao = violacoesDe(r.nome).length > 0;
-      return `<tr class="clickable" onclick="abrirCandidato('${chaveDe(r).replace(/'/g, "\\'")}')" title="Ver detalhamento e exportar PDF">
+      const rowCls = aprovado ? 'row-aprovado' : 'row-reprovado';
+      return `<tr class="clickable ${rowCls}" onclick="abrirCandidato('${chaveDe(r).replace(/'/g, "\\'")}')" title="Ver detalhamento e exportar PDF">
         <td style="text-align:center;color:var(--text3);">${i + 1}</td>
         <td class="td-nome">${escapeHtml(r.nome || '—')}${temViolacao ? ' <span style="color:var(--red);font-weight:700;" title="Possui violação registrada durante o teste">*</span>' : ''} <span class="row-hint">▸ detalhes</span></td>
         <td><span class="badge-modulo">${escapeHtml(r.modulo || '—')}</span></td>
@@ -2086,8 +2089,11 @@
 
   // ══════════ BANCO DE APROVADOS ══════════
   // Puramente automático: agrupa por candidato (mesma chave usada no modal de
-  // detalhe) e considera aprovado quem tem média de quiz >= 70%. Não existe
-  // decisão manual — "Aprovado" aqui é só o cálculo da nota.
+  // detalhe) e considera aprovado quem tirou >= 70% em pelo menos um módulo
+  // (mesmo critério usado no KPI "Aprovados" e na tabela do Dashboard — antes
+  // esta tela exigia média entre TODOS os módulos da trilha, o que escondia
+  // candidatos aprovados no módulo escolhido mas com trilha comportamental
+  // mais fraca). Não existe decisão manual — "Aprovado" aqui é só a nota.
   window.renderBancoAprovados = function renderBancoAprovados() {
     const tbody = document.getElementById('bancoTableBody');
     const quizzes = ALL_RESULTADOS.filter(r => r.tipo !== 'typing');
@@ -2098,7 +2104,8 @@
       porCandidato[chave].push(r);
     }
     const aprovados = Object.entries(porCandidato).map(([chave, tents]) => {
-      const media = Math.round(tents.reduce((a, t) => a + (t.pct || 0), 0) / tents.length);
+      const melhor = Math.max(...tents.map(t => t.pct || 0));
+      const media = melhor;
       const modulos = [...new Set(tents.map(t => t.modulo || '—'))];
       const ultima = tents.reduce((a, t) => (t.data_conclusao || '') > (a || '') ? t.data_conclusao : a, tents[0].data_conclusao);
       const nome = tents[tents.length - 1].nome || '—';
@@ -2125,7 +2132,7 @@
     tbody.innerHTML = aprovadosFiltrados.map((c, i) => {
       const temViolacao = violacoesDe(c.nome).length > 0;
       return `
-      <tr class="clickable" onclick="abrirCandidato('${c.chave.replace(/'/g, "\\'")}')" title="Ver detalhamento e exportar PDF">
+      <tr class="clickable row-aprovado" onclick="abrirCandidato('${c.chave.replace(/'/g, "\\'")}')" title="Ver detalhamento e exportar PDF">
         <td style="text-align:center;color:var(--text3);">${i + 1}</td>
         <td class="td-nome">${escapeHtml(c.nome)}${temViolacao ? ' <span style="color:var(--red);font-weight:700;" title="Possui violação registrada durante o teste">*</span>' : ''} <span class="row-hint">▸ detalhes</span></td>
         <td>${c.modulos.map(m => `<span class="badge-modulo">${escapeHtml(m)}</span>`).join(' ')}</td>
