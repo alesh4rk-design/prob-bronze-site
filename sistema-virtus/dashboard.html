@@ -1010,7 +1010,7 @@
           </tr>
         </thead>
         <tbody id="bancoTableBody">
-          <tr><td colspan="5"><div class="empty-state"><div class="empty-icon">📭</div>Nenhum aprovado ainda.</div></td></tr>
+          <tr><td colspan="5"><div class="empty-state"><div class="empty-icon">📅</div>Selecione um período (De / Até) e clique em Buscar.</div></td></tr>
         </tbody>
       </table>
     </div>
@@ -2192,8 +2192,13 @@
     // Filtro por período (data da última tentativa), opcional.
     const dataIni = document.getElementById('bancoDataIni').value;
     const dataFim = document.getElementById('bancoDataFim').value;
+    if (!dataIni && !dataFim) {
+      document.getElementById('bancoCountBadge').textContent = '0 registros';
+      tbody.innerHTML = '<tr><td colspan="5"><div class="empty-state"><div class="empty-icon">📅</div>Selecione um período (De / Até) e clique em Buscar.</div></td></tr>';
+      return;
+    }
+
     const aprovadosFiltrados = aprovados.filter(c => {
-      if (!dataIni && !dataFim) return true;
       const dataC = c.ultima ? dataLocalYMD(c.ultima) : '';
       if (!dataC) return false;
       if (dataIni && dataC < dataIni) return false;
