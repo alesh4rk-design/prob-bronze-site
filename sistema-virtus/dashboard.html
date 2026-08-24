@@ -1200,7 +1200,14 @@
   // ── Auth gate ─────────────────────────────────────────────────────────
   const me = await requireDashboardAccess();
   if (me) {
-    document.getElementById('authUserName').textContent = me.usuario;
+    const nomeEl = document.getElementById('authUserName');
+    if (me.usuario && me.usuario.includes('@')) {
+      nomeEl.textContent = '•••••';
+      nomeEl.classList.add('email-hover');
+      nomeEl.setAttribute('data-email', me.usuario);
+    } else {
+      nomeEl.textContent = me.usuario;
+    }
     document.getElementById('authUserPerfil').textContent = me.perfil;
   }
   document.getElementById('btnLogout').onclick = async () => { await virtusLogout(); window.location.replace('./index.html'); };
