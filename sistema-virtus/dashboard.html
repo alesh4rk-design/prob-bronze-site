@@ -2080,7 +2080,7 @@
   // Puramente automático: agrupa por candidato (mesma chave usada no modal de
   // detalhe) e considera aprovado quem tem média de quiz >= 70%. Não existe
   // decisão manual — "Aprovado" aqui é só o cálculo da nota.
-  function renderBancoAprovados() {
+  window.renderBancoAprovados = function renderBancoAprovados() {
     const tbody = document.getElementById('bancoTableBody');
     const quizzes = ALL_RESULTADOS.filter(r => r.tipo !== 'typing');
     const porCandidato = {};
