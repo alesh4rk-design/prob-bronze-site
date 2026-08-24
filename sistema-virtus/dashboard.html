@@ -2771,7 +2771,7 @@
   // antigos 'hoje'/'ontem'/'personalizado' de versões anteriores do filtro).
   document.getElementById('filterDia').value = dataLocalYMD(new Date());
   let periodoSalvo = localStorage.getItem(LS_PERIODO) || 'dia';
-  if (periodoSalvo === 'hoje' || periodoSalvo === 'personalizado') periodoSalvo = 'dia';
+  if (periodoSalvo === 'hoje' || periodoSalvo === 'personalizado' || periodoSalvo === 'todos') periodoSalvo = 'dia';
   if (periodoSalvo === 'ontem') {
     periodoSalvo = 'dia';
     const ontem = new Date(); ontem.setDate(ontem.getDate() - 1);
