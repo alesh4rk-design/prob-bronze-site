@@ -207,6 +207,16 @@
   #tableBody tr.clickable { cursor:pointer; transition:background .15s; }
   #tableBody tr.clickable:hover { background:var(--amberdim); }
   .row-hint { font-family:'Share Tech Mono',monospace; font-size:9px; color:var(--text4); letter-spacing:1px; }
+  .email-hover { font-family:'Share Tech Mono',monospace; font-size:11px; color:var(--text3); cursor:default; position:relative; }
+  .email-hover::after {
+    content: attr(data-email);
+    position:absolute; left:0; top:100%; margin-top:4px; z-index:20;
+    background:var(--ink3); color:var(--text1); border:1px solid var(--line2);
+    border-radius:6px; padding:4px 9px; font-size:11px; white-space:nowrap;
+    opacity:0; pointer-events:none; transform:translateY(-3px);
+    transition:opacity .12s, transform .12s; box-shadow:0 4px 12px rgba(0,0,0,.35);
+  }
+  .email-hover:hover::after { opacity:1; transform:translateY(0); }
 
   .modal-back {
     position:fixed; inset:0; background:rgba(0,0,0,.82); backdrop-filter:blur(4px);
@@ -917,6 +927,15 @@
   <div class="panel">
     <div class="panel-head">
       <div class="panel-title-sm">✅ Aprovados <span class="badge green" id="bancoCountBadge">0 registros</span></div>
+    </div>
+    <div class="toolbar" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:0 0 14px;">
+      <label style="font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--text3);">De
+        <input type="date" class="field-input" id="bancoDataIni" style="max-width:165px;" onchange="renderBancoAprovados()">
+      </label>
+      <label style="font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--text3);">Até
+        <input type="date" class="field-input" id="bancoDataFim" style="max-width:165px;" onchange="renderBancoAprovados()">
+      </label>
+      <button class="btn-act btn-neutral" onclick="document.getElementById('bancoDataIni').value='';document.getElementById('bancoDataFim').value='';renderBancoAprovados();">Limpar período</button>
     </div>
     <div class="results-table-wrap">
       <table>
@@ -2070,12 +2089,24 @@
       return { chave, nome, media, modulos, ultima };
     }).filter(c => c.media >= 70).sort((a, b) => b.media - a.media);
 
-    document.getElementById('bancoCountBadge').textContent = aprovados.length + ' registros';
-    if (!aprovados.length) {
-      tbody.innerHTML = '<tr><td colspan="5"><div class="empty-state"><div class="empty-icon">📭</div>Nenhum aprovado ainda.</div></td></tr>';
+    // Filtro por período (data da última tentativa), opcional.
+    const dataIni = document.getElementById('bancoDataIni').value;
+    const dataFim = document.getElementById('bancoDataFim').value;
+    const aprovadosFiltrados = aprovados.filter(c => {
+      if (!dataIni && !dataFim) return true;
+      const dataC = c.ultima ? dataLocalYMD(c.ultima) : '';
+      if (!dataC) return false;
+      if (dataIni && dataC < dataIni) return false;
+      if (dataFim && dataC > dataFim) return false;
+      return true;
+    });
+
+    document.getElementById('bancoCountBadge').textContent = aprovadosFiltrados.length + ' registros';
+    if (!aprovadosFiltrados.length) {
+      tbody.innerHTML = '<tr><td colspan="5"><div class="empty-state"><div class="empty-icon">📭</div>Nenhum aprovado no período selecionado.</div></td></tr>';
       return;
     }
-    tbody.innerHTML = aprovados.map((c, i) => {
+    tbody.innerHTML = aprovadosFiltrados.map((c, i) => {
       const temViolacao = violacoesDe(c.nome).length > 0;
       return `
       <tr class="clickable" onclick="abrirCandidato('${c.chave.replace(/'/g, "\\'")}')" title="Ver detalhamento e exportar PDF">
@@ -2276,7 +2307,7 @@
     tbody.innerHTML = lista.map(p => `
       <tr>
         <td class="td-nome">${escapeHtml(p.nome || '—')}</td>
-        <td>${escapeHtml(p.email || '—')}</td>
+        <td><span class="email-hover" data-email="${escapeHtml(p.email || '—')}">•••••</span></td>
         <td>
           <div style="display:flex;gap:6px;flex-wrap:wrap;">
             <button class="btn-act btn-approve-admin"  onclick="aprovar('${p.uid}','admin')">Admin</button>
@@ -2302,7 +2333,7 @@
       return `
         <tr>
           <td class="td-nome">${escapeHtml(u.nome || '—')}${souEu ? ' <span style="color:var(--text3);font-size:11px;">(você)</span>' : ''}</td>
-          <td>${escapeHtml(u.email || '—')}</td>
+          <td><span class="email-hover" data-email="${escapeHtml(u.email || '—')}">•••••</span></td>
           <td><span class="perfil-chip perfil-${u.perfil}">${u.perfil}</span></td>
           <td>
             <div style="display:flex;gap:6px;flex-wrap:wrap;">
