@@ -930,11 +930,12 @@
     </div>
     <div class="toolbar" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:0 0 14px;">
       <label style="font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--text3);">De
-        <input type="date" class="field-input" id="bancoDataIni" style="max-width:165px;" onchange="renderBancoAprovados()">
+        <input type="date" class="field-input" id="bancoDataIni" style="max-width:165px;">
       </label>
       <label style="font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--text3);">Até
-        <input type="date" class="field-input" id="bancoDataFim" style="max-width:165px;" onchange="renderBancoAprovados()">
+        <input type="date" class="field-input" id="bancoDataFim" style="max-width:165px;">
       </label>
+      <button class="btn-act btn-approve-admin" onclick="renderBancoAprovados()">🔍 Buscar</button>
       <button class="btn-act btn-neutral" onclick="document.getElementById('bancoDataIni').value='';document.getElementById('bancoDataFim').value='';renderBancoAprovados();">Limpar período</button>
     </div>
     <div class="results-table-wrap">
