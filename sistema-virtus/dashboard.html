@@ -2177,7 +2177,14 @@
     const aprovados = Object.entries(porCandidato).map(([chave, tents]) => {
       const melhor = Math.max(...tents.map(t => t.pct || 0));
       const media = melhor;
-      const modulos = [...new Set(tents.map(t => t.modulo || '—'))];
+      // Melhor nota de cada módulo (se refez o teste, mostra a maior).
+      const porModulo = {};
+      for (const t of tents) {
+        const m = t.modulo || '—';
+        const pct = t.pct || 0;
+        if (!porModulo[m] || pct > porModulo[m]) porModulo[m] = pct;
+      }
+      const modulos = Object.entries(porModulo).map(([modulo, pct]) => ({ modulo, pct }));
       const ultima = tents.reduce((a, t) => (t.data_conclusao || '') > (a || '') ? t.data_conclusao : a, tents[0].data_conclusao);
       const nome = tents[tents.length - 1].nome || '—';
       return { chave, nome, media, modulos, ultima };
@@ -2206,7 +2213,7 @@
       <tr class="clickable row-aprovado" onclick="abrirCandidato('${c.chave.replace(/'/g, "\\'")}')" title="Ver detalhamento e exportar PDF">
         <td style="text-align:center;color:var(--text3);">${i + 1}</td>
         <td class="td-nome">${escapeHtml(c.nome)}${temViolacao ? ' <span style="color:var(--red);font-weight:700;" title="Possui violação registrada durante o teste">*</span>' : ''} <span class="row-hint">▸ detalhes</span></td>
-        <td>${c.modulos.map(m => `<span class="badge-modulo">${escapeHtml(m)}</span>`).join(' ')}</td>
+        <td>${c.modulos.map(m => `<span class="badge-modulo">${escapeHtml(m.modulo)} <b style="color:${m.pct >= 70 ? 'var(--green)' : m.pct >= 50 ? 'var(--amber)' : 'var(--red)'}">${m.pct}%</b></span>`).join(' ')}</td>
         <td><span class="td-pct" style="color:var(--green);">${c.media}%</span></td>
         <td class="td-time">${fmtData(c.ultima)}</td>
       </tr>`;
