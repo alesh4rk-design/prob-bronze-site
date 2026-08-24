@@ -2793,6 +2793,12 @@
   document.addEventListener('visibilitychange', () => { if (!document.hidden) conectar(); });
   window.addEventListener('online', conectar);
   window.addEventListener('focus', conectar);
+
+  // Registra o service worker para o navegador oferecer "Adicionar à tela
+  // inicial" / "Instalar app" automaticamente (critério de instalabilidade).
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('./sw.js').catch(() => {});
+  }
 </script>
 </body>
 </html>
