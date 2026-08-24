@@ -208,17 +208,21 @@
   #tableBody tr.clickable:hover, #bancoTableBody tr.clickable:hover { background:var(--amberdim) !important; }
   #tableBody tr.row-aprovado, #bancoTableBody tr.row-aprovado { background:rgba(0,222,120,.08); }
   #tableBody tr.row-reprovado { background:rgba(255,85,73,.08); }
+  body.light-theme #tableBody tr.row-aprovado, body.light-theme #bancoTableBody tr.row-aprovado { background:rgba(0,170,85,.10); }
+  body.light-theme #tableBody tr.row-reprovado { background:rgba(232,32,32,.09); }
   .row-hint { font-family:'Share Tech Mono',monospace; font-size:9px; color:var(--text4); letter-spacing:1px; }
-  .email-hover { font-family:'Share Tech Mono',monospace; font-size:11px; color:var(--text3); cursor:default; position:relative; }
+  .email-hover { font-family:'Share Tech Mono',monospace; font-size:11px; color:var(--text3); cursor:pointer; position:relative; }
   .email-hover::after {
     content: attr(data-email);
     position:absolute; left:0; top:100%; margin-top:4px; z-index:20;
-    background:var(--ink3); color:var(--text1); border:1px solid var(--line2);
+    background:var(--ink3); color:var(--text); border:1px solid var(--line2);
     border-radius:6px; padding:4px 9px; font-size:11px; white-space:nowrap;
     opacity:0; pointer-events:none; transform:translateY(-3px);
     transition:opacity .12s, transform .12s; box-shadow:0 4px 12px rgba(0,0,0,.35);
   }
-  .email-hover:hover::after { opacity:1; transform:translateY(0); }
+  .email-hover:hover::after,
+  .email-hover:focus::after,
+  .email-hover.revealed::after { opacity:1; transform:translateY(0); pointer-events:auto; }
 
   .modal-back {
     position:fixed; inset:0; background:rgba(0,0,0,.82); backdrop-filter:blur(4px);
@@ -729,6 +733,60 @@
   .teste-card .tc-icon { font-size:38px; margin-bottom:12px; }
   .teste-card .tc-nome { font-family:'Rajdhani',sans-serif; font-size:19px; font-weight:700; color:var(--text); letter-spacing:1px; text-transform:uppercase; }
   .teste-card .tc-desc { font-family:'Share Tech Mono',monospace; font-size:10.5px; color:var(--text3); margin-top:8px; letter-spacing:.5px; }
+
+  /* ══════════ RESPONSIVIDADE MOBILE ══════════ */
+  @media (max-width: 640px) {
+    .hud { padding:0 10px; height:auto; min-height:56px; flex-wrap:wrap; row-gap:6px; padding-top:6px; padding-bottom:6px; }
+    .hud-sep { display:none; }
+    .hud-status { order:3; width:100%; }
+    .hud-sub { display:none; }
+    .hud-right { margin-left:auto; order:2; gap:6px; }
+    .hud-time { display:none; }
+    .hud-btn span.hud-btn-label { display:none; }
+    #authUserBadge { padding:0 8px; }
+    #authUserBadge span:not(#authUserName) { display:none; }
+    #authUserName { max-width:70px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .theme-toggle { flex-shrink:0; width:32px; height:32px; }
+    .hud-btn { flex-shrink:0; padding:0 8px; }
+
+    .main { padding:104px 12px 60px; }
+    .page-title { font-size:22px; letter-spacing:3px; }
+    .page-title-area { align-items:flex-start; }
+    .page-actions { width:100%; }
+    .page-actions .btn { flex:1 1 auto; }
+
+    .panel-head { padding:14px 14px 12px; }
+    .panel-body { padding:14px; }
+    .toolbar { width:100%; }
+    .toolbar > * { flex:1 1 auto; min-width:0; }
+    input[type="search"].field-input { min-width:0; width:100%; }
+
+    .kpi-bar-5 { gap:8px; }
+    .kpi-card { padding:12px 14px; }
+    .kpi-val { font-size:28px; }
+
+    .qr-preview-grid { grid-template-columns:1fr 1fr; }
+    .pr-typing, .sk-perfil { grid-template-columns:1fr 1fr; }
+    .ficha-grid { grid-template-columns:1fr 1fr; }
+    .modal-actions { flex-direction:column; align-items:stretch; }
+    .modal-actions #btnExcluirCandidato { margin-left:0; }
+    .modal-scroll { padding:16px; }
+    .modal-top { padding:16px; }
+
+
+    /* Tabelas: rolam dentro do próprio wrapper, nunca a página inteira */
+    .results-table-wrap { -webkit-overflow-scrolling:touch; }
+    table { min-width:520px; }
+  }
+
+  @media (max-width: 480px) {
+    .hud-logo .hud-brand { display:none; }
+    .qr-preview-grid { grid-template-columns:1fr; }
+    .pr-typing, .sk-perfil, .ficha-grid { grid-template-columns:1fr; }
+    #authUserBadge { display:none; }
+    .kpi-bar-5 { grid-template-columns:1fr 1fr; }
+    table { min-width:460px; }
+  }
 </style>
 </head>
 <body class="dark-theme">
@@ -1236,6 +1294,19 @@
     usuarios: 'Gestão de Usuários'
   };
   const LS_VIEW = 'virtus_dashboard_view';
+
+  // Toque em e-mails ocultos (.email-hover) revela o tooltip em telas touch,
+  // onde :hover não existe. Um novo toque em outro lugar fecha.
+  document.addEventListener('click', function (ev) {
+    const target = ev.target.closest('.email-hover');
+    document.querySelectorAll('.email-hover.revealed').forEach(el => {
+      if (el !== target) el.classList.remove('revealed');
+    });
+    if (target) {
+      ev.stopPropagation();
+      target.classList.toggle('revealed');
+    }
+  });
 
   window.toggleSidebar = function (force) {
     const sb = document.getElementById('sidebar');
