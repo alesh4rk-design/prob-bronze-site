@@ -91,11 +91,21 @@ service cloud.firestore {
       allow delete: if request.auth != null && isAvaliador();
     }
 
-    // violacoes/{id}: mesma lógica de `resultados` — escrita liberada
-    // (evento de anti-fraude reportado durante o teste do candidato),
-    // leitura restrita aos avaliadores.
+    // violacoes/{id}: escrita liberada sem login (evento de anti-fraude
+    // reportado durante o teste do candidato, que não tem conta no sistema),
+    // mas com validação básica de formato/tamanho pra impedir spam de
+    // documentos falsos ou payloads gigantes inflando a conta do Firestore.
+    // Leitura restrita aos avaliadores.
     match /violacoes/{id} {
-      allow create: if true;
+      allow create: if request.resource.data.nome is string &&
+                       request.resource.data.nome.size() < 120 &&
+                       request.resource.data.modulo is string &&
+                       request.resource.data.modulo.size() < 80 &&
+                       request.resource.data.tipo is string &&
+                       request.resource.data.tipo.size() < 60 &&
+                       (!('detalhe' in request.resource.data) ||
+                        (request.resource.data.detalhe is string &&
+                         request.resource.data.detalhe.size() < 300));
       allow update, delete: if request.auth != null && isAdmin();
       allow read: if request.auth != null && isAvaliador();
     }
