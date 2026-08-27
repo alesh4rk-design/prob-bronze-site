@@ -1015,7 +1015,7 @@
   <div class="page-title-area">
     <div>
       <div class="page-title">Banco de <em>Aprovados</em></div>
-      <div class="page-subtitle">Candidatos com nota ≥ 70% em algum módulo · cálculo automático</div>
+      <div class="page-subtitle">Candidatos com nota ≥ 70% no módulo escolhido (★) · cálculo automático</div>
     </div>
   </div>
   <div class="panel">
@@ -1039,7 +1039,7 @@
             <th style="width:44px;text-align:center;">#</th>
             <th>Candidato</th>
             <th>Módulos avaliados</th>
-            <th>Melhor nota</th>
+            <th>Nota (módulo escolhido)</th>
             <th>Última tentativa</th>
           </tr>
         </thead>
@@ -2233,6 +2233,15 @@
   // esta tela exigia média entre TODOS os módulos da trilha, o que escondia
   // candidatos aprovados no módulo escolhido mas com trilha comportamental
   // mais fraca). Não existe decisão manual — "Aprovado" aqui é só a nota.
+  //
+  // IMPORTANTE: a aprovação usa a nota do MÓDULO ESCOLHIDO pelo candidato,
+  // não a melhor nota entre qualquer módulo. A trilha automática roda em
+  // sequência [escolhido, Informática, Linguagem Positiva, Atendimento ao
+  // Cliente] — então cronologicamente o PRIMEIRO módulo respondido é sempre
+  // o que o candidato escolheu. Antes, usar a melhor nota entre todos os
+  // módulos permitia que alguém aprovasse tirando 100% em um módulo
+  // automático da trilha mesmo tendo tirado 20% no módulo que realmente
+  // importa para a vaga.
   window.renderBancoAprovados = function renderBancoAprovados() {
     const tbody = document.getElementById('bancoTableBody');
     const quizzes = ALL_RESULTADOS.filter(r => r.tipo !== 'typing');
@@ -2242,10 +2251,13 @@
       if (!porCandidato[chave]) porCandidato[chave] = [];
       porCandidato[chave].push(r);
     }
-    const aprovados = Object.entries(porCandidato).map(([chave, tents]) => {
-      const melhor = Math.max(...tents.map(t => t.pct || 0));
-      const media = melhor;
-      // Melhor nota de cada módulo (se refez o teste, mostra a maior).
+    const aprovados = Object.entries(porCandidato).map(([chave, tentsRaw]) => {
+      const tents = [...tentsRaw].sort((a, b) => String(a.data_conclusao || '').localeCompare(String(b.data_conclusao || '')));
+      const moduloEscolhido = tents[0].modulo || '—';
+      const tentsEscolhido = tents.filter(t => (t.modulo || '—') === moduloEscolhido);
+      const media = Math.max(...tentsEscolhido.map(t => t.pct || 0));
+      // Melhor nota de cada módulo (se refez o teste, mostra a maior) — só
+      // pra referência visual, não entra no cálculo de aprovação.
       const porModulo = {};
       for (const t of tents) {
         const m = t.modulo || '—';
@@ -2255,7 +2267,7 @@
       const modulos = Object.entries(porModulo).map(([modulo, pct]) => ({ modulo, pct }));
       const ultima = tents.reduce((a, t) => (t.data_conclusao || '') > (a || '') ? t.data_conclusao : a, tents[0].data_conclusao);
       const nome = tents[tents.length - 1].nome || '—';
-      return { chave, nome, media, modulos, ultima };
+      return { chave, nome, media, moduloEscolhido, modulos, ultima };
     }).filter(c => c.media >= 70).sort((a, b) => b.media - a.media);
 
     // Filtro por período (data da última tentativa), opcional.
@@ -2281,7 +2293,7 @@
       <tr class="clickable row-aprovado" onclick="abrirCandidato('${c.chave.replace(/'/g, "\\'")}')" title="Ver detalhamento e exportar PDF">
         <td style="text-align:center;color:var(--text3);">${i + 1}</td>
         <td class="td-nome">${escapeHtml(c.nome)}${temViolacao ? ' <span style="color:var(--red);font-weight:700;" title="Possui violação registrada durante o teste">*</span>' : ''} <span class="row-hint">▸ detalhes</span></td>
-        <td>${c.modulos.map(m => `<span class="badge-modulo">${escapeHtml(m.modulo)} <b style="color:${m.pct >= 70 ? 'var(--green)' : m.pct >= 50 ? 'var(--amber)' : 'var(--red)'}">${m.pct}%</b></span>`).join(' ')}</td>
+        <td>${c.modulos.map(m => `<span class="badge-modulo" style="${m.modulo === c.moduloEscolhido ? 'border-color:var(--amber);' : ''}" title="${m.modulo === c.moduloEscolhido ? 'Módulo escolhido pelo candidato' : 'Módulo automático da trilha'}">${m.modulo === c.moduloEscolhido ? '★ ' : ''}${escapeHtml(m.modulo)} <b style="color:${m.pct >= 70 ? 'var(--green)' : m.pct >= 50 ? 'var(--amber)' : 'var(--red)'}">${m.pct}%</b></span>`).join(' ')}</td>
         <td><span class="td-pct" style="color:var(--green);">${c.media}%</span></td>
         <td class="td-time">${fmtData(c.ultima)}</td>
       </tr>`;

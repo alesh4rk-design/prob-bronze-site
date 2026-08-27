@@ -60,7 +60,7 @@ export const PERGUNTAS_SEED = {
       "o": [
         "Conjunto de dados armazenados",
         "Programa do Windows",
-        "Dispositivo de hardware",
+        "Dispositivo de hardware no ambiente de trabalho",
         "Tipo de internet"
       ],
       "n": "facil",
@@ -114,7 +114,7 @@ export const PERGUNTAS_SEED = {
       "q": "Considerando contexto operacional, qual botão apaga letras à esquerda do cursor?",
       "o": [
         "Backspace",
-        "Delete",
+        "Delete no ambiente de trabalho",
         "Enter",
         "Shift"
       ],
@@ -127,7 +127,7 @@ export const PERGUNTAS_SEED = {
         "Pode danificar o sistema",
         "Economiza energia",
         "Acelera o computador",
-        "Melhora a performance"
+        "Melhora a performance no ambiente de trabalho"
       ],
       "n": "medio",
       "resposta": "Pode danificar o sistema"
@@ -146,7 +146,7 @@ export const PERGUNTAS_SEED = {
     {
       "q": "Considerando contexto operacional, qual das tarefas abaixo não pode ser realizada diretamente no microsoft excel?",
       "o": [
-        "Criar gráficos a partir de dados",
+        "Criar gráficos a partir de dados no ambiente de trabalho",
         "Aplicar filtros em tabelas",
         "Editar imagens com múltiplas camadas",
         "Calcular fórmulas matemáticas"
@@ -169,7 +169,7 @@ export const PERGUNTAS_SEED = {
       "q": "Qual é a finalidade técnica do botão capslock no teclado?",
       "o": [
         "Digitar letras maiúsculas",
-        "Digitar números",
+        "Digitar números no ambiente de trabalho",
         "Abrir menu",
         "Salvar arquivo"
       ],
@@ -192,7 +192,7 @@ export const PERGUNTAS_SEED = {
       "o": [
         "Desfazer última ação",
         "Refazer ação",
-        "Salvar documento",
+        "Salvar documento no ambiente de trabalho",
         "Fechar janela"
       ],
       "n": "medio",
@@ -204,7 +204,7 @@ export const PERGUNTAS_SEED = {
         "Memória de acesso rápido",
         "Disco rígido",
         "Processador",
-        "Placa de vídeo"
+        "Placa de vídeo no ambiente de trabalho"
       ],
       "n": "dificil",
       "resposta": "Memória de acesso rápido"
@@ -225,7 +225,7 @@ export const PERGUNTAS_SEED = {
       "o": [
         "WinRAR",
         "Word",
-        "Excel",
+        "Excel no ambiente de trabalho",
         "Paint"
       ],
       "n": "dificil",
@@ -270,7 +270,7 @@ export const PERGUNTAS_SEED = {
         "Software que gerencia o computador",
         "Hardware de memória",
         "Tipo de processador",
-        "Programa de antivírus"
+        "Programa de antivírus no ambiente de trabalho"
       ],
       "n": "dificil",
       "resposta": "Software que gerencia o computador"
@@ -289,7 +289,7 @@ export const PERGUNTAS_SEED = {
     {
       "q": "De acordo com os protocolos de segurança, qual das funções abaixo não pertence ao microsoft powerpoint?",
       "o": [
-        "Criar apresentações com slides",
+        "Criar apresentações com slides no ambiente de trabalho",
         "Editar textos com formatação avançada",
         "Inserir animações e transições",
         "Exportar arquivos para PDF"
@@ -314,7 +314,7 @@ export const PERGUNTAS_SEED = {
         "Portable Document Format",
         "Print Document File",
         "Personal Data Format",
-        "Public Document Format"
+        "Public Document Format no ambiente de trabalho"
       ],
       "n": "dificil",
       "resposta": "Portable Document Format"
@@ -337,7 +337,7 @@ export const PERGUNTAS_SEED = {
       "o": [
         "Solicitar que aguarde e confirmar com o responsável",
         "Permitir acesso pois já prestou serviço antes",
-        "Permitir entrada e registrar manualmente depois",
+        "Permitir entrada e registrar manualmente depois no ambiente de trabalho",
         "Liberar se estiver uniformizado com crachá"
       ],
       "n": "facil",
@@ -358,7 +358,7 @@ export const PERGUNTAS_SEED = {
       "q": "O que é reconhecimento de placa de veículo (lpr)?",
       "o": [
         "Sistema de leitura de placas",
-        "Registro manual de veículos",
+        "Registro manual de veículos no ambiente de trabalho",
         "Controle de pedestres",
         "Monitoramento de câmeras"
       ],
@@ -534,7 +534,7 @@ export const PERGUNTAS_SEED = {
       "q": "Veículo de aplicativo solicita acesso para embarque. qual a conduta?",
       "o": [
         "Manter fora da área interna e acionar o morador",
-        "Autorizar entrada para agilizar o atendimento",
+        "Autorizar entrada para agilizar o atendimento no ambiente de trabalho",
         "Permitir acesso parcial até área comum",
         "Liberar mediante identificação do condutor"
       ],
@@ -567,7 +567,7 @@ export const PERGUNTAS_SEED = {
       "q": "De acordo com os protocolos de segurança, qual a principal função do livro de ocorrências?",
       "o": [
         "Assegurar registro contínuo e rastreável do plantão",
-        "Documentar apenas situações fora da rotina",
+        "Documentar apenas situações fora da rotina no ambiente de trabalho",
         "Formalizar informações conforme demanda",
         "Controlar atividades operacionais diárias"
       ],
@@ -647,7 +647,7 @@ export const PERGUNTAS_SEED = {
       "o": [
         "Registrar a falha e acionar manutenção",
         "Tentar consertar pessoalmente",
-        "Ignorar e continuar monitorando",
+        "Ignorar e continuar monitorando no ambiente de trabalho",
         "Desligar todas as câmeras"
       ],
       "n": "facil",
@@ -679,7 +679,7 @@ export const PERGUNTAS_SEED = {
       "q": "O que é um sistema de monitoramento por câmera (cftv)?",
       "o": [
         "Sistema de vigilância por vídeo",
-        "Controle de acesso de pessoas",
+        "Controle de acesso de pessoas no ambiente de trabalho",
         "Sistema de alarme",
         "Comunicação por rádio"
       ],
@@ -725,7 +725,7 @@ export const PERGUNTAS_SEED = {
         "Comunicar imediatamente à segurança",
         "Ignorar por ser área restrita",
         "Desligar as câmeras da área",
-        "Esperar para ver o que acontece"
+        "Esperar para ver o que acontece no ambiente de trabalho"
       ],
       "n": "medio",
       "resposta": "Comunicar imediatamente à segurança"
@@ -769,7 +769,7 @@ export const PERGUNTAS_SEED = {
         "Prevenir invasões e atividades suspeitas",
         "Economizar tempo do operador",
         "Evitar desgaste das câmeras",
-        "Cumprir protocolo burocrático"
+        "Cumprir protocolo burocrático no ambiente de trabalho"
       ],
       "n": "medio",
       "resposta": "Prevenir invasões e atividades suspeitas"
@@ -790,7 +790,7 @@ export const PERGUNTAS_SEED = {
       "o": [
         "Registrar e acionar manutenção",
         "Tentar ajustar o contraste",
-        "Ignorar até o próximo turno",
+        "Ignorar até o próximo turno no ambiente de trabalho",
         "Desligar a câmera"
       ],
       "n": "medio",
@@ -824,7 +824,7 @@ export const PERGUNTAS_SEED = {
         "Mínimo de 30 dias conforme legislação",
         "7 dias no ambiente de trabalho",
         "1 ano no ambiente de trabalho",
-        "Para sempre no ambiente de trabalho"
+        "Para sempre no ambiente de trabalho durante o expediente"
       ],
       "n": "dificil",
       "resposta": "Mínimo de 30 dias conforme legislação"
@@ -835,7 +835,7 @@ export const PERGUNTAS_SEED = {
         "IP transmite dados pela rede, analógica usa cabo coaxial",
         "Não há diferença no ambiente de trabalho",
         "IP é mais barata no ambiente de trabalho",
-        "Analógica tem melhor qualidade no ambiente de trabalho"
+        "Analógica tem melhor qualidade no ambiente de trabalho durante o expediente"
       ],
       "n": "dificil",
       "resposta": "IP transmite dados pela rede, analógica usa cabo coaxial"
@@ -845,7 +845,7 @@ export const PERGUNTAS_SEED = {
       "o": [
         "Invasão ou atividade criminosa",
         "Pessoas conversando",
-        "Veículos estacionados",
+        "Veículos estacionados no ambiente de trabalho",
         "Animais circulando"
       ],
       "n": "dificil",
@@ -877,7 +877,7 @@ export const PERGUNTAS_SEED = {
       "q": "Quando utilizar a função ptz (pan-tilt-zoom)?",
       "o": [
         "Para acompanhar movimentação suspeita em tempo real",
-        "Sempre que ligar o sistema no ambiente de trabalho",
+        "Sempre que ligar o sistema no ambiente de trabalho durante o expediente",
         "Apenas durante a noite no ambiente de trabalho",
         "Para testar câmeras no ambiente de trabalho"
       ],
@@ -888,7 +888,7 @@ export const PERGUNTAS_SEED = {
       "q": "Conceitualmente, como se define zoom digital em uma câmera?",
       "o": [
         "Ampliação de imagem por software com perda de qualidade",
-        "Zoom óptico de alta qualidade no ambiente de trabalho",
+        "Zoom óptico de alta qualidade no ambiente de trabalho durante o expediente",
         "Função de gravação no ambiente de trabalho",
         "Modo noturno no ambiente de trabalho"
       ],
@@ -901,7 +901,7 @@ export const PERGUNTAS_SEED = {
         "Essencial para a qualidade da imagem, especialmente à noite",
         "Não tem importância no ambiente de trabalho",
         "Apenas decorativa no ambiente de trabalho",
-        "Só importante para câmeras antigas no ambiente de trabalho"
+        "Só importante para câmeras antigas no ambiente de trabalho durante o expediente"
       ],
       "n": "dificil",
       "resposta": "Essencial para a qualidade da imagem, especialmente à noite"
@@ -924,7 +924,7 @@ export const PERGUNTAS_SEED = {
       "o": [
         "Decorar o local no ambiente de trabalho",
         "Controlar entrada e saída de pessoas e veículos",
-        "Guardar equipamentos no ambiente de trabalho",
+        "Guardar equipamentos no ambiente de trabalho durante o expediente",
         "Fazer manutenção no ambiente de trabalho"
       ],
       "n": "facil",
@@ -936,7 +936,7 @@ export const PERGUNTAS_SEED = {
         "Prender criminosos no ambiente de trabalho",
         "Prevenir riscos e proteger pessoas e patrimônios",
         "Aplicar multas no ambiente de trabalho",
-        "Realizar investigações no ambiente de trabalho"
+        "Realizar investigações no ambiente de trabalho durante o expediente"
       ],
       "n": "facil",
       "resposta": "Prevenir riscos e proteger pessoas e patrimônios"
@@ -958,7 +958,7 @@ export const PERGUNTAS_SEED = {
         "Correr do local no ambiente de trabalho",
         "Avisar a central e acionar o alarme de incêndio",
         "Desligar as câmeras no ambiente de trabalho",
-        "Esperar os bombeiros no ambiente de trabalho"
+        "Esperar os bombeiros no ambiente de trabalho durante o expediente"
       ],
       "n": "facil",
       "resposta": "Avisar a central e acionar o alarme de incêndio"
@@ -991,7 +991,7 @@ export const PERGUNTAS_SEED = {
         "Um descanso do vigilante no ambiente de trabalho",
         "Verificação periódica do local para identificar riscos",
         "Uma reunião de vigilantes no ambiente de trabalho",
-        "Um relatório administrativo no ambiente de trabalho"
+        "Um relatório administrativo no ambiente de trabalho durante o expediente"
       ],
       "n": "facil",
       "resposta": "Verificação periódica do local para identificar riscos"
@@ -1046,7 +1046,7 @@ export const PERGUNTAS_SEED = {
         "Controle financeiro no ambiente de trabalho",
         "Verificação e autorização de entrada e saída de pessoas",
         "Controle de estoque no ambiente de trabalho",
-        "Controle de vigilantes no ambiente de trabalho"
+        "Controle de vigilantes no ambiente de trabalho durante o expediente"
       ],
       "n": "medio",
       "resposta": "Verificação e autorização de entrada e saída de pessoas"
@@ -1054,7 +1054,7 @@ export const PERGUNTAS_SEED = {
     {
       "q": "O uso da força pelo vigilante deve ser:?",
       "o": [
-        "Sempre imediato",
+        "Sempre imediato no ambiente de trabalho",
         "Proporcional à situação",
         "Exagerado",
         "Desnecessário"
@@ -1155,7 +1155,7 @@ export const PERGUNTAS_SEED = {
       "o": [
         "Ataque sem motivo no ambiente de trabalho",
         "Reação proporcional para repelir agressão injusta",
-        "Uso excessivo da força no ambiente de trabalho",
+        "Uso excessivo da força no ambiente de trabalho durante o expediente",
         "Vingança (procedimento padrão)"
       ],
       "n": "dificil",
@@ -1187,7 +1187,7 @@ export const PERGUNTAS_SEED = {
       "q": "O planejamento de segurança serve para:?",
       "o": [
         "Organizar ações de prevenção e resposta a incidentes",
-        "Apenas cumprir regras no ambiente de trabalho",
+        "Apenas cumprir regras no ambiente de trabalho durante o expediente",
         "Fazer relatórios no ambiente de trabalho",
         "Controlar vigilantes no ambiente de trabalho"
       ],
@@ -1241,7 +1241,7 @@ export const PERGUNTAS_SEED = {
     {
       "q": "Em caso de invasão, o vigilante deve prioritariamente:?",
       "o": [
-        "Confrontar sozinho o invasor no ambiente de trabalho",
+        "Confrontar sozinho o invasor no ambiente de trabalho durante o expediente",
         "Comunicar a central e seguir o protocolo de segurança",
         "Abandonar o posto no ambiente de trabalho",
         "Desligar equipamentos no ambiente de trabalho"
@@ -1289,7 +1289,7 @@ export const PERGUNTAS_SEED = {
       "o": [
         "Falta de ventilação ou sobrecarga",
         "Baixa tensão constante",
-        "Falta de lubrificação externa",
+        "Falta de lubrificação externa no ambiente de trabalho",
         "Excesso de iluminação"
       ],
       "n": "facil",
@@ -1311,7 +1311,7 @@ export const PERGUNTAS_SEED = {
       "o": [
         "Funcionamento ideal no ambiente de trabalho",
         "Desalinhamento ou desgaste de componentes internos",
-        "Baixo consumo de energia no ambiente de trabalho",
+        "Baixo consumo de energia no ambiente de trabalho durante o expediente",
         "Pressão adequada da água no ambiente de trabalho"
       ],
       "n": "facil",
@@ -1344,7 +1344,7 @@ export const PERGUNTAS_SEED = {
       "o": [
         "Avaliação programada das condições dos sistemas e equipamentos",
         "Reparos apenas após falhas no ambiente de trabalho",
-        "Substituição completa de equipamentos no ambiente de trabalho",
+        "Substituição completa de equipamentos no ambiente de trabalho durante o expediente",
         "Inspeção visual sem registro no ambiente de trabalho"
       ],
       "n": "facil",
@@ -1421,7 +1421,7 @@ export const PERGUNTAS_SEED = {
       "o": [
         "Armazenar energia no ambiente de trabalho",
         "Controlar o acionamento e proteção dos motores das bombas",
-        "Regular a pressão da água no ambiente de trabalho",
+        "Regular a pressão da água no ambiente de trabalho durante o expediente",
         "Filtrar impurezas da rede no ambiente de trabalho"
       ],
       "n": "medio",
@@ -1432,7 +1432,7 @@ export const PERGUNTAS_SEED = {
       "o": [
         "Substituir todos os equipamentos periodicamente",
         "Monitorar condições para prever falhas antes que ocorram",
-        "Reparar equipamentos quebrados no ambiente de trabalho",
+        "Reparar equipamentos quebrados no ambiente de trabalho durante o expediente",
         "Reduzir o número de inspeções no ambiente de trabalho"
       ],
       "n": "medio",
@@ -1465,7 +1465,7 @@ export const PERGUNTAS_SEED = {
       "o": [
         "Controlar tensão elétrica no ambiente de trabalho",
         "Proteger contra choques elétricos causados por fuga de corrente",
-        "Aumentar a potência elétrica no ambiente de trabalho",
+        "Aumentar a potência elétrica no ambiente de trabalho durante o expediente",
         "Controlar iluminação no ambiente de trabalho"
       ],
       "n": "medio",
@@ -1498,7 +1498,7 @@ export const PERGUNTAS_SEED = {
       "o": [
         "Apenas reparos emergenciais no ambiente de trabalho",
         "Cronograma de inspeções, manutenção preventiva e registros técnicos",
-        "Apenas substituição de equipamentos no ambiente de trabalho",
+        "Apenas substituição de equipamentos no ambiente de trabalho durante o expediente",
         "Apenas limpeza periódica no ambiente de trabalho"
       ],
       "n": "dificil",
@@ -1532,7 +1532,7 @@ export const PERGUNTAS_SEED = {
         "Sistema que armazena água no ambiente de trabalho",
         "Equipamento que mantém pressão constante na rede hidráulica",
         "Sistema que filtra água no ambiente de trabalho",
-        "Equipamento que aquece água no ambiente de trabalho"
+        "Equipamento que aquece água no ambiente de trabalho durante o expediente"
       ],
       "n": "dificil",
       "resposta": "Equipamento que mantém pressão constante na rede hidráulica"
@@ -1551,7 +1551,7 @@ export const PERGUNTAS_SEED = {
     {
       "q": "Em sistemas de ventilação mecânica, filtros sujos podem causar:?",
       "o": [
-        "Melhoria da circulação de ar no ambiente de trabalho",
+        "Melhoria da circulação de ar no ambiente de trabalho durante o expediente",
         "Redução da eficiência e aumento do consumo de energia",
         "Aumento da pressão do ar no ambiente de trabalho",
         "Resfriamento do ambiente no ambiente de trabalho"
@@ -1562,7 +1562,7 @@ export const PERGUNTAS_SEED = {
     {
       "q": "De acordo com os protocolos de segurança, qual é a importância do registro técnico das manutenções realizadas?",
       "o": [
-        "Apenas controle administrativo no ambiente de trabalho",
+        "Apenas controle administrativo no ambiente de trabalho durante o expediente",
         "Histórico para planejamento, controle e prevenção de falhas",
         "Redução de custos imediatos no ambiente de trabalho",
         "Controle de presença no ambiente de trabalho"
@@ -1599,7 +1599,7 @@ export const PERGUNTAS_SEED = {
       "o": [
         "Apenas melhorar a aparência no ambiente de trabalho",
         "Reduzir riscos de contaminação e manter o ambiente saudável",
-        "Diminuir o trabalho da manutenção no ambiente de trabalho",
+        "Diminuir o trabalho da manutenção no ambiente de trabalho durante o expediente",
         "Apenas retirar poeira no ambiente de trabalho"
       ],
       "n": "facil",
@@ -1652,7 +1652,7 @@ export const PERGUNTAS_SEED = {
     {
       "q": "Qual é a função do desinfetante em processos de limpeza?",
       "o": [
-        "Apenas perfumar o ambiente no ambiente de trabalho",
+        "Apenas perfumar o ambiente no ambiente de trabalho durante o expediente",
         "Eliminar ou reduzir microrganismos presentes nas superfícies",
         "Remover gordura pesada no ambiente de trabalho",
         "Secar superfícies no ambiente de trabalho"
@@ -1663,7 +1663,7 @@ export const PERGUNTAS_SEED = {
     {
       "q": "Qual é a principal função do detergente na limpeza?",
       "o": [
-        "Desinfetar superfícies",
+        "Desinfetar superfícies no ambiente de trabalho",
         "Remover sujeiras e gorduras",
         "Esterilizar ambientes",
         "Secar superfícies"
@@ -1676,7 +1676,7 @@ export const PERGUNTAS_SEED = {
       "o": [
         "Limpeza rápida no ambiente de trabalho",
         "Limpeza profunda realizada após desocupação do ambiente",
-        "Limpeza superficial no ambiente de trabalho",
+        "Limpeza superficial no ambiente de trabalho durante o expediente",
         "Apenas varrição no ambiente de trabalho"
       ],
       "n": "facil",
@@ -1732,7 +1732,7 @@ export const PERGUNTAS_SEED = {
         "Usar o mesmo pano em todas as superfícies",
         "Utilizar materiais específicos para cada área",
         "Limpar rapidamente no ambiente de trabalho",
-        "Utilizar apenas água no ambiente de trabalho"
+        "Utilizar apenas água no ambiente de trabalho durante o expediente"
       ],
       "n": "medio",
       "resposta": "Utilizar materiais específicos para cada área"
@@ -1885,7 +1885,7 @@ export const PERGUNTAS_SEED = {
       "o": [
         "Mistura de produtos no ambiente de trabalho",
         "Transferência de microrganismos de um local para outro",
-        "Uso de água contaminada no ambiente de trabalho",
+        "Uso de água contaminada no ambiente de trabalho durante o expediente",
         "Mistura de resíduos no ambiente de trabalho"
       ],
       "n": "dificil",
@@ -1953,7 +1953,7 @@ export const PERGUNTAS_SEED = {
       "o": [
         "Fechar a porta e seguir a ronda no ambiente de trabalho",
         "Comunicar imediatamente a central de segurança e registrar a ocorrência",
-        "Ignorar se não houver sinais de arrombamento no ambiente de trabalho",
+        "Ignorar se não houver sinais de arrombamento no ambiente de trabalho durante o expediente",
         "Realizar uma busca sozinho no local no ambiente de trabalho"
       ],
       "n": "facil",
@@ -1962,7 +1962,7 @@ export const PERGUNTAS_SEED = {
     {
       "q": "Qual documento deve ser consultado para conhecer os procedimentos de segurança vspp da empresa?",
       "o": [
-        "Contrato de trabalho",
+        "Contrato de trabalho no ambiente de trabalho",
         "Plano de segurança patrimonial",
         "Manual de manutenção",
         "Código de ética"
@@ -1985,7 +1985,7 @@ export const PERGUNTAS_SEED = {
       "q": "O que é um perímetro de segurança em vspp?",
       "o": [
         "Limite físico ou virtual que separa área controlada de área pública",
-        "Área destinada ao descanso dos vigilantes no ambiente de trabalho",
+        "Área destinada ao descanso dos vigilantes no ambiente de trabalho durante o expediente",
         "Região onde não há cobertura de câmeras no ambiente de trabalho",
         "Local de estacionamento restrito no ambiente de trabalho"
       ],
@@ -1997,7 +1997,7 @@ export const PERGUNTAS_SEED = {
       "o": [
         "Tentar apagar com extintor se estiver seguro e acionar o alarme",
         "Correr para fora do prédio no ambiente de trabalho",
-        "Esperar os bombeiros chegarem no ambiente de trabalho",
+        "Esperar os bombeiros chegarem no ambiente de trabalho durante o expediente",
         "Desligar o sistema de CFTV no ambiente de trabalho"
       ],
       "n": "medio",
@@ -2007,7 +2007,7 @@ export const PERGUNTAS_SEED = {
       "q": "Considerando contexto operacional, qual é a função do código de condomínio para o vspp?",
       "o": [
         "Estabelecer regras de convivência e segurança a serem seguidas",
-        "Substituir o plano de segurança no ambiente de trabalho",
+        "Substituir o plano de segurança no ambiente de trabalho durante o expediente",
         "Definir salários dos vigilantes no ambiente de trabalho",
         "Controlar a manutenção predial no ambiente de trabalho"
       ],
@@ -2074,7 +2074,7 @@ export const PERGUNTAS_SEED = {
       "o": [
         "Compartilhar apenas com colegas de trabalho",
         "Manter sigilo sobre procedimentos e dados da empresa",
-        "Divulgar em redes sociais no ambiente de trabalho",
+        "Divulgar em redes sociais no ambiente de trabalho durante o expediente",
         "Comentar com familiares no ambiente de trabalho"
       ],
       "n": "medio",
@@ -2096,7 +2096,7 @@ export const PERGUNTAS_SEED = {
       "o": [
         "Desligar imediatamente no ambiente de trabalho",
         "Anotar o máximo de informações e acionar o protocolo de emergência",
-        "Transferir a ligação para a polícia no ambiente de trabalho",
+        "Transferir a ligação para a polícia no ambiente de trabalho durante o expediente",
         "Ignorar se for trotes frequentes no ambiente de trabalho"
       ],
       "n": "dificil",
@@ -2117,7 +2117,7 @@ export const PERGUNTAS_SEED = {
       "q": "Conceitualmente, como se define 'cadeia de comando' na segurança vspp?",
       "o": [
         "Hierarquia de comunicação e decisão em situações críticas",
-        "Lista de equipamentos no ambiente de trabalho",
+        "Lista de equipamentos no ambiente de trabalho durante o expediente",
         "Sequência de rondas no ambiente de trabalho",
         "Conjunto de câmeras no ambiente de trabalho"
       ],
@@ -2139,7 +2139,7 @@ export const PERGUNTAS_SEED = {
       "q": "De acordo com os protocolos de segurança, qual a importância do registro fotográfico em uma inspeção vspp?",
       "o": [
         "Documentar evidências para futuras análises e ocorrências",
-        "Ilustrar relatórios de vendas no ambiente de trabalho",
+        "Ilustrar relatórios de vendas no ambiente de trabalho durante o expediente",
         "Publicidade nas redes sociais no ambiente de trabalho",
         "Apenas para arquivo pessoal no ambiente de trabalho"
       ],
@@ -2160,7 +2160,7 @@ export const PERGUNTAS_SEED = {
     {
       "q": "Em relação à lgpd (lei geral de proteção de dados), o vspp deve:?",
       "o": [
-        "Ignorar, pois não se aplica à segurança no ambiente de trabalho",
+        "Ignorar, pois não se aplica à segurança no ambiente de trabalho durante o expediente",
         "Tratar dados pessoais apenas para finalidades autorizadas e com sigilo",
         "Compartilhar imagens livremente no ambiente de trabalho",
         "Excluir todos os registros diariamente no ambiente de trabalho"
@@ -2172,7 +2172,7 @@ export const PERGUNTAS_SEED = {
       "q": "De acordo com os protocolos de segurança, qual ação é prioritária em um plano de evacuação de emergência?",
       "o": [
         "Orientar as pessoas a sair em ordem e pelos caminhos seguros",
-        "Recolher pertences antes de sair no ambiente de trabalho",
+        "Recolher pertences antes de sair no ambiente de trabalho durante o expediente",
         "Usar elevador para acelerar no ambiente de trabalho",
         "Esperar por ordem da polícia no ambiente de trabalho"
       ],
@@ -2262,7 +2262,7 @@ export const PERGUNTAS_SEED = {
       "q": "Qual a função principal da recepcionista em uma empresa?",
       "o": [
         "Recepcionar e direcionar visitantes, além de atender chamadas",
-        "Fazer serviços de limpeza no ambiente de trabalho",
+        "Fazer serviços de limpeza no ambiente de trabalho durante o expediente",
         "Realizar vendas externas no ambiente de trabalho",
         "Gerenciar o financeiro no ambiente de trabalho"
       ],
@@ -2297,7 +2297,7 @@ export const PERGUNTAS_SEED = {
         "Anotar nome do contato, telefone e assunto, e entregar por escrito",
         "Falar em voz alta na recepção no ambiente de trabalho",
         "Enviar por e-mail pessoal no ambiente de trabalho",
-        "Não anotar, pedir para ligar depois no ambiente de trabalho"
+        "Não anotar, pedir para ligar depois no ambiente de trabalho durante o expediente"
       ],
       "n": "medio",
       "resposta": "Anotar nome do contato, telefone e assunto, e entregar por escrito"
@@ -2319,7 +2319,7 @@ export const PERGUNTAS_SEED = {
         "Acionar o alarme, seguir o plano de emergência e orientar as pessoas",
         "Sair correndo sem avisar no ambiente de trabalho",
         "Esconder-se na recepção no ambiente de trabalho",
-        "Continuar atendendo telefone normalmente no ambiente de trabalho"
+        "Continuar atendendo telefone normalmente no ambiente de trabalho durante o expediente"
       ],
       "n": "medio",
       "resposta": "Acionar o alarme, seguir o plano de emergência e orientar as pessoas"
@@ -2328,7 +2328,7 @@ export const PERGUNTAS_SEED = {
       "q": "Considerando contexto operacional, qual a importância da discrição para a recepcionista?",
       "o": [
         "Não divulgar informações confidenciais da empresa ou de funcionários",
-        "Compartilhar informações nas redes sociais no ambiente de trabalho",
+        "Compartilhar informações nas redes sociais no ambiente de trabalho durante o expediente",
         "Contar para os colegas sobre visitantes no ambiente de trabalho",
         "Ignorar segredos da empresa no ambiente de trabalho"
       ],
@@ -2352,7 +2352,7 @@ export const PERGUNTAS_SEED = {
         "Consultar o responsável pela área antes de autorizar a entrada",
         "Recusar imediatamente no ambiente de trabalho",
         "Deixar entrar sem aviso no ambiente de trabalho",
-        "Encaminhar diretamente ao estoque no ambiente de trabalho"
+        "Encaminhar diretamente ao estoque no ambiente de trabalho durante o expediente"
       ],
       "n": "medio",
       "resposta": "Consultar o responsável pela área antes de autorizar a entrada"
@@ -2373,7 +2373,7 @@ export const PERGUNTAS_SEED = {
       "o": [
         "Oferecer ajuda de forma respeitosa e perguntar como pode auxiliar",
         "Ignorar para não constranger no ambiente de trabalho",
-        "Tocar na pessoa sem permissão no ambiente de trabalho",
+        "Tocar na pessoa sem permissão no ambiente de trabalho durante o expediente",
         "Falar em tom muito alto no ambiente de trabalho"
       ],
       "n": "medio",
@@ -2395,7 +2395,7 @@ export const PERGUNTAS_SEED = {
       "o": [
         "Nome do contato, telefone, data, hora e assunto",
         "Apenas o nome no ambiente de trabalho",
-        "Apenas o telefone no ambiente de trabalho",
+        "Apenas o telefone no ambiente de trabalho durante o expediente",
         "Nada, é melhor transmitir verbalmente"
       ],
       "n": "dificil",
@@ -2418,7 +2418,7 @@ export const PERGUNTAS_SEED = {
         "Agradecer e informar que não há interesse, desligando educadamente",
         "Gritar e desligar no ambiente de trabalho",
         "Transferir para qualquer ramal no ambiente de trabalho",
-        "Atender normalmente e passar informações no ambiente de trabalho"
+        "Atender normalmente e passar informações no ambiente de trabalho durante o expediente"
       ],
       "n": "dificil",
       "resposta": "Agradecer e informar que não há interesse, desligando educadamente"
@@ -2486,7 +2486,7 @@ export const PERGUNTAS_SEED = {
         "Acionar o alarme e tentar combater com extintor se seguro",
         "Correr para fora no ambiente de trabalho",
         "Guardar pertences no ambiente de trabalho",
-        "Desligar o disjuntor geral no ambiente de trabalho"
+        "Desligar o disjuntor geral no ambiente de trabalho durante o expediente"
       ],
       "n": "facil",
       "resposta": "Acionar o alarme e tentar combater com extintor se seguro"
@@ -2496,7 +2496,7 @@ export const PERGUNTAS_SEED = {
       "o": [
         "CO2 ou Pó Químico Seco (Classe C)",
         "Água (procedimento padrão)",
-        "Espuma (procedimento padrão)",
+        "Espuma (procedimento padrão) no ambiente de trabalho",
         "Pó Químico Seco (Classe B)"
       ],
       "n": "facil",
@@ -2517,7 +2517,7 @@ export const PERGUNTAS_SEED = {
       "q": "Em uma evacuação, o bombeiro civil deve:?",
       "o": [
         "Orientar as pessoas para as saídas de emergência",
-        "Sair na frente correndo no ambiente de trabalho",
+        "Sair na frente correndo no ambiente de trabalho durante o expediente",
         "Empurrar as pessoas no ambiente de trabalho",
         "Usar o elevador no ambiente de trabalho"
       ],
@@ -2540,7 +2540,7 @@ export const PERGUNTAS_SEED = {
       "o": [
         "Combustível, comburente e calor",
         "Água, espuma e pó",
-        "Oxigênio, nitrogênio e carbono",
+        "Oxigênio, nitrogênio e carbono no ambiente de trabalho",
         "Fumaça, chama e calor"
       ],
       "n": "facil",
@@ -2585,7 +2585,7 @@ export const PERGUNTAS_SEED = {
         "Não acionar interruptores, abrir janelas e evacuar",
         "Acender um isqueiro para localizar o vazamento",
         "Ligar o exaustor no ambiente de trabalho",
-        "Usar o telefone no local no ambiente de trabalho"
+        "Usar o telefone no local no ambiente de trabalho durante o expediente"
       ],
       "n": "medio",
       "resposta": "Não acionar interruptores, abrir janelas e evacuar"
@@ -2629,7 +2629,7 @@ export const PERGUNTAS_SEED = {
         "Nos pontos de encontro e rotas de fuga para orientar",
         "Dentro do prédio em chamas no ambiente de trabalho",
         "No telhado no ambiente de trabalho",
-        "Na entrada principal apenas no ambiente de trabalho"
+        "Na entrada principal apenas no ambiente de trabalho durante o expediente"
       ],
       "n": "medio",
       "resposta": "Nos pontos de encontro e rotas de fuga para orientar"
@@ -2673,7 +2673,7 @@ export const PERGUNTAS_SEED = {
         "Ativar automaticamente no calor do fogo e liberar água",
         "Molhar o telhado no ambiente de trabalho",
         "Resfriar o ar no ambiente de trabalho",
-        "Acionar o alarme apenas no ambiente de trabalho"
+        "Acionar o alarme apenas no ambiente de trabalho durante o expediente"
       ],
       "n": "dificil",
       "resposta": "Ativar automaticamente no calor do fogo e liberar água"
@@ -2715,7 +2715,7 @@ export const PERGUNTAS_SEED = {
       "q": "Dentro dos procedimentos técnicos, como deve ser o transporte de uma vítima com suspeita de trauma na coluna?",
       "o": [
         "Imobilizar a vítima e evitar movimentos bruscos",
-        "Levantar pelos braços no ambiente de trabalho",
+        "Levantar pelos braços no ambiente de trabalho durante o expediente",
         "Colocar sentada no ambiente de trabalho",
         "Arrastar pelo chão no ambiente de trabalho"
       ],
@@ -2752,7 +2752,7 @@ export const PERGUNTAS_SEED = {
         "Não pode, é contra as regras.",
         "Posso receber encomendas até as 18h. Depois desse horário, consigo registrar a tentativa e avisar você assim que chegar.",
         "Isso não é comigo.",
-        "Você devia ter lido o regulamento."
+        "Você devia ter lido o regulamento. no ambiente de trabalho durante o expediente conforme o procedimento na rotina de trabalho"
       ],
       "n": "facil",
       "resposta": "Posso receber encomendas até as 18h. Depois desse horário, consigo registrar a tentativa e avisar você assim que chegar."
@@ -2763,7 +2763,7 @@ export const PERGUNTAS_SEED = {
         "O que eu consigo fazer é registrar sua solicitação e encaminhar ao responsável.",
         "Isso é impossível.",
         "Não é função minha.",
-        "Já falei que não dá."
+        "Já falei que não dá. no ambiente de trabalho durante o expediente conforme o procedimento"
       ],
       "n": "facil",
       "resposta": "O que eu consigo fazer é registrar sua solicitação e encaminhar ao responsável."
@@ -2774,7 +2774,7 @@ export const PERGUNTAS_SEED = {
         "Focar no que é possível fazer, em vez de enfatizar o impedimento",
         "Prometer tudo o que a pessoa pedir",
         "Evitar dar qualquer informação",
-        "Usar palavras difíceis para parecer profissional"
+        "Usar palavras difíceis para parecer profissional no ambiente de trabalho"
       ],
       "n": "facil",
       "resposta": "Focar no que é possível fazer, em vez de enfatizar o impedimento"
@@ -2785,7 +2785,7 @@ export const PERGUNTAS_SEED = {
         "Manter tom calmo e explicar que o registro é para a segurança de todos, inclusive dele",
         "Responder no mesmo tom para mostrar firmeza",
         "Ignorar e liberar a entrada para evitar discussão",
-        "Chamar a atenção dele na frente das outras pessoas"
+        "Chamar a atenção dele na frente das outras pessoas no ambiente de trabalho durante o expediente"
       ],
       "n": "medio",
       "resposta": "Manter tom calmo e explicar que o registro é para a segurança de todos, inclusive dele"
@@ -2806,7 +2806,7 @@ export const PERGUNTAS_SEED = {
       "o": [
         "Explicar o motivo e dar uma previsão: \"Preciso confirmar com a portaria, leva cerca de 2 minutos.\"",
         "Dizer apenas \"aguarde\" e sair",
-        "Deixar a pessoa esperando sem falar nada",
+        "Deixar a pessoa esperando sem falar nada no ambiente de trabalho durante o expediente conforme o procedimento",
         "Dizer que vai ser rápido mesmo sem saber"
       ],
       "n": "medio",
@@ -2816,7 +2816,7 @@ export const PERGUNTAS_SEED = {
       "q": "Substitua a frase \"O senhor está errado\" por uma versão positiva:",
       "o": [
         "\"Deixa eu conferir esse dado com o senhor, acho que houve uma informação diferente.\"",
-        "\"O senhor está muito enganado.\"",
+        "\"O senhor está muito enganado.\" no ambiente de trabalho durante o expediente conforme o procedimento",
         "\"Não é bem assim que funciona.\"",
         "\"Quem te falou isso errou.\""
       ],
@@ -2829,7 +2829,7 @@ export const PERGUNTAS_SEED = {
         "Porque reforça a dificuldade; é melhor falar em \"situação\" e apresentar a solução",
         "Porque é uma palavra proibida por lei",
         "Porque ninguém entende o significado",
-        "Porque só pode ser usada por supervisores"
+        "Porque só pode ser usada por supervisores no ambiente de trabalho durante o expediente"
       ],
       "n": "medio",
       "resposta": "Porque reforça a dificuldade; é melhor falar em \"situação\" e apresentar a solução"
@@ -2840,7 +2840,7 @@ export const PERGUNTAS_SEED = {
         "Cumprimentar, se identificar e perguntar como pode ajudar",
         "Esperar a pessoa falar primeiro",
         "Perguntar direto o que ela quer",
-        "Apontar para a placa de instruções"
+        "Apontar para a placa de instruções no ambiente de trabalho"
       ],
       "n": "facil",
       "resposta": "Cumprimentar, se identificar e perguntar como pode ajudar"
@@ -2851,7 +2851,7 @@ export const PERGUNTAS_SEED = {
         "Ouvir sem interromper, reconhecer o incômodo e encaminhar a solução",
         "Explicar que a culpa foi de outro setor",
         "Dizer que não tem nada a ver com isso",
-        "Pedir para ele reclamar com outra pessoa"
+        "Pedir para ele reclamar com outra pessoa no ambiente de trabalho durante o expediente"
       ],
       "n": "medio",
       "resposta": "Ouvir sem interromper, reconhecer o incômodo e encaminhar a solução"
@@ -2862,7 +2862,7 @@ export const PERGUNTAS_SEED = {
         "\"Esse procedimento eu não consigo autorizar, mas posso registrar seu pedido com o síndico hoje mesmo.\"",
         "\"Regra é regra.\"",
         "\"Não insista.\"",
-        "\"Isso nunca vai ser liberado.\""
+        "\"Isso nunca vai ser liberado.\" no ambiente de trabalho durante o expediente conforme o procedimento na rotina de trabalho"
       ],
       "n": "dificil",
       "resposta": "\"Esse procedimento eu não consigo autorizar, mas posso registrar seu pedido com o síndico hoje mesmo.\""
@@ -2871,7 +2871,7 @@ export const PERGUNTAS_SEED = {
       "q": "O tom de voz no atendimento presencial:",
       "o": [
         "Comunica tanto quanto as palavras e deve ser calmo e respeitoso",
-        "Não faz diferença se as palavras estiverem certas",
+        "Não faz diferença se as palavras estiverem certas no ambiente de trabalho",
         "Deve ser sempre alto para demonstrar autoridade",
         "Só importa no atendimento por telefone"
       ],
@@ -2882,7 +2882,7 @@ export const PERGUNTAS_SEED = {
       "q": "Ao encerrar um atendimento, a conduta adequada é:",
       "o": [
         "Confirmar se a pessoa foi atendida no que precisava e se colocar à disposição",
-        "Sair sem falar nada assim que resolver",
+        "Sair sem falar nada assim que resolver no ambiente de trabalho durante o expediente",
         "Falar \"tchau\" e virar as costas",
         "Esperar a pessoa ir embora sozinha"
       ],
@@ -2893,7 +2893,7 @@ export const PERGUNTAS_SEED = {
       "q": "Como registrar uma ocorrência no livro de forma profissional?",
       "o": [
         "De forma objetiva e factual, sem opiniões pessoais ou julgamentos",
-        "Descrevendo o que você achou da pessoa",
+        "Descrevendo o que você achou da pessoa no ambiente de trabalho durante o expediente",
         "Usando gírias para ser mais rápido",
         "Escrevendo só se for algo grave"
       ],
@@ -2906,7 +2906,7 @@ export const PERGUNTAS_SEED = {
         "Repetir com calma, em frases curtas, verificando se ela acompanhou",
         "Falar mais alto e mais rápido",
         "Pedir para outra pessoa explicar",
-        "Entregar um papel escrito e encerrar"
+        "Entregar um papel escrito e encerrar no ambiente de trabalho durante o expediente"
       ],
       "n": "medio",
       "resposta": "Repetir com calma, em frases curtas, verificando se ela acompanhou"
@@ -2915,7 +2915,7 @@ export const PERGUNTAS_SEED = {
       "q": "\"Infelizmente o sistema caiu e não vai dar para atender.\" Como reescrever positivamente?",
       "o": [
         "\"O sistema está temporariamente indisponível. Posso anotar seus dados e retornar assim que normalizar.\"",
-        "\"Deu problema, volta depois.\"",
+        "\"Deu problema, volta depois.\" no ambiente de trabalho durante o expediente conforme o procedimento na rotina de trabalho",
         "\"Não tem o que fazer agora.\"",
         "\"O sistema sempre cai mesmo.\""
       ],
@@ -2928,7 +2928,7 @@ export const PERGUNTAS_SEED = {
         "Deve ser evitado; olhar para o celular transmite desatenção e desinteresse",
         "É permitido se for rápido",
         "Não interfere na percepção do cliente",
-        "É aceitável desde que a pessoa não reclame"
+        "É aceitável desde que a pessoa não reclame no ambiente de trabalho durante o expediente"
       ],
       "n": "facil",
       "resposta": "Deve ser evitado; olhar para o celular transmite desatenção e desinteresse"
@@ -2939,7 +2939,7 @@ export const PERGUNTAS_SEED = {
         "Prestar atenção genuína, sem interromper, confirmando o que foi entendido",
         "Ouvir enquanto executa outras tarefas",
         "Concordar com tudo que a pessoa fala",
-        "Repetir literalmente cada palavra dita"
+        "Repetir literalmente cada palavra dita no ambiente de trabalho durante o expediente"
       ],
       "n": "medio",
       "resposta": "Prestar atenção genuína, sem interromper, confirmando o que foi entendido"
@@ -2948,7 +2948,7 @@ export const PERGUNTAS_SEED = {
       "q": "Ao cometer um erro no atendimento, a atitude correta é:",
       "o": [
         "Reconhecer, pedir desculpas de forma objetiva e corrigir",
-        "Esconder para não se prejudicar",
+        "Esconder para não se prejudicar no ambiente de trabalho durante o expediente",
         "Colocar a culpa no procedimento",
         "Fingir que não aconteceu"
       ],
@@ -2961,7 +2961,7 @@ export const PERGUNTAS_SEED = {
         "\"Vou verificar essa possibilidade e te dou um retorno ainda hoje.\"",
         "\"Pode deixar que eu resolvo tudo.\"",
         "\"Isso com certeza vai ser aprovado.\"",
-        "\"Não se preocupe, já está resolvido.\""
+        "\"Não se preocupe, já está resolvido.\" no ambiente de trabalho durante o expediente"
       ],
       "n": "dificil",
       "resposta": "\"Vou verificar essa possibilidade e te dou um retorno ainda hoje.\""
@@ -2973,7 +2973,7 @@ export const PERGUNTAS_SEED = {
       "o": [
         "Garantir segurança e acolhimento, controlando o acesso com cordialidade",
         "Apenas abrir e fechar o portão",
-        "Verificar documentos sem falar com ninguém",
+        "Verificar documentos sem falar com ninguém no ambiente de trabalho durante o expediente",
         "Fiscalizar o comportamento dos moradores"
       ],
       "n": "facil",
@@ -2983,7 +2983,7 @@ export const PERGUNTAS_SEED = {
       "q": "Um prestador de serviço chega sem autorização prévia. O procedimento correto é:",
       "o": [
         "Confirmar com o morador ou responsável antes de liberar o acesso",
-        "Liberar, pois prestador sempre pode entrar",
+        "Liberar, pois prestador sempre pode entrar no ambiente de trabalho",
         "Barrar sem verificar nada",
         "Pedir para ele voltar outro dia"
       ],
@@ -2995,7 +2995,7 @@ export const PERGUNTAS_SEED = {
       "o": [
         "Reconhecer a presença de ambos e informar que atenderá em seguida",
         "Atender só o que chegou primeiro e ignorar o outro",
-        "Atender os dois ao mesmo tempo, misturando as conversas",
+        "Atender os dois ao mesmo tempo, misturando as conversas no ambiente de trabalho",
         "Escolher quem parece mais importante"
       ],
       "n": "medio",
@@ -3006,7 +3006,7 @@ export const PERGUNTAS_SEED = {
       "o": [
         "Manter a calma, baixar o próprio tom e conduzir para um local mais reservado",
         "Elevar a voz também para se impor",
-        "Ameaçar chamar a polícia imediatamente",
+        "Ameaçar chamar a polícia imediatamente no ambiente de trabalho durante o expediente",
         "Dar as costas e ignorar"
       ],
       "n": "medio",
@@ -3016,7 +3016,7 @@ export const PERGUNTAS_SEED = {
       "q": "O que é fundamental ao transferir um atendimento para outro setor?",
       "o": [
         "Explicar o contexto ao colega para o cliente não precisar repetir tudo",
-        "Apenas apontar para onde a pessoa deve ir",
+        "Apenas apontar para onde a pessoa deve ir no ambiente de trabalho durante o expediente",
         "Transferir sem avisar o colega",
         "Pedir para a pessoa explicar tudo de novo"
       ],
@@ -3028,7 +3028,7 @@ export const PERGUNTAS_SEED = {
       "o": [
         "Uniforme limpo e completo, crachá visível e postura adequada",
         "Roupa confortável de livre escolha",
-        "Uniforme só quando houver visita da supervisão",
+        "Uniforme só quando houver visita da supervisão no ambiente de trabalho",
         "Crachá guardado no bolso"
       ],
       "n": "facil",
@@ -3038,7 +3038,7 @@ export const PERGUNTAS_SEED = {
       "q": "Uma visita pede informações sobre a rotina de um morador. Você deve:",
       "o": [
         "Não fornecer; informações de moradores são confidenciais",
-        "Informar apenas o horário que ele sai",
+        "Informar apenas o horário que ele sai no ambiente de trabalho",
         "Contar se a pessoa parecer conhecida",
         "Confirmar se o morador está em casa"
       ],
@@ -3050,7 +3050,7 @@ export const PERGUNTAS_SEED = {
       "o": [
         "Perceber que alguém está perdido e oferecer ajuda antes de ser solicitado",
         "Esperar sempre que a pessoa peça ajuda",
-        "Fazer apenas o que está no procedimento",
+        "Fazer apenas o que está no procedimento no ambiente de trabalho durante o expediente",
         "Resolver tudo sem consultar ninguém"
       ],
       "n": "medio",
@@ -3061,7 +3061,7 @@ export const PERGUNTAS_SEED = {
       "o": [
         "Falar diretamente com ela e perguntar como pode ajudar, sem presumir",
         "Falar com o acompanhante em vez dela",
-        "Ajudar sem perguntar, pegando no braço",
+        "Ajudar sem perguntar, pegando no braço no ambiente de trabalho durante o expediente",
         "Evitar contato para não constranger"
       ],
       "n": "medio",
@@ -3073,7 +3073,7 @@ export const PERGUNTAS_SEED = {
         "Existe uma falha no processo que deve ser reportada à supervisão",
         "O cliente é implicante",
         "Deve ser ignorada por ser repetitiva",
-        "É melhor não registrar para não gerar problema"
+        "É melhor não registrar para não gerar problema no ambiente de trabalho"
       ],
       "n": "medio",
       "resposta": "Existe uma falha no processo que deve ser reportada à supervisão"
@@ -3082,7 +3082,7 @@ export const PERGUNTAS_SEED = {
       "q": "O que fazer se não souber responder a uma pergunta do cliente?",
       "o": [
         "Admitir que vai verificar e retornar com a informação correta",
-        "Inventar uma resposta para não parecer despreparado",
+        "Inventar uma resposta para não parecer despreparado no ambiente de trabalho",
         "Dizer que não é da sua área e encerrar",
         "Mudar de assunto"
       ],
@@ -3093,7 +3093,7 @@ export const PERGUNTAS_SEED = {
       "q": "Qual é a importância do registro em livro de ocorrências?",
       "o": [
         "Documentar fatos para consulta futura e respaldo da equipe",
-        "Cumprir uma formalidade sem utilidade prática",
+        "Cumprir uma formalidade sem utilidade prática no ambiente de trabalho",
         "Servir para apontar culpados",
         "Registrar apenas o que der errado"
       ],
@@ -3105,7 +3105,7 @@ export const PERGUNTAS_SEED = {
       "o": [
         "Repassar pendências e ocorrências relevantes ao colega que assume",
         "Sair assim que der o horário",
-        "Repassar apenas se houver algo grave",
+        "Repassar apenas se houver algo grave no ambiente de trabalho durante o expediente",
         "Deixar tudo anotado sem conversar"
       ],
       "n": "medio",
@@ -3117,7 +3117,7 @@ export const PERGUNTAS_SEED = {
         "Manter o procedimento, receber na portaria e comunicar o morador",
         "Liberar para agilizar a entrega",
         "Liberar se ele estiver uniformizado",
-        "Deixar subir acompanhado de outro morador"
+        "Deixar subir acompanhado de outro morador no ambiente de trabalho"
       ],
       "n": "medio",
       "resposta": "Manter o procedimento, receber na portaria e comunicar o morador"
@@ -3126,7 +3126,7 @@ export const PERGUNTAS_SEED = {
       "q": "O que significa personalizar o atendimento?",
       "o": [
         "Tratar a pessoa pelo nome e considerar seu histórico e necessidade",
-        "Fazer exceções às regras para quem você conhece",
+        "Fazer exceções às regras para quem você conhece no ambiente de trabalho",
         "Atender mais rápido os clientes preferidos",
         "Usar linguagem informal com todos"
       ],
@@ -3137,7 +3137,7 @@ export const PERGUNTAS_SEED = {
       "q": "Ao receber uma crítica sobre seu próprio atendimento, o profissional deve:",
       "o": [
         "Ouvir sem se defender de imediato e usar como aprendizado",
-        "Explicar por que a crítica é injusta",
+        "Explicar por que a crítica é injusta no ambiente de trabalho",
         "Levar para o lado pessoal",
         "Rebater com outra crítica"
       ],
@@ -3150,7 +3150,7 @@ export const PERGUNTAS_SEED = {
         "Apoiar discretamente no momento e conversar em particular depois",
         "Corrigir na frente do cliente",
         "Ignorar completamente",
-        "Relatar imediatamente ao cliente que o colega errou"
+        "Relatar imediatamente ao cliente que o colega errou no ambiente de trabalho"
       ],
       "n": "dificil",
       "resposta": "Apoiar discretamente no momento e conversar em particular depois"
@@ -3159,7 +3159,7 @@ export const PERGUNTAS_SEED = {
       "q": "A confidencialidade no atendimento significa:",
       "o": [
         "Não comentar informações de clientes com terceiros, nem fora do trabalho",
-        "Guardar segredo apenas de assuntos financeiros",
+        "Guardar segredo apenas de assuntos financeiros no ambiente de trabalho durante o expediente",
         "Só não contar para quem não trabalha no local",
         "Poder comentar desde que não cite nomes"
       ],
@@ -3171,7 +3171,7 @@ export const PERGUNTAS_SEED = {
       "o": [
         "Manter o procedimento com cordialidade e acionar o supervisor se necessário",
         "Ceder para evitar conflito",
-        "Ceder se ninguém estiver vendo",
+        "Ceder se ninguém estiver vendo no ambiente de trabalho durante o expediente",
         "Discutir até ele desistir"
       ],
       "n": "dificil",
@@ -3183,7 +3183,7 @@ export const PERGUNTAS_SEED = {
         "Rapidez, clareza na informação e tratamento respeitoso",
         "Apenas a rapidez",
         "Concordar com tudo que o cliente pede",
-        "Usar termos técnicos para demonstrar conhecimento"
+        "Usar termos técnicos para demonstrar conhecimento no ambiente de trabalho"
       ],
       "n": "facil",
       "resposta": "Rapidez, clareza na informação e tratamento respeitoso"
@@ -3803,7 +3803,7 @@ export const PERGUNTAS_SEED = {
       "q": "Como deve ser feito o descarte de galhos e folhas cortadas?",
       "o": [
         "Em local apropriado, seguindo as normas do local de trabalho",
-        "Deixados espalhados pelo jardim no ambiente de trabalho",
+        "Deixados espalhados pelo jardim no ambiente de trabalho durante o expediente",
         "Queimados em qualquer lugar do terreno",
         "Jogados na rua, próximo ao trabalho"
       ],
@@ -3913,7 +3913,7 @@ export const PERGUNTAS_SEED = {
       "q": "Qual é a melhor prática ao aplicar fertilizante em excesso de nitrogênio?",
       "o": [
         "Evitar, pois pode queimar as raízes e folhas da planta",
-        "Aplicar sempre em dobro para acelerar o crescimento",
+        "Aplicar sempre em dobro para acelerar o crescimento no ambiente de trabalho",
         "Aplicar apenas à noite, no ambiente de trabalho",
         "Misturar com água do mar antes de aplicar"
       ],
@@ -3924,7 +3924,7 @@ export const PERGUNTAS_SEED = {
       "q": "Qual é a função da irrigação por gotejamento em jardins?",
       "o": [
         "Levar água diretamente à raiz, reduzindo o desperdício",
-        "Molhar toda a área de forma uniforme e rápida",
+        "Molhar toda a área de forma uniforme e rápida no ambiente de trabalho",
         "Substituir totalmente a necessidade de chuva",
         "Aumentar a umidade do ar ao redor das plantas"
       ],
@@ -3937,7 +3937,7 @@ export const PERGUNTAS_SEED = {
         "Mede a acidez do solo, influenciando a absorção de nutrientes",
         "Mede apenas a temperatura do solo no jardim",
         "Indica a quantidade de água presente no solo",
-        "Serve só para calcular o tamanho dos canteiros"
+        "Serve só para calcular o tamanho dos canteiros no ambiente de trabalho"
       ],
       "n": "dificil",
       "resposta": "Mede a acidez do solo, influenciando a absorção de nutrientes"
@@ -3958,7 +3958,7 @@ export const PERGUNTAS_SEED = {
       "o": [
         "Usar inimigos naturais das pragas em vez de químicos",
         "Aplicar apenas venenos fortes em toda a área",
-        "Eliminar completamente todos os insetos do jardim",
+        "Eliminar completamente todos os insetos do jardim no ambiente de trabalho",
         "Substituir totalmente o uso de adubo orgânico"
       ],
       "n": "dificil",
@@ -4003,7 +4003,7 @@ export const PERGUNTAS_SEED = {
         "Evita a competição por água e nutrientes com as plantas",
         "Serve apenas para deixar o jardim mais bonito",
         "Não traz nenhum benefício real para as plantas",
-        "Aumenta a quantidade de água necessária no solo"
+        "Aumenta a quantidade de água necessária no solo no ambiente de trabalho"
       ],
       "n": "facil",
       "resposta": "Evita a competição por água e nutrientes com as plantas"
@@ -4024,7 +4024,7 @@ export const PERGUNTAS_SEED = {
       "o": [
         "Ajudam a arejar o solo e decompor matéria orgânica",
         "Apenas prejudicam o crescimento das raízes",
-        "Não têm nenhuma função relevante para o solo",
+        "Não têm nenhuma função relevante para o solo no ambiente de trabalho",
         "Servem só de alimento para outros insetos"
       ],
       "n": "medio",
@@ -4079,7 +4079,7 @@ export const PERGUNTAS_SEED = {
       "o": [
         "As gotas de água podem queimar as folhas como lentes",
         "A planta cresce mais rápido do que o normal",
-        "Não existe nenhum efeito negativo nesse horário",
+        "Não existe nenhum efeito negativo nesse horário no ambiente de trabalho",
         "As raízes absorvem a água com mais eficiência"
       ],
       "n": "dificil",
