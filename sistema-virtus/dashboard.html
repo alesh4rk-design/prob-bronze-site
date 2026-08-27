@@ -1080,10 +1080,20 @@
   </div>
   <div class="panel" style="margin-bottom:16px;">
     <div class="panel-head"><div class="panel-title-sm">🚨 Violações Registradas <span class="badge" id="violBadge" style="background:var(--reddim);border-color:rgba(255,85,73,0.4);color:var(--red);">0 eventos</span></div></div>
+    <div class="toolbar" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:0 20px 14px;">
+      <label style="font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--text3);">De
+        <input type="date" class="field-input" id="violDataIni" style="max-width:165px;">
+      </label>
+      <label style="font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--text3);">Até
+        <input type="date" class="field-input" id="violDataFim" style="max-width:165px;">
+      </label>
+      <button class="btn-act btn-approve-admin" onclick="renderViolacoes()">🔍 Buscar</button>
+      <button class="btn-act btn-neutral" onclick="document.getElementById('violDataIni').value='';document.getElementById('violDataFim').value='';renderViolacoes();">Limpar período</button>
+    </div>
     <div class="results-table-wrap">
       <table>
         <thead><tr><th>Candidato</th><th>Módulo</th><th>Tipo</th><th>Detalhe</th><th>Data/Hora</th></tr></thead>
-        <tbody id="violTableBody"><tr><td colspan="5"><div class="empty-state"><div class="empty-icon">🚨</div>Nenhuma violação registrada</div></td></tr></tbody>
+        <tbody id="violTableBody"><tr><td colspan="5"><div class="empty-state"><div class="empty-icon">📅</div>Selecione um período (De / Até) e clique em Buscar.</div></td></tr></tbody>
       </table>
     </div>
   </div>
@@ -1125,7 +1135,7 @@
   </div>
 <div class="panel">
       <div class="panel-head">
-        <div class="panel-title-sm">🔑 Código de Acesso do Candidato</div>
+        <div class="panel-title-sm">🔑 Código de Acesso do Candidato <span class="badge green" id="cntCodigosDisp">0</span> ativo(s)</div>
       </div>
       <div class="panel-body" style="padding:16px 20px;">
         <div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap;">
@@ -2168,14 +2178,23 @@
       </div>`).join('');
   }
 
-  function renderViolacoes() {
+  window.renderViolacoes = function renderViolacoes() {
     const tbody = document.getElementById('violTableBody');
-    const intervalo = calcularIntervaloPeriodo();
-    const lista = intervalo
-      ? ALL_VIOLACOES.filter(v => v.data && v.data >= intervalo[0] && v.data <= intervalo[1])
-      : ALL_VIOLACOES;
+    const dataIni = document.getElementById('violDataIni').value;
+    const dataFim = document.getElementById('violDataFim').value;
+    if (!dataIni && !dataFim) {
+      document.getElementById('violBadge').textContent = '0 eventos';
+      tbody.innerHTML = '<tr><td colspan="5"><div class="empty-state"><div class="empty-icon">📅</div>Selecione um período (De / Até) e clique em Buscar.</div></td></tr>';
+      return;
+    }
+    const lista = ALL_VIOLACOES.filter(v => {
+      if (!v.data) return false;
+      if (dataIni && v.data < dataIni) return false;
+      if (dataFim && v.data > dataFim) return false;
+      return true;
+    });
     document.getElementById('violBadge').textContent = lista.length + ' eventos';
-    if (!lista.length) { tbody.innerHTML = '<tr><td colspan="5"><div class="empty-state"><div class="empty-icon">🚨</div>Nenhuma violação registrada</div></td></tr>'; return; }
+    if (!lista.length) { tbody.innerHTML = '<tr><td colspan="5"><div class="empty-state"><div class="empty-icon">🚨</div>Nenhuma violação no período selecionado</div></td></tr>'; return; }
     tbody.innerHTML = lista.slice(0, 100).map(v => `
       <tr>
         <td class="td-nome">${escapeHtml(v.nome || '—')}</td>
