@@ -215,6 +215,18 @@ export async function definirVisibilidadeRH(chave, visivel, nome, avaliador) {
   }, { merge: true });
 }
 
+// Observação do avaliador (admin/viewer) para o coordenador/gerente de RH
+// ler — texto livre, não interfere em nota nem em nenhum resultado de prova.
+export async function definirObservacaoPipeline(chave, observacao, nome, avaliador) {
+  const id = chave.replace(/[/]/g, "_");
+  await setDoc(doc(db, "pipeline", id), {
+    observacao: observacao || "",
+    nome: nome || null,
+    atualizado_por: avaliador || null,
+    atualizado_em: serverTimestamp()
+  }, { merge: true });
+}
+
 export function assinarPipeline(callback, onError) {
   return onSnapshot(collection(db, "pipeline"), (snap) => {
     const mapa = {};

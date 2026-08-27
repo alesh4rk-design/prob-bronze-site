@@ -1133,11 +1133,12 @@
             <th>Nota (módulo escolhido)</th>
             <th>Etapa</th>
             <th id="thVisivelRH" style="display:none;">Visível ao RH</th>
+            <th>Observação</th>
             <th>Atualizado</th>
           </tr>
         </thead>
         <tbody id="pipelineTableBody">
-          <tr><td colspan="7"><div class="empty-state"><div class="empty-icon">🧭</div>Nenhum candidato ainda.</div></td></tr>
+          <tr><td colspan="8"><div class="empty-state"><div class="empty-icon">🧭</div>Nenhum candidato ainda.</div></td></tr>
         </tbody>
       </table>
     </div>
@@ -1327,7 +1328,7 @@
     assinarModulos, definirModuloAtivo,
     gerarCodigoAcesso, assinarCodigosAcesso, cancelarCodigoAcesso, excluirCodigoAcesso,
     definirNumeroWhatsapp, assinarNumeroWhatsapp,
-    definirEtapaPipeline, assinarPipeline, definirVisibilidadeRH
+    definirEtapaPipeline, assinarPipeline, definirVisibilidadeRH, definirObservacaoPipeline
   } from "./js/dashboard.js";
   import { db } from "./js/firebase-config.js";
   import { doc, setDoc } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
@@ -2370,7 +2371,7 @@
     document.getElementById('pipelineBadge').textContent = candidatos.length + ' candidatos';
     if (!candidatos.length) {
       const msg = somenteLeitura ? 'Nenhum candidato enviado pra você ainda.' : 'Nenhum candidato ainda.';
-      tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state"><div class="empty-icon">🧭</div>${msg}</div></td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="8"><div class="empty-state"><div class="empty-icon">🧭</div>${msg}</div></td></tr>`;
       return;
     }
     tbody.innerHTML = candidatos.map((c, i) => {
@@ -2390,6 +2391,14 @@
             ${visivelRH ? '✅ Enviado' : '📤 Enviar ao RH'}
           </button>
         </td>`;
+      const observacao = (PIPELINE_MAP[chaveId] && PIPELINE_MAP[chaveId].observacao) || '';
+      const colunaObs = somenteLeitura
+        ? `<td style="max-width:220px;white-space:normal;font-size:12px;color:var(--text2);">${observacao ? escapeHtml(observacao) : '<span style="color:var(--text4);">—</span>'}</td>`
+        : `<td onclick="event.stopPropagation()">
+            <button class="btn-act btn-neutral" onclick="event.stopPropagation();editarObservacaoPipeline('${c.chave.replace(/'/g, "\\'")}','${escapeHtml(c.nome).replace(/'/g, "\\'")}')" title="${observacao ? escapeHtml(observacao) : 'Nenhuma observação ainda'}">
+              📝 ${observacao ? 'Ver/editar' : 'Observação'}
+            </button>
+          </td>`;
       return `
       <tr class="clickable" onclick="abrirCandidato('${c.chave.replace(/'/g, "\\'")}')" title="Ver detalhamento e exportar PDF">
         <td style="text-align:center;color:var(--text3);">${i + 1}</td>
@@ -2398,6 +2407,7 @@
         <td><span class="td-pct" style="color:${c.media >= 70 ? 'var(--green)' : c.media >= 50 ? 'var(--amber)' : 'var(--red)'}">${c.media >= 70 ? '✅' : '❌'} ${c.media}%</span></td>
         <td>${seletor}</td>
         ${colunaRH}
+        ${colunaObs}
         <td class="td-time">${atualizadoEm}</td>
       </tr>`;
     }).join('');
@@ -2420,6 +2430,20 @@
     } catch (e) {
       console.error(e);
       toast('❌ Falha: ' + e.message, 'err');
+    }
+  };
+
+  window.editarObservacaoPipeline = async function (chave, nome) {
+    const chaveId = chave.replace(/[/]/g, '_');
+    const atual = (PIPELINE_MAP[chaveId] && PIPELINE_MAP[chaveId].observacao) || '';
+    const nova = prompt(`Observação sobre ${nome} (visível para o coordenador/RH):`, atual);
+    if (nova === null) return; // cancelou
+    try {
+      await definirObservacaoPipeline(chave, nova.trim(), nome, me.usuario);
+      toast('✅ Observação salva', 'ok');
+    } catch (e) {
+      console.error(e);
+      toast('❌ Falha ao salvar observação: ' + e.message, 'err');
     }
   };
 
