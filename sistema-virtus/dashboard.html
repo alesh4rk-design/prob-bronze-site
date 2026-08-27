@@ -1128,8 +1128,8 @@
           <tr>
             <th style="width:44px;text-align:center;">#</th>
             <th>Candidato</th>
-            <th>Módulo escolhido</th>
-            <th>Nota</th>
+            <th>Testes realizados</th>
+            <th>Nota (módulo escolhido)</th>
             <th>Etapa</th>
             <th>Atualizado</th>
           </tr>
@@ -2316,9 +2316,21 @@
       const moduloEscolhido = tents[0].modulo || '—';
       const tentsEscolhido = tents.filter(t => (t.modulo || '—') === moduloEscolhido);
       const media = Math.max(...tentsEscolhido.map(t => t.pct || 0));
+      // Melhor nota de CADA módulo já feito (todos os testes, não só o
+      // escolhido) — o coordenador precisa ver o quadro completo.
+      const porModulo = {};
+      for (const t of tents) {
+        const m = t.modulo || '—';
+        const pct = t.pct || 0;
+        if (!porModulo[m] || pct > porModulo[m]) porModulo[m] = pct;
+      }
+      const modulos = Object.entries(porModulo).map(([modulo, pct]) => ({ modulo, pct }));
+      // Teste de digitação (se já fez) — nota mais alta obtida.
+      const typings = ALL_RESULTADOS.filter(t => t.tipo === 'typing' && chaveDe(t) === chave);
+      const digitacao = typings.length ? Math.max(...typings.map(t => t.pct || 0)) : null;
       const ultima = tents.reduce((a, t) => (t.data_conclusao || '') > (a || '') ? t.data_conclusao : a, tents[0].data_conclusao);
       const nome = tents[tents.length - 1].nome || '—';
-      return { chave, nome, media, moduloEscolhido, ultima };
+      return { chave, nome, media, moduloEscolhido, modulos, digitacao, ultima };
     }).sort((a, b) => (b.ultima || '').localeCompare(a.ultima || ''));
   }
 
@@ -2346,7 +2358,7 @@
       <tr class="clickable" onclick="abrirCandidato('${c.chave.replace(/'/g, "\\'")}')" title="Ver detalhamento e exportar PDF">
         <td style="text-align:center;color:var(--text3);">${i + 1}</td>
         <td class="td-nome">${escapeHtml(c.nome)} <span class="row-hint">▸ detalhes</span></td>
-        <td><span class="badge-modulo">${escapeHtml(c.moduloEscolhido)}</span></td>
+        <td>${c.modulos.map(m => `<span class="badge-modulo" style="${m.modulo === c.moduloEscolhido ? 'border-color:var(--amber);' : ''}" title="${m.modulo === c.moduloEscolhido ? 'Módulo escolhido pelo candidato' : 'Módulo automático da trilha'}">${m.modulo === c.moduloEscolhido ? '★ ' : ''}${escapeHtml(m.modulo)} <b style="color:${m.pct >= 70 ? 'var(--green)' : m.pct >= 50 ? 'var(--amber)' : 'var(--red)'}">${m.pct}%</b></span>`).join(' ')}${c.digitacao != null ? ` <span class="badge-modulo" title="Teste de digitação">⌨️ Digitação <b style="color:${c.digitacao >= 70 ? 'var(--green)' : c.digitacao >= 50 ? 'var(--amber)' : 'var(--red)'}">${c.digitacao}%</b></span>` : ''}</td>
         <td><span class="td-pct" style="color:${c.media >= 70 ? 'var(--green)' : c.media >= 50 ? 'var(--amber)' : 'var(--red)'}">${c.media >= 70 ? '✅' : '❌'} ${c.media}%</span></td>
         <td>${seletor}</td>
         <td class="td-time">${atualizadoEm}</td>
