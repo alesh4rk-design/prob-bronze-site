@@ -2609,7 +2609,6 @@
   // ── Solicitações pendentes ────────────────────────────────────────────
   function renderPendentes(lista) {
     document.getElementById('pendBadge').textContent = lista.length;
-    document.getElementById('cntPendentes').textContent = lista.length;
     const tbody = document.getElementById('pendTableBody');
     if (!lista.length) {
       tbody.innerHTML = '<tr><td colspan="4"><div class="empty-state"><div class="empty-icon">🔑</div>Nenhuma solicitação pendente</div></td></tr>';
@@ -2676,7 +2675,6 @@
 
   // ── Módulos de perguntas ──────────────────────────────────────────────
   function renderModulos(lista) {
-    document.getElementById('cntModulos').textContent = lista.length;
     document.getElementById('modBadge').textContent = lista.length + ' módulos';
     const el = document.getElementById('modulosList');
     if (!lista.length) {
