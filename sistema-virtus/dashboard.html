@@ -865,9 +865,9 @@
   </div>
   <div class="sidebar-nav">
     <div class="sidebar-section-lbl">Resultados</div>
-    <div class="sidebar-item active" data-view="dashboard" onclick="switchView('dashboard')"><span class="si-icon">📊</span> Dashboard</div>
-    <div class="sidebar-item" data-view="banco" onclick="switchView('banco')"><span class="si-icon">✅</span> Banco de Aprovados</div>
-    <div class="sidebar-item" data-view="violacoes" onclick="switchView('violacoes')"><span class="si-icon">🚨</span> Violações</div>
+    <div class="sidebar-item active" data-view="dashboard" id="sidebarItemDashboard" onclick="switchView('dashboard')"><span class="si-icon">📊</span> Dashboard</div>
+    <div class="sidebar-item" data-view="banco" id="sidebarItemBanco" onclick="switchView('banco')"><span class="si-icon">✅</span> Banco de Aprovados</div>
+    <div class="sidebar-item" data-view="violacoes" id="sidebarItemViolacoes" onclick="switchView('violacoes')"><span class="si-icon">🚨</span> Violações</div>
     <div class="sidebar-item" data-view="pipeline" onclick="switchView('pipeline')"><span class="si-icon">🧭</span> Processo Seletivo</div>
     <div class="sidebar-section-lbl" id="sidebarFerramentasLbl">Ferramentas</div>
     <div class="sidebar-item" data-view="testes" id="sidebarItemTestes" onclick="switchView('testes')"><span class="si-icon">⌨️</span> Testes</div>
@@ -1389,6 +1389,12 @@
   // Dashboard, o Banco de Aprovados e as Violações) — não tem acesso às
   // ferramentas operacionais (Testes, QR Codes, Código de Acesso).
   if (me && me.perfil === 'coordenador') {
+    // Coordenador só precisa da lista corrida de candidatos (Processo
+    // Seletivo) — não do Dashboard com KPIs/gráficos/filtros nem das
+    // ferramentas operacionais.
+    document.getElementById('sidebarItemDashboard').style.display = 'none';
+    document.getElementById('sidebarItemBanco').style.display = 'none';
+    document.getElementById('sidebarItemViolacoes').style.display = 'none';
     document.getElementById('sidebarFerramentasLbl').style.display = 'none';
     document.getElementById('sidebarItemTestes').style.display = 'none';
     document.getElementById('sidebarItemQrcodes').style.display = 'none';
@@ -1434,7 +1440,8 @@
 
   window.switchView = function (view) {
     if ((view === 'perguntas' || view === 'usuarios') && (!me || me.perfil !== 'admin')) view = 'dashboard';
-    if (VIEWS_OPERACIONAIS.includes(view) && me && me.perfil === 'coordenador') view = 'dashboard';
+    const VIEWS_BLOQUEADAS_COORDENADOR = [...VIEWS_OPERACIONAIS, 'dashboard', 'banco', 'violacoes'];
+    if (VIEWS_BLOQUEADAS_COORDENADOR.includes(view) && me && me.perfil === 'coordenador') view = 'pipeline';
     document.querySelectorAll('.app-view').forEach(v => v.classList.toggle('active', v.id === 'view-' + view));
     document.querySelectorAll('.sidebar-item').forEach(i => i.classList.toggle('active', i.dataset.view === view));
     const sub = document.getElementById('hudSubTitle');
@@ -1444,6 +1451,10 @@
     if (view === 'qrcodes') gerarQRCodes();
     if (view === 'pipeline') renderPipeline();
   };
+
+  // Coordenador abre direto na lista corrida de candidatos (Processo
+  // Seletivo) — não tem por que ver o Dashboard com KPIs/gráficos/filtros.
+  if (me && me.perfil === 'coordenador') switchView('pipeline');
 
 
   // ══════════ DETALHE DO CANDIDATO + RELATÓRIO PDF ══════════
@@ -2440,6 +2451,7 @@
     renderTyping();
     renderViolacoes();
     renderBancoAprovados();
+    renderPipeline();
   }
 
   // Planilha .xlsx de verdade (cabeçalho colorido, colunas largas, filtro,
