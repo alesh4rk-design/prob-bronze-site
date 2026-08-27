@@ -202,6 +202,19 @@ export async function definirEtapaPipeline(chave, etapa, nome, avaliador) {
   }, { merge: true });
 }
 
+// Marca (ou desmarca) um candidato como visível para coordenador/gerente de
+// RH. Admin e viewer decidem quem entra nessa lista — o coordenador só vê
+// quem foi explicitamente enviado, não todo mundo que já fez teste.
+export async function definirVisibilidadeRH(chave, visivel, nome, avaliador) {
+  const id = chave.replace(/[/]/g, "_");
+  await setDoc(doc(db, "pipeline", id), {
+    visivel_rh: visivel,
+    nome: nome || null,
+    atualizado_por: avaliador || null,
+    atualizado_em: serverTimestamp()
+  }, { merge: true });
+}
+
 export function assinarPipeline(callback, onError) {
   return onSnapshot(collection(db, "pipeline"), (snap) => {
     const mapa = {};
