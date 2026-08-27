@@ -47,10 +47,13 @@ service cloud.firestore {
     // Leitura é restrita a admin/viewer (só o dashboard lê).
     match /resultados/{id} {
       allow create: if request.resource.data.tipo == 'typing';
-      allow read: if request.auth != null && isAvaliador();
+      // Leitura: admin, viewer E coordenador (perfil só-leitura, criado pra
+      // coordenadores/gerentes acompanharem o Processo Seletivo).
+      allow read: if request.auth != null && isLeitor();
       allow update: if request.auth != null && isAdmin();
       // Excluir candidato: liberado para admin E viewer (decisão do dono do
       // sistema — qualquer avaliador logado pode apagar o resultado inteiro).
+      // Coordenador NÃO pode excluir — só acompanha.
       allow delete: if request.auth != null && isAvaliador();
     }
 
@@ -104,7 +107,16 @@ service cloud.firestore {
                         (request.resource.data.detalhe is string &&
                          request.resource.data.detalhe.size() < 300));
       allow update, delete: if request.auth != null && isAdmin();
-      allow read: if request.auth != null && isAvaliador();
+      allow read: if request.auth != null && isLeitor();
+    }
+
+    // pipeline/{chave}: etapa do processo seletivo de cada candidato
+    // (Aguardando | Entrevista | Contratado | Recusado — "Aprovado" já vem
+    // do cálculo automático da nota, não é uma etapa gravada aqui).
+    // Coordenador só LÊ; quem move a etapa é admin/viewer.
+    match /pipeline/{chave} {
+      allow read: if request.auth != null && isLeitor();
+      allow write: if request.auth != null && isAvaliador();
     }
 
     function isAdmin() {
@@ -115,6 +127,14 @@ service cloud.firestore {
     function isAvaliador() {
       return exists(/databases/$(database)/documents/usuarios/$(request.auth.uid)) &&
              get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.perfil in ['admin', 'viewer'];
+    }
+
+    // Perfil só-leitura (admin, viewer e coordenador) — usado nas coleções
+    // que o coordenador precisa VER (resultados, violações, pipeline), mas
+    // nunca em regras de escrita/exclusão.
+    function isLeitor() {
+      return exists(/databases/$(database)/documents/usuarios/$(request.auth.uid)) &&
+             get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.perfil in ['admin', 'viewer', 'coordenador'];
     }
   }
 }

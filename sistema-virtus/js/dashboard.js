@@ -184,3 +184,28 @@ export function assinarNumeroWhatsapp(callback, onError) {
     callback(snap.exists() ? (snap.data().numero || "") : "");
   }, (err) => { console.error("assinarNumeroWhatsapp:", err); if (onError) onError(err); });
 }
+
+// ── Processo Seletivo / Pipeline (pipeline/{chave}) ─────────────────────
+// Etapa manual do processo de contratação de cada candidato (Aguardando,
+// Entrevista, Contratado, Recusado). Isso é DIFERENTE da nota do teste —
+// não reintroduz a antiga "decisão do avaliador" sobre a prova, é só um
+// controle de onde o candidato está no processo de contratação, pra
+// coordenadores/gerentes acompanharem. `chave` é a mesma chave usada no
+// dashboard para agrupar tentativas do candidato (cpf:xxx ou nome:xxx).
+export async function definirEtapaPipeline(chave, etapa, nome, avaliador) {
+  const id = chave.replace(/[/]/g, "_");
+  await setDoc(doc(db, "pipeline", id), {
+    etapa,
+    nome: nome || null,
+    atualizado_por: avaliador || null,
+    atualizado_em: serverTimestamp()
+  }, { merge: true });
+}
+
+export function assinarPipeline(callback, onError) {
+  return onSnapshot(collection(db, "pipeline"), (snap) => {
+    const mapa = {};
+    snap.forEach((d) => { mapa[d.id] = d.data(); });
+    callback(mapa);
+  }, (err) => { console.error("assinarPipeline:", err); if (onError) onError(err); });
+}

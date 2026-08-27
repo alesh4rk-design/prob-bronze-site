@@ -543,6 +543,7 @@
   }
   .perfil-admin    { background:var(--greendim); color:var(--green); border:1px solid rgba(0,238,136,.4); }
   .perfil-viewer   { background:var(--cyandim);  color:var(--cyan);  border:1px solid rgba(0,212,240,.4); }
+  .perfil-coordenador { background:var(--amberdim); color:var(--amber); border:1px solid var(--ambermid); }
   .perfil-pendente { background:var(--amberdim); color:var(--amber); border:1px solid rgba(240,168,0,.4); }
 
   .btn-act {
@@ -867,10 +868,11 @@
     <div class="sidebar-item active" data-view="dashboard" onclick="switchView('dashboard')"><span class="si-icon">📊</span> Dashboard</div>
     <div class="sidebar-item" data-view="banco" onclick="switchView('banco')"><span class="si-icon">✅</span> Banco de Aprovados</div>
     <div class="sidebar-item" data-view="violacoes" onclick="switchView('violacoes')"><span class="si-icon">🚨</span> Violações</div>
-    <div class="sidebar-section-lbl">Ferramentas</div>
-    <div class="sidebar-item" data-view="testes" onclick="switchView('testes')"><span class="si-icon">⌨️</span> Testes</div>
-    <div class="sidebar-item" data-view="qrcodes" onclick="switchView('qrcodes')"><span class="si-icon">🖨️</span> QR Codes</div>
-    <div class="sidebar-item" data-view="codigos" onclick="switchView('codigos')"><span class="si-icon">🔑</span> Código de Acesso</div>
+    <div class="sidebar-item" data-view="pipeline" onclick="switchView('pipeline')"><span class="si-icon">🧭</span> Processo Seletivo</div>
+    <div class="sidebar-section-lbl" id="sidebarFerramentasLbl">Ferramentas</div>
+    <div class="sidebar-item" data-view="testes" id="sidebarItemTestes" onclick="switchView('testes')"><span class="si-icon">⌨️</span> Testes</div>
+    <div class="sidebar-item" data-view="qrcodes" id="sidebarItemQrcodes" onclick="switchView('qrcodes')"><span class="si-icon">🖨️</span> QR Codes</div>
+    <div class="sidebar-item" data-view="codigos" id="sidebarItemCodigos" onclick="switchView('codigos')"><span class="si-icon">🔑</span> Código de Acesso</div>
     <div class="sidebar-section-lbl" id="sidebarAdminLbl" style="display:none;">Administração</div>
     <div class="sidebar-item" data-view="perguntas" id="sidebarItemPerguntas" style="display:none;" onclick="switchView('perguntas')"><span class="si-icon">📚</span> Perguntas</div>
     <div class="sidebar-item" data-view="usuarios" id="sidebarItemUsuarios" style="display:none;" onclick="switchView('usuarios')"><span class="si-icon">👥</span> Usuários</div>
@@ -1102,6 +1104,44 @@
   </div>
 </section>
 
+<!-- ══════════ VIEW: PROCESSO SELETIVO (funil de contratação) ══════════ -->
+<section class="app-view" id="view-pipeline">
+  <div class="page-title-area">
+    <div>
+      <div class="page-title">Processo <em>Seletivo</em></div>
+      <div class="page-subtitle">Acompanhamento do funil de contratação de cada candidato</div>
+    </div>
+  </div>
+  <div class="panel">
+    <div class="panel-head">
+      <div class="panel-title-sm">🧭 Funil de Contratação <span class="badge" id="pipelineBadge">0 candidatos</span></div>
+    </div>
+    <div class="panel-body" style="padding:16px 20px 6px;">
+      <div class="warn-note">
+        A nota (✅/❌) vem automática do teste. A <strong>etapa</strong> abaixo é manual — controla só o
+        andamento do processo de contratação (não mexe na nota nem em nenhum resultado de prova).
+      </div>
+    </div>
+    <div class="results-table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th style="width:44px;text-align:center;">#</th>
+            <th>Candidato</th>
+            <th>Módulo escolhido</th>
+            <th>Nota</th>
+            <th>Etapa</th>
+            <th>Atualizado</th>
+          </tr>
+        </thead>
+        <tbody id="pipelineTableBody">
+          <tr><td colspan="6"><div class="empty-state"><div class="empty-icon">🧭</div>Nenhum candidato ainda.</div></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
 <!-- ══════════ VIEW: QR CODES (de admin.html / sec-qrcodes) ══════════ -->
 <section class="app-view" id="view-qrcodes">
   <div class="page-title-area">
@@ -1284,7 +1324,8 @@
     assinarPendentes, assinarUsuarios, aprovarUsuario, removerUsuario,
     assinarModulos, definirModuloAtivo,
     gerarCodigoAcesso, assinarCodigosAcesso, cancelarCodigoAcesso, excluirCodigoAcesso,
-    definirNumeroWhatsapp, assinarNumeroWhatsapp
+    definirNumeroWhatsapp, assinarNumeroWhatsapp,
+    definirEtapaPipeline, assinarPipeline
   } from "./js/dashboard.js";
   import { db } from "./js/firebase-config.js";
   import { doc, setDoc } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
@@ -1292,6 +1333,7 @@
 
   let ALL_RESULTADOS = [];
   let ALL_VIOLACOES = [];
+  let PIPELINE_MAP = {};
 
   function toast(msg, type='') {
     const el = document.getElementById('toast');
@@ -1343,17 +1385,30 @@
     document.getElementById('sidebarItemUsuarios').style.display = 'flex';
   }
 
+  // Coordenador é um perfil só-leitura (acompanha o Processo Seletivo, o
+  // Dashboard, o Banco de Aprovados e as Violações) — não tem acesso às
+  // ferramentas operacionais (Testes, QR Codes, Código de Acesso).
+  if (me && me.perfil === 'coordenador') {
+    document.getElementById('sidebarFerramentasLbl').style.display = 'none';
+    document.getElementById('sidebarItemTestes').style.display = 'none';
+    document.getElementById('sidebarItemQrcodes').style.display = 'none';
+    document.getElementById('sidebarItemCodigos').style.display = 'none';
+    document.getElementById('btnExcluirCandidato').style.display = 'none';
+  }
+
   // ══════════ NAVEGAÇÃO LATERAL (SIDEBAR) — SPA sem reload ══════════
   const VIEW_TITULOS = {
     dashboard: 'Dashboard de Resultados',
     banco: 'Banco de Aprovados',
     testes: 'Aplicar Testes',
     violacoes: 'Violações Registradas',
+    pipeline: 'Processo Seletivo',
     qrcodes: 'QR Codes para Imprimir',
     codigos: 'Código de Acesso',
     perguntas: 'Banco de Perguntas',
     usuarios: 'Gestão de Usuários'
   };
+  const VIEWS_OPERACIONAIS = ['testes', 'qrcodes', 'codigos'];
   const LS_VIEW = 'virtus_dashboard_view';
 
   // Toque em e-mails ocultos (.email-hover) revela o tooltip em telas touch,
@@ -1379,6 +1434,7 @@
 
   window.switchView = function (view) {
     if ((view === 'perguntas' || view === 'usuarios') && (!me || me.perfil !== 'admin')) view = 'dashboard';
+    if (VIEWS_OPERACIONAIS.includes(view) && me && me.perfil === 'coordenador') view = 'dashboard';
     document.querySelectorAll('.app-view').forEach(v => v.classList.toggle('active', v.id === 'view-' + view));
     document.querySelectorAll('.sidebar-item').forEach(i => i.classList.toggle('active', i.dataset.view === view));
     const sub = document.getElementById('hudSubTitle');
@@ -1386,6 +1442,7 @@
     localStorage.setItem(LS_VIEW, view);
     toggleSidebar(false);
     if (view === 'qrcodes') gerarQRCodes();
+    if (view === 'pipeline') renderPipeline();
   };
 
 
@@ -2226,6 +2283,79 @@
 
   function escapeHtml(s) { return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
 
+  // ══════════ PROCESSO SELETIVO (funil de contratação) ══════════
+  // Agrupa por candidato (mesma chave usada no resto do dashboard) e mostra
+  // a nota automática do módulo escolhido lado a lado com a ETAPA manual do
+  // processo de contratação (guardada em `pipeline/{chave}`). A nota nunca
+  // muda aqui — só a etapa, que é controle de RH, não de correção de prova.
+  const ETAPAS_PIPELINE = [
+    { valor: 'aguardando', label: 'Aguardando', cor: 'var(--text3)' },
+    { valor: 'entrevista', label: 'Em entrevista', cor: 'var(--amber)' },
+    { valor: 'contratado', label: 'Contratado', cor: 'var(--green)' },
+    { valor: 'recusado', label: 'Recusado', cor: 'var(--red)' }
+  ];
+
+  function candidatosAgrupados() {
+    const quizzes = ALL_RESULTADOS.filter(r => r.tipo !== 'typing');
+    const porCandidato = {};
+    for (const r of quizzes) {
+      const chave = chaveDe(r);
+      if (!porCandidato[chave]) porCandidato[chave] = [];
+      porCandidato[chave].push(r);
+    }
+    return Object.entries(porCandidato).map(([chave, tentsRaw]) => {
+      const tents = [...tentsRaw].sort((a, b) => String(a.data_conclusao || '').localeCompare(String(b.data_conclusao || '')));
+      const moduloEscolhido = tents[0].modulo || '—';
+      const tentsEscolhido = tents.filter(t => (t.modulo || '—') === moduloEscolhido);
+      const media = Math.max(...tentsEscolhido.map(t => t.pct || 0));
+      const ultima = tents.reduce((a, t) => (t.data_conclusao || '') > (a || '') ? t.data_conclusao : a, tents[0].data_conclusao);
+      const nome = tents[tents.length - 1].nome || '—';
+      return { chave, nome, media, moduloEscolhido, ultima };
+    }).sort((a, b) => (b.ultima || '').localeCompare(a.ultima || ''));
+  }
+
+  window.renderPipeline = function renderPipeline() {
+    const tbody = document.getElementById('pipelineTableBody');
+    if (!tbody) return;
+    const candidatos = candidatosAgrupados();
+    document.getElementById('pipelineBadge').textContent = candidatos.length + ' candidatos';
+    if (!candidatos.length) {
+      tbody.innerHTML = '<tr><td colspan="6"><div class="empty-state"><div class="empty-icon">🧭</div>Nenhum candidato ainda.</div></td></tr>';
+      return;
+    }
+    const somenteLeitura = me.perfil === 'coordenador';
+    tbody.innerHTML = candidatos.map((c, i) => {
+      const chaveId = c.chave.replace(/[/]/g, '_');
+      const etapaAtual = (PIPELINE_MAP[chaveId] && PIPELINE_MAP[chaveId].etapa) || 'aguardando';
+      const infoEtapa = ETAPAS_PIPELINE.find(e => e.valor === etapaAtual) || ETAPAS_PIPELINE[0];
+      const atualizadoEm = PIPELINE_MAP[chaveId] && PIPELINE_MAP[chaveId].atualizado_em ? fmtDataHora(PIPELINE_MAP[chaveId].atualizado_em) : '—';
+      const seletor = somenteLeitura
+        ? `<span style="color:${infoEtapa.cor};font-weight:700;">${infoEtapa.label}</span>`
+        : `<select class="field-input" style="max-width:170px;color:${infoEtapa.cor};font-weight:700;" onclick="event.stopPropagation()" onchange="event.stopPropagation();mudarEtapaPipeline('${c.chave.replace(/'/g, "\\'")}','${escapeHtml(c.nome).replace(/'/g, "\\'")}',this.value)">
+            ${ETAPAS_PIPELINE.map(e => `<option value="${e.valor}" ${e.valor === etapaAtual ? 'selected' : ''}>${e.label}</option>`).join('')}
+          </select>`;
+      return `
+      <tr class="clickable" onclick="abrirCandidato('${c.chave.replace(/'/g, "\\'")}')" title="Ver detalhamento e exportar PDF">
+        <td style="text-align:center;color:var(--text3);">${i + 1}</td>
+        <td class="td-nome">${escapeHtml(c.nome)} <span class="row-hint">▸ detalhes</span></td>
+        <td><span class="badge-modulo">${escapeHtml(c.moduloEscolhido)}</span></td>
+        <td><span class="td-pct" style="color:${c.media >= 70 ? 'var(--green)' : c.media >= 50 ? 'var(--amber)' : 'var(--red)'}">${c.media >= 70 ? '✅' : '❌'} ${c.media}%</span></td>
+        <td>${seletor}</td>
+        <td class="td-time">${atualizadoEm}</td>
+      </tr>`;
+    }).join('');
+  };
+
+  window.mudarEtapaPipeline = async function (chave, nome, etapa) {
+    try {
+      await definirEtapaPipeline(chave, etapa, nome, me.usuario);
+      toast('✅ Etapa atualizada', 'ok');
+    } catch (e) {
+      console.error(e);
+      toast('❌ Falha ao atualizar etapa: ' + e.message, 'err');
+    }
+  };
+
   // ══════════ BANCO DE APROVADOS ══════════
   // Puramente automático: agrupa por candidato (mesma chave usada no modal de
   // detalhe) e considera aprovado quem tirou >= 70% em pelo menos um módulo
@@ -2493,6 +2623,7 @@
           <div style="display:flex;gap:6px;flex-wrap:wrap;">
             <button class="btn-act btn-approve-admin"  onclick="aprovar('${p.uid}','admin')">Admin</button>
             <button class="btn-act btn-approve-viewer" onclick="aprovar('${p.uid}','viewer')">Viewer</button>
+            <button class="btn-act btn-neutral" onclick="aprovar('${p.uid}','coordenador')">Coordenador</button>
           </div>
         </td>
         <td><button class="btn-act btn-danger" onclick="recusar('${p.uid}','${escapeHtml(p.nome || p.email || '')}')">✕</button></td>
@@ -2501,7 +2632,8 @@
 
   // ── Avaliadores já com acesso ─────────────────────────────────────────
   function renderUsuarios(todos) {
-    const ativos = todos.filter(u => u.perfil === 'admin' || u.perfil === 'viewer');
+    const PERFIS = ['admin', 'viewer', 'coordenador'];
+    const ativos = todos.filter(u => PERFIS.includes(u.perfil));
     document.getElementById('ativosBadge').textContent = ativos.length;
     const tbody = document.getElementById('usersTableBody');
     if (!ativos.length) {
@@ -2510,7 +2642,7 @@
     }
     tbody.innerHTML = ativos.map(u => {
       const souEu = u.uid === me.uid;
-      const outroPerfil = u.perfil === 'admin' ? 'viewer' : 'admin';
+      const outrosPerfis = PERFIS.filter(p => p !== u.perfil);
       return `
         <tr>
           <td class="td-nome">${escapeHtml(u.nome || '—')}${souEu ? ' <span style="color:var(--text3);font-size:11px;">(você)</span>' : ''}</td>
@@ -2520,8 +2652,8 @@
             <div style="display:flex;gap:6px;flex-wrap:wrap;">
               ${souEu
                 ? '<span style="color:var(--text4);font-size:11px;font-family:\'Share Tech Mono\',monospace;">—</span>'
-                : `<button class="btn-act btn-neutral" onclick="alterarPerfil('${u.uid}','${outroPerfil}')">→ ${outroPerfil}</button>
-                   <button class="btn-act btn-danger" onclick="recusar('${u.uid}','${escapeHtml(u.nome || u.email || '')}')">Revogar</button>`}
+                : outrosPerfis.map(p => `<button class="btn-act btn-neutral" onclick="alterarPerfil('${u.uid}','${p}')">→ ${p}</button>`).join('') +
+                  `<button class="btn-act btn-danger" onclick="recusar('${u.uid}','${escapeHtml(u.nome || u.email || '')}')">Revogar</button>`}
             </div>
           </td>
         </tr>`;
@@ -2857,12 +2989,20 @@
         unsubs.push(assinarModulos(lista => { renderModulos(lista); }, () => statusDot(false, 'Reconectando...')));
       }
       // Códigos de acesso: admin e viewer têm permissão (isAvaliador()).
-      unsubs.push(assinarCodigosAcesso(
-        lista => { renderCodigos(lista); },
-        () => statusDot(false, 'Reconectando...')
-      ));
-      unsubs.push(assinarNumeroWhatsapp(
-        numero => { document.getElementById('inWhatsappRH').value = numero || ''; },
+      // Código de acesso: só admin/viewer têm permissão (coordenador é
+      // só-leitura de resultados/violações/pipeline, não mexe em operação).
+      if (me.perfil !== 'coordenador') {
+        unsubs.push(assinarCodigosAcesso(
+          lista => { renderCodigos(lista); },
+          () => statusDot(false, 'Reconectando...')
+        ));
+        unsubs.push(assinarNumeroWhatsapp(
+          numero => { document.getElementById('inWhatsappRH').value = numero || ''; },
+          () => statusDot(false, 'Reconectando...')
+        ));
+      }
+      unsubs.push(assinarPipeline(
+        mapa => { PIPELINE_MAP = mapa; renderPipeline(); },
         () => statusDot(false, 'Reconectando...')
       ));
     } catch (e) {

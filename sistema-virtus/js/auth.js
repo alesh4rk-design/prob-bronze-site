@@ -90,7 +90,13 @@ export function virtusGetCurrentUser() {
         const perfilDoc = await getDoc(doc(db, "usuarios", user.uid));
         if (!perfilDoc.exists()) { resolve(null); return; }
         const data = perfilDoc.data();
-        resolve({ uid: user.uid, usuario: data.usuario, perfil: data.perfil });
+        // Contas criadas manualmente no console do Firebase (sem o campo
+        // "usuario" salvo em Firestore) caíam com usuario:undefined aqui,
+        // o que quebrava qualquer updateDoc que gravasse esse valor depois
+        // (Firestore rejeita campos undefined). Cai para o e-mail do Auth,
+        // ou "avaliador" como último recurso.
+        const usuario = data.usuario || data.nome || data.email || user.email || "avaliador";
+        resolve({ uid: user.uid, usuario, perfil: data.perfil });
       } catch (e) {
         resolve(null);
       }
@@ -98,7 +104,9 @@ export function virtusGetCurrentUser() {
   });
 }
 
-// Exige perfil admin ou viewer; redireciona para o login se não autorizado.
+// Exige perfil admin, viewer ou coordenador; redireciona para o login se não
+// autorizado. "coordenador" é um perfil só-leitura, criado pra coordenadores/
+// gerentes acompanharem o Processo Seletivo sem poder mexer em nada.
 // Uso típico no topo do dashboard.html: `const me = await requireDashboardAccess();`
 export async function requireDashboardAccess() {
   const me = await virtusGetCurrentUser();
@@ -107,7 +115,7 @@ export async function requireDashboardAccess() {
     window.location.replace("./index.html?pendente=1");
     return null;
   }
-  if (!me || (me.perfil !== "admin" && me.perfil !== "viewer")) {
+  if (!me || (me.perfil !== "admin" && me.perfil !== "viewer" && me.perfil !== "coordenador")) {
     window.location.replace("./index.html");
     return null;
   }
