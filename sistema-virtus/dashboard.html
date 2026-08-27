@@ -1093,7 +1093,7 @@
     <div class="results-table-wrap">
       <table>
         <thead><tr><th>Candidato</th><th>Módulo</th><th>Tipo</th><th>Detalhe</th><th>Data/Hora</th></tr></thead>
-        <tbody id="violTableBody"><tr><td colspan="5"><div class="empty-state"><div class="empty-icon">📅</div>Selecione um período (De / Até) e clique em Buscar.</div></td></tr></tbody>
+        <tbody id="violTableBody"><tr><td colspan="5"><div class="empty-state"><div class="empty-icon">🚨</div>Nenhuma violação no período selecionado</div></td></tr></tbody>
       </table>
     </div>
   </div>
@@ -2182,11 +2182,6 @@
     const tbody = document.getElementById('violTableBody');
     const dataIni = document.getElementById('violDataIni').value;
     const dataFim = document.getElementById('violDataFim').value;
-    if (!dataIni && !dataFim) {
-      document.getElementById('violBadge').textContent = '0 eventos';
-      tbody.innerHTML = '<tr><td colspan="5"><div class="empty-state"><div class="empty-icon">📅</div>Selecione um período (De / Até) e clique em Buscar.</div></td></tr>';
-      return;
-    }
     const lista = ALL_VIOLACOES.filter(v => {
       if (!v.data) return false;
       if (dataIni && v.data < dataIni) return false;
@@ -2838,6 +2833,10 @@
     document.getElementById('filterDia').value = dataLocalYMD(ontem);
   }
   document.getElementById('filterPeriodo').value = periodoSalvo;
+
+  // Violações também abre filtrado no dia de hoje por padrão.
+  document.getElementById('violDataIni').value = dataLocalYMD(new Date());
+  document.getElementById('violDataFim').value = dataLocalYMD(new Date());
 
   conectar();
 
