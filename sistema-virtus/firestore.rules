@@ -7,17 +7,25 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // usuarios/{uid}: perfil (pendente | admin | viewer) de cada avaliador.
+    // usuarios/{uid}: perfil (pendente | admin | viewer | coordenador) de
+    // cada avaliador.
     // Autocadastro (cadastro.html): a própria pessoa cria seu doc, mas SÓ
-    // com perfil "pendente" — não pode se autopromover a admin/viewer na
-    // criação. Só um admin existente pode mudar o perfil depois (aprovação),
-    // via tela "Solicitações pendentes" no dashboard.
+    // com perfil "pendente" — não pode se autopromover na criação.
+    // Aprovação: admin pode aprovar/alterar qualquer perfil. Viewer também
+    // pode aprovar solicitações e gerenciar contas, MAS só pode conceder ou
+    // manter os perfis "viewer"/"coordenador" — nunca "admin" — e não pode
+    // mexer em contas que já são admin (nem promover, nem revogar).
     match /usuarios/{uid} {
-      allow read: if request.auth != null &&
-                     (request.auth.uid == uid || isAdmin());
+      allow read: if request.auth != null && (request.auth.uid == uid || isAvaliador());
       allow create: if request.auth != null && request.auth.uid == uid &&
                        request.resource.data.perfil == 'pendente';
-      allow update, delete: if request.auth != null && isAdmin();
+      allow update: if request.auth != null && (
+                      isAdmin() ||
+                      (isViewer() &&
+                       resource.data.perfil != 'admin' &&
+                       request.resource.data.perfil in ['viewer', 'coordenador'])
+                    );
+      allow delete: if request.auth != null && (isAdmin() || (isViewer() && resource.data.perfil != 'admin'));
     }
 
     // perguntas/{modulo}: banco de questões por módulo, COM o gabarito
@@ -127,6 +135,11 @@ service cloud.firestore {
     function isAvaliador() {
       return exists(/databases/$(database)/documents/usuarios/$(request.auth.uid)) &&
              get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.perfil in ['admin', 'viewer'];
+    }
+
+    function isViewer() {
+      return exists(/databases/$(database)/documents/usuarios/$(request.auth.uid)) &&
+             get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.perfil == 'viewer';
     }
 
     // Perfil só-leitura (admin, viewer e coordenador) — usado nas coleções

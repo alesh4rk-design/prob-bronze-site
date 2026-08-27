@@ -1377,11 +1377,15 @@
   }
   document.getElementById('btnLogout').onclick = async () => { await virtusLogout(); window.location.replace('./index.html'); };
 
-  // Perguntas e Usuários são exclusivos do perfil admin — vier oculta essas
-  // duas entradas do menu lateral por completo (não só desabilitada).
+  // Perguntas é exclusivo do admin. Usuários também é liberado pro viewer
+  // (ele pode aprovar solicitações e gerenciar contas, mas só como
+  // viewer/coordenador — nunca admin, e não mexe em contas admin).
   if (me && me.perfil === 'admin') {
     document.getElementById('sidebarAdminLbl').style.display = 'block';
     document.getElementById('sidebarItemPerguntas').style.display = 'flex';
+    document.getElementById('sidebarItemUsuarios').style.display = 'flex';
+  } else if (me && me.perfil === 'viewer') {
+    document.getElementById('sidebarAdminLbl').style.display = 'block';
     document.getElementById('sidebarItemUsuarios').style.display = 'flex';
   }
 
@@ -1439,7 +1443,8 @@
   };
 
   window.switchView = function (view) {
-    if ((view === 'perguntas' || view === 'usuarios') && (!me || me.perfil !== 'admin')) view = 'dashboard';
+    if (view === 'perguntas' && (!me || me.perfil !== 'admin')) view = 'dashboard';
+    if (view === 'usuarios' && (!me || (me.perfil !== 'admin' && me.perfil !== 'viewer'))) view = 'dashboard';
     const VIEWS_BLOQUEADAS_COORDENADOR = [...VIEWS_OPERACIONAIS, 'dashboard', 'banco', 'violacoes'];
     if (VIEWS_BLOQUEADAS_COORDENADOR.includes(view) && me && me.perfil === 'coordenador') view = 'pipeline';
     document.querySelectorAll('.app-view').forEach(v => v.classList.toggle('active', v.id === 'view-' + view));
@@ -2635,13 +2640,15 @@
       tbody.innerHTML = '<tr><td colspan="4"><div class="empty-state"><div class="empty-icon">🔑</div>Nenhuma solicitação pendente</div></td></tr>';
       return;
     }
+    // Viewer não pode conceder perfil admin — só admin vê esse botão.
+    const podeAprovarAdmin = me.perfil === 'admin';
     tbody.innerHTML = lista.map(p => `
       <tr>
         <td class="td-nome">${escapeHtml(p.nome || '—')}</td>
         <td><span class="email-hover" data-email="${escapeHtml(p.email || '—')}">•••••</span></td>
         <td>
           <div style="display:flex;gap:6px;flex-wrap:wrap;">
-            <button class="btn-act btn-approve-admin"  onclick="aprovar('${p.uid}','admin')">Admin</button>
+            ${podeAprovarAdmin ? `<button class="btn-act btn-approve-admin"  onclick="aprovar('${p.uid}','admin')">Admin</button>` : ''}
             <button class="btn-act btn-approve-viewer" onclick="aprovar('${p.uid}','viewer')">Viewer</button>
             <button class="btn-act btn-neutral" onclick="aprovar('${p.uid}','coordenador')">Coordenador</button>
           </div>
@@ -2660,9 +2667,14 @@
       tbody.innerHTML = '<tr><td colspan="4"><div class="empty-state"><div class="empty-icon">👥</div>Nenhum avaliador aprovado ainda</div></td></tr>';
       return;
     }
+    // Viewer não pode conceder admin nem mexer em quem já é admin (nem
+    // promover pra admin, nem revogar um admin) — reforçado nas rules.
+    const souAdmin = me.perfil === 'admin';
     tbody.innerHTML = ativos.map(u => {
       const souEu = u.uid === me.uid;
-      const outrosPerfis = PERFIS.filter(p => p !== u.perfil);
+      const posEditar = souAdmin || u.perfil !== 'admin';
+      let outrosPerfis = PERFIS.filter(p => p !== u.perfil);
+      if (!souAdmin) outrosPerfis = outrosPerfis.filter(p => p !== 'admin');
       return `
         <tr>
           <td class="td-nome">${escapeHtml(u.nome || '—')}${souEu ? ' <span style="color:var(--text3);font-size:11px;">(você)</span>' : ''}</td>
@@ -2670,7 +2682,7 @@
           <td><span class="perfil-chip perfil-${u.perfil}">${u.perfil}</span></td>
           <td>
             <div style="display:flex;gap:6px;flex-wrap:wrap;">
-              ${souEu
+              ${(souEu || !posEditar)
                 ? '<span style="color:var(--text4);font-size:11px;font-family:\'Share Tech Mono\',monospace;">—</span>'
                 : outrosPerfis.map(p => `<button class="btn-act btn-neutral" onclick="alterarPerfil('${u.uid}','${p}')">→ ${p}</button>`).join('') +
                   `<button class="btn-act btn-danger" onclick="recusar('${u.uid}','${escapeHtml(u.nome || u.email || '')}')">Revogar</button>`}
@@ -3006,10 +3018,14 @@
         (lista) => { ALL_VIOLACOES = lista; renderViolacoes(); },
         () => statusDot(false, 'Conexão perdida — reconectando...')
       ));
-      // Usuários/Perguntas: só admin tem permissão de leitura nas regras.
-      if (me.perfil === 'admin') {
+      // Usuários: admin e viewer têm permissão de leitura/aprovação nas
+      // regras (viewer só pode conceder viewer/coordenador — ver rules).
+      if (me.perfil === 'admin' || me.perfil === 'viewer') {
         unsubs.push(assinarPendentes(renderPendentes, () => statusDot(false, 'Reconectando...')));
         unsubs.push(assinarUsuarios(renderUsuarios, () => statusDot(false, 'Reconectando...')));
+      }
+      // Perguntas: só admin tem permissão de leitura nas regras.
+      if (me.perfil === 'admin') {
         unsubs.push(assinarModulos(lista => { renderModulos(lista); }, () => statusDot(false, 'Reconectando...')));
       }
       // Códigos de acesso: admin e viewer têm permissão (isAvaliador()).
