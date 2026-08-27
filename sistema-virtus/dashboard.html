@@ -1452,11 +1452,6 @@
     if (view === 'pipeline') renderPipeline();
   };
 
-  // Coordenador abre direto na lista corrida de candidatos (Processo
-  // Seletivo) — não tem por que ver o Dashboard com KPIs/gráficos/filtros.
-  if (me && me.perfil === 'coordenador') {
-    try { switchView('pipeline'); } catch (e) { console.error(e); toast('❌ Erro ao abrir Processo Seletivo: ' + e.message, 'err'); }
-  }
 
 
   // ══════════ DETALHE DO CANDIDATO + RELATÓRIO PDF ══════════
@@ -3048,6 +3043,12 @@
   document.getElementById('violDataFim').value = dataLocalYMD(new Date());
   document.getElementById('bancoDataIni').value = dataLocalYMD(new Date());
   document.getElementById('bancoDataFim').value = dataLocalYMD(new Date());
+
+  // Coordenador abre direto na lista corrida de candidatos (Processo
+  // Seletivo) — não tem por que ver o Dashboard com KPIs/gráficos/filtros.
+  if (me && me.perfil === 'coordenador') {
+    try { switchView('pipeline'); } catch (e) { console.error(e); toast('❌ Erro ao abrir Processo Seletivo: ' + e.message, 'err'); }
+  }
 
   conectar();
 
