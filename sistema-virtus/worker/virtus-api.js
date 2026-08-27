@@ -211,6 +211,61 @@ async function handleVerificarCodigo(request, env, cors) {
   return json({ ok: true }, cors);
 }
 
+// Mesma configuração usada no js/quiz.js do site — precisa ficar igual nos
+// dois lugares (aqui decide QUANTAS questões o candidato recebe e embaralha
+// sem o gabarito; no site, tempoLimiteParaModulo só decide o cronômetro).
+const MODULOS_COMPORTAMENTAIS = ["Linguagem Positiva", "Atendimento ao Cliente"];
+function totalQuestoesParaModulo(modulo) {
+  return MODULOS_COMPORTAMENTAIS.includes((modulo || "").trim()) ? 10 : 15;
+}
+function embaralhar(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+async function handleListarModulos(env, cors) {
+  const token = await getAccessToken(env);
+  const resp = await fetch(`${FIRESTORE_BASE(env.FIREBASE_PROJECT_ID)}/perguntas`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!resp.ok) throw new Error(`Firestore LIST falhou (${resp.status}): ${await resp.text()}`);
+  const data = await resp.json();
+  const modulos = [];
+  let total = 0;
+  for (const d of data.documents || []) {
+    const fields = fromFirestoreFields(d.fields);
+    if (fields.ativo === false) continue;
+    const nome = d.name.split("/").pop();
+    const qtd = (fields.questoes || []).length;
+    modulos.push({ nome, total: qtd });
+    total += qtd;
+  }
+  return json({ modulos, total_perguntas: total }, cors);
+}
+
+async function handleCarregarPerguntas(request, env, cors) {
+  const { modulo } = await request.json();
+  if (!modulo) return json({ ok: false, erro: "modulo_invalido" }, cors, 400);
+
+  const token = await getAccessToken(env);
+  const doc = await firestoreGet(env, token, `perguntas/${encodeURIComponent(modulo)}`);
+  if (!doc || doc.ativo === false) return json({ ok: false, erro: "modulo_nao_encontrado" }, cors, 404);
+  const banco = doc.questoes || [];
+  if (!banco.length) return json({ ok: false, erro: "modulo_sem_perguntas" }, cors, 404);
+
+  const quantas = Math.min(totalQuestoesParaModulo(modulo), banco.length);
+  // O gabarito (`resposta`) NUNCA sai daqui — só q/o/n vão pro candidato.
+  const perguntas = embaralhar(banco)
+    .slice(0, quantas)
+    .map((item) => ({ q: item.q, o: embaralhar(item.o || []), n: item.n }));
+
+  return json({ ok: true, perguntas }, cors);
+}
+
 async function handleSubmeterQuiz(request, env, cors) {
   const body = await request.json();
   const { modulo, respostas, perguntaTextos, nome, candidato, dataPreferencia } = body;
@@ -268,6 +323,12 @@ export default {
       }
       if (url.pathname === "/submeter-quiz" && request.method === "POST") {
         return await handleSubmeterQuiz(request, env, cors);
+      }
+      if (url.pathname === "/listar-modulos" && request.method === "POST") {
+        return await handleListarModulos(env, cors);
+      }
+      if (url.pathname === "/carregar-perguntas" && request.method === "POST") {
+        return await handleCarregarPerguntas(request, env, cors);
       }
       return json({ ok: false, erro: "rota_nao_encontrada" }, cors, 404);
     } catch (e) {

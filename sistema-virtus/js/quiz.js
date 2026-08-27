@@ -30,38 +30,35 @@
 
 import { db } from "./firebase-config.js";
 import {
-  collection, doc, getDoc, getDocs, addDoc, updateDoc, increment, serverTimestamp
+  collection, addDoc, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+
+// URL do Worker (Cloudflare) que faz a correção do quiz e a checagem do
+// código de acesso no SERVIDOR — o candidato nunca recebe o gabarito, e não
+// dá mais para fabricar uma nota direto no Firestore nem tentar adivinhar o
+// código por força bruta (o Worker aplica um limite de tentativas por IP).
+const API_BASE = "https://virtus-api.ale-sh4rk.workers.dev";
 
 // ── Código de acesso presencial ─────────────────────────────────────────
 // Confere o código digitado pelo candidato. É um código COMPARTILHADO — o
 // mesmo serve para todos os candidatos da entrevista (não é de uso único),
 // pensado para dias com muita gente (20+ candidatos). Ele expira sozinho
 // 4 horas depois de gerado, ou antes se o avaliador desativar manualmente.
-// A expiração é validada no SERVIDOR pelas firestore.rules
-// (request.time < resource.data.expira_em) — não dá para burlar mudando o
-// relógio do navegador, porque quem decide é o horário do servidor do
-// Firestore no momento da escrita.
+// A validação acontece no Worker (que também limita tentativas por IP, para
+// impedir um script de tentar adivinhar o código por força bruta).
 export async function verificarCodigoAcesso(codigoDigitado) {
   const codigo = (codigoDigitado || "").trim();
   if (!codigo) return { ok: false, motivo: "vazio" };
 
-  const ref = doc(db, "codigos_acesso", codigo);
-  const snap = await getDoc(ref);
-  if (!snap.exists()) return { ok: false, motivo: "nao_encontrado" };
-  const data = snap.data();
-  if (data.ativo === false) return { ok: false, motivo: "desativado" };
-  const expiraEm = data.expira_em && data.expira_em.toDate ? data.expira_em.toDate() : null;
-  if (expiraEm && expiraEm.getTime() <= Date.now()) return { ok: false, motivo: "expirado" };
-
   try {
-    // Só incrementa o contador de usos — não invalida o código para os
-    // próximos candidatos. Se a regra rejeitar (código expirou no exato
-    // instante entre a leitura e a escrita), cai no catch abaixo.
-    await updateDoc(ref, { usos: increment(1), ultimo_uso_em: serverTimestamp() });
-    return { ok: true };
+    const resp = await fetch(`${API_BASE}/verificar-codigo`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ codigo })
+    });
+    return await resp.json();
   } catch (e) {
-    return { ok: false, motivo: "expirado" };
+    return { ok: false, motivo: "erro_conexao" };
   }
 }
 
@@ -120,85 +117,54 @@ function embaralhar(arr) {
 }
 
 // Lista os módulos disponíveis e a contagem total de perguntas.
+// Passa pelo Worker (não lê `perguntas` direto do Firestore no navegador do
+// candidato): essa coleção guarda o gabarito de cada questão, então só
+// avaliadores logados podem lê-la diretamente (ver firestore.rules).
 export async function listarModulos() {
-  const snap = await getDocs(collection(db, "perguntas"));
-  const modulos = [];
-  let total = 0;
-  snap.forEach((d) => {
-    const data = d.data();
-    // Módulos desativados pelo admin (ativo === false) não são oferecidos ao
-    // candidato. Docs sem o campo `ativo` contam como ativos.
-    if (data.ativo === false) return;
-    const questoes = data.questoes || [];
-    modulos.push({ nome: d.id, total: questoes.length });
-    total += questoes.length;
-  });
-  return { modulos, total_perguntas: total };
+  const resp = await fetch(`${API_BASE}/listar-modulos`, { method: "POST" });
+  if (!resp.ok) throw new Error("Não foi possível carregar os módulos.");
+  return resp.json();
 }
 
-// Carrega as perguntas de um módulo específico (sem o campo `resposta`,
-// para não vazar o gabarito no client — a correção é feita no navegador do
-// candidato de qualquer forma nesta migração 100% client-side, mas mantemos
-// a separação para deixar claro o que é "exibido" vs "gabarito").
+// Carrega as perguntas de um módulo específico, já sem o campo `resposta` —
+// o Worker sorteia as questões e embaralha as alternativas no SERVIDOR, e só
+// manda pro navegador do candidato o que ele pode ver (q/o/n). O gabarito
+// nunca trafega até aqui, então não tem como ler pelo DevTools.
 export async function carregarPerguntasDoModulo(modulo) {
-  const ref = doc(db, "perguntas", modulo);
-  const snap = await getDoc(ref);
-  if (!snap.exists()) throw new Error(`Módulo "${modulo}" não encontrado em Firestore.`);
-  const banco = snap.data().questoes || [];
-  if (!banco.length) throw new Error(`Módulo "${modulo}" está sem perguntas cadastradas.`);
-
-  // Sorteia N questões do banco (o banco tem mais questões do que o teste
-  // aplica, então cada candidato recebe uma seleção diferente) e embaralha
-  // também a ordem das alternativas, para que a posição da resposta certa
-  // não se repita entre candidatos.
-  const quantas = Math.min(totalQuestoesParaModulo(modulo), banco.length);
-  return embaralhar(banco).slice(0, quantas).map((item) => ({
-    q: item.q,
-    o: embaralhar(item.o || []),
-    n: item.n,
-    resposta: item.resposta
-  }));
+  const resp = await fetch(`${API_BASE}/carregar-perguntas`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ modulo })
+  });
+  const data = await resp.json();
+  if (!resp.ok || !data.ok) {
+    throw new Error(`Módulo "${modulo}" não encontrado ou sem perguntas cadastradas.`);
+  }
+  return data.perguntas;
 }
 
 // Grava o resultado final do quiz na coleção `resultados`.
-// Shape compatível com o resultados.json original (respostas_detalhadas etc.)
+// A correção acontece no Worker (não no navegador do candidato): ele manda
+// só as respostas escolhidas, o Worker busca o gabarito real no Firestore,
+// corrige e grava o resultado usando uma conta de serviço — o candidato não
+// tem como fabricar uma nota fake, porque as regras do Firestore bloqueiam
+// escrita direta de resultado tipo "quiz" (ver firestore.rules).
 export async function salvarResultadoQuiz({ nome, modulo, dataPreferencia, perguntas, respostas, candidato }) {
-  let acertos = 0;
-  const respostas_detalhadas = perguntas.map((q, i) => {
-    const dada = respostas[i] || null;
-    const ok = dada === q.resposta;
-    if (ok) acertos++;
-    return {
-      pergunta: q.q,
-      resposta_dada: dada,
-      resposta_correta: q.resposta,
-      acertou: ok
-    };
+  const resp = await fetch(`${API_BASE}/submeter-quiz`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      modulo,
+      perguntaTextos: perguntas.map((q) => q.q),
+      respostas,
+      nome,
+      candidato: candidato || null,
+      dataPreferencia: dataPreferencia || ""
+    })
   });
-  const total = perguntas.length;
-  const pct = total > 0 ? Math.round((acertos / total) * 100) : 0;
-
-  const docRef = await addDoc(collection(db, "resultados"), {
-    nome,
-    // Ficha preenchida pelo candidato antes do teste (CPF, nascimento,
-    // telefone, altura, cargo pretendido, turno, certificações...). O CPF
-    // também serve para agrupar tentativas da mesma pessoa no dashboard,
-    // já que o nome digitado varia entre um teste e outro.
-    candidato: candidato || null,
-    cpf: candidato ? candidato.cpf : null,
-    modulo,
-    tipo: "quiz",
-    data_preferencia: dataPreferencia || "",
-    acertos,
-    total,
-    pct,
-    percentual: pct,
-    respostas_detalhadas,
-    data_conclusao: new Date().toISOString(),
-    criado_em: serverTimestamp()
-  });
-
-  return { id: docRef.id, acertos, total, pct };
+  const data = await resp.json();
+  if (!resp.ok || !data.ok) throw new Error(data.erro || "Falha ao salvar o resultado.");
+  return { id: data.id, acertos: data.acertos, total: data.total, pct: data.pct };
 }
 
 // Registra uma violação (perda_foco, tentativa_copia, devtools, etc.)
