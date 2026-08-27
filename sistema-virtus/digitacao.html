@@ -407,6 +407,13 @@ textarea::placeholder { color:#4A6078; }
     </div>
     <div id="delWarning"></div>
     <div class="sync-status" id="syncStatus"></div>
+
+    <div id="whatsappNotice" style="display:none;background:#0D1220;border:1px solid rgba(37,211,102,0.35);border-radius:3px;padding:14px 16px;margin:14px 0;text-align:center;">
+      <div style="font-family:'Rajdhani',sans-serif;font-size:15px;font-weight:700;color:#25D366;letter-spacing:1px;">✅ Avaliação concluída!</div>
+      <div style="font-family:'Share Tech Mono',monospace;font-size:11px;color:#7A90A8;margin:6px 0 10px;">Toque no botão abaixo pra avisar o RH pelo WhatsApp que você terminou.</div>
+      <a id="linkWhatsappRH" href="#" target="_blank" rel="noopener" class="btn" style="background:#25D366;color:#052e16;text-decoration:none;display:inline-block;">💬 Avisar o RH no WhatsApp</a>
+    </div>
+
     <div class="result-btns">
       <button class="btn" id="newTestBtn">+ Novo Teste</button>
       <button class="btn btn-ghost" id="closeBtn">✕ Fechar</button>
@@ -455,7 +462,19 @@ textarea::placeholder { color:#4A6078; }
 // Original usava POST /api/digitacao e GET /api/ping (server.pyw, contrato
 // inferido). Agora grava direto na coleção `resultados` via js/digitacao.js
 // e "status online" reflete apenas se a config do Firebase está OK.
-import { salvarResultadoDigitacao } from "./js/digitacao.js";
+import { salvarResultadoDigitacao, obterNumeroWhatsappRH } from "./js/digitacao.js";
+
+// Monta o link wa.me com uma mensagem pronta, se o RH tiver configurado um
+// número de WhatsApp no dashboard. O candidato ainda precisa apertar
+// "Enviar" no WhatsApp — não é um envio automático por trás das câmeras.
+async function montarBotaoWhatsapp(nome) {
+  const numero = await obterNumeroWhatsappRH();
+  const notice = document.getElementById('whatsappNotice');
+  if (!numero || !notice) return;
+  const msg = `Olá! Sou ${nome} e acabei de concluir minha avaliação (teste de digitação) no Sistema Virtus.`;
+  document.getElementById('linkWhatsappRH').href = `https://wa.me/${numero}?text=${encodeURIComponent(msg)}`;
+  notice.style.display = 'block';
+}
 import { verificarCodigoAcesso } from "./js/quiz.js";
 import { db } from "./js/firebase-config.js";
 import { collection, getDocs, limit, query } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
@@ -715,6 +734,7 @@ function finishTest(){
   document.getElementById('resultScreen').style.display='block';
   document.getElementById('syncStatus').innerHTML='';
   enviarAoServidor(lastResult);
+  montarBotaoWhatsapp(candidate.nome);
 }
 
 function renderHistory(){

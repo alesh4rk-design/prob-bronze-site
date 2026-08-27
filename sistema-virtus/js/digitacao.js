@@ -13,7 +13,19 @@
 // usado pelo resultados.json original para os testes de digitação.
 
 import { db } from "./firebase-config.js";
-import { collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+import { collection, addDoc, doc, getDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+
+// Número de WhatsApp do RH (configurado no dashboard, coleção `config`),
+// usado pra montar o link "avisar que terminei" no fim do teste de digitação.
+// Leitura pública — não é dado sensível, só um número de telefone.
+export async function obterNumeroWhatsappRH() {
+  try {
+    const snap = await getDoc(doc(db, "config", "whatsapp_rh"));
+    return snap.exists() ? (snap.data().numero || "") : "";
+  } catch (e) {
+    return "";
+  }
+}
 
 export async function salvarResultadoDigitacao(resultado) {
   const agora = new Date();

@@ -1159,6 +1159,23 @@
         </div>
       </div>
     </div>
+
+  <div class="panel" style="margin-top:16px;">
+    <div class="panel-head">
+      <div class="panel-title-sm">💬 WhatsApp do RH</div>
+    </div>
+    <div class="panel-body" style="padding:16px 20px;">
+      <div class="warn-note" style="margin-bottom:14px;">
+        Ao terminar todos os testes, o candidato vê um botão pra avisar automaticamente
+        que concluiu a avaliação — abre o WhatsApp dele já com a mensagem pronta pra esse número.
+      </div>
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+        <input class="field-input" type="tel" id="inWhatsappRH" placeholder="Ex: 5511999998888 (DDI+DDD+número, só números)" style="max-width:320px;">
+        <button class="btn-act btn-approve-admin" id="btnSalvarWhatsapp">💾 Salvar número</button>
+        <span id="whatsappSalvoTxt" style="font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--text3);"></span>
+      </div>
+    </div>
+  </div>
 </section>
 
 <!-- ══════════ VIEW: PERGUNTAS (admin only, de admin.html / sec-perguntas) ══════════ -->
@@ -1266,7 +1283,8 @@
     assinarResultados, assinarViolacoes, excluirResultado,
     assinarPendentes, assinarUsuarios, aprovarUsuario, removerUsuario,
     assinarModulos, definirModuloAtivo,
-    gerarCodigoAcesso, assinarCodigosAcesso, cancelarCodigoAcesso, excluirCodigoAcesso
+    gerarCodigoAcesso, assinarCodigosAcesso, cancelarCodigoAcesso, excluirCodigoAcesso,
+    definirNumeroWhatsapp, assinarNumeroWhatsapp
   } from "./js/dashboard.js";
   import { db } from "./js/firebase-config.js";
   import { doc, setDoc } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
@@ -2592,6 +2610,23 @@
     }
   };
 
+  document.getElementById('btnSalvarWhatsapp').onclick = async () => {
+    const btn = document.getElementById('btnSalvarWhatsapp');
+    const numero = document.getElementById('inWhatsappRH').value.replace(/\D/g, '');
+    if (!numero) { toast('▸ Informe o número com DDI+DDD (só números)', 'err'); return; }
+    btn.disabled = true;
+    try {
+      await definirNumeroWhatsapp(numero);
+      document.getElementById('whatsappSalvoTxt').textContent = '✓ Salvo';
+      toast('✅ Número do WhatsApp salvo', 'ok');
+    } catch (e) {
+      console.error(e);
+      toast('❌ Falha ao salvar: ' + e.message, 'err');
+    } finally {
+      btn.disabled = false;
+    }
+  };
+
   function fmtDataHora(ts) {
     if (!ts) return '—';
     const d = ts.toDate ? ts.toDate() : new Date(ts);
@@ -2812,6 +2847,10 @@
       // Códigos de acesso: admin e viewer têm permissão (isAvaliador()).
       unsubs.push(assinarCodigosAcesso(
         lista => { renderCodigos(lista); },
+        () => statusDot(false, 'Reconectando...')
+      ));
+      unsubs.push(assinarNumeroWhatsapp(
+        numero => { document.getElementById('inWhatsappRH').value = numero || ''; },
         () => statusDot(false, 'Reconectando...')
       ));
     } catch (e) {

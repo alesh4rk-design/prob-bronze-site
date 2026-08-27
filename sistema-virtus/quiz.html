@@ -921,6 +921,15 @@
         </div>
       </div>
 
+      <div class="next-step-notice" id="whatsappNotice" style="display:none;">
+        <div class="next-step-icon">✅</div>
+        <div style="flex:1;">
+          <div class="next-step-title">Avaliação concluída!</div>
+          <div class="next-step-text">Toque no botão abaixo pra avisar o RH pelo WhatsApp que você terminou.</div>
+          <a id="linkWhatsappRH" href="#" target="_blank" rel="noopener" class="btn" style="margin-top:10px;background:#25D366;color:#052e16;display:inline-block;text-decoration:none;">💬 Avisar o RH no WhatsApp</a>
+        </div>
+      </div>
+
       <div class="sep"></div>
       <button class="btn btn-ghost" onclick="resetAndGoHome()">← Nova Avaliação</button>
     </div>
@@ -928,7 +937,7 @@
 </div>
 
 <script type="module">
-  import { listarModulos, carregarPerguntasDoModulo, salvarResultadoQuiz, registrarViolacao, tempoLimiteParaModulo, montarTrilha, verificarCodigoAcesso } from "./js/quiz.js";
+  import { listarModulos, carregarPerguntasDoModulo, salvarResultadoQuiz, registrarViolacao, tempoLimiteParaModulo, montarTrilha, verificarCodigoAcesso, obterNumeroWhatsappRH } from "./js/quiz.js";
 
   let globalConsentGiven = false;
   let globalLgpdAccepted = false;
@@ -950,10 +959,14 @@
     try {
       const data = await listarModulos();
       const sel = document.getElementById('inTema');
+      // Apelidos exibidos ao candidato para deixar mais claro a que função o
+      // módulo se aplica (o valor salvo/usado internamente continua sendo o
+      // nome original do módulo).
+      const APELIDOS_MODULO = { 'Controle de Acesso': 'Controle de Acesso (Portaria)' };
       for (const mod of data.modulos) {
         const opt = document.createElement('option');
         opt.value = mod.nome;
-        opt.textContent = mod.nome;
+        opt.textContent = APELIDOS_MODULO[mod.nome] || mod.nome;
         sel.appendChild(opt);
       }
       document.getElementById('launcherQCount').textContent =
@@ -1492,6 +1505,19 @@
     iniciarModulo();
   };
 
+  // Monta o link wa.me com uma mensagem pronta, se o RH tiver configurado um
+  // número de WhatsApp no dashboard. O candidato ainda precisa apertar
+  // "Enviar" no WhatsApp — não é um envio automático por trás das câmeras.
+  async function montarBotaoWhatsapp(nome, candidato) {
+    const numero = await obterNumeroWhatsappRH();
+    const notice = document.getElementById('whatsappNotice');
+    if (!numero || !notice) return;
+    const cargo = (candidato && candidato.cargo_pretendido) || '';
+    const msg = `Olá! Sou ${nome}${cargo ? ', candidato(a) à vaga de ' + cargo : ''} e acabei de concluir minha avaliação no Sistema Virtus.`;
+    document.getElementById('linkWhatsappRH').href = `https://wa.me/${numero}?text=${encodeURIComponent(msg)}`;
+    notice.style.display = 'flex';
+  }
+
   function renderResultadoFinal() {
     const rs = S.resultadosTrilha;
     const acertosTot = rs.reduce((a, r) => a + r.acertos, 0);
@@ -1520,6 +1546,10 @@
     const precisaDigitacao = CARGOS_DIGITACAO.some(c => cargoDigitado.includes(c));
     const aviso = document.getElementById('nextStepNotice');
     if (aviso) aviso.style.display = precisaDigitacao ? 'flex' : 'none';
+
+    // Se não precisa de digitação, a avaliação acabou aqui — mostra o botão
+    // de avisar o RH pelo WhatsApp (se o número estiver configurado).
+    if (!precisaDigitacao) montarBotaoWhatsapp(S.nome, S.candidato);
 
     const offset = 364 - (media / 100) * 364;
     setTimeout(() => {

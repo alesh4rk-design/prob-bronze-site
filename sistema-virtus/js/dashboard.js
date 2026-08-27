@@ -169,3 +169,18 @@ export async function cancelarCodigoAcesso(codigo) {
 export async function excluirCodigoAcesso(codigo) {
   await deleteDoc(doc(db, "codigos_acesso", codigo));
 }
+
+// ── WhatsApp do RH (config/whatsapp_rh) ─────────────────────────────────
+// Número que recebe o aviso automático de "terminei a avaliação", mandado
+// pelo próprio candidato (via link wa.me, aberto no navegador dele — não é
+// um envio automático por trás das câmeras, é o candidato que confirma o
+// envio no WhatsApp). Guardado como documento único em `config`.
+export async function definirNumeroWhatsapp(numero) {
+  await setDoc(doc(db, "config", "whatsapp_rh"), { numero, atualizado_em: serverTimestamp() });
+}
+
+export function assinarNumeroWhatsapp(callback, onError) {
+  return onSnapshot(doc(db, "config", "whatsapp_rh"), (snap) => {
+    callback(snap.exists() ? (snap.data().numero || "") : "");
+  }, (err) => { console.error("assinarNumeroWhatsapp:", err); if (onError) onError(err); });
+}
