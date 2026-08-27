@@ -971,8 +971,8 @@
           <tr>
             <th style="width:44px;text-align:center;">#</th>
             <th>Candidato</th>
-            <th>Módulo</th>
-            <th>Acertos</th>
+            <th>Testes realizados</th>
+            <th>Acertos (módulo escolhido)</th>
             <th>Nota %</th>
             <th>Status</th>
             <th>Concluído</th>
@@ -2196,24 +2196,29 @@
 
   function pctClass(pct) { return pct >= 70 ? 'pct-high' : pct >= 50 ? 'pct-mid' : 'pct-low'; }
 
+  // Uma linha por CANDIDATO (não por tentativa) — antes cada módulo da
+  // trilha aparecia numa linha separada, e um candidato que fez vários
+  // testes se espalhava/perdia na lista conforme mais gente ia fazendo o
+  // teste. Agora agrupa tudo numa linha só, com os módulos como badges.
   function renderTable(lista) {
     const tbody = document.getElementById('tableBody');
-    document.getElementById('tableCountBadge').textContent = lista.length + ' registros';
-    if (!lista.length) {
+    const candidatos = candidatosAgrupados(lista);
+    document.getElementById('tableCountBadge').textContent = candidatos.length + ' candidatos';
+    if (!candidatos.length) {
       tbody.innerHTML = '<tr><td colspan="7"><div class="empty-state"><div class="empty-icon">📭</div>Nenhum resultado encontrado.</div></td></tr>';
       return;
     }
-    tbody.innerHTML = lista.map((r, i) => {
-      const pct = r.pct || 0;
+    tbody.innerHTML = candidatos.map((c, i) => {
+      const pct = c.media;
       const aprovado = pct >= 70;
-      const dt = r.data_conclusao ? new Date(r.data_conclusao).toLocaleString('pt-BR') : '—';
-      const temViolacao = violacoesDe(r.nome).length > 0;
+      const dt = c.ultima ? new Date(c.ultima).toLocaleString('pt-BR') : '—';
+      const temViolacao = violacoesDe(c.nome).length > 0;
       const rowCls = aprovado ? 'row-aprovado' : 'row-reprovado';
-      return `<tr class="clickable ${rowCls}" onclick="abrirCandidato('${chaveDe(r).replace(/'/g, "\\'")}')" title="Ver detalhamento e exportar PDF">
+      return `<tr class="clickable ${rowCls}" onclick="abrirCandidato('${c.chave.replace(/'/g, "\\'")}')" title="Ver detalhamento e exportar PDF">
         <td style="text-align:center;color:var(--text3);">${i + 1}</td>
-        <td class="td-nome">${escapeHtml(r.nome || '—')}${temViolacao ? ' <span style="color:var(--red);font-weight:700;" title="Possui violação registrada durante o teste">*</span>' : ''} <span class="row-hint">▸ detalhes</span></td>
-        <td><span class="badge-modulo">${escapeHtml(r.modulo || '—')}</span></td>
-        <td>${r.acertos ?? '—'} / ${r.total ?? '—'}</td>
+        <td class="td-nome">${escapeHtml(c.nome)}${temViolacao ? ' <span style="color:var(--red);font-weight:700;" title="Possui violação registrada durante o teste">*</span>' : ''} <span class="row-hint">▸ detalhes</span></td>
+        <td>${c.modulos.map(m => `<span class="badge-modulo" style="${m.modulo === c.moduloEscolhido ? 'border-color:var(--amber);' : ''}" title="${m.modulo === c.moduloEscolhido ? 'Módulo escolhido pelo candidato' : 'Módulo automático da trilha'}">${m.modulo === c.moduloEscolhido ? '★ ' : ''}${escapeHtml(m.modulo)} <b style="color:${m.pct >= 70 ? 'var(--green)' : m.pct >= 50 ? 'var(--amber)' : 'var(--red)'}">${m.pct}%</b></span>`).join(' ')}</td>
+        <td>${c.acertosEscolhido ?? '—'} / ${c.totalEscolhido ?? '—'}</td>
         <td>
           <div class="pct-bar-wrap">
             <span class="td-pct" style="color:${aprovado ? 'var(--green)' : pct >= 50 ? 'var(--amber)' : 'var(--red)'}">${pct}%</span>
@@ -2310,8 +2315,8 @@
     { valor: 'recusado', label: 'Recusado', cor: 'var(--red)' }
   ];
 
-  function candidatosAgrupados() {
-    const quizzes = ALL_RESULTADOS.filter(r => r.tipo !== 'typing');
+  function candidatosAgrupados(lista) {
+    const quizzes = (lista || ALL_RESULTADOS).filter(r => r.tipo !== 'typing');
     const porCandidato = {};
     for (const r of quizzes) {
       const chave = chaveDe(r);
@@ -2323,6 +2328,7 @@
       const moduloEscolhido = tents[0].modulo || '—';
       const tentsEscolhido = tents.filter(t => (t.modulo || '—') === moduloEscolhido);
       const media = Math.max(...tentsEscolhido.map(t => t.pct || 0));
+      const melhorEscolhido = tentsEscolhido.reduce((a, t) => (t.pct || 0) >= (a.pct || 0) ? t : a, tentsEscolhido[0]);
       // Melhor nota de CADA módulo já feito (todos os testes, não só o
       // escolhido) — o coordenador precisa ver o quadro completo.
       const porModulo = {};
@@ -2337,7 +2343,11 @@
       const digitacao = typings.length ? Math.max(...typings.map(t => t.pct || 0)) : null;
       const ultima = tents.reduce((a, t) => (t.data_conclusao || '') > (a || '') ? t.data_conclusao : a, tents[0].data_conclusao);
       const nome = tents[tents.length - 1].nome || '—';
-      return { chave, nome, media, moduloEscolhido, modulos, digitacao, ultima };
+      return {
+        chave, nome, media, moduloEscolhido, modulos, digitacao, ultima,
+        acertosEscolhido: melhorEscolhido.acertos,
+        totalEscolhido: melhorEscolhido.total
+      };
     }).sort((a, b) => (b.ultima || '').localeCompare(a.ultima || ''));
   }
 
