@@ -1041,7 +1041,7 @@
           </tr>
         </thead>
         <tbody id="bancoTableBody">
-          <tr><td colspan="5"><div class="empty-state"><div class="empty-icon">📅</div>Selecione um período (De / Até) e clique em Buscar.</div></td></tr>
+          <tr><td colspan="5"><div class="empty-state"><div class="empty-icon">📭</div>Nenhum aprovado no período selecionado.</div></td></tr>
         </tbody>
       </table>
     </div>
@@ -2237,11 +2237,6 @@
     // Filtro por período (data da última tentativa), opcional.
     const dataIni = document.getElementById('bancoDataIni').value;
     const dataFim = document.getElementById('bancoDataFim').value;
-    if (!dataIni && !dataFim) {
-      document.getElementById('bancoCountBadge').textContent = '0 registros';
-      tbody.innerHTML = '<tr><td colspan="5"><div class="empty-state"><div class="empty-icon">📅</div>Selecione um período (De / Até) e clique em Buscar.</div></td></tr>';
-      return;
-    }
 
     const aprovadosFiltrados = aprovados.filter(c => {
       const dataC = c.ultima ? dataLocalYMD(c.ultima) : '';
@@ -2834,9 +2829,11 @@
   }
   document.getElementById('filterPeriodo').value = periodoSalvo;
 
-  // Violações também abre filtrado no dia de hoje por padrão.
+  // Violações e Banco de Aprovados também abrem filtrados no dia de hoje.
   document.getElementById('violDataIni').value = dataLocalYMD(new Date());
   document.getElementById('violDataFim').value = dataLocalYMD(new Date());
+  document.getElementById('bancoDataIni').value = dataLocalYMD(new Date());
+  document.getElementById('bancoDataFim').value = dataLocalYMD(new Date());
 
   conectar();
 
