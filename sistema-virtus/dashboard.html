@@ -1489,7 +1489,8 @@
         ['Bairro / Região', f.bairro],
         ['Cargo pretendido', f.cargo_pretendido],
         ['Experiência na área', f.experiencia ? '✓ Sim' : '✕ Não'],
-        ['Turno disponível', f.turno]
+        ['Turno disponível', f.turno],
+        ['Disponibilidade total', f.disponibilidade_total == null ? '—' : (f.disponibilidade_total ? '✓ Sim' : '✕ Não')]
       ];
       html += `
         <div class="tent-card" style="border-color:var(--ambermid);">
@@ -1669,7 +1670,8 @@
         ['Bairro / Região', f.bairro],
         ['Cargo pretendido', f.cargo_pretendido],
         ['Experiência na área', f.experiencia ? 'Sim' : 'Não'],
-        ['Disponibilidade de turno', f.turno]
+        ['Disponibilidade de turno', f.turno],
+        ['Disponibilidade total', f.disponibilidade_total == null ? '—' : (f.disponibilidade_total ? 'Sim' : 'Não')]
       ];
       h += `
         <div class="pr-sec-title">Ficha do candidato</div>
@@ -1905,6 +1907,7 @@
         <div class="pr-sec-title">Perfil operacional</div>
         <div class="sk-perfil">
           <div class="sk-p-cell"><div class="sk-p-lbl">Disponibilidade</div><div class="sk-p-val">${escapeHtml(f.turno || '—')}</div></div>
+          <div class="sk-p-cell"><div class="sk-p-lbl">Disponibilidade total</div><div class="sk-p-val">${f.disponibilidade_total == null ? '—' : (f.disponibilidade_total ? 'Sim' : 'Não')}</div></div>
           <div class="sk-p-cell"><div class="sk-p-lbl">Experiência na área</div><div class="sk-p-val">${f.experiencia ? 'Sim' : 'Não'}</div></div>
           <div class="sk-p-cell"><div class="sk-p-lbl">Idade</div><div class="sk-p-val">${f.idade != null ? f.idade + ' anos' : '—'}</div></div>
           <div class="sk-p-cell"><div class="sk-p-lbl">Altura</div><div class="sk-p-val">${f.altura ? String(f.altura).replace('.', ',') + ' m' : '—'}</div></div>

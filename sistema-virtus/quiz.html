@@ -781,6 +781,14 @@
       </div>
 
       <div class="field-group">
+        <span class="field-label">Disponibilidade total de horário? *</span>
+        <div class="opt-pills" id="inDispTotal">
+          <div class="pill" data-val="sim">✓ Sim</div>
+          <div class="pill" data-val="nao">✕ Não</div>
+        </div>
+      </div>
+
+      <div class="field-group">
         <span class="field-label">Cursos e certificações <span style="color:var(--text4);">(marque os que possui)</span></span>
         <div class="cert-list" id="inCerts">
           <label class="cert-item"><input type="checkbox" value="Curso de Formação de Vigilante"><span>Curso de Formação de Vigilante</span></label>
@@ -1214,6 +1222,14 @@
         p.classList.add('sel');
       };
     });
+
+    // Pills de disponibilidade total de horário (sim/não)
+    document.querySelectorAll('#inDispTotal .pill').forEach(p => {
+      p.onclick = () => {
+        document.querySelectorAll('#inDispTotal .pill').forEach(x => x.classList.remove('sel'));
+        p.classList.add('sel');
+      };
+    });
   })();
 
   // Monta o objeto do candidato validando tudo. Retorna null se algo falhar
@@ -1258,6 +1274,9 @@
     const turno = document.getElementById('inTurno').value;
     if (!turno) return falha('Selecione a disponibilidade de turno', 'inTurno');
 
+    const pillDispTotal = document.querySelector('#inDispTotal .pill.sel');
+    if (!pillDispTotal) return falha('Informe se possui disponibilidade total de horário', 'inDispTotal');
+
     const certificacoes = [...document.querySelectorAll('#inCerts input:checked')].map(c => c.value);
 
     return {
@@ -1271,6 +1290,7 @@
       cargo_pretendido: cargo,
       experiencia: pillSel.dataset.val === 'sim',
       turno,
+      disponibilidade_total: pillDispTotal.dataset.val === 'sim',
       certificacoes
     };
   }
