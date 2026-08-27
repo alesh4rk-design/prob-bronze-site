@@ -2327,7 +2327,7 @@
 
   window.renderPipeline = function renderPipeline() {
     const tbody = document.getElementById('pipelineTableBody');
-    if (!tbody) return;
+    if (!tbody || !me) return;
     const candidatos = candidatosAgrupados();
     document.getElementById('pipelineBadge').textContent = candidatos.length + ' candidatos';
     if (!candidatos.length) {
@@ -2983,10 +2983,15 @@
     try {
       unsubs.push(assinarResultados(
         (lista) => {
-          ALL_RESULTADOS = lista; renderAll(); statusDot(true, 'Sistema online');
+          ALL_RESULTADOS = lista;
+          try { renderAll(); } catch (e) { console.error('Erro ao renderizar:', e); }
+          statusDot(true, 'Sistema online');
           document.getElementById('loadingOverlay').classList.add('hide');
         },
-        () => statusDot(false, 'Conexão perdida — reconectando...')
+        () => {
+          statusDot(false, 'Conexão perdida — reconectando...');
+          document.getElementById('loadingOverlay').classList.add('hide');
+        }
       ));
       unsubs.push(assinarViolacoes(
         (lista) => { ALL_VIOLACOES = lista; renderViolacoes(); },
