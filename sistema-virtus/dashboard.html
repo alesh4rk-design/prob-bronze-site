@@ -1454,7 +1454,9 @@
 
   // Coordenador abre direto na lista corrida de candidatos (Processo
   // Seletivo) — não tem por que ver o Dashboard com KPIs/gráficos/filtros.
-  if (me && me.perfil === 'coordenador') switchView('pipeline');
+  if (me && me.perfil === 'coordenador') {
+    try { switchView('pipeline'); } catch (e) { console.error(e); toast('❌ Erro ao abrir Processo Seletivo: ' + e.message, 'err'); }
+  }
 
 
   // ══════════ DETALHE DO CANDIDATO + RELATÓRIO PDF ══════════
@@ -2984,7 +2986,7 @@
       unsubs.push(assinarResultados(
         (lista) => {
           ALL_RESULTADOS = lista;
-          try { renderAll(); } catch (e) { console.error('Erro ao renderizar:', e); }
+          try { renderAll(); } catch (e) { console.error('Erro ao renderizar:', e); toast('❌ Erro ao renderizar: ' + e.message, 'err'); }
           statusDot(true, 'Sistema online');
           document.getElementById('loadingOverlay').classList.add('hide');
         },
