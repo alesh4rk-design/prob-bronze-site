@@ -298,12 +298,12 @@ export const PERGUNTAS_SEED = {
       "resposta": "Editar textos com formatação avançada"
     },
     {
-      "q": "De acordo com os protocolos de segurança, qual desses dispositivos é considerado um hardware de entrada?",
+      "q": "Qual desses dispositivos é considerado um hardware de entrada?",
       "o": [
-        "Desenvolver apresentações em slides",
-        "Realizar edição avançada de textos",
-        "Inserir animações e transições",
-        "Exportar documentos para formato PDF"
+        "Teclado",
+        "Monitor",
+        "Impressora",
+        "Caixa de som"
       ],
       "n": "dificil",
       "resposta": "Teclado"
@@ -330,7 +330,7 @@ export const PERGUNTAS_SEED = {
         "Efetuar chamadas telefônicas internas"
       ],
       "n": "facil",
-      "resposta": "Controlar o fluxo de entrada e saída de veículos e pessoas"
+      "resposta": "Monitorar o fluxo de entrada e saída"
     },
     {
       "q": "Um prestador diz 'sempre trabalhei aqui' mas não há registro. o que fazer?",
@@ -3262,7 +3262,7 @@ export const PERGUNTAS_SEED = {
         "Ajuda a entender o real problema",
         "Torna a reunião mais longa independente da situação",
         "É exigida só em entrevista logo no início do processo",
-        "Serve só pra agradar a equipe"
+        "Serve só para agradar a equipe"
       ],
       "n": "facil",
       "resposta": "Ajuda a entender o real problema"
@@ -3281,13 +3281,13 @@ export const PERGUNTAS_SEED = {
     {
       "q": "Um colaborador está desmotivado e produz pouco. O líder deve primeiro:",
       "o": [
-        "Conversar pra entender a causa",
+        "Conversar para entender a causa",
         "Reduzir as tarefas sem avisar",
         "Repreender na frente de todos",
         "Substituir a pessoa logo na rotina de trabalho"
       ],
       "n": "medio",
-      "resposta": "Conversar pra entender a causa"
+      "resposta": "Conversar para entender a causa"
     },
     {
       "q": "O que significa dar autonomia à equipe?",
@@ -3339,7 +3339,7 @@ export const PERGUNTAS_SEED = {
         "Reforça e motiva a equipe",
         "Cria disputa entre colegas",
         "É desnecessário com bom salário",
-        "Só vale pro melhor da equipe"
+        "Só vale para o melhor da equipe"
       ],
       "n": "facil",
       "resposta": "Reforça e motiva a equipe"
@@ -3361,7 +3361,7 @@ export const PERGUNTAS_SEED = {
         "Alinhar prioridades logo cedo",
         "Ocupar o tempo livre da equipe",
         "Substituir o contato individual",
-        "Servir só pra cobrar resultado"
+        "Servir só para cobrar resultado"
       ],
       "n": "facil",
       "resposta": "Alinhar prioridades logo cedo"
@@ -3369,16 +3369,16 @@ export const PERGUNTAS_SEED = {
     {
       "q": "Como lidar com um colaborador que resiste a mudanças na rotina?",
       "o": [
-        "Explicar o motivo e ouvir ele",
+        "Explicar o motivo e ouvi-lo",
         "Impor a mudança sem explicar",
         "Ignorar a resistência dele",
-        "Excluir ele das próximas decisões"
+        "Excluí-lo das próximas decisões"
       ],
       "n": "medio",
-      "resposta": "Explicar o motivo e ouvir ele"
+      "resposta": "Explicar o motivo e ouvi-lo"
     },
     {
-      "q": "O que é essencial pra tomar boas decisões sob pressão?",
+      "q": "O que é essencial para tomar boas decisões sob pressão?",
       "o": [
         "Manter a calma e avaliar",
         "Decidir rápido, sem avaliar",
@@ -3393,7 +3393,7 @@ export const PERGUNTAS_SEED = {
       "o": [
         "Reconhecer a própria emoção antes de reagir",
         "Não mostrar emoção nenhuma na rotina de trabalho",
-        "Reagir forte pra mostrar firmeza durante o expediente",
+        "Reagir forte para mostrar firmeza durante o expediente",
         "Ignorar como a equipe está no dia a dia da equipe"
       ],
       "n": "dificil",
@@ -3403,7 +3403,7 @@ export const PERGUNTAS_SEED = {
       "q": "Por que alinhar expectativas no início de um projeto é importante?",
       "o": [
         "Evita retrabalho e mal-entendido",
-        "Serve só pra preencher formulário",
+        "Serve só para preencher formulário",
         "É obrigatório só em projeto grande",
         "Atrasa o início do trabalho conforme o procedimento"
       ],
@@ -3414,7 +3414,7 @@ export const PERGUNTAS_SEED = {
       "q": "Um membro da equipe se destaca e quer crescer. O líder deve:",
       "o": [
         "Apoiar e indicar oportunidades reais",
-        "Segurar pra não perder o funcionário",
+        "Segurar para não perder o funcionário",
         "Prometer promoção sem previsão independente da situação",
         "Ignorar até que surja uma vaga logo no início do processo"
       ],
@@ -3455,7 +3455,7 @@ export const PERGUNTAS_SEED = {
       "resposta": "Sobrecarga e pouca autonomia"
     },
     {
-      "q": "O que é fundamental pra manter coesão numa equipe diversa?",
+      "q": "O que é fundamental para manter coesão em uma equipe diversa?",
       "o": [
         "Respeitar as diferenças de cada um",
         "Padronizar o comportamento de todos",
@@ -3517,7 +3517,7 @@ export const PERGUNTAS_SEED = {
         "Preditiva antecipa; corretiva conserta depois",
         "São exatamente a mesma coisa durante o expediente",
         "Corretiva é sempre mais barata no dia a dia da equipe",
-        "Preditiva só serve pra elevador conforme o procedimento"
+        "Preditiva só serve para elevador conforme o procedimento"
       ],
       "n": "dificil",
       "resposta": "Preditiva antecipa; corretiva conserta depois"
@@ -3548,7 +3548,7 @@ export const PERGUNTAS_SEED = {
       "q": "Qual cuidado é essencial ao lidar com produtos químicos de limpeza?",
       "o": [
         "Usar EPI e seguir a ficha técnica",
-        "Misturar produtos pra render mais",
+        "Misturar produtos para render mais",
         "Guardar sem identificação na rotina de trabalho",
         "Usar sem luva se for pouco durante o expediente"
       ],
@@ -3556,10 +3556,10 @@ export const PERGUNTAS_SEED = {
       "resposta": "Usar EPI e seguir a ficha técnica"
     },
     {
-      "q": "O que fazer ao identificar um risco de incêndio numa área comum?",
+      "q": "O que fazer ao identificar um risco de incêndio em uma área comum?",
       "o": [
         "Isolar, comunicar e corrigir logo",
-        "Anotar pra resolver depois no dia a dia da equipe",
+        "Anotar para resolver depois no dia a dia da equipe",
         "Avisar só o síndico por e-mail",
         "Aguardar a próxima vistoria conforme o procedimento"
       ],
@@ -3583,13 +3583,13 @@ export const PERGUNTAS_SEED = {
         "Priorizar risco à segurança primeiro",
         "Atender por ordem de chegada só durante o expediente",
         "Atender o mais fácil primeiro no dia a dia da equipe",
-        "Deixar pra decidir no fim do dia conforme o procedimento"
+        "Deixar para decidir no fim do dia conforme o procedimento"
       ],
       "n": "dificil",
       "resposta": "Priorizar risco à segurança primeiro"
     },
     {
-      "q": "O que deve constar num relatório de ocorrência predial?",
+      "q": "O que deve constar em um relatório de ocorrência predial?",
       "o": [
         "Fato, data, local e providência",
         "Só a opinião de quem registrou",
@@ -3693,7 +3693,7 @@ export const PERGUNTAS_SEED = {
         "Seguir o protocolo de emergência definido",
         "Esperar o próximo dia útil sempre no dia a dia da equipe",
         "Resolver sem registrar depois conforme o procedimento",
-        "Ignorar se não for urgente pra todos independente da situação"
+        "Ignorar se não for urgente para todos independente da situação"
       ],
       "n": "medio",
       "resposta": "Seguir o protocolo de emergência definido"
@@ -3746,12 +3746,344 @@ export const PERGUNTAS_SEED = {
       "q": "Qual atitude ajuda a manter a segurança do trabalho em altura na manutenção predial?",
       "o": [
         "Usar equipamento adequado e treinamento",
-        "Trabalhar rápido pra reduzir o risco",
+        "Trabalhar rápido para reduzir o risco",
         "Evitar o uso de EPI se for rápido no dia a dia da equipe",
-        "Fazer sozinho pra não atrasar conforme o procedimento"
+        "Fazer sozinho para não atrasar conforme o procedimento"
       ],
       "n": "medio",
       "resposta": "Usar equipamento adequado e treinamento"
+    }
+  ],
+  "Jardineiro": [
+    {
+      "q": "Qual é o melhor horário para regar plantas em dias quentes?",
+      "o": [
+        "No início da manhã ou no fim da tarde",
+        "No horário de maior calor do dia",
+        "Sempre ao meio-dia, no ambiente de trabalho",
+        "Apenas durante a noite, no ambiente de trabalho"
+      ],
+      "n": "facil",
+      "resposta": "No início da manhã ou no fim da tarde"
+    },
+    {
+      "q": "Qual equipamento de proteção é essencial ao usar roçadeira?",
+      "o": [
+        "Óculos de proteção e protetor auricular",
+        "Apenas luvas de proteção, no ambiente de trabalho",
+        "Apenas boné, no ambiente de trabalho",
+        "Nenhum equipamento é necessário"
+      ],
+      "n": "facil",
+      "resposta": "Óculos de proteção e protetor auricular"
+    },
+    {
+      "q": "Para que serve a poda de plantas e árvores?",
+      "o": [
+        "Estimular o crescimento saudável e a forma da planta",
+        "Apenas deixar o jardim mais bonito no ambiente de trabalho",
+        "Reduzir o consumo de água do jardim",
+        "Evitar que a planta floresça"
+      ],
+      "n": "facil",
+      "resposta": "Estimular o crescimento saudável e a forma da planta"
+    },
+    {
+      "q": "Qual é a função do adubo no cultivo de plantas?",
+      "o": [
+        "Fornecer nutrientes que enriquecem o solo",
+        "Apenas melhorar o cheiro do jardim no ambiente de trabalho",
+        "Substituir a necessidade de água",
+        "Eliminar todas as pragas do jardim"
+      ],
+      "n": "facil",
+      "resposta": "Fornecer nutrientes que enriquecem o solo"
+    },
+    {
+      "q": "Como deve ser feito o descarte de galhos e folhas cortadas?",
+      "o": [
+        "Em local apropriado, seguindo as normas do local de trabalho",
+        "Deixados espalhados pelo jardim no ambiente de trabalho",
+        "Queimados em qualquer lugar do terreno",
+        "Jogados na rua, próximo ao trabalho"
+      ],
+      "n": "facil",
+      "resposta": "Em local apropriado, seguindo as normas do local de trabalho"
+    },
+    {
+      "q": "Qual ferramenta é mais indicada para aparar grama em áreas pequenas?",
+      "o": [
+        "Tesoura de jardim ou aparador manual",
+        "Motosserra, no ambiente de trabalho",
+        "Enxada grande, no ambiente de trabalho",
+        "Pá de corte, no ambiente de trabalho"
+      ],
+      "n": "facil",
+      "resposta": "Tesoura de jardim ou aparador manual"
+    },
+    {
+      "q": "Por que é importante afiar as lâminas das ferramentas de corte?",
+      "o": [
+        "Para cortes mais limpos e menos danos à planta",
+        "Apenas para o trabalho ficar mais rápido",
+        "Para gastar menos combustível no equipamento no ambiente de trabalho",
+        "Não existe necessidade real de afiar"
+      ],
+      "n": "medio",
+      "resposta": "Para cortes mais limpos e menos danos à planta"
+    },
+    {
+      "q": "Qual é o principal risco de regar em excesso um vaso de planta?",
+      "o": [
+        "Apodrecimento das raízes por falta de oxigenação",
+        "Crescimento rápido demais da planta no ambiente de trabalho",
+        "Mudança na cor das folhas para verde escuro",
+        "Aumento da resistência a pragas"
+      ],
+      "n": "medio",
+      "resposta": "Apodrecimento das raízes por falta de oxigenação"
+    },
+    {
+      "q": "O que caracteriza um solo com boa drenagem para jardinagem?",
+      "o": [
+        "Permite a água escoar sem encharcar as raízes",
+        "Retém toda a água por vários dias no ambiente de trabalho",
+        "É formado apenas por argila compactada",
+        "Não absorve nenhuma quantidade de água"
+      ],
+      "n": "medio",
+      "resposta": "Permite a água escoar sem encharcar as raízes"
+    },
+    {
+      "q": "Qual é a recomendação de segurança ao manusear produtos como herbicidas e inseticidas?",
+      "o": [
+        "Usar luvas, máscara e seguir as instruções do rótulo",
+        "Aplicar sem qualquer proteção, no ambiente de trabalho",
+        "Misturar diferentes produtos livremente",
+        "Guardar junto com alimentos, no ambiente de trabalho"
+      ],
+      "n": "medio",
+      "resposta": "Usar luvas, máscara e seguir as instruções do rótulo"
+    },
+    {
+      "q": "Qual é a função da cobertura morta (mulch) nos canteiros?",
+      "o": [
+        "Reduzir a evaporação da água e inibir ervas daninhas",
+        "Apenas deixar o canteiro mais colorido no ambiente de trabalho",
+        "Substituir totalmente a necessidade de adubo",
+        "Impedir o crescimento das próprias plantas"
+      ],
+      "n": "medio",
+      "resposta": "Reduzir a evaporação da água e inibir ervas daninhas"
+    },
+    {
+      "q": "Como identificar sinais de que uma planta está doente?",
+      "o": [
+        "Folhas manchadas, murchas ou com crescimento anormal",
+        "Apenas pelo tamanho das flores no ambiente de trabalho",
+        "Somente pela cor do vaso onde está plantada",
+        "Plantas doentes não apresentam nenhum sinal"
+      ],
+      "n": "medio",
+      "resposta": "Folhas manchadas, murchas ou com crescimento anormal"
+    },
+    {
+      "q": "Qual é o cuidado necessário ao operar um cortador de grama motorizado?",
+      "o": [
+        "Verificar a área por objetos e usar calçado fechado",
+        "Usar sandálias para mais conforto no trabalho",
+        "Operar sempre com o protetor de lâmina removido",
+        "Não é necessário nenhum cuidado especial no ambiente de trabalho"
+      ],
+      "n": "medio",
+      "resposta": "Verificar a área por objetos e usar calçado fechado"
+    },
+    {
+      "q": "Por que é recomendado rodar as culturas em uma horta ao longo do ano?",
+      "o": [
+        "Para evitar o esgotamento de nutrientes específicos do solo",
+        "Apenas para variar a aparência da horta no ambiente de trabalho",
+        "Porque as plantas não crescem duas vezes no mesmo local",
+        "Para reduzir o tempo total de colheita"
+      ],
+      "n": "dificil",
+      "resposta": "Para evitar o esgotamento de nutrientes específicos do solo"
+    },
+    {
+      "q": "Qual é a melhor prática ao aplicar fertilizante em excesso de nitrogênio?",
+      "o": [
+        "Evitar, pois pode queimar as raízes e folhas da planta",
+        "Aplicar sempre em dobro para acelerar o crescimento",
+        "Aplicar apenas à noite, no ambiente de trabalho",
+        "Misturar com água do mar antes de aplicar"
+      ],
+      "n": "dificil",
+      "resposta": "Evitar, pois pode queimar as raízes e folhas da planta"
+    },
+    {
+      "q": "Qual é a função da irrigação por gotejamento em jardins?",
+      "o": [
+        "Levar água diretamente à raiz, reduzindo o desperdício",
+        "Molhar toda a área de forma uniforme e rápida",
+        "Substituir totalmente a necessidade de chuva",
+        "Aumentar a umidade do ar ao redor das plantas"
+      ],
+      "n": "dificil",
+      "resposta": "Levar água diretamente à raiz, reduzindo o desperdício"
+    },
+    {
+      "q": "O que é o pH do solo e por que ele importa para o jardineiro?",
+      "o": [
+        "Mede a acidez do solo, influenciando a absorção de nutrientes",
+        "Mede apenas a temperatura do solo no jardim",
+        "Indica a quantidade de água presente no solo",
+        "Serve só para calcular o tamanho dos canteiros"
+      ],
+      "n": "dificil",
+      "resposta": "Mede a acidez do solo, influenciando a absorção de nutrientes"
+    },
+    {
+      "q": "Qual é o risco de podar uma árvore fora da época recomendada?",
+      "o": [
+        "Pode enfraquecer a planta ou comprometer a floração",
+        "Nenhum risco, pois a poda nunca afeta a árvore",
+        "Faz a árvore crescer mais rápido em qualquer situação",
+        "Só muda a cor das folhas por alguns dias"
+      ],
+      "n": "dificil",
+      "resposta": "Pode enfraquecer a planta ou comprometer a floração"
+    },
+    {
+      "q": "Qual é o objetivo do controle biológico de pragas na jardinagem?",
+      "o": [
+        "Usar inimigos naturais das pragas em vez de químicos",
+        "Aplicar apenas venenos fortes em toda a área",
+        "Eliminar completamente todos os insetos do jardim",
+        "Substituir totalmente o uso de adubo orgânico"
+      ],
+      "n": "dificil",
+      "resposta": "Usar inimigos naturais das pragas em vez de químicos"
+    },
+    {
+      "q": "Qual é a postura correta ao levantar sacos pesados de adubo ou terra?",
+      "o": [
+        "Dobrar os joelhos e manter a coluna reta",
+        "Dobrar apenas a coluna, no ambiente de trabalho",
+        "Levantar o peso com um braço só, de qualquer forma",
+        "Não existe cuidado necessário ao levantar peso"
+      ],
+      "n": "facil",
+      "resposta": "Dobrar os joelhos e manter a coluna reta"
+    },
+    {
+      "q": "Qual cuidado é importante ao trabalhar exposto ao sol por longos períodos?",
+      "o": [
+        "Usar protetor solar e se manter hidratado",
+        "Evitar beber água durante o expediente",
+        "Trabalhar sempre sem chapéu ou boné",
+        "Não é necessário nenhum cuidado especial no ambiente de trabalho"
+      ],
+      "n": "facil",
+      "resposta": "Usar protetor solar e se manter hidratado"
+    },
+    {
+      "q": "O que é recomendado fazer antes de usar uma ferramenta elétrica de jardim?",
+      "o": [
+        "Verificar fios e conexões em busca de danos",
+        "Usar direto sem qualquer verificação prévia",
+        "Molhar a ferramenta para facilitar o uso",
+        "Emprestar para outra pessoa testar antes"
+      ],
+      "n": "facil",
+      "resposta": "Verificar fios e conexões em busca de danos"
+    },
+    {
+      "q": "Qual é a importância de manter os canteiros livres de ervas daninhas?",
+      "o": [
+        "Evita a competição por água e nutrientes com as plantas",
+        "Serve apenas para deixar o jardim mais bonito",
+        "Não traz nenhum benefício real para as plantas",
+        "Aumenta a quantidade de água necessária no solo"
+      ],
+      "n": "facil",
+      "resposta": "Evita a competição por água e nutrientes com as plantas"
+    },
+    {
+      "q": "Como deve ser armazenada uma escada usada para podar árvores altas?",
+      "o": [
+        "Em local seco, apoiada de forma estável e segura",
+        "Deitada no meio do caminho, no ambiente de trabalho",
+        "Molhada, próxima a produtos químicos",
+        "Não há necessidade de cuidado no armazenamento"
+      ],
+      "n": "facil",
+      "resposta": "Em local seco, apoiada de forma estável e segura"
+    },
+    {
+      "q": "Qual é a função das minhocas e outros organismos no solo de um jardim?",
+      "o": [
+        "Ajudam a arejar o solo e decompor matéria orgânica",
+        "Apenas prejudicam o crescimento das raízes",
+        "Não têm nenhuma função relevante para o solo",
+        "Servem só de alimento para outros insetos"
+      ],
+      "n": "medio",
+      "resposta": "Ajudam a arejar o solo e decompor matéria orgânica"
+    },
+    {
+      "q": "Por que é recomendado variar a altura do corte de grama ao longo do ano?",
+      "o": [
+        "Ajuda a grama a resistir melhor ao calor e à seca",
+        "Não existe motivo, o corte deve ser sempre igual",
+        "Serve apenas para economizar combustível do equipamento",
+        "Faz a grama crescer mais devagar o ano todo"
+      ],
+      "n": "medio",
+      "resposta": "Ajuda a grama a resistir melhor ao calor e à seca"
+    },
+    {
+      "q": "Qual é o cuidado indicado ao transplantar uma muda de vaso pequeno para um maior?",
+      "o": [
+        "Manter parte da terra original nas raízes",
+        "Remover toda a terra e lavar as raízes com sabão",
+        "Cortar metade das raízes antes de transplantar",
+        "Deixar a muda sem água por uma semana antes"
+      ],
+      "n": "medio",
+      "resposta": "Manter parte da terra original nas raízes"
+    },
+    {
+      "q": "O que caracteriza uma planta que precisa de mais luz solar direta?",
+      "o": [
+        "Folhas alongadas e caule fraco em locais sombreados",
+        "Flores com cores mais escuras que o normal",
+        "Crescimento acelerado das raízes em qualquer local seguindo as boas práticas",
+        "Redução do tamanho das folhas em pleno sol"
+      ],
+      "n": "dificil",
+      "resposta": "Folhas alongadas e caule fraco em locais sombreados"
+    },
+    {
+      "q": "Qual é o principal benefício da compostagem de resíduos orgânicos do jardim?",
+      "o": [
+        "Produz adubo natural e reduz o descarte de lixo",
+        "Serve apenas para eliminar o cheiro dos resíduos",
+        "Substitui totalmente a necessidade de água nas plantas",
+        "Impede o crescimento de qualquer tipo de praga"
+      ],
+      "n": "dificil",
+      "resposta": "Produz adubo natural e reduz o descarte de lixo"
+    },
+    {
+      "q": "Qual é o efeito de regar plantas diretamente sob sol forte ao meio-dia?",
+      "o": [
+        "As gotas de água podem queimar as folhas como lentes",
+        "A planta cresce mais rápido do que o normal",
+        "Não existe nenhum efeito negativo nesse horário",
+        "As raízes absorvem a água com mais eficiência"
+      ],
+      "n": "dificil",
+      "resposta": "As gotas de água podem queimar as folhas como lentes"
     }
   ]
 };
