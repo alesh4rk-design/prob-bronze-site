@@ -2658,6 +2658,13 @@
   window.mudarEtapaPipeline = async function (chave, nome, etapa) {
     try {
       await definirEtapaPipeline(chave, etapa, nome, me.usuario);
+      // Selecionar "Em entrevista" no seletor de etapa também marca o
+      // candidato como aprovado para entrevista, para aparecer na aba
+      // "Aprovados para Entrevista" sem precisar clicar nos dois controles
+      // separadamente (que é a mesma decisão, só com dois campos no banco).
+      if (etapa === 'entrevista') {
+        await definirAprovacaoManual(chave, true, nome, me.usuario);
+      }
       toast('✅ Etapa atualizada', 'ok');
     } catch (e) {
       console.error(e);
