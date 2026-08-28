@@ -1790,6 +1790,19 @@
         </div>`;
     }
 
+    // Observação do avaliador (Processo Seletivo), se houver.
+    {
+      const chaveIdObs = CAND_ATUAL.replace(/[/]/g, '_');
+      const obs = PIPELINE_MAP[chaveIdObs] && PIPELINE_MAP[chaveIdObs].observacao;
+      if (obs) {
+        h += `
+          <div class="pr-sec-title">Observação do avaliador</div>
+          <div class="pr-cand" style="display:block;border-left:4px solid #0088B0;">
+            <div style="font-size:12px;color:#12141c;white-space:pre-wrap;">${escapeHtml(obs)}</div>
+          </div>`;
+      }
+    }
+
     if (quizzes.length) {
       h += `<div class="pr-sec-title">Desempenho por módulo</div>`;
       for (const t of quizzes) {
@@ -2020,6 +2033,19 @@
             ? f.certificacoes.map(c => `<span class="pr-chip">✓ ${escapeHtml(c)}</span>`).join(' ')
             : '<span class="pr-f-val" style="color:#7A8EA8;">Nenhuma informada</span>'}
         </div>`;
+    }
+
+    // Observação do avaliador (Processo Seletivo), se houver.
+    {
+      const chaveIdObs = CAND_ATUAL.replace(/[/]/g, '_');
+      const obs = PIPELINE_MAP[chaveIdObs] && PIPELINE_MAP[chaveIdObs].observacao;
+      if (obs) {
+        h += `
+          <div class="pr-sec-title">Observação do avaliador</div>
+          <div class="sk-perfil" style="display:block;">
+            <div style="font-size:12px;color:#12141c;white-space:pre-wrap;">${escapeHtml(obs)}</div>
+          </div>`;
+      }
     }
 
     // Competências por módulo
