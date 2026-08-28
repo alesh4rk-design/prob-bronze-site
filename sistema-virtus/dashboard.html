@@ -922,6 +922,27 @@
   </div>
 </div>
 
+<!-- ══════════ MODAL: OBSERVAÇÃO DO CANDIDATO ══════════ -->
+<div class="modal-back" id="obsModal" onclick="if(event.target===this)fecharObservacao()">
+  <div class="modal-card" style="max-width:480px;">
+    <div class="modal-top">
+      <div class="modal-avatar">📝</div>
+      <div>
+        <div class="modal-cand-nome">Observação</div>
+        <div class="modal-cand-sub" id="obsNomeCandidato">—</div>
+      </div>
+      <button class="modal-close" onclick="fecharObservacao()" title="Fechar">✕</button>
+    </div>
+    <div class="modal-scroll" style="padding:20px;">
+      <textarea class="field-input" id="obsTextarea" rows="6" style="width:100%;resize:vertical;font-family:inherit;line-height:1.5;" placeholder="Escreva aqui sua observação sobre o candidato. Ela vai aparecer na aba &quot;Aprovados para Entrevista&quot; se ele for selecionado."></textarea>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-act btn-neutral" style="padding:12px 20px;border-radius:6px;" onclick="fecharObservacao()">Cancelar</button>
+      <button class="btn-act btn-approve-admin" style="padding:12px 20px;border-radius:6px;margin-left:auto;" onclick="salvarObservacao()">💾 Salvar observação</button>
+    </div>
+  </div>
+</div>
+
 <!-- ══════════ RELATÓRIO (visível apenas na impressão/PDF) ══════════ -->
 <div id="printReport"></div>
 
@@ -1599,7 +1620,11 @@
     document.getElementById('fqAcertos').classList.toggle('active', modo === 'acertos');
     renderModalCandidato();
   };
-  document.addEventListener('keydown', e => { if (e.key === 'Escape') fecharCandidato(); });
+  document.addEventListener('keydown', e => {
+    if (e.key !== 'Escape') return;
+    fecharCandidato();
+    if (document.getElementById('obsModal').classList.contains('show')) fecharObservacao();
+  });
 
   function renderModalCandidato() {
     const tents = tentativasDe(CAND_ATUAL);
@@ -2520,14 +2545,31 @@
     }).join('');
   };
 
-  window.editarObservacaoPipeline = async function (chave, nome) {
+  let OBS_CHAVE_ATUAL = null;
+  let OBS_NOME_ATUAL = null;
+
+  window.editarObservacaoPipeline = function (chave, nome) {
     const chaveId = chave.replace(/[/]/g, '_');
-    const atual = (PIPELINE_MAP[chaveId] && PIPELINE_MAP[chaveId].observacao) || '';
-    const nova = prompt(`Observação sobre ${nome} (aparece na aba "Aprovados para Entrevista"):`, atual);
-    if (nova === null) return; // cancelou
+    OBS_CHAVE_ATUAL = chave;
+    OBS_NOME_ATUAL = nome;
+    document.getElementById('obsNomeCandidato').textContent = nome;
+    document.getElementById('obsTextarea').value = (PIPELINE_MAP[chaveId] && PIPELINE_MAP[chaveId].observacao) || '';
+    document.getElementById('obsModal').classList.add('show');
+    document.getElementById('obsTextarea').focus();
+  };
+
+  window.fecharObservacao = function () {
+    document.getElementById('obsModal').classList.remove('show');
+    OBS_CHAVE_ATUAL = null;
+    OBS_NOME_ATUAL = null;
+  };
+
+  window.salvarObservacao = async function () {
+    const nova = document.getElementById('obsTextarea').value.trim();
     try {
-      await definirObservacaoPipeline(chave, nova.trim(), nome, me.usuario);
+      await definirObservacaoPipeline(OBS_CHAVE_ATUAL, nova, OBS_NOME_ATUAL, me.usuario);
       toast('✅ Observação salva', 'ok');
+      fecharObservacao();
     } catch (e) {
       console.error(e);
       toast('❌ Falha ao salvar observação: ' + e.message, 'err');
