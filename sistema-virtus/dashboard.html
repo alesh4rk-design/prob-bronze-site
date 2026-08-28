@@ -2487,15 +2487,20 @@
 
   window.renderViolacoes = function renderViolacoes() {
     const tbody = document.getElementById('violTableBody');
-    const dataIni = document.getElementById('violDataIni').value;
-    const dataFim = document.getElementById('violDataFim').value;
+    if (!tbody) return;
+    const dataIniEl = document.getElementById('violDataIni');
+    const dataFimEl = document.getElementById('violDataFim');
+    if (!dataIniEl || !dataFimEl) return;
+    const dataIni = dataIniEl.value;
+    const dataFim = dataFimEl.value;
     const lista = ALL_VIOLACOES.filter(v => {
       if (!v.data) return false;
       if (dataIni && v.data < dataIni) return false;
       if (dataFim && v.data > dataFim) return false;
       return true;
     });
-    document.getElementById('violBadge').textContent = lista.length + ' eventos';
+    const badge = document.getElementById('violBadge');
+    if (badge) badge.textContent = lista.length + ' eventos';
     if (!lista.length) { tbody.innerHTML = '<tr><td colspan="5"><div class="empty-state"><div class="empty-icon">🚨</div>Nenhuma violação no período selecionado</div></td></tr>'; return; }
     tbody.innerHTML = lista.slice(0, 100).map(v => `
       <tr>
