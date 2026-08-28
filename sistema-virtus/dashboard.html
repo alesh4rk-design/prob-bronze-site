@@ -3439,21 +3439,27 @@
   // selecionado", para não misturar candidatos de dias diferentes na mesma
   // lista. Lembra a última escolha de modo entre sessões (migra valores
   // antigos 'hoje'/'ontem'/'personalizado' de versões anteriores do filtro).
-  document.getElementById('filterDia').value = dataLocalYMD(new Date());
+  const filterDiaEl = document.getElementById('filterDia');
+  if (filterDiaEl) filterDiaEl.value = dataLocalYMD(new Date());
   let periodoSalvo = localStorage.getItem(LS_PERIODO) || 'dia';
   if (periodoSalvo === 'hoje' || periodoSalvo === 'personalizado' || periodoSalvo === 'todos') periodoSalvo = 'dia';
   if (periodoSalvo === 'ontem') {
     periodoSalvo = 'dia';
     const ontem = new Date(); ontem.setDate(ontem.getDate() - 1);
-    document.getElementById('filterDia').value = dataLocalYMD(ontem);
+    if (filterDiaEl) filterDiaEl.value = dataLocalYMD(ontem);
   }
-  document.getElementById('filterPeriodo').value = periodoSalvo;
+  const filterPeriodoEl = document.getElementById('filterPeriodo');
+  if (filterPeriodoEl) filterPeriodoEl.value = periodoSalvo;
 
   // Violações e Banco de Aprovados também abrem filtrados no dia de hoje.
-  document.getElementById('violDataIni').value = dataLocalYMD(new Date());
-  document.getElementById('violDataFim').value = dataLocalYMD(new Date());
-  document.getElementById('bancoDataIni').value = dataLocalYMD(new Date());
-  document.getElementById('bancoDataFim').value = dataLocalYMD(new Date());
+  const violDataIniEl = document.getElementById('violDataIni');
+  const violDataFimEl = document.getElementById('violDataFim');
+  if (violDataIniEl) violDataIniEl.value = dataLocalYMD(new Date());
+  if (violDataFimEl) violDataFimEl.value = dataLocalYMD(new Date());
+  const bancoDataIniEl = document.getElementById('bancoDataIni');
+  const bancoDataFimEl = document.getElementById('bancoDataFim');
+  if (bancoDataIniEl) bancoDataIniEl.value = dataLocalYMD(new Date());
+  if (bancoDataFimEl) bancoDataFimEl.value = dataLocalYMD(new Date());
 
   conectar();
   // Após os dados carregarem, renderPipeline() é chamado automaticamente por renderAll().
