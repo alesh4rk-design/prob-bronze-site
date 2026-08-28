@@ -2759,12 +2759,18 @@
 
   window.renderBancoAprovados = function renderBancoAprovados() {
     const tbody = document.getElementById('bancoTableBody');
-    const aprovados = candidatosAgrupados().filter(c => c.media >= 70);
+    const todos = candidatosAgrupados();
 
     const dataIni = document.getElementById('bancoDataIni').value;
     const dataFim = document.getElementById('bancoDataFim').value;
 
-    const aprovadosFiltrados = aprovados.filter(c => {
+    // Filtra apenas candidatos marcados para entrevista (aprovado = true no pipeline)
+    const marcadosParaEntrevista = todos.filter(c => {
+      const chaveId = c.chave.replace(/[/]/g, '_');
+      return PIPELINE_MAP[chaveId] && PIPELINE_MAP[chaveId].aprovado === true;
+    });
+
+    const aprovadosFiltrados = marcadosParaEntrevista.filter(c => {
       const dataC = c.ultima ? dataLocalYMD(c.ultima) : '';
       if (!dataC) return false;
       if (dataIni && dataC < dataIni) return false;
@@ -2774,7 +2780,7 @@
 
     document.getElementById('bancoCountBadge').textContent = aprovadosFiltrados.length + ' registro' + (aprovadosFiltrados.length !== 1 ? 's' : '');
     if (!aprovadosFiltrados.length) {
-      tbody.innerHTML = '<tr><td colspan="5"><div class="empty-state"><div class="empty-icon">📭</div>Nenhum candidato encontrado</div></td></tr>';
+      tbody.innerHTML = '<tr><td colspan="5"><div class="empty-state"><div class="empty-icon">📭</div>Nenhum candidato marcado para entrevista</div></td></tr>';
       return;
     }
     tbody.innerHTML = aprovadosFiltrados.map((c, i) => {
