@@ -12,7 +12,7 @@
 
 import { db } from "./firebase-config.js";
 import {
-  collection, query, where, orderBy, limit, onSnapshot, getDocs, getDoc, doc, setDoc, updateDoc, deleteDoc, serverTimestamp
+  collection, query, where, orderBy, limit, onSnapshot, getDoc, doc, setDoc, updateDoc, deleteDoc, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
 
 // Assina a coleção `resultados` em tempo real (substitui o polling de 10s do
@@ -35,23 +35,6 @@ export function assinarViolacoes(callback, onError) {
     snap.forEach((d) => lista.push({ id: d.id, ...d.data() }));
     callback(lista);
   }, (err) => { console.error("assinarViolacoes:", err); if (onError) onError(err); });
-}
-
-// Grava a decisão do avaliador sobre um candidato: "apto", "nao_apto" ou
-// "pendente" (limpa a decisão). Admin e viewer podem decidir; as
-// firestore.rules limitam o viewer a alterar SOMENTE estes três campos.
-// `avaliador` é o usuário logado (me.usuario, vindo de virtusGetCurrentUser).
-export async function definirDecisao(resultadoId, decisao, avaliador) {
-  const ref = doc(db, "resultados", resultadoId);
-  // Firestore rejeita updateDoc com valor undefined em qualquer campo — o
-  // "|| null" garante que sempre vai um valor gravável, mesmo se a conta do
-  // avaliador não tiver o campo "usuario" salvo em Firestore.
-  const nomeAvaliador = avaliador || null;
-  if (decisao === "pendente") {
-    await updateDoc(ref, { decisao: null, decisao_por: null, decisao_em: null });
-  } else {
-    await updateDoc(ref, { decisao, decisao_por: nomeAvaliador, decisao_em: serverTimestamp() });
-  }
 }
 
 // Exclui um resultado (uma tentativa de quiz ou digitação). Admin e viewer
@@ -126,13 +109,22 @@ export async function definirModuloAtivo(modulo, ativo) {
 }
 
 // ── Código de acesso presencial (codigos_acesso/{codigo}) ──────────────────
-// Impede o candidato de fazer o teste em casa: admin OU viewer gera um
-// código de 6 dígitos ali na hora, de uso único (as firestore.rules impedem
-// reaproveitar um código já marcado como usado). Ver quiz.js para o lado do
-// candidato (verificarEConsumirCodigoAcesso).
+// Impede o candidato de fazer o teste em casa: admin OU viewer gera UM
+// código compartilhado, que serve para TODOS os candidatos da entrevista
+// (útil em dias com muita gente, ex: 20+ candidatos). O código expira
+// sozinho 4 horas depois de gerado — a expiração é validada no SERVIDOR
+// pelas firestore.rules (request.time < resource.data.expira_em), não só
+// no navegador do candidato, então não dá para simplesmente "esperar" ou
+// ajustar o relógio do celular para continuar usando um código vencido.
+// Ver quiz.js para o lado do candidato (verificarCodigoAcesso).
 
-// Gera um código novo de 6 dígitos, evitando colisão com um já existente.
+const VALIDADE_CODIGO_MS = 4 * 60 * 60 * 1000; // 4 horas
+
+// Gera um código novo de 6 dígitos, válido por 4 horas a partir de agora.
 export async function gerarCodigoAcesso(avaliador) {
+  // Firestore rejeita setDoc/updateDoc com campo undefined — mesma causa do
+  // bug de "Falha ao salvar decisão" (conta sem o campo "usuario" salvo).
+  const nomeAvaliador = avaliador || null;
   let codigo;
   for (let tentativa = 0; tentativa < 5; tentativa++) {
     codigo = String(Math.floor(100000 + Math.random() * 900000));
@@ -140,10 +132,12 @@ export async function gerarCodigoAcesso(avaliador) {
     const snap = await getDoc(ref);
     if (!snap.exists()) {
       await setDoc(ref, {
-        usado: false,
-        criado_por: avaliador,
+        ativo: true,
+        usos: 0,
+        criado_por: nomeAvaliador,
         criado_em: serverTimestamp(),
-        usado_em: null
+        expira_em: new Date(Date.now() + VALIDADE_CODIGO_MS),
+        ultimo_uso_em: null
       });
       return codigo;
     }
@@ -152,9 +146,10 @@ export async function gerarCodigoAcesso(avaliador) {
 }
 
 // Assina os últimos códigos gerados (para a lista no painel), mais recentes
-// primeiro. Usa apenas os 30 mais recentes para não pesar o listener.
+// primeiro. Usa apenas os 10 mais recentes — não há mais um por candidato,
+// então não precisa de uma lista longa.
 export function assinarCodigosAcesso(callback, onError) {
-  const q = query(collection(db, "codigos_acesso"), orderBy("criado_em", "desc"), limit(30));
+  const q = query(collection(db, "codigos_acesso"), orderBy("criado_em", "desc"), limit(10));
   return onSnapshot(q, (snap) => {
     const lista = [];
     snap.forEach((d) => lista.push({ codigo: d.id, ...d.data() }));
@@ -162,16 +157,81 @@ export function assinarCodigosAcesso(callback, onError) {
   }, (err) => { console.error("assinarCodigosAcesso:", err); if (onError) onError(err); });
 }
 
-// Cancela um código gerado por engano (evaliador). Diferente de "usar" um
-// código, que só o próprio candidato faz (ver quiz.js).
+// Desativa um código antes da expiração natural (ex: entrevista encerrou
+// mais cedo, ou o código vazou). Admin ou viewer.
 export async function cancelarCodigoAcesso(codigo) {
-  await updateDoc(doc(db, "codigos_acesso", codigo), { usado: true, usado_em: serverTimestamp(), cancelado: true });
+  await updateDoc(doc(db, "codigos_acesso", codigo), { ativo: false });
 }
 
-// Leitura pontual (sem realtime), útil para exportações (CSV/Excel).
-export async function buscarResultadosUmaVez() {
-  const snap = await getDocs(collection(db, "resultados"));
-  const lista = [];
-  snap.forEach((d) => lista.push({ id: d.id, ...d.data() }));
-  return lista;
+// Exclui um código da lista (ativo, desativado ou já expirado). Diferente de
+// cancelarCodigoAcesso: aqui o documento some de vez, para não acumular
+// códigos antigos que não servem mais pra nada.
+export async function excluirCodigoAcesso(codigo) {
+  await deleteDoc(doc(db, "codigos_acesso", codigo));
+}
+
+// ── WhatsApp do RH (config/whatsapp_rh) ─────────────────────────────────
+// Número que recebe o aviso automático de "terminei a avaliação", mandado
+// pelo próprio candidato (via link wa.me, aberto no navegador dele — não é
+// um envio automático por trás das câmeras, é o candidato que confirma o
+// envio no WhatsApp). Guardado como documento único em `config`.
+export async function definirNumeroWhatsapp(numero) {
+  await setDoc(doc(db, "config", "whatsapp_rh"), { numero, atualizado_em: serverTimestamp() });
+}
+
+export function assinarNumeroWhatsapp(callback, onError) {
+  return onSnapshot(doc(db, "config", "whatsapp_rh"), (snap) => {
+    callback(snap.exists() ? (snap.data().numero || "") : "");
+  }, (err) => { console.error("assinarNumeroWhatsapp:", err); if (onError) onError(err); });
+}
+
+// ── Processo Seletivo / Pipeline (pipeline/{chave}) ─────────────────────
+// Etapa manual do processo de contratação de cada candidato (Aguardando,
+// Entrevista, Contratado, Recusado). Isso é DIFERENTE da nota do teste —
+// não reintroduz a antiga "decisão do avaliador" sobre a prova, é só um
+// controle de onde o candidato está no processo de contratação, pra
+// coordenadores/gerentes acompanharem. `chave` é a mesma chave usada no
+// dashboard para agrupar tentativas do candidato (cpf:xxx ou nome:xxx).
+export async function definirEtapaPipeline(chave, etapa, nome, avaliador) {
+  const id = chave.replace(/[/]/g, "_");
+  await setDoc(doc(db, "pipeline", id), {
+    etapa,
+    nome: nome || null,
+    atualizado_por: avaliador || null,
+    atualizado_em: serverTimestamp()
+  }, { merge: true });
+}
+
+// Observação do avaliador (admin/viewer) para o coordenador/gerente de RH
+// ler — texto livre, não interfere em nota nem em nenhum resultado de prova.
+export async function definirObservacaoPipeline(chave, observacao, nome, avaliador) {
+  const id = chave.replace(/[/]/g, "_");
+  await setDoc(doc(db, "pipeline", id), {
+    observacao: observacao || "",
+    nome: nome || null,
+    atualizado_por: avaliador || null,
+    atualizado_em: serverTimestamp()
+  }, { merge: true });
+}
+
+// Aprovação manual (aba "Aprovados") — decisão da equipe (avaliador,
+// coordenador ou gerência) sobre o candidato, separada da nota do teste
+// (essa continua 100% automática) e separada também da etapa do processo
+// seletivo (Aguardando/Entrevista/Contratado/Recusado).
+export async function definirAprovacaoManual(chave, aprovado, nome, avaliador) {
+  const id = chave.replace(/[/]/g, "_");
+  await setDoc(doc(db, "pipeline", id), {
+    aprovado,
+    nome: nome || null,
+    aprovado_por: avaliador || null,
+    aprovado_em: serverTimestamp()
+  }, { merge: true });
+}
+
+export function assinarPipeline(callback, onError) {
+  return onSnapshot(collection(db, "pipeline"), (snap) => {
+    const mapa = {};
+    snap.forEach((d) => { mapa[d.id] = d.data(); });
+    callback(mapa);
+  }, (err) => { console.error("assinarPipeline:", err); if (onError) onError(err); });
 }
