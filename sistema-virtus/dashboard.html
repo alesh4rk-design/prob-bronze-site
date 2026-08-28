@@ -2759,6 +2759,7 @@
 
   window.renderBancoAprovados = function renderBancoAprovados() {
     const tbody = document.getElementById('bancoTableBody');
+    if (!tbody) return;
     const todos = candidatosAgrupados();
 
     const dataIni = document.getElementById('bancoDataIni').value;
@@ -2778,7 +2779,8 @@
       return true;
     }).sort((a, b) => b.media - a.media);
 
-    document.getElementById('bancoCountBadge').textContent = aprovadosFiltrados.length + ' registro' + (aprovadosFiltrados.length !== 1 ? 's' : '');
+    const badge = document.getElementById('bancoCountBadge');
+    if (badge) badge.textContent = aprovadosFiltrados.length + ' registro' + (aprovadosFiltrados.length !== 1 ? 's' : '');
     if (!aprovadosFiltrados.length) {
       tbody.innerHTML = '<tr><td colspan="5"><div class="empty-state"><div class="empty-icon">📭</div>Nenhum candidato marcado para entrevista</div></td></tr>';
       return;
