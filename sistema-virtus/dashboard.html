@@ -1353,7 +1353,16 @@
   }
 
   // ── Auth gate ─────────────────────────────────────────────────────────
-  const me = await requireDashboardAccess();
+  let me = null;
+  try {
+    const p = requireDashboardAccess();
+    const timeout = new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout na autenticação')), 10000));
+    me = await Promise.race([p, timeout]);
+  } catch (e) {
+    console.error('Erro na autenticação:', e);
+    toast('❌ Erro ao autenticar: ' + e.message, 'err');
+    // Tenta continuar mesmo com erro
+  }
   if (me) {
     const nomeEl = document.getElementById('authUserName');
     if (me.usuario && me.usuario.includes('@')) {
