@@ -873,10 +873,10 @@
   </div>
   <div class="sidebar-nav">
     <div class="sidebar-section-lbl">Resultados</div>
-    <div class="sidebar-item active" data-view="dashboard" id="sidebarItemDashboard" onclick="switchView('dashboard')"><span class="si-icon">📊</span> Dashboard</div>
-    <div class="sidebar-item" data-view="banco" id="sidebarItemBanco" onclick="switchView('banco')"><span class="si-icon">✅</span> Banco de Aprovados</div>
+    <div class="sidebar-item" data-view="dashboard" id="sidebarItemDashboard" onclick="switchView('dashboard')"><span class="si-icon">✅</span> Aprovados</div>
+    <div class="sidebar-item active" data-view="pipeline" id="sidebarItemPipeline" onclick="switchView('pipeline')"><span class="si-icon">🧭</span> Processo Seletivo</div>
+    <div class="sidebar-item" data-view="banco" id="sidebarItemBanco" onclick="switchView('banco')"><span class="si-icon">📊</span> Banco de Aprovados</div>
     <div class="sidebar-item" data-view="violacoes" id="sidebarItemViolacoes" onclick="switchView('violacoes')"><span class="si-icon">🚨</span> Violações</div>
-    <div class="sidebar-item" data-view="pipeline" id="sidebarItemPipeline" onclick="switchView('pipeline')"><span class="si-icon">🧭</span> Processo Seletivo</div>
     <div class="sidebar-section-lbl" id="sidebarFerramentasLbl">Ferramentas</div>
     <div class="sidebar-item" data-view="testes" id="sidebarItemTestes" onclick="switchView('testes')"><span class="si-icon">⌨️</span> Testes</div>
     <div class="sidebar-item" data-view="qrcodes" id="sidebarItemQrcodes" onclick="switchView('qrcodes')"><span class="si-icon">🖨️</span> QR Codes</div>
@@ -1447,11 +1447,11 @@
 
   // ══════════ NAVEGAÇÃO LATERAL (SIDEBAR) — SPA sem reload ══════════
   const VIEW_TITULOS = {
-    dashboard: 'Dashboard de Resultados',
+    dashboard: 'Candidatos Aprovados',
+    pipeline: 'Processo Seletivo (Todos)',
     banco: 'Banco de Aprovados',
     testes: 'Aplicar Testes',
     violacoes: 'Violações Registradas',
-    pipeline: 'Processo Seletivo',
     qrcodes: 'QR Codes para Imprimir',
     codigos: 'Código de Acesso',
     perguntas: 'Banco de Perguntas',
@@ -2318,8 +2318,10 @@
   // teste. Agora agrupa tudo numa linha só, com os módulos como badges.
   function renderTable(lista) {
     const tbody = document.getElementById('tableBody');
-    const candidatos = candidatosAgrupados(lista);
-    document.getElementById('tableCountBadge').textContent = candidatos.length + ' candidatos';
+    let candidatos = candidatosAgrupados(lista);
+    // Dashboard mostra só aprovados (pct >= 70)
+    candidatos = candidatos.filter(c => c.media >= 70);
+    document.getElementById('tableCountBadge').textContent = candidatos.length + ' aprovados';
     if (!candidatos.length) {
       tbody.innerHTML = '<tr><td colspan="7"><div class="empty-state"><div class="empty-icon">📭</div>Nenhum resultado encontrado.</div></td></tr>';
       return;
@@ -3307,11 +3309,9 @@
   document.getElementById('bancoDataIni').value = dataLocalYMD(new Date());
   document.getElementById('bancoDataFim').value = dataLocalYMD(new Date());
 
-  // Coordenador abre direto na lista corrida de candidatos (Processo
-  // Seletivo) — não tem por que ver o Dashboard com KPIs/gráficos/filtros.
-  if (me && me.perfil === 'coordenador') {
-    try { switchView('pipeline'); } catch (e) { console.error(e); toast('❌ Erro ao abrir Processo Seletivo: ' + e.message, 'err'); }
-  }
+  // Abre direto no Processo Seletivo (lista de todos os candidatos).
+  // Dashboard fica reservado para aprovados apenas.
+  try { switchView('pipeline'); } catch (e) { console.error(e); toast('❌ Erro ao abrir Processo Seletivo: ' + e.message, 'err'); }
 
   conectar();
 
