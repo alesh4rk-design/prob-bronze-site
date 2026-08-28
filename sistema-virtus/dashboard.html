@@ -986,7 +986,6 @@
             <th>Nota %</th>
             <th>Status</th>
             <th>Concluído</th>
-            <th id="thVisivelRHDash" style="display:none;">Visível ao RH</th>
           </tr>
         </thead>
         <tbody id="tableBody">
@@ -1131,7 +1130,6 @@
       <div class="warn-note">
         A nota (✅/❌) vem automática do teste. A <strong>etapa</strong> abaixo é manual — controla só o
         andamento do processo de contratação (não mexe na nota nem em nenhum resultado de prova).
-        <span id="rhAvisoAdmin" style="display:none;">Use a coluna <strong>"Visível ao RH"</strong> pra escolher quais candidatos o coordenador/gerente de RH vai enxergar.</span>
       </div>
       <div id="pipelineSearchWrap" style="display:none;margin-top:12px;">
         <input class="field-input" type="text" id="pipelineSearchInput" placeholder="🔍 Buscar candidato por nome..." style="max-width:340px;" oninput="renderPipeline()">
@@ -1146,13 +1144,12 @@
             <th>Testes realizados</th>
             <th>Nota (módulo escolhido)</th>
             <th>Etapa</th>
-            <th id="thVisivelRH" style="display:none;">Visível ao RH</th>
             <th>Observação</th>
             <th>Atualizado</th>
           </tr>
         </thead>
         <tbody id="pipelineTableBody">
-          <tr><td colspan="8"><div class="empty-state"><div class="empty-icon">🧭</div>Nenhum candidato ainda.</div></td></tr>
+          <tr><td colspan="7"><div class="empty-state"><div class="empty-icon">🧭</div>Nenhum candidato ainda.</div></td></tr>
         </tbody>
       </table>
     </div>
@@ -1343,7 +1340,7 @@
     assinarModulos, definirModuloAtivo,
     gerarCodigoAcesso, assinarCodigosAcesso, cancelarCodigoAcesso, excluirCodigoAcesso,
     definirNumeroWhatsapp, assinarNumeroWhatsapp,
-    definirEtapaPipeline, assinarPipeline, definirVisibilidadeRH, definirObservacaoPipeline
+    definirEtapaPipeline, assinarPipeline, definirObservacaoPipeline
   } from "./js/dashboard.js";
   import { db } from "./js/firebase-config.js";
   import { doc, setDoc } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
@@ -2319,10 +2316,8 @@
     const tbody = document.getElementById('tableBody');
     const candidatos = candidatosAgrupados(lista);
     document.getElementById('tableCountBadge').textContent = candidatos.length + ' candidatos';
-    const podeEnviarRH = me && (me.perfil === 'admin' || me.perfil === 'gerencia' || me.perfil === 'avaliador');
-    document.getElementById('thVisivelRHDash').style.display = podeEnviarRH ? '' : 'none';
     if (!candidatos.length) {
-      tbody.innerHTML = '<tr><td colspan="8"><div class="empty-state"><div class="empty-icon">📭</div>Nenhum resultado encontrado.</div></td></tr>';
+      tbody.innerHTML = '<tr><td colspan="7"><div class="empty-state"><div class="empty-icon">📭</div>Nenhum resultado encontrado.</div></td></tr>';
       return;
     }
     tbody.innerHTML = candidatos.map((c, i) => {
@@ -2331,14 +2326,6 @@
       const dt = c.ultima ? new Date(c.ultima).toLocaleString('pt-BR') : '—';
       const temViolacao = violacoesDe(c.nome).length > 0;
       const rowCls = aprovado ? 'row-aprovado' : 'row-reprovado';
-      const chaveId = c.chave.replace(/[/]/g, '_');
-      const visivelRH = !!(PIPELINE_MAP[chaveId] && PIPELINE_MAP[chaveId].visivel_rh);
-      const colunaRH = podeEnviarRH ? `
-        <td onclick="event.stopPropagation()">
-          <button class="btn-act ${visivelRH ? 'btn-approve-admin' : 'btn-neutral'}" onclick="event.stopPropagation();alternarVisivelRH('${c.chave.replace(/'/g, "\\'")}','${escapeHtml(c.nome).replace(/'/g, "\\'")}',${!visivelRH})">
-            ${visivelRH ? '✅ Enviado' : '📤 Enviar ao RH'}
-          </button>
-        </td>` : '';
       return `<tr class="clickable ${rowCls}" onclick="abrirCandidato('${c.chave.replace(/'/g, "\\'")}')" title="Ver detalhamento e exportar PDF">
         <td style="text-align:center;color:var(--text3);">${i + 1}</td>
         <td class="td-nome">${escapeHtml(c.nome)}${temViolacao ? ' <span style="color:var(--red);font-weight:700;" title="Possui violação registrada durante o teste">*</span>' : ''} <span class="row-hint">▸ detalhes</span></td>
@@ -2352,7 +2339,6 @@
         </td>
         <td>${aprovado ? '<span style="color:var(--green);font-weight:700;">✅ Aprovado</span>' : '<span style="color:var(--red);font-weight:700;">❌ Reprovado</span>'}</td>
         <td class="td-time">${dt}</td>
-        ${colunaRH}
       </tr>`;
     }).join('');
   }
@@ -2481,8 +2467,6 @@
     const tbody = document.getElementById('pipelineTableBody');
     if (!tbody || !me) return;
     const somenteLeitura = me.perfil === 'coordenador';
-    document.getElementById('thVisivelRH').style.display = somenteLeitura ? 'none' : '';
-    document.getElementById('rhAvisoAdmin').style.display = somenteLeitura ? 'none' : 'inline';
     document.getElementById('pipelineSearchWrap').style.display = somenteLeitura ? 'block' : 'none';
 
     let candidatos = candidatosAgrupados();
@@ -2506,26 +2490,19 @@
     document.getElementById('pipelineBadge').textContent = candidatos.length + ' candidatos';
     if (!candidatos.length) {
       const msg = somenteLeitura ? 'Nenhum candidato encontrado.' : 'Nenhum candidato ainda.';
-      tbody.innerHTML = `<tr><td colspan="8"><div class="empty-state"><div class="empty-icon">🧭</div>${msg}</div></td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state"><div class="empty-icon">🧭</div>${msg}</div></td></tr>`;
       return;
     }
     tbody.innerHTML = candidatos.map((c, i) => {
       const chaveId = c.chave.replace(/[/]/g, '_');
       const etapaAtual = (PIPELINE_MAP[chaveId] && PIPELINE_MAP[chaveId].etapa) || 'aguardando';
       const infoEtapa = ETAPAS_PIPELINE.find(e => e.valor === etapaAtual) || ETAPAS_PIPELINE[0];
-      const visivelRH = !!(PIPELINE_MAP[chaveId] && PIPELINE_MAP[chaveId].visivel_rh);
       const atualizadoEm = PIPELINE_MAP[chaveId] && PIPELINE_MAP[chaveId].atualizado_em ? fmtDataHora(PIPELINE_MAP[chaveId].atualizado_em) : '—';
       const seletor = somenteLeitura
         ? `<span style="color:${infoEtapa.cor};font-weight:700;">${infoEtapa.label}</span>`
         : `<select class="field-input" style="max-width:170px;color:${infoEtapa.cor};font-weight:700;" onclick="event.stopPropagation()" onchange="event.stopPropagation();mudarEtapaPipeline('${c.chave.replace(/'/g, "\\'")}','${escapeHtml(c.nome).replace(/'/g, "\\'")}',this.value)">
             ${ETAPAS_PIPELINE.map(e => `<option value="${e.valor}" ${e.valor === etapaAtual ? 'selected' : ''}>${e.label}</option>`).join('')}
           </select>`;
-      const colunaRH = somenteLeitura ? '' : `
-        <td onclick="event.stopPropagation()">
-          <button class="btn-act ${visivelRH ? 'btn-approve-admin' : 'btn-neutral'}" onclick="event.stopPropagation();alternarVisivelRH('${c.chave.replace(/'/g, "\\'")}','${escapeHtml(c.nome).replace(/'/g, "\\'")}',${!visivelRH})">
-            ${visivelRH ? '✅ Enviado' : '📤 Enviar ao RH'}
-          </button>
-        </td>`;
       const observacao = (PIPELINE_MAP[chaveId] && PIPELINE_MAP[chaveId].observacao) || '';
       const colunaObs = somenteLeitura
         ? `<td style="max-width:220px;white-space:normal;font-size:12px;color:var(--text2);">${observacao ? escapeHtml(observacao) : '<span style="color:var(--text4);">—</span>'}</td>`
@@ -2541,7 +2518,6 @@
         <td style="max-width:220px;white-space:normal;"><div style="display:flex;flex-wrap:wrap;gap:4px;">${c.modulos.map(m => `<span class="badge-modulo" style="${m.modulo === c.moduloEscolhido ? 'border-color:var(--amber);' : ''}" title="${m.modulo === c.moduloEscolhido ? 'Módulo escolhido pelo candidato' : 'Módulo automático da trilha'}">${m.modulo === c.moduloEscolhido ? '★ ' : ''}${escapeHtml(m.modulo)} <b style="color:${m.pct >= 70 ? 'var(--green)' : m.pct >= 50 ? 'var(--amber)' : 'var(--red)'}">${m.pct}%</b></span>`).join('')}${c.digitacao != null ? `<span class="badge-modulo" title="Teste de digitação">⌨️ Digitação <b style="color:${c.digitacao >= 70 ? 'var(--green)' : c.digitacao >= 50 ? 'var(--amber)' : 'var(--red)'}">${c.digitacao}%</b></span>` : ''}</div></td>
         <td><span class="td-pct" style="color:${c.media >= 70 ? 'var(--green)' : c.media >= 50 ? 'var(--amber)' : 'var(--red)'}">${c.media >= 70 ? '✅' : '❌'} ${c.media}%</span></td>
         <td>${seletor}</td>
-        ${colunaRH}
         ${colunaObs}
         <td class="td-time">${atualizadoEm}</td>
       </tr>`;
@@ -2555,16 +2531,6 @@
     } catch (e) {
       console.error(e);
       toast('❌ Falha ao atualizar etapa: ' + e.message, 'err');
-    }
-  };
-
-  window.alternarVisivelRH = async function (chave, nome, visivel) {
-    try {
-      await definirVisibilidadeRH(chave, visivel, nome, me.usuario);
-      toast(visivel ? '✅ Candidato enviado ao RH' : '↩ Candidato removido da lista do RH', 'ok');
-    } catch (e) {
-      console.error(e);
-      toast('❌ Falha: ' + e.message, 'err');
     }
   };
 
