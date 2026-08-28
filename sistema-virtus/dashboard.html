@@ -1141,7 +1141,14 @@
         andamento do processo de contratação (não mexe na nota nem em nenhum resultado de prova).
       </div>
       <div id="pipelineSearchWrap" style="display:none;margin-top:12px;">
-        <input class="field-input" type="text" id="pipelineSearchInput" placeholder="🔍 Buscar candidato por nome..." style="max-width:340px;" oninput="renderPipeline()">
+        <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;">
+          <input class="field-input" type="text" id="pipelineSearchInput" placeholder="🔍 Buscar candidato por nome..." style="flex:1;min-width:200px;" oninput="renderPipeline()">
+          <label style="display:flex;align-items:center;gap:6px;font-size:13px;">
+            📅 Data:
+            <input class="field-input" type="date" id="pipelineDateInput" style="width:140px;" onchange="renderPipeline()">
+            <button class="btn-act btn-neutral" onclick="document.getElementById('pipelineDateInput').value='';renderPipeline()" style="padding:4px 12px;font-size:12px;">Hoje</button>
+          </label>
+        </div>
       </div>
     </div>
     <div class="results-table-wrap">
@@ -2589,20 +2596,19 @@
 
     let candidatos = candidatosAgrupados();
 
-    // Coordenador vê todo mundo direto, com busca por nome e o dia de hoje
-    // sempre priorizado na exibição (candidatos de hoje aparecem primeiro).
+    // Filtros de busca e data (para coordenador, mostra controls de filtro)
     if (somenteLeitura) {
       const buscaEl = document.getElementById('pipelineSearchInput');
       const busca = buscaEl ? buscaEl.value.trim().toLowerCase() : '';
       if (busca) candidatos = candidatos.filter(c => c.nome.toLowerCase().includes(busca));
-      const hoje = dataLocalYMD(new Date());
-      candidatos = [...candidatos].sort((a, b) => {
-        const aHoje = a.ultima && dataLocalYMD(a.ultima) === hoje;
-        const bHoje = b.ultima && dataLocalYMD(b.ultima) === hoje;
-        if (aHoje && !bHoje) return -1;
-        if (!aHoje && bHoje) return 1;
-        return String(b.ultima || '').localeCompare(String(a.ultima || ''));
-      });
+
+      const dataEl = document.getElementById('pipelineDateInput');
+      let dataFiltro = dataEl ? dataEl.value : '';
+      if (!dataFiltro) dataFiltro = dataLocalYMD(new Date()); // Por padrão, "hoje"
+      candidatos = candidatos.filter(c => c.ultima && dataLocalYMD(c.ultima) === dataFiltro);
+
+      // Ordena por data mais recente dentro do dia
+      candidatos = [...candidatos].sort((a, b) => String(b.ultima || '').localeCompare(String(a.ultima || '')));
     }
 
     document.getElementById('pipelineBadge').textContent = candidatos.length + ' candidatos';
