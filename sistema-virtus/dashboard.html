@@ -877,7 +877,6 @@
     <div class="sidebar-item" data-view="banco" id="sidebarItemBanco" onclick="switchView('banco')"><span class="si-icon">✅</span> Banco de Aprovados</div>
     <div class="sidebar-item" data-view="violacoes" id="sidebarItemViolacoes" onclick="switchView('violacoes')"><span class="si-icon">🚨</span> Violações</div>
     <div class="sidebar-item" data-view="pipeline" id="sidebarItemPipeline" onclick="switchView('pipeline')"><span class="si-icon">🧭</span> Processo Seletivo</div>
-    <div class="sidebar-item" data-view="aprovados" id="sidebarItemAprovadosManual" onclick="switchView('aprovados')"><span class="si-icon">✅</span> Aprovados</div>
     <div class="sidebar-section-lbl" id="sidebarFerramentasLbl">Ferramentas</div>
     <div class="sidebar-item" data-view="testes" id="sidebarItemTestes" onclick="switchView('testes')"><span class="si-icon">⌨️</span> Testes</div>
     <div class="sidebar-item" data-view="qrcodes" id="sidebarItemQrcodes" onclick="switchView('qrcodes')"><span class="si-icon">🖨️</span> QR Codes</div>
@@ -1146,11 +1145,12 @@
             <th>Nota (módulo escolhido)</th>
             <th>Etapa</th>
             <th>Observação</th>
+            <th>Aprovado para Entrevista</th>
             <th>Atualizado</th>
           </tr>
         </thead>
         <tbody id="pipelineTableBody">
-          <tr><td colspan="7"><div class="empty-state"><div class="empty-icon">🧭</div>Nenhum candidato ainda.</div></td></tr>
+          <tr><td colspan="8"><div class="empty-state"><div class="empty-icon">🧭</div>Nenhum candidato ainda.</div></td></tr>
         </tbody>
       </table>
     </div>
@@ -1158,42 +1158,6 @@
 </section>
 
 <!-- ══════════ VIEW: APROVADOS (decisão manual da equipe) ══════════ -->
-<section class="app-view" id="view-aprovados">
-  <div class="page-title-area">
-    <div>
-      <div class="page-title">Candidatos <em>Aprovados</em></div>
-      <div class="page-subtitle">Decisão manual da equipe (avaliador, coordenador ou gerência) — diferente da nota automática do teste</div>
-    </div>
-  </div>
-  <div class="panel">
-    <div class="panel-head">
-      <div class="panel-title-sm">✅ Aprovação Manual <span class="badge" id="aprovadosManualBadge">0 candidatos</span></div>
-    </div>
-    <div class="panel-body" style="padding:16px 20px 6px;">
-      <div class="warn-note">
-        Aqui a equipe decide, um a um, quem está aprovado — não mexe na nota do teste nem na etapa do Processo Seletivo.
-      </div>
-    </div>
-    <div class="results-table-wrap">
-      <table>
-        <thead>
-          <tr>
-            <th style="width:44px;text-align:center;">#</th>
-            <th>Candidato</th>
-            <th>Testes realizados</th>
-            <th>Nota (módulo escolhido)</th>
-            <th>Aprovação</th>
-            <th>Decidido por</th>
-          </tr>
-        </thead>
-        <tbody id="aprovadosManualTableBody">
-          <tr><td colspan="6"><div class="empty-state"><div class="empty-icon">✅</div>Nenhum candidato ainda.</div></td></tr>
-        </tbody>
-      </table>
-    </div>
-  </div>
-</section>
-
 <!-- ══════════ VIEW: QR CODES (de admin.html / sec-qrcodes) ══════════ -->
 <section class="app-view" id="view-qrcodes">
   <div class="page-title-area">
@@ -1456,7 +1420,6 @@
   if (ehView) {
     document.getElementById('sidebarItemBanco').style.display = 'none';
     document.getElementById('sidebarItemPipeline').style.display = 'none';
-    document.getElementById('sidebarItemAprovadosManual').style.display = 'none';
     document.getElementById('sidebarItemDashboard').innerHTML = '<span class="si-icon">👥</span> Participantes';
     document.getElementById('kpiBar5').style.display = 'none';
     document.getElementById('chartsGrid').style.display = 'none';
@@ -1490,8 +1453,7 @@
     qrcodes: 'QR Codes para Imprimir',
     codigos: 'Código de Acesso',
     perguntas: 'Banco de Perguntas',
-    usuarios: 'Gestão de Usuários',
-    aprovados: 'Aprovados'
+    usuarios: 'Gestão de Usuários'
   };
   const VIEWS_OPERACIONAIS = ['testes', 'qrcodes', 'codigos'];
   const LS_VIEW = 'virtus_dashboard_view';
@@ -1520,7 +1482,7 @@
   window.switchView = function (view) {
     const ehGerenciaSV = me && (me.perfil === 'admin' || me.perfil === 'gerencia');
     if ((view === 'perguntas' || view === 'usuarios') && !ehGerenciaSV) view = 'dashboard';
-    if ((view === 'banco' || view === 'pipeline' || view === 'aprovados') && me && me.perfil === 'viewer') view = 'dashboard';
+    if ((view === 'banco' || view === 'pipeline') && me && me.perfil === 'viewer') view = 'dashboard';
     const VIEWS_BLOQUEADAS_COORDENADOR = [...VIEWS_OPERACIONAIS, 'dashboard', 'banco', 'violacoes'];
     if (VIEWS_BLOQUEADAS_COORDENADOR.includes(view) && me && me.perfil === 'coordenador') view = 'pipeline';
     document.querySelectorAll('.app-view').forEach(v => v.classList.toggle('active', v.id === 'view-' + view));
@@ -1531,7 +1493,6 @@
     toggleSidebar(false);
     if (view === 'qrcodes') gerarQRCodes();
     if (view === 'pipeline') renderPipeline();
-    if (view === 'aprovados') renderAprovadosManual();
   };
 
 
@@ -2367,6 +2328,9 @@
       const dt = c.ultima ? new Date(c.ultima).toLocaleString('pt-BR') : '—';
       const temViolacao = violacoesDe(c.nome).length > 0;
       const rowCls = aprovado ? 'row-aprovado' : 'row-reprovado';
+      const chaveId = c.chave.replace(/[/]/g, '_');
+      const pipelineInfo = PIPELINE_MAP[chaveId] || {};
+      const aprovadoParaEntrevista = pipelineInfo.aprovado === true;
       return `<tr class="clickable ${rowCls}" onclick="abrirCandidato('${c.chave.replace(/'/g, "\\'")}')" title="Ver detalhamento e exportar PDF">
         <td style="text-align:center;color:var(--text3);">${i + 1}</td>
         <td class="td-nome">${escapeHtml(c.nome)}${temViolacao ? ' <span style="color:var(--red);font-weight:700;" title="Possui violação registrada durante o teste">*</span>' : ''} <span class="row-hint">▸ detalhes</span></td>
@@ -2379,6 +2343,11 @@
           </div>
         </td>
         <td>${aprovado ? '<span style="color:var(--green);font-weight:700;">✅ Aprovado</span>' : '<span style="color:var(--red);font-weight:700;">❌ Reprovado</span>'}</td>
+        <td onclick="event.stopPropagation()">
+          <button class="btn-act ${aprovadoParaEntrevista ? 'btn-approve-admin' : 'btn-neutral'}" onclick="event.stopPropagation();alternarAprovadoParaEntrevista('${c.chave.replace(/'/g, "\\'")}','${escapeHtml(c.nome).replace(/'/g, "\\'")}',${!aprovadoParaEntrevista})">
+            ${aprovadoParaEntrevista ? '✅ Entrevista' : '☐ Entrevista'}
+          </button>
+        </td>
         <td class="td-time">${dt}</td>
       </tr>`;
     }).join('');
@@ -2531,7 +2500,7 @@
     document.getElementById('pipelineBadge').textContent = candidatos.length + ' candidatos';
     if (!candidatos.length) {
       const msg = somenteLeitura ? 'Nenhum candidato encontrado.' : 'Nenhum candidato ainda.';
-      tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state"><div class="empty-icon">🧭</div>${msg}</div></td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="8"><div class="empty-state"><div class="empty-icon">🧭</div>${msg}</div></td></tr>`;
       return;
     }
     tbody.innerHTML = candidatos.map((c, i) => {
@@ -2539,6 +2508,7 @@
       const etapaAtual = (PIPELINE_MAP[chaveId] && PIPELINE_MAP[chaveId].etapa) || 'aguardando';
       const infoEtapa = ETAPAS_PIPELINE.find(e => e.valor === etapaAtual) || ETAPAS_PIPELINE[0];
       const atualizadoEm = PIPELINE_MAP[chaveId] && PIPELINE_MAP[chaveId].atualizado_em ? fmtDataHora(PIPELINE_MAP[chaveId].atualizado_em) : '—';
+      const aprovadoParaEntrevista = PIPELINE_MAP[chaveId] && PIPELINE_MAP[chaveId].aprovado === true;
       const seletor = somenteLeitura
         ? `<span style="color:${infoEtapa.cor};font-weight:700;">${infoEtapa.label}</span>`
         : `<select class="field-input" style="max-width:170px;color:${infoEtapa.cor};font-weight:700;" onclick="event.stopPropagation()" onchange="event.stopPropagation();mudarEtapaPipeline('${c.chave.replace(/'/g, "\\'")}','${escapeHtml(c.nome).replace(/'/g, "\\'")}',this.value)">
@@ -2552,6 +2522,11 @@
               📝 ${observacao ? 'Ver/editar' : 'Observação'}
             </button>
           </td>`;
+      const colunaAprovado = `<td onclick="event.stopPropagation()">
+        <button class="btn-act ${aprovadoParaEntrevista ? 'btn-approve-admin' : 'btn-neutral'}" onclick="event.stopPropagation();alternarAprovadoParaEntrevista('${c.chave.replace(/'/g, "\\'")}','${escapeHtml(c.nome).replace(/'/g, "\\'")}',${!aprovadoParaEntrevista})">
+          ${aprovadoParaEntrevista ? '✅ Entrevista' : '☐ Entrevista'}
+        </button>
+      </td>`;
       return `
       <tr class="clickable" onclick="abrirCandidato('${c.chave.replace(/'/g, "\\'")}')" title="Ver detalhamento e exportar PDF">
         <td style="text-align:center;color:var(--text3);">${i + 1}</td>
@@ -2560,6 +2535,7 @@
         <td><span class="td-pct" style="color:${c.media >= 70 ? 'var(--green)' : c.media >= 50 ? 'var(--amber)' : 'var(--red)'}">${c.media >= 70 ? '✅' : '❌'} ${c.media}%</span></td>
         <td>${seletor}</td>
         ${colunaObs}
+        ${colunaAprovado}
         <td class="td-time">${atualizadoEm}</td>
       </tr>`;
     }).join('');
@@ -2589,44 +2565,10 @@
     }
   };
 
-  // ══════════ APROVADOS (decisão manual da equipe) ══════════
-  // Lista todo mundo (mesmo agrupamento usado no resto do dashboard) com um
-  // botão de aprovar/desaprovar. Avaliador, coordenador e gerência decidem;
-  // isso NÃO mexe na nota do teste nem na etapa do Processo Seletivo — é
-  // um campo à parte (`pipeline.aprovado`).
-  window.renderAprovadosManual = function renderAprovadosManual() {
-    const tbody = document.getElementById('aprovadosManualTableBody');
-    if (!tbody || !me) return;
-    const candidatos = candidatosAgrupados();
-    document.getElementById('aprovadosManualBadge').textContent = candidatos.length + ' candidatos';
-    if (!candidatos.length) {
-      tbody.innerHTML = '<tr><td colspan="6"><div class="empty-state"><div class="empty-icon">✅</div>Nenhum candidato ainda.</div></td></tr>';
-      return;
-    }
-    tbody.innerHTML = candidatos.map((c, i) => {
-      const chaveId = c.chave.replace(/[/]/g, '_');
-      const info = PIPELINE_MAP[chaveId] || {};
-      const aprovado = info.aprovado === true;
-      return `
-      <tr class="clickable ${aprovado ? 'row-aprovado' : ''}" onclick="abrirCandidato('${c.chave.replace(/'/g, "\\'")}')" title="Ver detalhamento e exportar PDF">
-        <td style="text-align:center;color:var(--text3);">${i + 1}</td>
-        <td class="td-nome">${escapeHtml(c.nome)} <span class="row-hint">▸ detalhes</span></td>
-        <td style="max-width:220px;white-space:normal;"><div style="display:flex;flex-wrap:wrap;gap:4px;">${c.modulos.map(m => `<span class="badge-modulo" style="${m.modulo === c.moduloEscolhido ? 'border-color:var(--amber);' : ''}">${m.modulo === c.moduloEscolhido ? '★ ' : ''}${escapeHtml(m.modulo)} <b style="color:${m.pct >= 70 ? 'var(--green)' : m.pct >= 50 ? 'var(--amber)' : 'var(--red)'}">${m.pct}%</b></span>`).join('')}</div></td>
-        <td><span class="td-pct" style="color:${c.media >= 70 ? 'var(--green)' : c.media >= 50 ? 'var(--amber)' : 'var(--red)'}">${c.media >= 70 ? '✅' : '❌'} ${c.media}%</span></td>
-        <td onclick="event.stopPropagation()">
-          <button class="btn-act ${aprovado ? 'btn-approve-admin' : 'btn-neutral'}" onclick="event.stopPropagation();alternarAprovacaoManual('${c.chave.replace(/'/g, "\\'")}','${escapeHtml(c.nome).replace(/'/g, "\\'")}',${!aprovado})">
-            ${aprovado ? '✅ Aprovado' : '☐ Aprovar'}
-          </button>
-        </td>
-        <td class="td-time">${escapeHtml(info.aprovado_por || '—')}</td>
-      </tr>`;
-    }).join('');
-  };
-
-  window.alternarAprovacaoManual = async function (chave, nome, aprovado) {
+  window.alternarAprovadoParaEntrevista = async function (chave, nome, aprovado) {
     try {
       await definirAprovacaoManual(chave, aprovado, nome, me.usuario);
-      toast(aprovado ? '✅ Candidato aprovado' : '↩ Aprovação removida', 'ok');
+      toast(aprovado ? '✅ Marcado para entrevista' : '↩ Desmarcado', 'ok');
     } catch (e) {
       console.error(e);
       toast('❌ Falha: ' + e.message, 'err');
@@ -2718,7 +2660,6 @@
     renderViolacoes();
     renderBancoAprovados();
     renderPipeline();
-    renderAprovadosManual();
   }
 
   // Planilha .xlsx de verdade (cabeçalho colorido, colunas largas, filtro,
@@ -3292,7 +3233,7 @@
       // coordenador (só lê) — viewer não tem acesso nas rules.
       if (me.perfil !== 'viewer') {
         unsubs.push(assinarPipeline(
-          mapa => { PIPELINE_MAP = mapa; renderPipeline(); renderAprovadosManual(); renderTable(getFiltered()); },
+          mapa => { PIPELINE_MAP = mapa; renderPipeline(); renderTable(getFiltered()); },
           () => statusDot(false, 'Reconectando...')
         ));
       }
