@@ -214,6 +214,20 @@ export async function definirObservacaoPipeline(chave, observacao, nome, avaliad
   }, { merge: true });
 }
 
+// Aprovação manual (aba "Aprovados") — decisão da equipe (avaliador,
+// coordenador ou gerência) sobre o candidato, separada da nota do teste
+// (essa continua 100% automática) e separada também da etapa do processo
+// seletivo (Aguardando/Entrevista/Contratado/Recusado).
+export async function definirAprovacaoManual(chave, aprovado, nome, avaliador) {
+  const id = chave.replace(/[/]/g, "_");
+  await setDoc(doc(db, "pipeline", id), {
+    aprovado,
+    nome: nome || null,
+    aprovado_por: avaliador || null,
+    aprovado_em: serverTimestamp()
+  }, { merge: true });
+}
+
 export function assinarPipeline(callback, onError) {
   return onSnapshot(collection(db, "pipeline"), (snap) => {
     const mapa = {};

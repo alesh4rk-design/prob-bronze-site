@@ -118,18 +118,15 @@ service cloud.firestore {
 
     // pipeline/{chave}: etapa do processo seletivo de cada candidato
     // (Aguardando | Entrevista | Contratado | Recusado), observação do
-    // avaliador e marcação de "visível ao RH". Isso é DIFERENTE da nota do
-    // teste — não reintroduz decisão manual sobre a prova, é só controle de
-    // processo de contratação.
+    // avaliador e aprovação manual (aba "Aprovados"). Isso é DIFERENTE da
+    // nota do teste — não mexe na prova, é só controle de processo de
+    // contratação/decisão da equipe.
     // View NÃO tem acesso ao Processo Seletivo (nem leitura). Quem
-    // gerencia é admin/gerência/avaliador; coordenador só lê.
+    // gerencia/aprova é admin/gerência/avaliador/coordenador.
     match /pipeline/{chave} {
-      allow read: if request.auth != null &&
+      allow read, write: if request.auth != null &&
                      exists(/databases/$(database)/documents/usuarios/$(request.auth.uid)) &&
                      get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.perfil in ['admin', 'gerencia', 'avaliador', 'coordenador'];
-      allow write: if request.auth != null &&
-                      exists(/databases/$(database)/documents/usuarios/$(request.auth.uid)) &&
-                      get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.perfil in ['admin', 'gerencia', 'avaliador'];
     }
 
     // Acesso total (admin ou gerência) — únicos que mexem em usuários e
