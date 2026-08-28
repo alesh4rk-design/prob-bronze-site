@@ -1036,36 +1036,36 @@
   <div class="page-title-area">
     <div>
       <div class="page-title">Aprovados para <em>Entrevista</em></div>
-      <div class="page-subtitle">Candidatos com nota ≥ 70% no módulo escolhido (★) · cálculo automático</div>
+      <div class="page-subtitle">Candidatos com nota ≥ 70% no módulo escolhido · Gestão de entrevistas e decisões</div>
     </div>
   </div>
   <div class="panel">
     <div class="panel-head">
-      <div class="panel-title-sm">✅ Aprovados <span class="badge green" id="bancoCountBadge">0 registros</span></div>
-    </div>
-    <div class="toolbar" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:0 0 14px;">
-      <label style="font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--text3);">De
-        <input type="date" class="field-input" id="bancoDataIni" style="max-width:165px;">
-      </label>
-      <label style="font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--text3);">Até
-        <input type="date" class="field-input" id="bancoDataFim" style="max-width:165px;">
-      </label>
-      <button class="btn-act btn-approve-admin" onclick="renderBancoAprovados()">🔍 Buscar</button>
-      <button class="btn-act btn-neutral" onclick="document.getElementById('bancoDataIni').value='';document.getElementById('bancoDataFim').value='';renderBancoAprovados();">Limpar período</button>
+      <div class="panel-title-sm">✅ Candidatos <span class="badge green" id="bancoCountBadge">0 registros</span></div>
+      <div class="toolbar" style="display:flex;gap:8px;flex-wrap:wrap;">
+        <label style="font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--text3);display:flex;align-items:center;">De
+          <input type="date" class="field-input" id="bancoDataIni" style="max-width:140px;margin-left:6px;">
+        </label>
+        <label style="font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--text3);display:flex;align-items:center;">Até
+          <input type="date" class="field-input" id="bancoDataFim" style="max-width:140px;margin-left:6px;">
+        </label>
+        <button class="btn-act btn-approve-admin" onclick="renderBancoAprovados()">🔍 Filtrar</button>
+        <button class="btn-act btn-neutral" onclick="limparFiltrosBanco()">↻ Resetar</button>
+      </div>
     </div>
     <div class="results-table-wrap">
       <table>
         <thead>
           <tr>
-            <th style="width:44px;text-align:center;">#</th>
+            <th style="width:40px;text-align:center;">#</th>
             <th>Candidato</th>
-            <th>Módulos avaliados</th>
-            <th>Nota (módulo escolhido)</th>
-            <th>Última tentativa</th>
+            <th style="width:70px;">Nota</th>
+            <th>Entrevista</th>
+            <th>Ações</th>
           </tr>
         </thead>
         <tbody id="bancoTableBody">
-          <tr><td colspan="5"><div class="empty-state"><div class="empty-icon">📭</div>Nenhum aprovado no período selecionado.</div></td></tr>
+          <tr><td colspan="5"><div class="empty-state"><div class="empty-icon">📭</div>Nenhum candidato aprovado</div></td></tr>
         </tbody>
       </table>
     </div>
@@ -2751,35 +2751,16 @@
   // módulos permitia que alguém aprovasse tirando 100% em um módulo
   // automático da trilha mesmo tendo tirado 20% no módulo que realmente
   // importa para a vaga.
+  window.limparFiltrosBanco = function limparFiltrosBanco() {
+    document.getElementById('bancoDataIni').value = '';
+    document.getElementById('bancoDataFim').value = '';
+    renderBancoAprovados();
+  };
+
   window.renderBancoAprovados = function renderBancoAprovados() {
     const tbody = document.getElementById('bancoTableBody');
-    const quizzes = ALL_RESULTADOS.filter(r => r.tipo !== 'typing');
-    const porCandidato = {};
-    for (const r of quizzes) {
-      const chave = chaveDe(r);
-      if (!porCandidato[chave]) porCandidato[chave] = [];
-      porCandidato[chave].push(r);
-    }
-    const aprovados = Object.entries(porCandidato).map(([chave, tentsRaw]) => {
-      const tents = [...tentsRaw].sort((a, b) => String(a.data_conclusao || '').localeCompare(String(b.data_conclusao || '')));
-      const moduloEscolhido = tents[0].modulo || '—';
-      const tentsEscolhido = tents.filter(t => (t.modulo || '—') === moduloEscolhido);
-      const media = Math.max(...tentsEscolhido.map(t => t.pct || 0));
-      // Melhor nota de cada módulo (se refez o teste, mostra a maior) — só
-      // pra referência visual, não entra no cálculo de aprovação.
-      const porModulo = {};
-      for (const t of tents) {
-        const m = t.modulo || '—';
-        const pct = t.pct || 0;
-        if (!porModulo[m] || pct > porModulo[m]) porModulo[m] = pct;
-      }
-      const modulos = Object.entries(porModulo).map(([modulo, pct]) => ({ modulo, pct }));
-      const ultima = tents.reduce((a, t) => (t.data_conclusao || '') > (a || '') ? t.data_conclusao : a, tents[0].data_conclusao);
-      const nome = tents[tents.length - 1].nome || '—';
-      return { chave, nome, media, moduloEscolhido, modulos, ultima };
-    }).filter(c => c.media >= 70).sort((a, b) => b.media - a.media);
+    const aprovados = candidatosAgrupados().filter(c => c.media >= 70);
 
-    // Filtro por período (data da última tentativa), opcional.
     const dataIni = document.getElementById('bancoDataIni').value;
     const dataFim = document.getElementById('bancoDataFim').value;
 
@@ -2789,22 +2770,86 @@
       if (dataIni && dataC < dataIni) return false;
       if (dataFim && dataC > dataFim) return false;
       return true;
-    });
+    }).sort((a, b) => b.media - a.media);
 
-    document.getElementById('bancoCountBadge').textContent = aprovadosFiltrados.length + ' registros';
+    document.getElementById('bancoCountBadge').textContent = aprovadosFiltrados.length + ' registro' + (aprovadosFiltrados.length !== 1 ? 's' : '');
     if (!aprovadosFiltrados.length) {
-      tbody.innerHTML = '<tr><td colspan="5"><div class="empty-state"><div class="empty-icon">📭</div>Nenhum aprovado no período selecionado.</div></td></tr>';
+      tbody.innerHTML = '<tr><td colspan="5"><div class="empty-state"><div class="empty-icon">📭</div>Nenhum candidato encontrado</div></td></tr>';
       return;
     }
     tbody.innerHTML = aprovadosFiltrados.map((c, i) => {
+      const chaveId = c.chave.replace(/[/]/g, '_');
+      const pipelineData = PIPELINE_MAP[chaveId] || {};
+      const aprovadoParaEntrevista = pipelineData.aprovado || false;
+      const decCoordenador = pipelineData.entrevista_coordenador_decisao || null;
+      const decGerencia = pipelineData.entrevista_gerencia_decisao || null;
+
+      let statusEntrevista = '⏳ Pendente';
+      let corStatus = 'var(--text3)';
+      if (decCoordenador === 'aprovado' && !decGerencia) {
+        statusEntrevista = '🎤 Coord. Aprovado';
+        corStatus = 'var(--cyan)';
+      } else if (decCoordenador === 'recusado') {
+        statusEntrevista = '❌ Recusado (Coord)';
+        corStatus = 'var(--red)';
+      } else if (decGerencia === 'aprovado') {
+        statusEntrevista = '🎉 Contratado';
+        corStatus = 'var(--green)';
+      } else if (decGerencia === 'recusado') {
+        statusEntrevista = '❌ Recusado (Ger)';
+        corStatus = 'var(--red)';
+      }
+
       const temViolacao = violacoesDe(c.nome).length > 0;
+      const ehCoordenador = me && me.perfil === 'coordenador';
+      const ehGerencia = me && (me.perfil === 'admin' || me.perfil === 'gerencia');
+      const ehAvaliador = me && (me.perfil === 'avaliador' || me.perfil === 'admin' || me.perfil === 'gerencia');
+
+      let botoesAcao = '';
+      if (ehAvaliador && !ehCoordenador) {
+        botoesAcao += `<button class="btn-act ${aprovadoParaEntrevista ? 'btn-approve-admin' : 'btn-neutral'}" style="font-size:11px;padding:6px 10px;" onclick="event.stopPropagation();alternarAprovadoParaEntrevista('${c.chave.replace(/'/g, "\\'")}','${escapeHtml(c.nome).replace(/'/g, "\\'")}',${!aprovadoParaEntrevista})">
+          ${aprovadoParaEntrevista ? '✅ Entrevista' : '☐ Entrevista'}
+        </button>`;
+      }
+
+      if (ehCoordenador && !decCoordenador) {
+        botoesAcao += `<button class="btn-act btn-neutral" style="font-size:11px;padding:6px 10px;" onclick="event.stopPropagation();abrirDecisaoCoordenador('${c.chave.replace(/'/g, "\\'")}','${escapeHtml(c.nome).replace(/'/g, "\\'")}')" title="Entrevista com Coordenador">
+          🎤 Decidir
+        </button>`;
+      }
+
+      if (ehGerencia && decCoordenador === 'aprovado' && !decGerencia) {
+        botoesAcao += `<button class="btn-act btn-neutral" style="font-size:11px;padding:6px 10px;" onclick="event.stopPropagation();abrirDecisaoGerencia('${c.chave.replace(/'/g, "\\'")}','${escapeHtml(c.nome).replace(/'/g, "\\'")}')" title="Entrevista com Gerência">
+          👔 Decidir
+        </button>`;
+      }
+
       return `
-      <tr class="clickable row-aprovado" onclick="abrirCandidato('${c.chave.replace(/'/g, "\\'")}')" title="Ver detalhamento e exportar PDF">
+      <tr class="row-aprovado">
         <td style="text-align:center;color:var(--text3);">${i + 1}</td>
-        <td class="td-nome">${escapeHtml(c.nome)}${temViolacao ? ' <span style="color:var(--red);font-weight:700;" title="Possui violação registrada durante o teste">*</span>' : ''} <span class="row-hint">▸ detalhes</span></td>
-        <td style="max-width:220px;white-space:normal;"><div style="display:flex;flex-wrap:wrap;gap:4px;">${c.modulos.map(m => `<span class="badge-modulo" style="${m.modulo === c.moduloEscolhido ? 'border-color:var(--amber);' : ''}" title="${m.modulo === c.moduloEscolhido ? 'Módulo escolhido pelo candidato' : 'Módulo automático da trilha'}">${m.modulo === c.moduloEscolhido ? '★ ' : ''}${escapeHtml(m.modulo)} <b style="color:${m.pct >= 70 ? 'var(--green)' : m.pct >= 50 ? 'var(--amber)' : 'var(--red)'}">${m.pct}%</b></span>`).join('')}</div></td>
-        <td><span class="td-pct" style="color:var(--green);">${c.media}%</span></td>
-        <td class="td-time">${fmtData(c.ultima)}</td>
+        <td class="td-nome" onclick="abrirCandidato('${c.chave.replace(/'/g, "\\'")}')" style="cursor:pointer;">
+          ${escapeHtml(c.nome)}${temViolacao ? ' <span style="color:var(--red);font-weight:700;" title="Violação registrada">*</span>' : ''}
+          <span class="row-hint">▸ detalhes</span>
+        </td>
+        <td style="text-align:right;">
+          <div style="display:flex;align-items:center;gap:6px;justify-content:flex-end;">
+            <span style="font-weight:700;color:var(--green);">${c.media}%</span>
+            <div class="pct-bar-wrap" style="min-width:80px;">
+              <div class="pct-bar-track">
+                <div class="pct-bar-fill pct-${c.media >= 80 ? 'high' : c.media >= 70 ? 'mid' : 'low'}" style="width:${c.media}%;"></div>
+              </div>
+            </div>
+          </div>
+        </td>
+        <td style="font-size:12px;color:var(--text);">${statusEntrevista}</td>
+        <td onclick="event.stopPropagation()" style="font-size:11px;">
+          <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;">
+            ${botoesAcao}
+            <button class="btn-act btn-neutral" style="font-size:11px;padding:6px 10px;" onclick="event.stopPropagation();abrirCandidato('${c.chave.replace(/'/g, "\\'")}')" title="Ver detalhes completos">
+              📋
+            </button>
+          </div>
+        </td>
       </tr>`;
     }).join('');
   }
