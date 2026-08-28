@@ -214,10 +214,9 @@ export async function definirObservacaoPipeline(chave, observacao, nome, avaliad
   }, { merge: true });
 }
 
-// Aprovação manual (aba "Aprovados") — decisão da equipe (avaliador,
-// coordenador ou gerência) sobre o candidato, separada da nota do teste
-// (essa continua 100% automática) e separada também da etapa do processo
-// seletivo (Aguardando/Entrevista/Contratado/Recusado).
+// Aprovação para entrevista — decisão do avaliador/coordenador/gerência
+// sobre qual candidato será chamado para entrevista. Campo separado na
+// coleção pipeline — não mexe na nota do teste nem na etapa do processo seletivo.
 export async function definirAprovacaoManual(chave, aprovado, nome, avaliador) {
   const id = chave.replace(/[/]/g, "_");
   await setDoc(doc(db, "pipeline", id), {
