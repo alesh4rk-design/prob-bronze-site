@@ -3462,8 +3462,11 @@
   if (bancoDataFimEl) bancoDataFimEl.value = dataLocalYMD(new Date());
 
   conectar();
-  // Após os dados carregarem, renderPipeline() é chamado automaticamente por renderAll().
-  // Então não precisa chamar switchView() antes dos dados estarem prontos.
+
+  // Abre direto no Processo Seletivo (lista de todos os candidatos).
+  // Chamado depois de conectar() e protegido: se algo falhar aqui, não pode
+  // travar o resto da inicialização (era o que deixava a tela carregando).
+  try { switchView('pipeline'); } catch (e) { console.error('Erro ao abrir Processo Seletivo:', e); }
 
   document.addEventListener('visibilitychange', () => { if (!document.hidden) conectar(); });
   window.addEventListener('online', conectar);
