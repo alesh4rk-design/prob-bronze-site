@@ -3446,11 +3446,9 @@
   document.getElementById('bancoDataIni').value = dataLocalYMD(new Date());
   document.getElementById('bancoDataFim').value = dataLocalYMD(new Date());
 
-  // Abre direto no Processo Seletivo (lista de todos os candidatos).
-  // Dashboard fica reservado para aprovados apenas.
-  try { switchView('pipeline'); } catch (e) { console.error(e); toast('❌ Erro ao abrir Processo Seletivo: ' + e.message, 'err'); }
-
   conectar();
+  // Após os dados carregarem, renderPipeline() é chamado automaticamente por renderAll().
+  // Então não precisa chamar switchView() antes dos dados estarem prontos.
 
   document.addEventListener('visibilitychange', () => { if (!document.hidden) conectar(); });
   window.addEventListener('online', conectar);
