@@ -874,8 +874,9 @@
   <div class="sidebar-nav">
     <div class="sidebar-section-lbl">Resultados</div>
     <div class="sidebar-item" data-view="dashboard" id="sidebarItemDashboard" onclick="switchView('dashboard')"><span class="si-icon">📊</span> Dashboard</div>
-    <div class="sidebar-item active" data-view="pipeline" id="sidebarItemPipeline" onclick="switchView('pipeline')"><span class="si-icon">🧭</span> Processo Seletivo</div>
+    <div class="sidebar-item active" data-view="pipeline" id="sidebarItemPipeline" onclick="switchView('pipeline')"><span class="si-icon">👥</span> Candidatos</div>
     <div class="sidebar-item" data-view="banco" id="sidebarItemBanco" onclick="switchView('banco')"><span class="si-icon">📊</span> Aprovados para Entrevista</div>
+    <div class="sidebar-item" data-view="contratados" id="sidebarItemContratados" onclick="switchView('contratados')"><span class="si-icon">🏆</span> Contratados</div>
     <div class="sidebar-item" data-view="violacoes" id="sidebarItemViolacoes" onclick="switchView('violacoes')"><span class="si-icon">🚨</span> Violações</div>
     <div class="sidebar-section-lbl" id="sidebarFerramentasLbl">Ferramentas</div>
     <div class="sidebar-item" data-view="testes" id="sidebarItemTestes" onclick="switchView('testes')"><span class="si-icon">⌨️</span> Testes</div>
@@ -943,8 +944,14 @@
     </div>
     <div class="page-actions">
       <button class="btn btn-amber" id="btnExportExcel" onclick="exportCSV()">⬇ Exportar Excel</button>
-      <button class="btn btn-outline" onclick="clearAllFilters()">🗑 Limpar Filtros</button>
     </div>
+  </div>
+
+  <div class="toolbar" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:16px;">
+    <label style="font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--text3);display:flex;align-items:center;gap:6px;">📅 Dia:
+      <input type="date" class="field-input" id="dashData" style="max-width:150px;" onchange="renderAll()">
+    </label>
+    <button class="btn-act btn-neutral" onclick="document.getElementById('dashData').value='';renderAll()">↻ Ver todos os dias</button>
   </div>
 
   <div class="kpi-bar-5" id="kpiBar5">
@@ -991,7 +998,7 @@
   <div class="page-title-area">
     <div>
       <div class="page-title">Aprovados para <em>Entrevista</em></div>
-      <div class="page-subtitle">Candidatos marcados para entrevista pelo avaliador · Gestão de entrevistas e decisões</div>
+      <div class="page-subtitle">Candidatos selecionados na aba Candidatos · avaliador, coordenador, gerência e admin decidem Contratado ou Recusado</div>
     </div>
   </div>
   <div class="panel">
@@ -1015,12 +1022,46 @@
             <th style="width:40px;text-align:center;">#</th>
             <th>Candidato</th>
             <th style="width:70px;">Nota</th>
-            <th>Entrevista</th>
+            <th>Observação</th>
+            <th>Status</th>
             <th>Ações</th>
           </tr>
         </thead>
         <tbody id="bancoTableBody">
-          <tr><td colspan="5"><div class="empty-state"><div class="empty-icon">📭</div>Nenhum candidato aprovado</div></td></tr>
+          <tr><td colspan="6"><div class="empty-state"><div class="empty-icon">📭</div>Nenhum candidato aprovado</div></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ VIEW: CONTRATADOS (histórico de decisões) ══════════ -->
+<section class="app-view" id="view-contratados">
+  <div class="page-title-area">
+    <div>
+      <div class="page-title">Histórico de <em>Contratados</em></div>
+      <div class="page-subtitle">Decisões finais da entrevista — quem foi contratado ou recusado, e por quem</div>
+    </div>
+  </div>
+  <div class="panel">
+    <div class="panel-head">
+      <div class="panel-title-sm">🏆 Histórico <span class="badge" id="contratadosBadge">0 registros</span></div>
+    </div>
+    <div class="results-table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th style="width:40px;text-align:center;">#</th>
+            <th>Candidato</th>
+            <th style="width:70px;">Nota</th>
+            <th>Observação</th>
+            <th>Status</th>
+            <th>Decidido por</th>
+            <th>Data</th>
+          </tr>
+        </thead>
+        <tbody id="contratadosTableBody">
+          <tr><td colspan="7"><div class="empty-state"><div class="empty-icon">🏆</div>Nenhuma decisão registrada ainda</div></td></tr>
         </tbody>
       </table>
     </div>
@@ -1082,26 +1123,22 @@
 <section class="app-view" id="view-pipeline">
   <div class="page-title-area">
     <div>
-      <div class="page-title">Processo <em>Seletivo</em></div>
-      <div class="page-subtitle">Acompanhamento do funil de contratação de cada candidato</div>
+      <div class="page-title">Lista de <em>Candidatos</em></div>
+      <div class="page-subtitle">Testes realizados por todo mundo. Selecionar para entrevista e observações ficam com avaliador, coordenador, gerência e admin.</div>
     </div>
   </div>
   <div class="panel">
     <div class="panel-head">
-      <div class="panel-title-sm">🧭 Funil de Contratação <span class="badge" id="pipelineBadge">0 candidatos</span></div>
+      <div class="panel-title-sm">👥 Candidatos <span class="badge" id="pipelineBadge">0 candidatos</span></div>
     </div>
     <div class="panel-body" style="padding:16px 20px 6px;">
-      <div class="warn-note">
-        A nota (✅/❌) vem automática do teste. A <strong>etapa</strong> abaixo é manual — controla só o
-        andamento do processo de contratação (não mexe na nota nem em nenhum resultado de prova).
-      </div>
-      <div id="pipelineSearchWrap" style="display:none;margin-top:12px;">
+      <div id="pipelineSearchWrap" style="margin-top:12px;">
         <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;">
           <input class="field-input" type="text" id="pipelineSearchInput" placeholder="🔍 Buscar candidato por nome..." style="flex:1;min-width:200px;" oninput="renderPipeline()">
           <label style="display:flex;align-items:center;gap:6px;font-size:13px;">
             📅 Data:
             <input class="field-input" type="date" id="pipelineDateInput" style="width:140px;" onchange="renderPipeline()">
-            <button class="btn-act btn-neutral" onclick="document.getElementById('pipelineDateInput').value='';renderPipeline()" style="padding:4px 12px;font-size:12px;">Hoje</button>
+            <button class="btn-act btn-neutral" onclick="document.getElementById('pipelineDateInput').value='';renderPipeline()" style="padding:4px 12px;font-size:12px;">Todos os dias</button>
           </label>
         </div>
       </div>
@@ -1109,16 +1146,11 @@
     <div class="results-table-wrap">
       <table>
         <thead>
-          <tr>
+          <tr id="pipelineTableHead">
             <th style="width:44px;text-align:center;">#</th>
             <th>Candidato</th>
             <th>Testes realizados</th>
             <th>Nota (módulo escolhido)</th>
-            <th>Etapa</th>
-            <th>Observação</th>
-            <th>Aprovado para Entrevista</th>
-            <th>Status de Entrevistas</th>
-            <th>Atualizado</th>
           </tr>
         </thead>
         <tbody id="pipelineTableBody">
@@ -1314,8 +1346,8 @@
     assinarModulos, definirModuloAtivo,
     gerarCodigoAcesso, assinarCodigosAcesso, cancelarCodigoAcesso, excluirCodigoAcesso,
     definirNumeroWhatsapp, assinarNumeroWhatsapp,
-    definirEtapaPipeline, assinarPipeline, definirObservacaoPipeline, definirAprovacaoManual,
-    registrarDecisaoCoordenador, registrarDecisaoGerencia
+    assinarPipeline, definirObservacaoPipeline, definirAprovacaoManual,
+    registrarDecisaoFinal
   } from "./js/dashboard.js";
   import { db } from "./js/firebase-config.js";
   import { doc, setDoc } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
@@ -1396,19 +1428,14 @@
     document.getElementById('sidebarItemUsuarios').style.display = 'flex';
   }
 
-  // View não tem Banco de Aprovados nem Processo Seletivo, e a "Dashboard"
-  // dele vira só a lista de participantes (KPIs/gráficos ficam ocultos —
-  // ver renderAll/CSS mais abaixo).
+  // View não tem Dashboard (estatísticas), Aprovados para Entrevista nem
+  // Contratados — o lugar dele é a aba Candidatos, onde vê os testes
+  // realizados de todo mundo (só não pode selecionar ninguém para
+  // entrevista nem escrever observação — ver renderPipeline).
   if (ehView) {
+    document.getElementById('sidebarItemDashboard').style.display = 'none';
     document.getElementById('sidebarItemBanco').style.display = 'none';
-    document.getElementById('sidebarItemPipeline').style.display = 'none';
-    document.getElementById('sidebarItemDashboard').innerHTML = '<span class="si-icon">👥</span> Participantes';
-    document.getElementById('kpiBar5').style.display = 'none';
-    document.getElementById('chartsGrid').style.display = 'none';
-    const tituloDash = document.querySelector('#view-dashboard .page-title');
-    if (tituloDash) tituloDash.innerHTML = 'Lista de <em>Participantes</em>';
-    const subDash = document.querySelector('#view-dashboard .page-subtitle');
-    if (subDash) subDash.textContent = 'Resultado dos testes de cada candidato';
+    document.getElementById('sidebarItemContratados').style.display = 'none';
   }
 
   // Coordenador só precisa da lista corrida de candidatos (Processo
@@ -1427,8 +1454,9 @@
   // ══════════ NAVEGAÇÃO LATERAL (SIDEBAR) — SPA sem reload ══════════
   const VIEW_TITULOS = {
     dashboard: 'Dashboard',
-    pipeline: 'Processo Seletivo (Todos)',
+    pipeline: 'Candidatos',
     banco: 'Aprovados para Entrevista',
+    contratados: 'Contratados',
     testes: 'Aplicar Testes',
     violacoes: 'Violações Registradas',
     qrcodes: 'QR Codes para Imprimir',
@@ -1463,7 +1491,9 @@
   window.switchView = function (view) {
     const ehGerenciaSV = me && (me.perfil === 'admin' || me.perfil === 'gerencia');
     if ((view === 'perguntas' || view === 'usuarios') && !ehGerenciaSV) view = 'dashboard';
-    if ((view === 'banco' || view === 'pipeline') && me && me.perfil === 'viewer') view = 'dashboard';
+    // Viewer só tem a aba Candidatos (vê os testes realizados de todo
+    // mundo, sem poder selecionar ninguém pra entrevista).
+    if ((view === 'banco' || view === 'contratados' || view === 'dashboard') && me && me.perfil === 'viewer') view = 'pipeline';
     const VIEWS_BLOQUEADAS_COORDENADOR = [...VIEWS_OPERACIONAIS, 'dashboard', 'violacoes'];
     if (VIEWS_BLOQUEADAS_COORDENADOR.includes(view) && me && me.perfil === 'coordenador') view = 'pipeline';
     document.querySelectorAll('.app-view').forEach(v => v.classList.toggle('active', v.id === 'view-' + view));
@@ -1474,6 +1504,7 @@
     toggleSidebar(false);
     if (view === 'qrcodes') gerarQRCodes();
     if (view === 'pipeline') renderPipeline();
+    if (view === 'contratados') renderContratados();
   };
 
 
@@ -2186,33 +2217,6 @@
     setTimeout(() => { window.print(); document.title = original; }, 120);
   }
 
-  // ── Filtros ──────────────────────────────────────────────────────────
-  const LS_PERIODO = 'virtus_dashboard_periodo';
-
-  window.applyFilters = function() { renderAll(); };
-  window.clearAllFilters = function() {
-    document.getElementById('searchInput').value = '';
-    document.getElementById('filterModulo').value = '';
-    document.getElementById('filterStatus').value = '';
-    document.getElementById('filterPeriodo').value = 'todos';
-    localStorage.setItem(LS_PERIODO, 'todos');
-    renderAll();
-  };
-
-  // Selecionar uma data no campo sempre visível volta o modo para "Dia
-  // selecionado" automaticamente — não precisa mexer no menu ao lado.
-  window.onChangeDia = function() {
-    document.getElementById('filterPeriodo').value = 'dia';
-    localStorage.setItem(LS_PERIODO, 'dia');
-    renderAll();
-  };
-
-  window.onChangePeriodo = function() {
-    const periodo = document.getElementById('filterPeriodo').value;
-    localStorage.setItem(LS_PERIODO, periodo);
-    renderAll();
-  };
-
   // Data no formato yyyy-mm-dd usando o FUSO LOCAL do navegador — nunca usar
   // toISOString().slice(0,10) aqui, porque isso converte para UTC e, no
   // Brasil (UTC-3), a partir das ~21h o "dia UTC" já virou amanhã. Isso
@@ -2226,60 +2230,19 @@
     return `${ano}-${mes}-${dia}`;
   }
 
-  // Retorna [inicioISO, fimISO] (yyyy-mm-dd, no fuso local) representando o
-  // período selecionado, ou null para "todos os dias" (sem filtro de data).
-  function calcularIntervaloPeriodo() {
-    const periodo = document.getElementById('filterPeriodo').value;
-    const toISO = dataLocalYMD;
-    const hoje = new Date();
-
-    if (periodo === 'todos') return null;
-    if (periodo === 'dia') {
-      const v = document.getElementById('filterDia').value || toISO(hoje);
-      return [v, v];
-    }
-    if (periodo === '7dias') {
-      const seteDiasAtras = new Date(hoje); seteDiasAtras.setDate(seteDiasAtras.getDate() - 6);
-      return [toISO(seteDiasAtras), toISO(hoje)];
-    }
-    if (periodo === 'mes') {
-      const inicioMes = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
-      return [toISO(inicioMes), toISO(hoje)];
-    }
-    return null;
-  }
-
-  function getFiltered() {
-    const searchEl = document.getElementById('searchInput');
-    const modEl = document.getElementById('filterModulo');
-    const statusEl = document.getElementById('filterStatus');
-    if (!searchEl || !modEl || !statusEl) return [];
-    const busca = (searchEl.value || '').toLowerCase();
-    const modulo = modEl.value;
-    const status = statusEl.value;
-    const intervalo = calcularIntervaloPeriodo();
+  // Dados do Dashboard (KPIs + gráficos), filtrados pelo campo de dia opcional
+  // "dashData" — vazio mostra todos os dias.
+  function resultadosDashboardFiltrados() {
+    const dataEl = document.getElementById('dashData');
+    const dataFiltro = dataEl ? dataEl.value : '';
     return ALL_RESULTADOS.filter(r => {
       if (r.tipo === 'typing') return false; // exibido na seção própria
-      if (busca && !(r.nome || '').toLowerCase().includes(busca)) return false;
-      if (modulo && r.modulo !== modulo) return false;
-      const aprovado = (r.pct || 0) >= 70;
-      if (status === 'aprovado' && !aprovado) return false;
-      if (status === 'reprovado' && aprovado) return false;
-      if (intervalo) {
+      if (dataFiltro) {
         const dataR = r.data_conclusao ? dataLocalYMD(r.data_conclusao) : '';
-        if (!dataR || dataR < intervalo[0] || dataR > intervalo[1]) return false;
+        if (dataR !== dataFiltro) return false;
       }
       return true;
     });
-  }
-
-  function renderModuleOptions() {
-    const sel = document.getElementById('filterModulo');
-    if (!sel) return;
-    const atual = sel.value;
-    const modulos = [...new Set(ALL_RESULTADOS.filter(r => r.tipo !== 'typing').map(r => r.modulo))].sort();
-    sel.innerHTML = '<option value="">Todos os módulos</option>' + modulos.map(m => `<option value="${m}">${m}</option>`).join('');
-    sel.value = atual;
   }
 
   function renderKPIs(lista) {
@@ -2297,51 +2260,6 @@
   }
 
   function pctClass(pct) { return pct >= 70 ? 'pct-high' : pct >= 50 ? 'pct-mid' : 'pct-low'; }
-
-  // Uma linha por CANDIDATO (não por tentativa) — antes cada módulo da
-  // trilha aparecia numa linha separada, e um candidato que fez vários
-  // testes se espalhava/perdia na lista conforme mais gente ia fazendo o
-  // teste. Agora agrupa tudo numa linha só, com os módulos como badges.
-  function renderTable(lista) {
-    const tbody = document.getElementById('tableBody');
-    let candidatos = candidatosAgrupados(lista);
-    // Dashboard mostra só aprovados (pct >= 70)
-    candidatos = candidatos.filter(c => c.media >= 70);
-    document.getElementById('tableCountBadge').textContent = candidatos.length + ' aprovados';
-    if (!candidatos.length) {
-      tbody.innerHTML = '<tr><td colspan="7"><div class="empty-state"><div class="empty-icon">📭</div>Nenhum resultado encontrado.</div></td></tr>';
-      return;
-    }
-    tbody.innerHTML = candidatos.map((c, i) => {
-      const pct = c.media;
-      const aprovado = pct >= 70;
-      const dt = c.ultima ? new Date(c.ultima).toLocaleString('pt-BR') : '—';
-      const temViolacao = violacoesDe(c.nome).length > 0;
-      const rowCls = aprovado ? 'row-aprovado' : 'row-reprovado';
-      const chaveId = c.chave.replace(/[/]/g, '_');
-      const pipelineInfo = PIPELINE_MAP[chaveId] || {};
-      const aprovadoParaEntrevista = pipelineInfo.aprovado === true;
-      return `<tr class="clickable ${rowCls}" onclick="abrirCandidato('${c.chave.replace(/'/g, "\\'")}')" title="Ver detalhamento e exportar PDF">
-        <td style="text-align:center;color:var(--text3);">${i + 1}</td>
-        <td class="td-nome">${escapeHtml(c.nome)}${temViolacao ? ' <span style="color:var(--red);font-weight:700;" title="Possui violação registrada durante o teste">*</span>' : ''} <span class="row-hint">▸ detalhes</span></td>
-        <td style="max-width:220px;white-space:normal;"><div style="display:flex;flex-wrap:wrap;gap:4px;">${c.modulos.map(m => `<span class="badge-modulo" style="${m.modulo === c.moduloEscolhido ? 'border-color:var(--amber);' : ''}" title="${m.modulo === c.moduloEscolhido ? 'Módulo escolhido pelo candidato' : 'Módulo automático da trilha'}">${m.modulo === c.moduloEscolhido ? '★ ' : ''}${escapeHtml(m.modulo)} <b style="color:${m.pct >= 70 ? 'var(--green)' : m.pct >= 50 ? 'var(--amber)' : 'var(--red)'}">${m.pct}%</b></span>`).join('')}</div></td>
-        <td>${c.acertosEscolhido ?? '—'} / ${c.totalEscolhido ?? '—'}</td>
-        <td>
-          <div class="pct-bar-wrap">
-            <span class="td-pct" style="color:${aprovado ? 'var(--green)' : pct >= 50 ? 'var(--amber)' : 'var(--red)'}">${pct}%</span>
-            <div class="pct-bar-track"><div class="pct-bar-fill ${pctClass(pct)}" style="width:${pct}%"></div></div>
-          </div>
-        </td>
-        <td>${aprovado ? '<span style="color:var(--green);font-weight:700;">✅ Aprovado</span>' : '<span style="color:var(--red);font-weight:700;">❌ Reprovado</span>'}</td>
-        <td onclick="event.stopPropagation()">
-          <button class="btn-act ${aprovadoParaEntrevista ? 'btn-approve-admin' : 'btn-neutral'}" onclick="event.stopPropagation();alternarAprovadoParaEntrevista('${c.chave.replace(/'/g, "\\'")}','${escapeHtml(c.nome).replace(/'/g, "\\'")}',${!aprovadoParaEntrevista})">
-            ${aprovadoParaEntrevista ? '✅ Entrevista' : '☐ Entrevista'}
-          </button>
-        </td>
-        <td class="td-time">${dt}</td>
-      </tr>`;
-    }).join('');
-  }
 
   function renderModuloBars(lista) {
     const el = document.getElementById('moduloBars');
@@ -2397,11 +2315,11 @@
     });
   }
 
-  function renderChartAprovacao() {
+  function renderChartAprovacao(lista) {
     const legendEl = document.getElementById('chartAprovacaoLegend');
     if (!legendEl) return;
-    const total = ALL_RESULTADOS.filter(r => r.tipo !== 'typing').length;
-    const aprovados = candidatosAgrupados().filter(c => c.media >= 70).length;
+    const total = (lista || ALL_RESULTADOS.filter(r => r.tipo !== 'typing')).length;
+    const aprovados = candidatosAgrupados(lista).filter(c => c.media >= 70).length;
     const reprovados = total - aprovados;
     drawPieChart('chartAprovacao', [
       { label: `✅ Aprovados (${aprovados})`, value: aprovados },
@@ -2415,10 +2333,10 @@
     `;
   }
 
-  function renderChartModulosAprovados() {
+  function renderChartModulosAprovados(lista) {
     const chartEl = document.getElementById('chartModulosAprovados');
     if (!chartEl) return;
-    const aprovados = candidatosAgrupados().filter(c => c.media >= 70);
+    const aprovados = candidatosAgrupados(lista).filter(c => c.media >= 70);
     const porModulo = {};
     aprovados.forEach(c => {
       const mod = c.moduloEscolhido || '—';
@@ -2439,59 +2357,31 @@
     `).join('');
   }
 
-  function renderChartEntrevistas() {
+  // Universo desta aba é quem foi selecionado para entrevista (marcado na
+  // aba Candidatos) — não simplesmente quem tirou média >= 70%, já que nem
+  // todo aprovado na nota é chamado para entrevista.
+  function renderChartEntrevistas(lista) {
     const legendEl = document.getElementById('chartEntrevistasLegend');
     if (!legendEl) return;
-    const aprovados = candidatosAgrupados().filter(c => c.media >= 70);
-    const pendentes = aprovados.filter(c => {
+    const marcados = candidatosAgrupados(lista).filter(c => {
       const id = c.chave.replace(/[/]/g, '_');
-      return !PIPELINE_MAP[id] || !PIPELINE_MAP[id].entrevista_coordenador_decisao;
-    }).length;
-    const coordAprovado = aprovados.filter(c => {
-      const id = c.chave.replace(/[/]/g, '_');
-      return PIPELINE_MAP[id] && PIPELINE_MAP[id].entrevista_coordenador_decisao === 'aprovado';
-    }).length;
-    const gerenciaAprovado = aprovados.filter(c => {
-      const id = c.chave.replace(/[/]/g, '_');
-      return PIPELINE_MAP[id] && PIPELINE_MAP[id].entrevista_gerencia_decisao === 'aprovado';
-    }).length;
-    const recusados = aprovados.length - pendentes - coordAprovado - gerenciaAprovado;
+      return PIPELINE_MAP[id] && PIPELINE_MAP[id].aprovado === true;
+    });
+    const contratados = marcados.filter(c => (PIPELINE_MAP[c.chave.replace(/[/]/g, '_')] || {}).decisao_final === 'contratado').length;
+    const recusados = marcados.filter(c => (PIPELINE_MAP[c.chave.replace(/[/]/g, '_')] || {}).decisao_final === 'recusado').length;
+    const pendentes = marcados.length - contratados - recusados;
     drawPieChart('chartEntrevistas', [
       { label: `⏳ Pendente (${pendentes})`, value: pendentes },
-      { label: `✅ Coord. Aprovado (${coordAprovado})`, value: coordAprovado },
-      { label: `🎉 Contratado (${gerenciaAprovado})`, value: gerenciaAprovado },
+      { label: `🎉 Contratado (${contratados})`, value: contratados },
       { label: `❌ Recusado (${recusados})`, value: recusados }
-    ], ['var(--amber)', 'var(--cyan)', 'var(--green)', 'var(--red)']);
+    ], ['var(--amber)', 'var(--green)', 'var(--red)']);
     legendEl.innerHTML = `
       <div style="display:flex;flex-wrap:wrap;justify-content:center;gap:12px;font-size:11px;">
         <div><span style="color:var(--amber);font-weight:700;">⏳</span> ${pendentes} pendente</div>
-        <div><span style="color:var(--cyan);font-weight:700;">✅</span> ${coordAprovado} coord.</div>
-        <div><span style="color:var(--green);font-weight:700;">🎉</span> ${gerenciaAprovado} contrat.</div>
+        <div><span style="color:var(--green);font-weight:700;">🎉</span> ${contratados} contrat.</div>
         <div><span style="color:var(--red);font-weight:700;">❌</span> ${recusados} recusado</div>
       </div>
     `;
-  }
-
-  function renderTyping() {
-    const intervalo = calcularIntervaloPeriodo();
-    const lista = ALL_RESULTADOS.filter(r => {
-      if (r.tipo !== 'typing') return false;
-      if (!intervalo) return true;
-      const dataR = r.data_conclusao ? dataLocalYMD(r.data_conclusao) : '';
-      return dataR && dataR >= intervalo[0] && dataR <= intervalo[1];
-    });
-    document.getElementById('typingBadge').textContent = lista.length + ' registros';
-    const el = document.getElementById('typingList');
-    if (!lista.length) { el.innerHTML = '<div class="empty-state"><div class="empty-icon">⌨️</div>Sem testes de digitação ainda</div>'; return; }
-    el.innerHTML = lista.slice(0, 30).map(r => `
-      <div class="typing-collab-row" onclick="abrirCandidato('${chaveDe(r).replace(/'/g, "\\'")}')" title="Ver detalhamento e exportar PDF">
-        <div class="typing-collab-name">${escapeHtml(r.nome || '—')} <span class="row-hint">▸ detalhes</span></div>
-        <div class="typing-collab-stats">
-          <div class="typing-collab-stat"><div class="typing-collab-stat-val" style="color:var(--amber);">${r.wpm ?? '—'}</div><div class="typing-collab-stat-lbl">WPM</div></div>
-          <div class="typing-collab-stat"><div class="typing-collab-stat-val" style="color:var(--cyan);">${r.pct ?? '—'}%</div><div class="typing-collab-stat-lbl">Precisão</div></div>
-          <div class="typing-collab-stat"><div class="typing-collab-stat-val" style="color:var(--red);">${r.deleteCount ?? 0}</div><div class="typing-collab-stat-lbl">⌫</div></div>
-        </div>
-      </div>`).join('');
   }
 
   window.renderViolacoes = function renderViolacoes() {
@@ -2523,17 +2413,12 @@
 
   function escapeHtml(s) { return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
 
-  // ══════════ PROCESSO SELETIVO (funil de contratação) ══════════
+  // ══════════ CANDIDATOS ══════════
   // Agrupa por candidato (mesma chave usada no resto do dashboard) e mostra
-  // a nota automática do módulo escolhido lado a lado com a ETAPA manual do
-  // processo de contratação (guardada em `pipeline/{chave}`). A nota nunca
-  // muda aqui — só a etapa, que é controle de RH, não de correção de prova.
-  const ETAPAS_PIPELINE = [
-    { valor: 'aguardando', label: 'Aguardando', cor: 'var(--text3)' },
-    { valor: 'entrevista', label: 'Em entrevista', cor: 'var(--amber)' },
-    { valor: 'contratado', label: 'Contratado', cor: 'var(--green)' },
-    { valor: 'recusado', label: 'Recusado', cor: 'var(--red)' }
-  ];
+  // a nota automática do módulo escolhido. Visível a todo mundo, inclusive
+  // viewer (só leitura). Selecionar para entrevista e escrever observação
+  // é exclusivo de avaliador/coordenador/gerência/admin — ver renderPipeline.
+  const PODE_GERENCIAR_CANDIDATOS = ['admin', 'gerencia', 'avaliador', 'coordenador'];
 
   function candidatosAgrupados(lista) {
     const quizzes = (lista || ALL_RESULTADOS).filter(r => r.tipo !== 'typing');
@@ -2573,109 +2458,72 @@
 
   window.renderPipeline = function renderPipeline() {
     const tbody = document.getElementById('pipelineTableBody');
-    if (!tbody || !me) return;
-    const somenteLeitura = me.perfil === 'coordenador';
-    document.getElementById('pipelineSearchWrap').style.display = somenteLeitura ? 'block' : 'none';
+    const thead = document.getElementById('pipelineTableHead');
+    if (!tbody || !thead || !me) return;
+    const podeGerenciar = PODE_GERENCIAR_CANDIDATOS.includes(me.perfil);
 
     let candidatos = candidatosAgrupados();
 
-    // Filtros de busca e data (para coordenador, mostra controls de filtro)
-    if (somenteLeitura) {
-      const buscaEl = document.getElementById('pipelineSearchInput');
-      const busca = buscaEl ? buscaEl.value.trim().toLowerCase() : '';
-      if (busca) candidatos = candidatos.filter(c => c.nome.toLowerCase().includes(busca));
+    const buscaEl = document.getElementById('pipelineSearchInput');
+    const busca = buscaEl ? buscaEl.value.trim().toLowerCase() : '';
+    if (busca) candidatos = candidatos.filter(c => c.nome.toLowerCase().includes(busca));
 
-      const dataEl = document.getElementById('pipelineDateInput');
-      let dataFiltro = dataEl ? dataEl.value : '';
-      if (!dataFiltro) dataFiltro = dataLocalYMD(new Date()); // Por padrão, "hoje"
-      candidatos = candidatos.filter(c => c.ultima && dataLocalYMD(c.ultima) === dataFiltro);
+    const dataEl = document.getElementById('pipelineDateInput');
+    const dataFiltro = dataEl ? dataEl.value : '';
+    if (dataFiltro) candidatos = candidatos.filter(c => c.ultima && dataLocalYMD(c.ultima) === dataFiltro);
 
-      // Ordena por data mais recente dentro do dia
-      candidatos = [...candidatos].sort((a, b) => String(b.ultima || '').localeCompare(String(a.ultima || '')));
-    }
+    candidatos = [...candidatos].sort((a, b) => String(b.ultima || '').localeCompare(String(a.ultima || '')));
 
     document.getElementById('pipelineBadge').textContent = candidatos.length + ' candidatos';
+
+    thead.innerHTML = `
+      <th style="width:44px;text-align:center;">#</th>
+      <th>Candidato</th>
+      <th>Testes realizados</th>
+      <th>Nota (módulo escolhido)</th>
+      ${podeGerenciar ? '<th>Observação</th><th>Entrevista</th><th>Atualizado</th>' : ''}
+    `;
+    const colspan = podeGerenciar ? 7 : 4;
+
     if (!candidatos.length) {
-      const msg = somenteLeitura ? 'Nenhum candidato encontrado.' : 'Nenhum candidato ainda.';
-      tbody.innerHTML = `<tr><td colspan="8"><div class="empty-state"><div class="empty-icon">🧭</div>${msg}</div></td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="${colspan}"><div class="empty-state"><div class="empty-icon">🧭</div>Nenhum candidato encontrado.</div></td></tr>`;
       return;
     }
     tbody.innerHTML = candidatos.map((c, i) => {
       const chaveId = c.chave.replace(/[/]/g, '_');
-      const etapaAtual = (PIPELINE_MAP[chaveId] && PIPELINE_MAP[chaveId].etapa) || 'aguardando';
-      const infoEtapa = ETAPAS_PIPELINE.find(e => e.valor === etapaAtual) || ETAPAS_PIPELINE[0];
-      const atualizadoEm = PIPELINE_MAP[chaveId] && PIPELINE_MAP[chaveId].atualizado_em ? fmtDataHora(PIPELINE_MAP[chaveId].atualizado_em) : '—';
-      const aprovadoParaEntrevista = PIPELINE_MAP[chaveId] && PIPELINE_MAP[chaveId].aprovado === true;
-      const seletor = somenteLeitura
-        ? `<span style="color:${infoEtapa.cor};font-weight:700;">${infoEtapa.label}</span>`
-        : `<select class="field-input" style="max-width:170px;color:${infoEtapa.cor};font-weight:700;" onclick="event.stopPropagation()" onchange="event.stopPropagation();mudarEtapaPipeline('${c.chave.replace(/'/g, "\\'")}','${escapeHtml(c.nome).replace(/'/g, "\\'")}',this.value)">
-            ${ETAPAS_PIPELINE.map(e => `<option value="${e.valor}" ${e.valor === etapaAtual ? 'selected' : ''}>${e.label}</option>`).join('')}
-          </select>`;
-      const observacao = (PIPELINE_MAP[chaveId] && PIPELINE_MAP[chaveId].observacao) || '';
-      const colunaObs = somenteLeitura
-        ? `<td style="max-width:220px;white-space:normal;font-size:12px;color:var(--text2);">${observacao ? escapeHtml(observacao) : '<span style="color:var(--text4);">—</span>'}</td>`
-        : `<td onclick="event.stopPropagation()">
-            <button class="btn-act btn-neutral" onclick="event.stopPropagation();editarObservacaoPipeline('${c.chave.replace(/'/g, "\\'")}','${escapeHtml(c.nome).replace(/'/g, "\\'")}')" title="${observacao ? escapeHtml(observacao) : 'Nenhuma observação ainda'}">
-              📝 ${observacao ? 'Ver/editar' : 'Observação'}
-            </button>
-          </td>`;
-      const colunaAprovado = `<td onclick="event.stopPropagation()">
-        <button class="btn-act ${aprovadoParaEntrevista ? 'btn-approve-admin' : 'btn-neutral'}" onclick="event.stopPropagation();alternarAprovadoParaEntrevista('${c.chave.replace(/'/g, "\\'")}','${escapeHtml(c.nome).replace(/'/g, "\\'")}',${!aprovadoParaEntrevista})">
-          ${aprovadoParaEntrevista ? '✅ Entrevista' : '☐ Entrevista'}
-        </button>
-      </td>`;
-      const decCoordenador = (PIPELINE_MAP[chaveId] && PIPELINE_MAP[chaveId].entrevista_coordenador_decisao) || null;
-      const decGerencia = (PIPELINE_MAP[chaveId] && PIPELINE_MAP[chaveId].entrevista_gerencia_decisao) || null;
-      const ehCoordenador = me && me.perfil === 'coordenador';
-      const ehGerencia = me && (me.perfil === 'admin' || me.perfil === 'gerencia');
-      const colunaEntrevistas = `<td onclick="event.stopPropagation()" style="font-size:11px;">
-        <div style="display:flex;flex-direction:column;gap:4px;">
-          <div style="display:flex;gap:4px;align-items:center;">
-            <span style="color:var(--text2);min-width:55px;">Coord:</span>
-            ${!ehCoordenador ? `<span style="color:${decCoordenador === 'aprovado' ? 'var(--green)' : decCoordenador === 'recusado' ? 'var(--red)' : 'var(--text3)'};font-weight:${decCoordenador ? '700' : '400'}">${decCoordenador === 'aprovado' ? '✅ Aprovado' : decCoordenador === 'recusado' ? '❌ Recusado' : '⏳ Pendente'}</span>` : `<button class="btn-act ${decCoordenador ? 'btn-small' : 'btn-neutral btn-small'}" onclick="abrirDecisaoCoordenador('${c.chave.replace(/'/g, "\\'")}','${escapeHtml(c.nome).replace(/'/g, "\\'")}')" style="padding:2px 8px;font-size:10px;">${decCoordenador === 'aprovado' ? '✅' : decCoordenador === 'recusado' ? '❌' : '⏳'} Decidir</button>`}
-          </div>
-          ${ehGerencia ? `<div style="display:flex;gap:4px;align-items:center;">
-            <span style="color:var(--text2);min-width:55px;">Gerência:</span>
-            ${decCoordenador === 'aprovado' ? `<button class="btn-act ${decGerencia ? 'btn-small' : 'btn-neutral btn-small'}" onclick="abrirDecisaoGerencia('${c.chave.replace(/'/g, "\\'")}','${escapeHtml(c.nome).replace(/'/g, "\\'")}')" style="padding:2px 8px;font-size:10px;">${decGerencia === 'aprovado' ? '✅ Contratado' : decGerencia === 'recusado' ? '❌ Recusado' : '⏳ Decidir'}</button>` : `<span style="color:var(--text4);font-size:10px;">Aguarda aprovação Coord</span>`}
-          </div>` : ''}
-        </div>
-      </td>`;
+      const pipelineInfo = PIPELINE_MAP[chaveId] || {};
+      const atualizadoEm = pipelineInfo.atualizado_em ? fmtDataHora(pipelineInfo.atualizado_em) : '—';
+      const aprovadoParaEntrevista = pipelineInfo.aprovado === true;
+      const observacao = pipelineInfo.observacao || '';
+
+      const colunasGerenciar = podeGerenciar ? `
+        <td onclick="event.stopPropagation()">
+          <button class="btn-act btn-neutral" onclick="event.stopPropagation();editarObservacaoPipeline('${c.chave.replace(/'/g, "\\'")}','${escapeHtml(c.nome).replace(/'/g, "\\'")}')" title="${observacao ? escapeHtml(observacao) : 'Nenhuma observação ainda'}">
+            📝 ${observacao ? 'Ver/editar' : 'Observação'}
+          </button>
+        </td>
+        <td onclick="event.stopPropagation()">
+          <button class="btn-act ${aprovadoParaEntrevista ? 'btn-approve-admin' : 'btn-neutral'}" onclick="event.stopPropagation();alternarAprovadoParaEntrevista('${c.chave.replace(/'/g, "\\'")}','${escapeHtml(c.nome).replace(/'/g, "\\'")}',${!aprovadoParaEntrevista})">
+            ${aprovadoParaEntrevista ? '✅ Entrevista' : '☐ Entrevista'}
+          </button>
+        </td>
+        <td class="td-time">${atualizadoEm}</td>` : '';
+
       return `
       <tr class="clickable" onclick="abrirCandidato('${c.chave.replace(/'/g, "\\'")}')" title="Ver detalhamento e exportar PDF">
         <td style="text-align:center;color:var(--text3);">${i + 1}</td>
         <td class="td-nome">${escapeHtml(c.nome)} <span class="row-hint">▸ detalhes</span></td>
         <td style="max-width:220px;white-space:normal;"><div style="display:flex;flex-wrap:wrap;gap:4px;">${c.modulos.map(m => `<span class="badge-modulo" style="${m.modulo === c.moduloEscolhido ? 'border-color:var(--amber);' : ''}" title="${m.modulo === c.moduloEscolhido ? 'Módulo escolhido pelo candidato' : 'Módulo automático da trilha'}">${m.modulo === c.moduloEscolhido ? '★ ' : ''}${escapeHtml(m.modulo)} <b style="color:${m.pct >= 70 ? 'var(--green)' : m.pct >= 50 ? 'var(--amber)' : 'var(--red)'}">${m.pct}%</b></span>`).join('')}${c.digitacao != null ? `<span class="badge-modulo" title="Teste de digitação">⌨️ Digitação <b style="color:${c.digitacao >= 70 ? 'var(--green)' : c.digitacao >= 50 ? 'var(--amber)' : 'var(--red)'}">${c.digitacao}%</b></span>` : ''}</div></td>
         <td><span class="td-pct" style="color:${c.media >= 70 ? 'var(--green)' : c.media >= 50 ? 'var(--amber)' : 'var(--red)'}">${c.media >= 70 ? '✅' : '❌'} ${c.media}%</span></td>
-        <td>${seletor}</td>
-        ${colunaObs}
-        ${colunaAprovado}
-        ${colunaEntrevistas}
-        <td class="td-time">${atualizadoEm}</td>
+        ${colunasGerenciar}
       </tr>`;
     }).join('');
-  };
-
-  window.mudarEtapaPipeline = async function (chave, nome, etapa) {
-    try {
-      await definirEtapaPipeline(chave, etapa, nome, me.usuario);
-      // Selecionar "Em entrevista" no seletor de etapa também marca o
-      // candidato como aprovado para entrevista, para aparecer na aba
-      // "Aprovados para Entrevista" sem precisar clicar nos dois controles
-      // separadamente (que é a mesma decisão, só com dois campos no banco).
-      if (etapa === 'entrevista') {
-        await definirAprovacaoManual(chave, true, nome, me.usuario);
-      }
-      toast('✅ Etapa atualizada', 'ok');
-    } catch (e) {
-      console.error(e);
-      toast('❌ Falha ao atualizar etapa: ' + e.message, 'err');
-    }
   };
 
   window.editarObservacaoPipeline = async function (chave, nome) {
     const chaveId = chave.replace(/[/]/g, '_');
     const atual = (PIPELINE_MAP[chaveId] && PIPELINE_MAP[chaveId].observacao) || '';
-    const nova = prompt(`Observação sobre ${nome} (visível para o coordenador/RH):`, atual);
+    const nova = prompt(`Observação sobre ${nome} (aparece na aba "Aprovados para Entrevista"):`, atual);
     if (nova === null) return; // cancelou
     try {
       await definirObservacaoPipeline(chave, nova.trim(), nome, me.usuario);
@@ -2693,30 +2541,6 @@
     } catch (e) {
       console.error(e);
       toast('❌ Falha: ' + e.message, 'err');
-    }
-  };
-
-  window.abrirDecisaoCoordenador = async function (chave, nome) {
-    const resultado = confirm(`Decisão na entrevista de ${nome}:\n\n[OK] = Aprovado para Gerência\n[Cancelar] = Recusado`);
-    const decisao = resultado ? 'aprovado' : 'recusado';
-    try {
-      await registrarDecisaoCoordenador(chave, decisao, nome, me.usuario);
-      toast(decisao === 'aprovado' ? '✅ Candidato segue para Gerência' : '❌ Candidato recusado', 'ok');
-    } catch (e) {
-      console.error(e);
-      toast('❌ Falha ao registrar decisão: ' + e.message, 'err');
-    }
-  };
-
-  window.abrirDecisaoGerencia = async function (chave, nome) {
-    const resultado = confirm(`Decisão final de ${nome}:\n\n[OK] = Contratado\n[Cancelar] = Recusado`);
-    const decisao = resultado ? 'aprovado' : 'recusado';
-    try {
-      await registrarDecisaoGerencia(chave, decisao, nome, me.usuario);
-      toast(decisao === 'aprovado' ? '🎉 Candidato Contratado!' : '❌ Candidato recusado', 'ok');
-    } catch (e) {
-      console.error(e);
-      toast('❌ Falha ao registrar decisão: ' + e.message, 'err');
     }
   };
 
@@ -2767,55 +2591,27 @@
     const badge = document.getElementById('bancoCountBadge');
     if (badge) badge.textContent = aprovadosFiltrados.length + ' registro' + (aprovadosFiltrados.length !== 1 ? 's' : '');
     if (!aprovadosFiltrados.length) {
-      tbody.innerHTML = '<tr><td colspan="5"><div class="empty-state"><div class="empty-icon">📭</div>Nenhum candidato marcado para entrevista</div></td></tr>';
+      tbody.innerHTML = '<tr><td colspan="6"><div class="empty-state"><div class="empty-icon">📭</div>Nenhum candidato marcado para entrevista</div></td></tr>';
       return;
     }
+    const podeDecidir = me && PODE_GERENCIAR_CANDIDATOS.includes(me.perfil);
     tbody.innerHTML = aprovadosFiltrados.map((c, i) => {
       const chaveId = c.chave.replace(/[/]/g, '_');
       const pipelineData = PIPELINE_MAP[chaveId] || {};
-      const aprovadoParaEntrevista = pipelineData.aprovado || false;
-      const decCoordenador = pipelineData.entrevista_coordenador_decisao || null;
-      const decGerencia = pipelineData.entrevista_gerencia_decisao || null;
+      const decisaoFinal = pipelineData.decisao_final || null;
+      const observacao = pipelineData.observacao || '';
 
-      let statusEntrevista = '⏳ Pendente';
+      let statusTxt = '⏳ Pendente';
       let corStatus = 'var(--text3)';
-      if (decCoordenador === 'aprovado' && !decGerencia) {
-        statusEntrevista = '🎤 Coord. Aprovado';
-        corStatus = 'var(--cyan)';
-      } else if (decCoordenador === 'recusado') {
-        statusEntrevista = '❌ Recusado (Coord)';
-        corStatus = 'var(--red)';
-      } else if (decGerencia === 'aprovado') {
-        statusEntrevista = '🎉 Contratado';
-        corStatus = 'var(--green)';
-      } else if (decGerencia === 'recusado') {
-        statusEntrevista = '❌ Recusado (Ger)';
-        corStatus = 'var(--red)';
-      }
+      if (decisaoFinal === 'contratado') { statusTxt = '🎉 Contratado'; corStatus = 'var(--green)'; }
+      else if (decisaoFinal === 'recusado') { statusTxt = '❌ Recusado'; corStatus = 'var(--red)'; }
 
       const temViolacao = violacoesDe(c.nome).length > 0;
-      const ehCoordenador = me && me.perfil === 'coordenador';
-      const ehGerencia = me && (me.perfil === 'admin' || me.perfil === 'gerencia');
-      const ehAvaliador = me && (me.perfil === 'avaliador' || me.perfil === 'admin' || me.perfil === 'gerencia');
 
-      let botoesAcao = '';
-      if (ehAvaliador && !ehCoordenador) {
-        botoesAcao += `<button class="btn-act ${aprovadoParaEntrevista ? 'btn-approve-admin' : 'btn-neutral'}" style="font-size:11px;padding:6px 10px;" onclick="event.stopPropagation();alternarAprovadoParaEntrevista('${c.chave.replace(/'/g, "\\'")}','${escapeHtml(c.nome).replace(/'/g, "\\'")}',${!aprovadoParaEntrevista})">
-          ${aprovadoParaEntrevista ? '✅ Entrevista' : '☐ Entrevista'}
-        </button>`;
-      }
-
-      if (ehCoordenador && !decCoordenador) {
-        botoesAcao += `<button class="btn-act btn-neutral" style="font-size:11px;padding:6px 10px;" onclick="event.stopPropagation();abrirDecisaoCoordenador('${c.chave.replace(/'/g, "\\'")}','${escapeHtml(c.nome).replace(/'/g, "\\'")}')" title="Entrevista com Coordenador">
-          🎤 Decidir
-        </button>`;
-      }
-
-      if (ehGerencia && decCoordenador === 'aprovado' && !decGerencia) {
-        botoesAcao += `<button class="btn-act btn-neutral" style="font-size:11px;padding:6px 10px;" onclick="event.stopPropagation();abrirDecisaoGerencia('${c.chave.replace(/'/g, "\\'")}','${escapeHtml(c.nome).replace(/'/g, "\\'")}')" title="Entrevista com Gerência">
-          👔 Decidir
-        </button>`;
-      }
+      const botoesAcao = (podeDecidir && !decisaoFinal) ? `
+          <button class="btn-act btn-approve-admin" style="font-size:11px;padding:6px 10px;" onclick="event.stopPropagation();decidirEntrevista('${c.chave.replace(/'/g, "\\'")}','${escapeHtml(c.nome).replace(/'/g, "\\'")}','contratado')">🎉 Contratado</button>
+          <button class="btn-act btn-neutral" style="font-size:11px;padding:6px 10px;" onclick="event.stopPropagation();decidirEntrevista('${c.chave.replace(/'/g, "\\'")}','${escapeHtml(c.nome).replace(/'/g, "\\'")}','recusado')">❌ Recusado</button>
+        ` : '';
 
       return `
       <tr class="row-aprovado">
@@ -2834,7 +2630,8 @@
             </div>
           </div>
         </td>
-        <td style="font-size:12px;color:var(--text);">${statusEntrevista}</td>
+        <td style="max-width:200px;white-space:normal;font-size:12px;color:var(--text2);">${observacao ? escapeHtml(observacao) : '<span style="color:var(--text4);">—</span>'}</td>
+        <td style="font-size:12px;color:${corStatus};font-weight:700;">${statusTxt}</td>
         <td onclick="event.stopPropagation()" style="font-size:11px;">
           <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;">
             ${botoesAcao}
@@ -2847,14 +2644,66 @@
     }).join('');
   }
 
+  window.decidirEntrevista = async function (chave, nome, decisao) {
+    const label = decisao === 'contratado' ? 'CONTRATAR' : 'RECUSAR';
+    if (!confirm(`Confirma ${label} o candidato ${nome}?\n\nIsso vai aparecer no histórico da aba "Contratados".`)) return;
+    try {
+      await registrarDecisaoFinal(chave, decisao, nome, me.usuario);
+      toast(decisao === 'contratado' ? '🎉 Candidato contratado!' : '❌ Candidato recusado', 'ok');
+    } catch (e) {
+      console.error(e);
+      toast('❌ Falha ao registrar decisão: ' + e.message, 'err');
+    }
+  };
+
+  // ══════════ CONTRATADOS (histórico de decisões) ══════════
+  window.renderContratados = function renderContratados() {
+    const tbody = document.getElementById('contratadosTableBody');
+    if (!tbody) return;
+    const decididos = candidatosAgrupados().filter(c => {
+      const id = c.chave.replace(/[/]/g, '_');
+      return PIPELINE_MAP[id] && PIPELINE_MAP[id].decisao_final;
+    }).sort((a, b) => {
+      const ta = (PIPELINE_MAP[a.chave.replace(/[/]/g, '_')] || {}).decisao_final_em;
+      const tb = (PIPELINE_MAP[b.chave.replace(/[/]/g, '_')] || {}).decisao_final_em;
+      return String(tb || '').localeCompare(String(ta || ''));
+    });
+    const badge = document.getElementById('contratadosBadge');
+    if (badge) badge.textContent = decididos.length + ' registro' + (decididos.length !== 1 ? 's' : '');
+    if (!decididos.length) {
+      tbody.innerHTML = '<tr><td colspan="7"><div class="empty-state"><div class="empty-icon">🏆</div>Nenhuma decisão registrada ainda</div></td></tr>';
+      return;
+    }
+    tbody.innerHTML = decididos.map((c, i) => {
+      const chaveId = c.chave.replace(/[/]/g, '_');
+      const p = PIPELINE_MAP[chaveId] || {};
+      const observacao = p.observacao || '';
+      const contratado = p.decisao_final === 'contratado';
+      return `
+      <tr class="clickable" onclick="abrirCandidato('${c.chave.replace(/'/g, "\\'")}')" title="Ver detalhamento e exportar PDF">
+        <td style="text-align:center;color:var(--text3);">${i + 1}</td>
+        <td class="td-nome">${escapeHtml(c.nome)} <span class="row-hint">▸ detalhes</span></td>
+        <td><span class="td-pct" style="color:${c.media >= 70 ? 'var(--green)' : 'var(--red)'}">${c.media}%</span></td>
+        <td style="max-width:200px;white-space:normal;font-size:12px;color:var(--text2);">${observacao ? escapeHtml(observacao) : '<span style="color:var(--text4);">—</span>'}</td>
+        <td style="font-weight:700;color:${contratado ? 'var(--green)' : 'var(--red)'};">${contratado ? '🎉 Contratado' : '❌ Recusado'}</td>
+        <td>${escapeHtml(p.decisao_final_por || '—')}</td>
+        <td class="td-time">${p.decisao_final_em ? fmtDataHora(p.decisao_final_em) : '—'}</td>
+      </tr>`;
+    }).join('');
+  };
+
   function renderAll() {
     try {
-      renderChartAprovacao();
-      renderChartModulosAprovados();
-      renderChartEntrevistas();
+      const lista = resultadosDashboardFiltrados();
+      renderKPIs(lista);
+      renderChartAprovacao(lista);
+      renderChartModulosAprovados(lista);
+      renderChartEntrevistas(lista);
+      renderModuloBars(lista);
       renderViolacoes();
       renderBancoAprovados();
       renderPipeline();
+      renderContratados();
     } catch (e) {
       console.error('Erro ao renderizar:', e);
     }
@@ -2993,7 +2842,7 @@
   }
 
   window.exportCSV = async function() {
-    const lista = getFiltered();
+    const lista = resultadosDashboardFiltrados();
     const typing = ALL_RESULTADOS.filter(r => r.tipo === 'typing');
     if (!lista.length && !typing.length) { toast('Nada para exportar', 'err'); return; }
 
@@ -3442,23 +3291,9 @@
     }
   }
 
-  // O campo de data começa sempre em hoje; por padrão o modo é "Dia
-  // selecionado", para não misturar candidatos de dias diferentes na mesma
-  // lista. Lembra a última escolha de modo entre sessões (migra valores
-  // antigos 'hoje'/'ontem'/'personalizado' de versões anteriores do filtro).
-  const filterDiaEl = document.getElementById('filterDia');
-  if (filterDiaEl) filterDiaEl.value = dataLocalYMD(new Date());
-  let periodoSalvo = localStorage.getItem(LS_PERIODO) || 'dia';
-  if (periodoSalvo === 'hoje' || periodoSalvo === 'personalizado' || periodoSalvo === 'todos') periodoSalvo = 'dia';
-  if (periodoSalvo === 'ontem') {
-    periodoSalvo = 'dia';
-    const ontem = new Date(); ontem.setDate(ontem.getDate() - 1);
-    if (filterDiaEl) filterDiaEl.value = dataLocalYMD(ontem);
-  }
-  const filterPeriodoEl = document.getElementById('filterPeriodo');
-  if (filterPeriodoEl) filterPeriodoEl.value = periodoSalvo;
-
-  // Violações e Banco de Aprovados também abrem filtrados no dia de hoje.
+  // Violações e Banco de Aprovados abrem filtrados no dia de hoje. O
+  // Dashboard (dashData) começa vazio de propósito — mostra estatísticas de
+  // todos os dias até alguém escolher um dia específico.
   const violDataIniEl = document.getElementById('violDataIni');
   const violDataFimEl = document.getElementById('violDataFim');
   if (violDataIniEl) violDataIniEl.value = dataLocalYMD(new Date());

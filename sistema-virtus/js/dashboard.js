@@ -227,30 +227,19 @@ export async function definirAprovacaoManual(chave, aprovado, nome, avaliador) {
   }, { merge: true });
 }
 
-// Decisão do coordenador na entrevista: aprovado/recusado
-export async function registrarDecisaoCoordenador(chave, decisao, nome, coordenador) {
+// Decisão final da entrevista (aba "Aprovados para Entrevista"): contratado
+// ou recusado. Substitui o fluxo antigo de duas etapas (coordenador então
+// gerência) por uma decisão única, que qualquer um de
+// avaliador/coordenador/gerência/admin pode registrar. Alimenta a aba
+// "Contratados" (histórico de quem decidiu o quê e quando).
+export async function registrarDecisaoFinal(chave, decisao, nome, quem) {
   const id = chave.replace(/[/]/g, "_");
-  const novaEtapa = decisao === 'aprovado' ? 'entrevista_gerencia' : 'recusado';
   await setDoc(doc(db, "pipeline", id), {
-    entrevista_coordenador_decisao: decisao,
-    entrevista_coordenador_por: coordenador || null,
-    entrevista_coordenador_em: serverTimestamp(),
+    decisao_final: decisao,
+    decisao_final_por: quem || null,
+    decisao_final_em: serverTimestamp(),
     nome: nome || null,
-    etapa: novaEtapa,
-    atualizado_em: serverTimestamp()
-  }, { merge: true });
-}
-
-// Decisão do gerente na entrevista: aprovado (contrata) ou recusado
-export async function registrarDecisaoGerencia(chave, decisao, nome, gerente) {
-  const id = chave.replace(/[/]/g, "_");
-  const novaEtapa = decisao === 'aprovado' ? 'contratado' : 'recusado';
-  await setDoc(doc(db, "pipeline", id), {
-    entrevista_gerencia_decisao: decisao,
-    entrevista_gerencia_por: gerente || null,
-    entrevista_gerencia_em: serverTimestamp(),
-    nome: nome || null,
-    etapa: novaEtapa,
+    etapa: decisao,
     atualizado_em: serverTimestamp()
   }, { merge: true });
 }
