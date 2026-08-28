@@ -806,6 +806,12 @@
     /* Tabelas: rolam dentro do próprio wrapper, nunca a página inteira */
     .results-table-wrap { -webkit-overflow-scrolling:touch; }
     table { min-width:520px; }
+
+    /* Badges de módulo (coluna "Testes realizados"): mais compactos e em
+       duas colunas, pra não empilhar um por linha ocupando a tela toda. */
+    .badge-modulo { font-size:8px; padding:3px 6px; letter-spacing:0.5px; line-height:1.5; }
+    td[style*="max-width:220px"] { max-width:280px !important; }
+    td > div[style*="flex-wrap"] { display:grid !important; grid-template-columns:1fr 1fr; gap:4px !important; max-width:100%; }
   }
 
   @media (max-width: 480px) {
