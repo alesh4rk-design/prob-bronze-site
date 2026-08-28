@@ -2241,9 +2241,13 @@
   }
 
   function getFiltered() {
-    const busca = (document.getElementById('searchInput').value || '').toLowerCase();
-    const modulo = document.getElementById('filterModulo').value;
-    const status = document.getElementById('filterStatus').value;
+    const searchEl = document.getElementById('searchInput');
+    const modEl = document.getElementById('filterModulo');
+    const statusEl = document.getElementById('filterStatus');
+    if (!searchEl || !modEl || !statusEl) return [];
+    const busca = (searchEl.value || '').toLowerCase();
+    const modulo = modEl.value;
+    const status = statusEl.value;
     const intervalo = calcularIntervaloPeriodo();
     return ALL_RESULTADOS.filter(r => {
       if (r.tipo === 'typing') return false; // exibido na seção própria
@@ -2262,6 +2266,7 @@
 
   function renderModuleOptions() {
     const sel = document.getElementById('filterModulo');
+    if (!sel) return;
     const atual = sel.value;
     const modulos = [...new Set(ALL_RESULTADOS.filter(r => r.tipo !== 'typing').map(r => r.modulo))].sort();
     sel.innerHTML = '<option value="">Todos os módulos</option>' + modulos.map(m => `<option value="${m}">${m}</option>`).join('');
@@ -2269,11 +2274,13 @@
   }
 
   function renderKPIs(lista) {
+    const kpiTotal = document.getElementById('kpiTotal');
+    if (!kpiTotal) return;
     const total = lista.length;
     const aprov = lista.filter(r => (r.pct || 0) >= 70).length;
     const reprov = total - aprov;
     const media = total ? Math.round(lista.reduce((a, r) => a + (r.pct || 0), 0) / total) : null;
-    document.getElementById('kpiTotal').textContent = total;
+    kpiTotal.textContent = total;
     document.getElementById('kpiAprov').textContent = aprov;
     document.getElementById('kpiReprov').textContent = reprov;
     document.getElementById('kpiMedia').textContent = media === null ? '—' : media + '%';
