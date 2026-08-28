@@ -2374,6 +2374,7 @@
 
   function renderModuloBars(lista) {
     const el = document.getElementById('moduloBars');
+    if (!el) return;
     if (!lista.length) { el.innerHTML = '<div class="empty-state"><div class="empty-icon">📊</div>Sem dados ainda</div>'; return; }
     const porModulo = {};
     lista.forEach(r => {
@@ -2391,6 +2392,7 @@
 
   function renderHistogram(lista) {
     const el = document.getElementById('histWrap');
+    if (!el) return;
     if (!lista.length) { el.innerHTML = '<div class="empty-state" style="padding:20px;"><div class="empty-icon">📉</div></div>'; return; }
     const buckets = new Array(10).fill(0);
     lista.forEach(r => { const idx = Math.min(9, Math.floor((r.pct || 0) / 10)); buckets[idx]++; });
