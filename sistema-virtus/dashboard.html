@@ -907,6 +907,8 @@
     <div class="modal-actions">
       <button class="btn-pdf" onclick="gerarPDF()">📄 Relatório completo</button>
       <button class="btn-pdf" style="background:linear-gradient(135deg,#0088B0,#00C8E8);color:#02222c;" onclick="gerarResumoSkills()">📊 Resumo de competências</button>
+      <button class="btn-act btn-neutral" style="background:#1F8A3B;color:#fff;" onclick="enviarWhatsappRelatorio('completo')">💬 Completo (WhatsApp)</button>
+      <button class="btn-act btn-neutral" style="background:#1F8A3B;color:#fff;" onclick="enviarWhatsappRelatorio('resumo')">💬 Resumo (WhatsApp)</button>
       <button class="btn-act btn-neutral" style="padding:12px 20px;border-radius:6px;" onclick="fecharCandidato()">Fechar</button>
       <button class="btn-act btn-danger" id="btnExcluirCandidato" style="padding:12px 20px;border-radius:6px;margin-left:auto;" onclick="excluirCandidatoAtual()">🗑 Excluir candidato</button>
     </div>
@@ -2136,6 +2138,58 @@
       </div>`;
 
     imprimirRelatorio(h, `Virtus - Competencias - ${nome.replace(/[^\w\s-]/g, '')}`);
+  };
+
+  // Monta um texto (não HTML) com o relatório do candidato e abre o
+  // WhatsApp com a mensagem pronta — sem número fixo, pra quem está
+  // enviando escolher o contato na hora (colega, coordenador, RH etc.).
+  // "resumo" = igual ao Resumo de Competências; "completo" = módulo a
+  // módulo com acertos, sem o detalhamento questão a questão (ficaria longo
+  // demais pra mensagem de WhatsApp).
+  window.enviarWhatsappRelatorio = function (tipo) {
+    const tents = tentativasDe(CAND_ATUAL);
+    if (!tents.length) return;
+
+    const quizzes = tents.filter(t => t.tipo !== 'typing');
+    const typings = tents.filter(t => t.tipo === 'typing');
+    const viols = violacoesDe(CAND_ATUAL);
+    const f = fichaDe(tents);
+    const nome = tents[0].nome || CAND_ATUAL;
+
+    let msg = `*SISTEMA VIRTUS*\n`;
+    msg += tipo === 'resumo' ? `_Resumo de Competências_\n\n` : `_Relatório Completo_\n\n`;
+    msg += `*Candidato:* ${nome}\n`;
+    if (f && f.cargo_pretendido) msg += `*Cargo pretendido:* ${f.cargo_pretendido}\n`;
+
+    if (tipo === 'resumo') {
+      const mods = consolidarModulos(quizzes);
+      const media = mods.length ? Math.round(mods.reduce((a, m) => a + m.pct, 0) / mods.length) : null;
+      const fortes = mods.filter(m => m.pct >= 70);
+      const fracos = mods.filter(m => m.pct < 70);
+      const melhorWpm = typings.length ? Math.max(...typings.map(t => t.wpm || 0)) : null;
+      const dig = classificarDigitacao(melhorWpm);
+      const situacao = media === null ? 'SEM PROVA TÉCNICA' : media >= 70 ? 'APROVADO' : media >= 50 ? 'EM ANÁLISE' : 'NÃO APROVADO';
+
+      msg += `*Média geral:* ${media !== null ? media + '%' : '—'}\n`;
+      msg += `*Situação:* ${situacao}\n\n`;
+      if (fortes.length) msg += `✅ *Pontos fortes:*\n${fortes.map(m => `• ${m.modulo} (${m.pct}%)`).join('\n')}\n\n`;
+      if (fracos.length) msg += `⚠️ *A desenvolver:*\n${fracos.map(m => `• ${m.modulo} (${m.pct}%)`).join('\n')}\n\n`;
+      if (dig) msg += `⌨️ *Digitação:* ${melhorWpm} WPM — ${dig.txt}\n\n`;
+      msg += viols.length ? `🚨 *Violações registradas:* ${viols.length}\n` : `✅ *Nenhuma violação registrada*\n`;
+    } else {
+      msg += `\n*Módulos avaliados:*\n`;
+      for (const t of quizzes) {
+        msg += `• ${t.modulo || '—'}: ${t.acertos ?? '—'}/${t.total ?? '—'} — *${t.pct || 0}%* ${(t.pct || 0) >= 70 ? '✅' : '❌'}\n`;
+      }
+      if (typings.length) {
+        msg += `\n*Digitação:*\n`;
+        for (const t of typings) msg += `• ${t.wpm ?? '—'} WPM · ${t.pct ?? '—'}% de precisão\n`;
+      }
+      msg += viols.length ? `\n🚨 *Violações registradas:* ${viols.length}\n` : `\n✅ *Nenhuma violação registrada*\n`;
+    }
+
+    msg += `\n_Gerado em ${new Date().toLocaleString('pt-BR')}_`;
+    window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
   };
 
   // Envia um HTML para o container de impressão e abre o diálogo do navegador.
