@@ -1146,11 +1146,12 @@
             <th>Etapa</th>
             <th>Observação</th>
             <th>Aprovado para Entrevista</th>
+            <th>Status de Entrevistas</th>
             <th>Atualizado</th>
           </tr>
         </thead>
         <tbody id="pipelineTableBody">
-          <tr><td colspan="8"><div class="empty-state"><div class="empty-icon">🧭</div>Nenhum candidato ainda.</div></td></tr>
+          <tr><td colspan="9"><div class="empty-state"><div class="empty-icon">🧭</div>Nenhum candidato ainda.</div></td></tr>
         </tbody>
       </table>
     </div>
@@ -1342,7 +1343,8 @@
     assinarModulos, definirModuloAtivo,
     gerarCodigoAcesso, assinarCodigosAcesso, cancelarCodigoAcesso, excluirCodigoAcesso,
     definirNumeroWhatsapp, assinarNumeroWhatsapp,
-    definirEtapaPipeline, assinarPipeline, definirObservacaoPipeline, definirAprovacaoManual
+    definirEtapaPipeline, assinarPipeline, definirObservacaoPipeline, definirAprovacaoManual,
+    registrarDecisaoCoordenador, registrarDecisaoGerencia
   } from "./js/dashboard.js";
   import { db } from "./js/firebase-config.js";
   import { doc, setDoc } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
@@ -2527,6 +2529,22 @@
           ${aprovadoParaEntrevista ? '✅ Entrevista' : '☐ Entrevista'}
         </button>
       </td>`;
+      const decCoordenador = (PIPELINE_MAP[chaveId] && PIPELINE_MAP[chaveId].entrevista_coordenador_decisao) || null;
+      const decGerencia = (PIPELINE_MAP[chaveId] && PIPELINE_MAP[chaveId].entrevista_gerencia_decisao) || null;
+      const ehCoordenador = me && me.perfil === 'coordenador';
+      const ehGerencia = me && (me.perfil === 'admin' || me.perfil === 'gerencia');
+      const colunaEntrevistas = `<td onclick="event.stopPropagation()" style="font-size:11px;">
+        <div style="display:flex;flex-direction:column;gap:4px;">
+          <div style="display:flex;gap:4px;align-items:center;">
+            <span style="color:var(--text2);min-width:55px;">Coord:</span>
+            ${!ehCoordenador ? `<span style="color:${decCoordenador === 'aprovado' ? 'var(--green)' : decCoordenador === 'recusado' ? 'var(--red)' : 'var(--text3)'};font-weight:${decCoordenador ? '700' : '400'}">${decCoordenador === 'aprovado' ? '✅ Aprovado' : decCoordenador === 'recusado' ? '❌ Recusado' : '⏳ Pendente'}</span>` : `<button class="btn-act ${decCoordenador ? 'btn-small' : 'btn-neutral btn-small'}" onclick="abrirDecisaoCoordenador('${c.chave.replace(/'/g, "\\'")}','${escapeHtml(c.nome).replace(/'/g, "\\'")}')" style="padding:2px 8px;font-size:10px;">${decCoordenador === 'aprovado' ? '✅' : decCoordenador === 'recusado' ? '❌' : '⏳'} Decidir</button>`}
+          </div>
+          ${ehGerencia ? `<div style="display:flex;gap:4px;align-items:center;">
+            <span style="color:var(--text2);min-width:55px;">Gerência:</span>
+            ${decCoordenador === 'aprovado' ? `<button class="btn-act ${decGerencia ? 'btn-small' : 'btn-neutral btn-small'}" onclick="abrirDecisaoGerencia('${c.chave.replace(/'/g, "\\'")}','${escapeHtml(c.nome).replace(/'/g, "\\'")}')" style="padding:2px 8px;font-size:10px;">${decGerencia === 'aprovado' ? '✅ Contratado' : decGerencia === 'recusado' ? '❌ Recusado' : '⏳ Decidir'}</button>` : `<span style="color:var(--text4);font-size:10px;">Aguarda aprovação Coord</span>`}
+          </div>` : ''}
+        </div>
+      </td>`;
       return `
       <tr class="clickable" onclick="abrirCandidato('${c.chave.replace(/'/g, "\\'")}')" title="Ver detalhamento e exportar PDF">
         <td style="text-align:center;color:var(--text3);">${i + 1}</td>
@@ -2536,6 +2554,7 @@
         <td>${seletor}</td>
         ${colunaObs}
         ${colunaAprovado}
+        ${colunaEntrevistas}
         <td class="td-time">${atualizadoEm}</td>
       </tr>`;
     }).join('');
@@ -2572,6 +2591,30 @@
     } catch (e) {
       console.error(e);
       toast('❌ Falha: ' + e.message, 'err');
+    }
+  };
+
+  window.abrirDecisaoCoordenador = async function (chave, nome) {
+    const resultado = confirm(`Decisão na entrevista de ${nome}:\n\n[OK] = Aprovado para Gerência\n[Cancelar] = Recusado`);
+    const decisao = resultado ? 'aprovado' : 'recusado';
+    try {
+      await registrarDecisaoCoordenador(chave, decisao, nome, me.usuario);
+      toast(decisao === 'aprovado' ? '✅ Candidato segue para Gerência' : '❌ Candidato recusado', 'ok');
+    } catch (e) {
+      console.error(e);
+      toast('❌ Falha ao registrar decisão: ' + e.message, 'err');
+    }
+  };
+
+  window.abrirDecisaoGerencia = async function (chave, nome) {
+    const resultado = confirm(`Decisão final de ${nome}:\n\n[OK] = Contratado\n[Cancelar] = Recusado`);
+    const decisao = resultado ? 'aprovado' : 'recusado';
+    try {
+      await registrarDecisaoGerencia(chave, decisao, nome, me.usuario);
+      toast(decisao === 'aprovado' ? '🎉 Candidato Contratado!' : '❌ Candidato recusado', 'ok');
+    } catch (e) {
+      console.error(e);
+      toast('❌ Falha ao registrar decisão: ' + e.message, 'err');
     }
   };
 
