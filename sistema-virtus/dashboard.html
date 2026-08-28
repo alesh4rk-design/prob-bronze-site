@@ -2827,17 +2827,16 @@
   }
 
   function renderAll() {
-    renderModuleOptions();
-    const filtrada = getFiltered();
-    renderKPIs(filtrada);
-    renderChartAprovacao();
-    renderChartModulosAprovados();
-    renderChartEntrevistas();
-    renderModuloBars(filtrada);
-    renderHistogram(filtrada);
-    renderViolacoes();
-    renderBancoAprovados();
-    renderPipeline();
+    try {
+      renderChartAprovacao();
+      renderChartModulosAprovados();
+      renderChartEntrevistas();
+      renderViolacoes();
+      renderBancoAprovados();
+      renderPipeline();
+    } catch (e) {
+      console.error('Erro ao renderizar:', e);
+    }
   }
 
   // Planilha .xlsx de verdade (cabeçalho colorido, colunas largas, filtro,
