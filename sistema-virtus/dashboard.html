@@ -997,19 +997,28 @@
 
   <div class="charts-grid" id="chartsGrid">
     <div class="panel">
-      <div class="panel-head"><div class="panel-title-sm">📊 Desempenho por Módulo</div></div>
-      <div class="chart-wrap"><div class="mod-bar-list" id="moduloBars"><div class="empty-state"><div class="empty-icon">📊</div>Sem dados ainda</div></div></div>
+      <div class="panel-head"><div class="panel-title-sm">✅ Taxa de Aprovação</div></div>
+      <div class="chart-wrap" style="display:flex;align-items:center;justify-content:center;min-height:200px;">
+        <svg id="chartAprovacao" width="200" height="200" viewBox="0 0 200 200" style="max-width:100%;"></svg>
+      </div>
+      <div id="chartAprovacaoLegend" style="text-align:center;font-size:12px;"></div>
     </div>
     <div class="panel">
-      <div class="panel-head"><div class="panel-title-sm">📉 Distribuição de Notas</div></div>
-      <div class="chart-wrap">
-        <div class="hist-wrap" id="histWrap"><div class="empty-state" style="padding:20px;"><div class="empty-icon">📉</div></div></div>
-        <div style="display:flex;justify-content:space-between;margin-top:4px;">
-          <span style="font-family:'Share Tech Mono',monospace;font-size:8px;color:var(--text4);">0%</span>
-          <span style="font-family:'Share Tech Mono',monospace;font-size:8px;color:var(--text4);">50%</span>
-          <span style="font-family:'Share Tech Mono',monospace;font-size:8px;color:var(--text4);">100%</span>
-        </div>
+      <div class="panel-head"><div class="panel-title-sm">🎯 Módulos Escolhidos (Aprovados)</div></div>
+      <div class="chart-wrap" style="min-height:200px;">
+        <div id="chartModulosAprovados" style="font-size:12px;"></div>
       </div>
+    </div>
+    <div class="panel">
+      <div class="panel-head"><div class="panel-title-sm">📋 Status de Entrevistas</div></div>
+      <div class="chart-wrap" style="display:flex;align-items:center;justify-content:center;min-height:200px;">
+        <svg id="chartEntrevistas" width="200" height="200" viewBox="0 0 200 200" style="max-width:100%;"></svg>
+      </div>
+      <div id="chartEntrevistasLegend" style="text-align:center;font-size:12px;"></div>
+    </div>
+    <div class="panel">
+      <div class="panel-head"><div class="panel-title-sm">📊 Desempenho por Módulo</div></div>
+      <div class="chart-wrap"><div class="mod-bar-list" id="moduloBars"><div class="empty-state"><div class="empty-icon">📊</div>Sem dados ainda</div></div></div>
     </div>
   </div>
 
@@ -2383,6 +2392,101 @@
     el.innerHTML = buckets.map(v => `<div class="hist-col"><div class="hist-bar" style="height:${(v / max) * 100}%" title="${v}"></div></div>`).join('');
   }
 
+  function drawPieChart(svgId, data, colors) {
+    const svg = document.getElementById(svgId);
+    if (!svg) return;
+    svg.innerHTML = '';
+    const total = data.reduce((a, b) => a + b.value, 0);
+    if (total === 0) { svg.innerHTML = '<text x="100" y="100" text-anchor="middle" fill="var(--text3)">Sem dados</text>'; return; }
+    let angle = -90;
+    data.forEach((item, i) => {
+      const sliceAngle = (item.value / total) * 360;
+      const startAngle = angle * Math.PI / 180;
+      const endAngle = (angle + sliceAngle) * Math.PI / 180;
+      const x1 = 100 + 70 * Math.cos(startAngle);
+      const y1 = 100 + 70 * Math.sin(startAngle);
+      const x2 = 100 + 70 * Math.cos(endAngle);
+      const y2 = 100 + 70 * Math.sin(endAngle);
+      const large = sliceAngle > 180 ? 1 : 0;
+      const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      path.setAttribute('d', `M 100 100 L ${x1} ${y1} A 70 70 0 ${large} 1 ${x2} ${y2} Z`);
+      path.setAttribute('fill', colors[i % colors.length]);
+      path.setAttribute('stroke', 'var(--bg)');
+      path.setAttribute('stroke-width', '2');
+      svg.appendChild(path);
+      angle += sliceAngle;
+    });
+  }
+
+  function renderChartAprovacao() {
+    const total = ALL_RESULTADOS.filter(r => r.tipo !== 'typing').length;
+    const aprovados = candidatosAgrupados().filter(c => c.media >= 70).length;
+    const reprovados = total - aprovados;
+    drawPieChart('chartAprovacao', [
+      { label: `✅ Aprovados (${aprovados})`, value: aprovados },
+      { label: `❌ Reprovados (${reprovados})`, value: reprovados }
+    ], ['var(--green)', 'var(--red)']);
+    document.getElementById('chartAprovacaoLegend').innerHTML = `
+      <div style="display:flex;justify-content:center;gap:16px;">
+        <div><span style="color:var(--green);font-weight:700;">✅</span> ${aprovados} aprovados (${total > 0 ? Math.round((aprovados/total)*100) : 0}%)</div>
+        <div><span style="color:var(--red);font-weight:700;">❌</span> ${reprovados} reprovados</div>
+      </div>
+    `;
+  }
+
+  function renderChartModulosAprovados() {
+    const aprovados = candidatosAgrupados().filter(c => c.media >= 70);
+    const porModulo = {};
+    aprovados.forEach(c => {
+      const mod = c.moduloEscolhido || '—';
+      porModulo[mod] = (porModulo[mod] || 0) + 1;
+    });
+    const sorted = Object.entries(porModulo).sort((a, b) => b[1] - a[1]);
+    const max = sorted[0]?.[1] || 1;
+    document.getElementById('chartModulosAprovados').innerHTML = sorted.map(([mod, cnt]) => `
+      <div style="margin-bottom:8px;">
+        <div style="display:flex;justify-content:space-between;margin-bottom:2px;">
+          <span>${escapeHtml(mod)}</span>
+          <span style="color:var(--green);font-weight:700;">${cnt}</span>
+        </div>
+        <div style="background:var(--bg2);border-radius:2px;height:16px;overflow:hidden;">
+          <div style="background:var(--green);height:100%;width:${(cnt/max)*100}%;transition:width 0.3s;"></div>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  function renderChartEntrevistas() {
+    const aprovados = candidatosAgrupados().filter(c => c.media >= 70);
+    const pendentes = aprovados.filter(c => {
+      const id = c.chave.replace(/[/]/g, '_');
+      return !PIPELINE_MAP[id] || !PIPELINE_MAP[id].entrevista_coordenador_decisao;
+    }).length;
+    const coordAprovado = aprovados.filter(c => {
+      const id = c.chave.replace(/[/]/g, '_');
+      return PIPELINE_MAP[id] && PIPELINE_MAP[id].entrevista_coordenador_decisao === 'aprovado';
+    }).length;
+    const gerenciaAprovado = aprovados.filter(c => {
+      const id = c.chave.replace(/[/]/g, '_');
+      return PIPELINE_MAP[id] && PIPELINE_MAP[id].entrevista_gerencia_decisao === 'aprovado';
+    }).length;
+    const recusados = aprovados.length - pendentes - coordAprovado - gerenciaAprovado;
+    drawPieChart('chartEntrevistas', [
+      { label: `⏳ Pendente (${pendentes})`, value: pendentes },
+      { label: `✅ Coord. Aprovado (${coordAprovado})`, value: coordAprovado },
+      { label: `🎉 Contratado (${gerenciaAprovado})`, value: gerenciaAprovado },
+      { label: `❌ Recusado (${recusados})`, value: recusados }
+    ], ['var(--amber)', 'var(--cyan)', 'var(--green)', 'var(--red)']);
+    document.getElementById('chartEntrevistasLegend').innerHTML = `
+      <div style="display:flex;flex-wrap:wrap;justify-content:center;gap:12px;font-size:11px;">
+        <div><span style="color:var(--amber);font-weight:700;">⏳</span> ${pendentes} pendente</div>
+        <div><span style="color:var(--cyan);font-weight:700;">✅</span> ${coordAprovado} coord.</div>
+        <div><span style="color:var(--green);font-weight:700;">🎉</span> ${gerenciaAprovado} contrat.</div>
+        <div><span style="color:var(--red);font-weight:700;">❌</span> ${recusados} recusado</div>
+      </div>
+    `;
+  }
+
   function renderTyping() {
     const intervalo = calcularIntervaloPeriodo();
     const lista = ALL_RESULTADOS.filter(r => {
@@ -2699,6 +2803,9 @@
     const filtrada = getFiltered();
     renderKPIs(filtrada);
     renderTable(filtrada);
+    renderChartAprovacao();
+    renderChartModulosAprovados();
+    renderChartEntrevistas();
     renderModuloBars(filtrada);
     renderHistogram(filtrada);
     renderTyping();
