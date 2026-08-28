@@ -3415,7 +3415,7 @@
       // coordenador (só lê) — viewer não tem acesso nas rules.
       if (me.perfil !== 'viewer') {
         unsubs.push(assinarPipeline(
-          mapa => { PIPELINE_MAP = mapa; renderPipeline(); renderTable(getFiltered()); },
+          mapa => { PIPELINE_MAP = mapa; renderPipeline(); },
           () => statusDot(false, 'Reconectando...')
         ));
       }
