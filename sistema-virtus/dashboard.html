@@ -2425,6 +2425,8 @@
   }
 
   function renderChartAprovacao() {
+    const legendEl = document.getElementById('chartAprovacaoLegend');
+    if (!legendEl) return;
     const total = ALL_RESULTADOS.filter(r => r.tipo !== 'typing').length;
     const aprovados = candidatosAgrupados().filter(c => c.media >= 70).length;
     const reprovados = total - aprovados;
@@ -2432,7 +2434,7 @@
       { label: `✅ Aprovados (${aprovados})`, value: aprovados },
       { label: `❌ Reprovados (${reprovados})`, value: reprovados }
     ], ['var(--green)', 'var(--red)']);
-    document.getElementById('chartAprovacaoLegend').innerHTML = `
+    legendEl.innerHTML = `
       <div style="display:flex;justify-content:center;gap:16px;">
         <div><span style="color:var(--green);font-weight:700;">✅</span> ${aprovados} aprovados (${total > 0 ? Math.round((aprovados/total)*100) : 0}%)</div>
         <div><span style="color:var(--red);font-weight:700;">❌</span> ${reprovados} reprovados</div>
@@ -2441,6 +2443,8 @@
   }
 
   function renderChartModulosAprovados() {
+    const chartEl = document.getElementById('chartModulosAprovados');
+    if (!chartEl) return;
     const aprovados = candidatosAgrupados().filter(c => c.media >= 70);
     const porModulo = {};
     aprovados.forEach(c => {
@@ -2449,7 +2453,7 @@
     });
     const sorted = Object.entries(porModulo).sort((a, b) => b[1] - a[1]);
     const max = sorted[0]?.[1] || 1;
-    document.getElementById('chartModulosAprovados').innerHTML = sorted.map(([mod, cnt]) => `
+    chartEl.innerHTML = sorted.map(([mod, cnt]) => `
       <div style="margin-bottom:8px;">
         <div style="display:flex;justify-content:space-between;margin-bottom:2px;">
           <span>${escapeHtml(mod)}</span>
@@ -2463,6 +2467,8 @@
   }
 
   function renderChartEntrevistas() {
+    const legendEl = document.getElementById('chartEntrevistasLegend');
+    if (!legendEl) return;
     const aprovados = candidatosAgrupados().filter(c => c.media >= 70);
     const pendentes = aprovados.filter(c => {
       const id = c.chave.replace(/[/]/g, '_');
@@ -2483,7 +2489,7 @@
       { label: `🎉 Contratado (${gerenciaAprovado})`, value: gerenciaAprovado },
       { label: `❌ Recusado (${recusados})`, value: recusados }
     ], ['var(--amber)', 'var(--cyan)', 'var(--green)', 'var(--red)']);
-    document.getElementById('chartEntrevistasLegend').innerHTML = `
+    legendEl.innerHTML = `
       <div style="display:flex;flex-wrap:wrap;justify-content:center;gap:12px;font-size:11px;">
         <div><span style="color:var(--amber);font-weight:700;">⏳</span> ${pendentes} pendente</div>
         <div><span style="color:var(--cyan);font-weight:700;">✅</span> ${coordAprovado} coord.</div>
