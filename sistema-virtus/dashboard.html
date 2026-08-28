@@ -955,45 +955,6 @@
     <div class="kpi-card purple"><div class="kpi-icon">🏆</div><div class="kpi-val" id="kpiTaxa">—</div><div class="kpi-lbl">Taxa de Aprovação</div></div>
   </div>
 
-  <div class="panel" style="margin-bottom:24px;">
-    <div class="panel-head">
-      <div class="panel-title-sm">👥 Candidatos <span class="badge green" id="tableCountBadge">0 registros</span></div>
-      <div class="toolbar">
-        <input type="search" class="field-input" id="searchInput" placeholder="🔍  Buscar candidato..." oninput="applyFilters()">
-        <select class="field-input" id="filterModulo" onchange="applyFilters()"><option value="">Todos os módulos</option></select>
-        <select class="field-input" id="filterStatus" onchange="applyFilters()">
-          <option value="">Todos</option>
-          <option value="aprovado">Aprovados</option>
-          <option value="reprovado">Reprovados</option>
-        </select>
-        <input type="date" class="field-input" id="filterDia" style="max-width:165px;" onchange="onChangeDia()" title="Escolha o dia dos candidatos">
-        <select class="field-input" id="filterPeriodo" onchange="onChangePeriodo()" style="max-width:190px;">
-          <option value="dia">📅 Dia selecionado</option>
-          <option value="7dias">📅 Últimos 7 dias</option>
-          <option value="mes">📅 Este mês</option>
-          <option value="todos">📅 Todos os dias</option>
-        </select>
-      </div>
-    </div>
-    <div class="results-table-wrap">
-      <table id="resultsTable">
-        <thead>
-          <tr>
-            <th style="width:44px;text-align:center;">#</th>
-            <th>Candidato</th>
-            <th>Testes realizados</th>
-            <th>Acertos (módulo escolhido)</th>
-            <th>Nota %</th>
-            <th>Status</th>
-            <th>Concluído</th>
-          </tr>
-        </thead>
-        <tbody id="tableBody">
-          <tr><td colspan="7"><div class="empty-state"><div class="empty-icon">📭</div>Nenhum resultado ainda.</div></td></tr>
-        </tbody>
-      </table>
-    </div>
-  </div>
 
   <div class="charts-grid" id="chartsGrid">
     <div class="panel">
@@ -1022,12 +983,6 @@
     </div>
   </div>
 
-  <div class="panel" style="margin-bottom:16px;">
-    <div class="panel-head"><div class="panel-title-sm">⌨️ Teste de Digitação — Candidatos <span class="badge cyan" id="typingBadge">0 registros</span></div></div>
-    <div class="panel-body">
-      <div class="typing-collab-list" id="typingList"><div class="empty-state"><div class="empty-icon">⌨️</div>Sem testes de digitação ainda</div></div>
-    </div>
-  </div>
 
 </section>
 
@@ -2868,13 +2823,11 @@
     renderModuleOptions();
     const filtrada = getFiltered();
     renderKPIs(filtrada);
-    renderTable(filtrada);
     renderChartAprovacao();
     renderChartModulosAprovados();
     renderChartEntrevistas();
     renderModuloBars(filtrada);
     renderHistogram(filtrada);
-    renderTyping();
     renderViolacoes();
     renderBancoAprovados();
     renderPipeline();
