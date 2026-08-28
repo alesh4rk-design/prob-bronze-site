@@ -868,7 +868,7 @@
     <div class="sidebar-item active" data-view="dashboard" id="sidebarItemDashboard" onclick="switchView('dashboard')"><span class="si-icon">📊</span> Dashboard</div>
     <div class="sidebar-item" data-view="banco" id="sidebarItemBanco" onclick="switchView('banco')"><span class="si-icon">✅</span> Banco de Aprovados</div>
     <div class="sidebar-item" data-view="violacoes" id="sidebarItemViolacoes" onclick="switchView('violacoes')"><span class="si-icon">🚨</span> Violações</div>
-    <div class="sidebar-item" data-view="pipeline" onclick="switchView('pipeline')"><span class="si-icon">🧭</span> Processo Seletivo</div>
+    <div class="sidebar-item" data-view="pipeline" id="sidebarItemPipeline" onclick="switchView('pipeline')"><span class="si-icon">🧭</span> Processo Seletivo</div>
     <div class="sidebar-section-lbl" id="sidebarFerramentasLbl">Ferramentas</div>
     <div class="sidebar-item" data-view="testes" id="sidebarItemTestes" onclick="switchView('testes')"><span class="si-icon">⌨️</span> Testes</div>
     <div class="sidebar-item" data-view="qrcodes" id="sidebarItemQrcodes" onclick="switchView('qrcodes')"><span class="si-icon">🖨️</span> QR Codes</div>
@@ -1393,6 +1393,13 @@
     document.getElementById('sidebarItemUsuarios').style.display = 'flex';
   }
 
+  // Processo Seletivo: removido do menu do viewer (o "Enviar ao RH" já dá
+  // pra fazer direto na tabela do Dashboard). Admin e coordenador continuam
+  // com acesso normal.
+  if (me && me.perfil === 'viewer') {
+    document.getElementById('sidebarItemPipeline').style.display = 'none';
+  }
+
   // Coordenador é um perfil só-leitura (acompanha o Processo Seletivo, o
   // Dashboard, o Banco de Aprovados e as Violações) — não tem acesso às
   // ferramentas operacionais (Testes, QR Codes, Código de Acesso).
@@ -1451,6 +1458,7 @@
     if (view === 'usuarios' && (!me || (me.perfil !== 'admin' && me.perfil !== 'viewer'))) view = 'dashboard';
     const VIEWS_BLOQUEADAS_COORDENADOR = [...VIEWS_OPERACIONAIS, 'dashboard', 'banco', 'violacoes'];
     if (VIEWS_BLOQUEADAS_COORDENADOR.includes(view) && me && me.perfil === 'coordenador') view = 'pipeline';
+    if (view === 'pipeline' && me && me.perfil === 'viewer') view = 'dashboard';
     document.querySelectorAll('.app-view').forEach(v => v.classList.toggle('active', v.id === 'view-' + view));
     document.querySelectorAll('.sidebar-item').forEach(i => i.classList.toggle('active', i.dataset.view === view));
     const sub = document.getElementById('hudSubTitle');
