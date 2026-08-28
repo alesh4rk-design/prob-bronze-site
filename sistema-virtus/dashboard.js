@@ -227,6 +227,34 @@ export async function definirAprovacaoManual(chave, aprovado, nome, avaliador) {
   }, { merge: true });
 }
 
+// Decisão do coordenador na entrevista: aprovado/recusado
+export async function registrarDecisaoCoordenador(chave, decisao, nome, coordenador) {
+  const id = chave.replace(/[/]/g, "_");
+  const novaEtapa = decisao === 'aprovado' ? 'entrevista_gerencia' : 'recusado';
+  await setDoc(doc(db, "pipeline", id), {
+    entrevista_coordenador_decisao: decisao,
+    entrevista_coordenador_por: coordenador || null,
+    entrevista_coordenador_em: serverTimestamp(),
+    nome: nome || null,
+    etapa: novaEtapa,
+    atualizado_em: serverTimestamp()
+  }, { merge: true });
+}
+
+// Decisão do gerente na entrevista: aprovado (contrata) ou recusado
+export async function registrarDecisaoGerencia(chave, decisao, nome, gerente) {
+  const id = chave.replace(/[/]/g, "_");
+  const novaEtapa = decisao === 'aprovado' ? 'contratado' : 'recusado';
+  await setDoc(doc(db, "pipeline", id), {
+    entrevista_gerencia_decisao: decisao,
+    entrevista_gerencia_por: gerente || null,
+    entrevista_gerencia_em: serverTimestamp(),
+    nome: nome || null,
+    etapa: novaEtapa,
+    atualizado_em: serverTimestamp()
+  }, { merge: true });
+}
+
 export function assinarPipeline(callback, onError) {
   return onSnapshot(collection(db, "pipeline"), (snap) => {
     const mapa = {};
