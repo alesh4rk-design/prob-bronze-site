@@ -3,29 +3,35 @@ rules_version = '2';
 // Regras de segurança do Firestore para o Sistema Virtus.
 // Este projeto Firebase é INDEPENDENTE do usado pelo Pro'Bronze — não
 // combine estas regras com o firestore.rules da raiz do repositório.
+//
+// Hierarquia de perfis:
+//   - admin / gerência: acesso total. São os únicos que cadastram/aprovam
+//     coordenadores, avaliadores e views (gerenciam a coleção `usuarios`) e
+//     os únicos que mexem no banco de perguntas.
+//   - avaliador: "chefe" dos views — tudo que o view tem, mais Dashboard
+//     completo, Banco de Aprovados e Processo Seletivo (envia candidatos
+//     pro coordenador/RH e acompanha o funil de contratação).
+//   - viewer (o "view" do sistema): acesso restrito a QR Codes, Código de
+//     Acesso, Violações e a lista de participantes (resultados dos testes).
+//     Não mexe em Perguntas, Usuários nem no Processo Seletivo.
+//   - coordenador: só-leitura, vê a lista de candidatos (Processo Seletivo)
+//     pra acompanhar o processo, sem mexer em nada.
 
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // usuarios/{uid}: perfil (pendente | admin | viewer | coordenador) de
-    // cada avaliador.
+    // usuarios/{uid}: perfil (pendente | admin | gerencia | avaliador |
+    // viewer | coordenador) de cada pessoa.
     // Autocadastro (cadastro.html): a própria pessoa cria seu doc, mas SÓ
     // com perfil "pendente" — não pode se autopromover na criação.
-    // Aprovação: admin pode aprovar/alterar qualquer perfil. Viewer também
-    // pode aprovar solicitações e gerenciar contas, MAS só pode conceder ou
-    // manter os perfis "viewer"/"coordenador" — nunca "admin" — e não pode
-    // mexer em contas que já são admin (nem promover, nem revogar).
+    // Só admin/gerência aprovam solicitações e gerenciam contas (cadastram
+    // coordenadores, avaliadores e views) — avaliador e viewer não mexem
+    // nessa coleção.
     match /usuarios/{uid} {
-      allow read: if request.auth != null && (request.auth.uid == uid || isAvaliador());
+      allow read: if request.auth != null && (request.auth.uid == uid || isGerencia());
       allow create: if request.auth != null && request.auth.uid == uid &&
                        request.resource.data.perfil == 'pendente';
-      allow update: if request.auth != null && (
-                      isAdmin() ||
-                      (isViewer() &&
-                       resource.data.perfil != 'admin' &&
-                       request.resource.data.perfil in ['viewer', 'coordenador'])
-                    );
-      allow delete: if request.auth != null && (isAdmin() || (isViewer() && resource.data.perfil != 'admin'));
+      allow update, delete: if request.auth != null && isGerencia();
     }
 
     // perguntas/{modulo}: banco de questões por módulo, COM o gabarito
@@ -36,10 +42,9 @@ service cloud.firestore {
     // candidato nunca lê essa coleção diretamente: o Worker (Cloudflare)
     // busca as perguntas usando uma conta de serviço (que ignora estas
     // regras) e só manda pro navegador o que ele pode ver, sem `resposta`.
-    // Por isso a leitura fica restrita a avaliadores logados.
+    // Leitura e escrita ficam restritas a admin/gerência.
     match /perguntas/{modulo} {
-      allow read: if request.auth != null && isAvaliador();
-      allow write: if request.auth != null && isAdmin();
+      allow read, write: if request.auth != null && isGerencia();
     }
 
     // resultados/{id}: um documento por tentativa de quiz ou teste de
@@ -52,26 +57,24 @@ service cloud.firestore {
     // (Cloudflare), que grava o resultado usando uma conta de serviço que
     // ignora estas regras. Isso impede alguém de gravar uma nota fabricada
     // direto no Firestore sem nunca ter feito o teste de verdade.
-    // Leitura é restrita a admin/viewer (só o dashboard lê).
+    // Leitura: qualquer perfil aprovado (inclusive view, que usa isso pra
+    // ver a lista de participantes, e coordenador, que acompanha o funil).
     match /resultados/{id} {
       allow create: if request.resource.data.tipo == 'typing';
-      // Leitura: admin, viewer E coordenador (perfil só-leitura, criado pra
-      // coordenadores/gerentes acompanharem o Processo Seletivo).
       allow read: if request.auth != null && isLeitor();
-      allow update: if request.auth != null && isAdmin();
-      // Excluir candidato: liberado para admin E viewer (decisão do dono do
-      // sistema — qualquer avaliador logado pode apagar o resultado inteiro).
-      // Coordenador NÃO pode excluir — só acompanha.
-      allow delete: if request.auth != null && isAvaliador();
+      allow update: if request.auth != null && isGerencia();
+      // Excluir candidato: liberado pra equipe operacional (admin/gerência/
+      // avaliador/viewer) — coordenador NÃO pode excluir, só acompanha.
+      allow delete: if request.auth != null && isEquipe();
     }
 
     // codigos_acesso/{codigo}: código COMPARTILHADO que impede o candidato de
-    // fazer o teste em casa. Qualquer avaliador (admin OU viewer) gera um
-    // código único por entrevista/dia — o MESMO código serve para todos os
-    // candidatos (não é de uso único), pensado para dias com muita gente
-    // (20+ candidatos). Expira sozinho 4h depois de gerado (campo
-    // `expira_em`), validado aqui no SERVIDOR via request.time — por isso um
-    // candidato não consegue continuar usando um código vencido nem
+    // fazer o teste em casa. Qualquer um da equipe (admin/gerência/avaliador/
+    // viewer) gera um código único por entrevista/dia — o MESMO código serve
+    // para todos os candidatos (não é de uso único), pensado para dias com
+    // muita gente (20+ candidatos). Expira sozinho 4h depois de gerado
+    // (campo `expira_em`), validado aqui no SERVIDOR via request.time — por
+    // isso um candidato não consegue continuar usando um código vencido nem
     // adiantando/atrasando o relógio do próprio celular.
     // - O ID do documento é o próprio código (ex: "384720"), gerado no client.
     // - A checagem do código pelo candidato NÃO passa mais direto pelo
@@ -80,30 +83,25 @@ service cloud.firestore {
     //   (que ignora estas regras). Antes, `get`/`update` eram públicos e
     //   davam pra tentar adivinhar o código por força bruta direto na API
     //   do Firestore, sem passar pelo Worker nem pelo site.
-    // - `get`/`list` restritos a avaliadores logados (usado no painel).
-    // - `create`/`update` só por avaliador autenticado.
     match /codigos_acesso/{codigo} {
-      allow get: if request.auth != null && isAvaliador();
-      allow list: if request.auth != null && isAvaliador();
-      allow create: if request.auth != null && isAvaliador();
-      allow update: if request.auth != null && isAvaliador();
-      allow delete: if request.auth != null && isAvaliador();
+      allow get, list, create, update, delete: if request.auth != null && isEquipe();
     }
 
     // config/{doc}: configurações gerais do sistema (ex: número de WhatsApp
     // do RH, usado para o candidato avisar que terminou a avaliação). Não é
     // sensível — leitura liberada mesmo sem login, pois o candidato precisa
-    // ler o número pra montar o link do WhatsApp. Escrita só por avaliador.
+    // ler o número pra montar o link do WhatsApp. Escrita pela equipe.
     match /config/{doc} {
       allow read: if true;
-      allow write: if request.auth != null && isAvaliador();
+      allow write: if request.auth != null && isEquipe();
     }
 
     // violacoes/{id}: escrita liberada sem login (evento de anti-fraude
     // reportado durante o teste do candidato, que não tem conta no sistema),
     // mas com validação básica de formato/tamanho pra impedir spam de
     // documentos falsos ou payloads gigantes inflando a conta do Firestore.
-    // Leitura restrita aos avaliadores.
+    // Leitura: view precisa ver (faz parte do escopo dele), então qualquer
+    // perfil aprovado lê.
     match /violacoes/{id} {
       allow create: if request.resource.data.nome is string &&
                        request.resource.data.nome.size() < 120 &&
@@ -114,40 +112,45 @@ service cloud.firestore {
                        (!('detalhe' in request.resource.data) ||
                         (request.resource.data.detalhe is string &&
                          request.resource.data.detalhe.size() < 300));
-      allow update, delete: if request.auth != null && isAdmin();
+      allow update, delete: if request.auth != null && isGerencia();
       allow read: if request.auth != null && isLeitor();
     }
 
     // pipeline/{chave}: etapa do processo seletivo de cada candidato
-    // (Aguardando | Entrevista | Contratado | Recusado — "Aprovado" já vem
-    // do cálculo automático da nota, não é uma etapa gravada aqui).
-    // Coordenador só LÊ; quem move a etapa é admin/viewer.
+    // (Aguardando | Entrevista | Contratado | Recusado), observação do
+    // avaliador e marcação de "visível ao RH". Isso é DIFERENTE da nota do
+    // teste — não reintroduz decisão manual sobre a prova, é só controle de
+    // processo de contratação.
+    // View NÃO tem acesso ao Processo Seletivo (nem leitura). Quem
+    // gerencia é admin/gerência/avaliador; coordenador só lê.
     match /pipeline/{chave} {
-      allow read: if request.auth != null && isLeitor();
-      allow write: if request.auth != null && isAvaliador();
+      allow read: if request.auth != null &&
+                     exists(/databases/$(database)/documents/usuarios/$(request.auth.uid)) &&
+                     get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.perfil in ['admin', 'gerencia', 'avaliador', 'coordenador'];
+      allow write: if request.auth != null &&
+                      exists(/databases/$(database)/documents/usuarios/$(request.auth.uid)) &&
+                      get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.perfil in ['admin', 'gerencia', 'avaliador'];
     }
 
-    function isAdmin() {
+    // Acesso total (admin ou gerência) — únicos que mexem em usuários e
+    // perguntas.
+    function isGerencia() {
       return exists(/databases/$(database)/documents/usuarios/$(request.auth.uid)) &&
-             get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.perfil == 'admin';
+             get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.perfil in ['admin', 'gerencia'];
     }
 
-    function isAvaliador() {
+    // Equipe operacional (admin, gerência, avaliador, viewer) — QR Codes,
+    // Código de Acesso, exclusão de resultados etc.
+    function isEquipe() {
       return exists(/databases/$(database)/documents/usuarios/$(request.auth.uid)) &&
-             get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.perfil in ['admin', 'viewer'];
+             get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.perfil in ['admin', 'gerencia', 'avaliador', 'viewer'];
     }
 
-    function isViewer() {
-      return exists(/databases/$(database)/documents/usuarios/$(request.auth.uid)) &&
-             get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.perfil == 'viewer';
-    }
-
-    // Perfil só-leitura (admin, viewer e coordenador) — usado nas coleções
-    // que o coordenador precisa VER (resultados, violações, pipeline), mas
-    // nunca em regras de escrita/exclusão.
+    // Qualquer perfil aprovado (inclusive coordenador) — leitura de
+    // resultados/violações, que view e coordenador também precisam ver.
     function isLeitor() {
       return exists(/databases/$(database)/documents/usuarios/$(request.auth.uid)) &&
-             get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.perfil in ['admin', 'viewer', 'coordenador'];
+             get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.perfil in ['admin', 'gerencia', 'avaliador', 'viewer', 'coordenador'];
     }
   }
 }

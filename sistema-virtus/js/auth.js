@@ -104,9 +104,14 @@ export function virtusGetCurrentUser() {
   });
 }
 
-// Exige perfil admin, viewer ou coordenador; redireciona para o login se não
-// autorizado. "coordenador" é um perfil só-leitura, criado pra coordenadores/
-// gerentes acompanharem o Processo Seletivo sem poder mexer em nada.
+// Perfis com acesso ao dashboard, do mais pro menos amplo:
+//   admin / gerencia -> acesso total, únicos que cadastram gente.
+//   avaliador        -> chefe dos viewers, tudo + Dashboard/Banco/Pipeline.
+//   viewer           -> QR Codes, Código de Acesso, Violações, participantes.
+//   coordenador      -> só-leitura do Processo Seletivo.
+const PERFIS_DASHBOARD = ["admin", "gerencia", "avaliador", "viewer", "coordenador"];
+
+// Exige um desses perfis; redireciona para o login se não autorizado.
 // Uso típico no topo do dashboard.html: `const me = await requireDashboardAccess();`
 export async function requireDashboardAccess() {
   const me = await virtusGetCurrentUser();
@@ -115,7 +120,7 @@ export async function requireDashboardAccess() {
     window.location.replace("./index.html?pendente=1");
     return null;
   }
-  if (!me || (me.perfil !== "admin" && me.perfil !== "viewer" && me.perfil !== "coordenador")) {
+  if (!me || !PERFIS_DASHBOARD.includes(me.perfil)) {
     window.location.replace("./index.html");
     return null;
   }
