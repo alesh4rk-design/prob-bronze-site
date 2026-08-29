@@ -807,11 +807,7 @@
     .results-table-wrap { -webkit-overflow-scrolling:touch; }
     table { min-width:520px; }
 
-    /* Badges de módulo (coluna "Testes realizados"): mais compactos e em
-       duas colunas, pra não empilhar um por linha ocupando a tela toda. */
     .badge-modulo { font-size:8px; padding:3px 6px; letter-spacing:0.5px; line-height:1.5; }
-    td[style*="max-width:220px"] { max-width:280px !important; }
-    td > div[style*="flex-wrap"] { display:grid !important; grid-template-columns:1fr 1fr; gap:4px !important; max-width:100%; }
   }
 
   @media (max-width: 480px) {
@@ -2588,7 +2584,12 @@
       <tr class="clickable" onclick="abrirCandidato('${c.chave.replace(/'/g, "\\'")}')" title="Ver detalhamento e exportar PDF">
         <td style="text-align:center;color:var(--text3);">${i + 1}</td>
         <td class="td-nome">${escapeHtml(c.nome)} <span class="row-hint">▸ detalhes</span></td>
-        <td style="max-width:220px;white-space:normal;"><div style="display:flex;flex-wrap:wrap;gap:4px;">${c.modulos.map(m => `<span class="badge-modulo" style="${m.modulo === c.moduloEscolhido ? 'border-color:var(--amber);' : ''}" title="${m.modulo === c.moduloEscolhido ? 'Módulo escolhido pelo candidato' : 'Módulo automático da trilha'}">${m.modulo === c.moduloEscolhido ? '★ ' : ''}${escapeHtml(m.modulo)} <b style="color:${m.pct >= 70 ? 'var(--green)' : m.pct >= 50 ? 'var(--amber)' : 'var(--red)'}">${m.pct}%</b></span>`).join('')}${c.digitacao != null ? `<span class="badge-modulo" title="Teste de digitação">⌨️ Digitação <b style="color:${c.digitacao >= 70 ? 'var(--green)' : c.digitacao >= 50 ? 'var(--amber)' : 'var(--red)'}">${c.digitacao}%</b></span>` : ''}</div></td>
+        <td style="max-width:220px;white-space:normal;">
+          <div style="display:flex;flex-direction:column;gap:3px;font-size:12px;color:var(--text2);">
+            ${c.modulos.map(m => `<div title="${m.modulo === c.moduloEscolhido ? 'Módulo escolhido pelo candidato' : 'Módulo automático da trilha'}">${m.modulo === c.moduloEscolhido ? '★ ' : ''}${escapeHtml(m.modulo)}: <b style="color:${m.pct >= 70 ? 'var(--green)' : m.pct >= 50 ? 'var(--amber)' : 'var(--red)'}">${m.pct}%</b></div>`).join('')}
+            ${c.digitacao != null ? `<div title="Teste de digitação">⌨️ Digitação: <b style="color:${c.digitacao >= 70 ? 'var(--green)' : c.digitacao >= 50 ? 'var(--amber)' : 'var(--red)'}">${c.digitacao}%</b></div>` : ''}
+          </div>
+        </td>
         <td><span class="td-pct" style="color:${c.media >= 70 ? 'var(--green)' : c.media >= 50 ? 'var(--amber)' : 'var(--red)'}">${c.media >= 70 ? '✅' : '❌'} ${c.media}%</span></td>
         ${colunasGerenciar}
       </tr>`;
