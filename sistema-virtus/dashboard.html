@@ -1083,6 +1083,16 @@
   <div class="panel">
     <div class="panel-head">
       <div class="panel-title-sm">🏆 Histórico <span class="badge" id="contratadosBadge">0 registros</span></div>
+      <div class="toolbar" style="display:flex;gap:8px;flex-wrap:wrap;">
+        <label style="font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--text3);display:flex;align-items:center;">De
+          <input type="date" class="field-input" id="contratadosDataIni" style="max-width:140px;margin-left:6px;">
+        </label>
+        <label style="font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--text3);display:flex;align-items:center;">Até
+          <input type="date" class="field-input" id="contratadosDataFim" style="max-width:140px;margin-left:6px;">
+        </label>
+        <button class="btn-act btn-approve-admin" onclick="renderContratados()">🔍 Filtrar</button>
+        <button class="btn-act btn-neutral" onclick="limparFiltrosContratados()">↻ Ver tudo</button>
+      </div>
     </div>
     <div class="results-table-wrap">
       <table>
@@ -2756,12 +2766,35 @@
   };
 
   // ══════════ CONTRATADOS (histórico de decisões) ══════════
+  window.limparFiltrosContratados = function limparFiltrosContratados() {
+    document.getElementById('contratadosDataIni').value = '';
+    document.getElementById('contratadosDataFim').value = '';
+    renderContratados();
+  };
+
+  function decisaoFinalEmDe(c) {
+    const p = PIPELINE_MAP[c.chave.replace(/[/]/g, '_')] || {};
+    if (!p.decisao_final_em) return null;
+    const d = p.decisao_final_em.toDate ? p.decisao_final_em.toDate() : new Date(p.decisao_final_em);
+    return isNaN(d) ? null : d;
+  }
+
   window.renderContratados = function renderContratados() {
     const tbody = document.getElementById('contratadosTableBody');
     if (!tbody) return;
+    const dataIni = document.getElementById('contratadosDataIni').value;
+    const dataFim = document.getElementById('contratadosDataFim').value;
     const decididos = candidatosAgrupados().filter(c => {
       const id = c.chave.replace(/[/]/g, '_');
       return PIPELINE_MAP[id] && PIPELINE_MAP[id].decisao_final;
+    }).filter(c => {
+      if (!dataIni && !dataFim) return true;
+      const d = decisaoFinalEmDe(c);
+      const dataC = d ? dataLocalYMD(d) : '';
+      if (!dataC) return false;
+      if (dataIni && dataC < dataIni) return false;
+      if (dataFim && dataC > dataFim) return false;
+      return true;
     }).sort((a, b) => {
       const ta = (PIPELINE_MAP[a.chave.replace(/[/]/g, '_')] || {}).decisao_final_em;
       const tb = (PIPELINE_MAP[b.chave.replace(/[/]/g, '_')] || {}).decisao_final_em;
@@ -2770,7 +2803,8 @@
     const badge = document.getElementById('contratadosBadge');
     if (badge) badge.textContent = decididos.length + ' registro' + (decididos.length !== 1 ? 's' : '');
     if (!decididos.length) {
-      tbody.innerHTML = '<tr><td colspan="7"><div class="empty-state"><div class="empty-icon">🏆</div>Nenhuma decisão registrada ainda</div></td></tr>';
+      const msg = (dataIni || dataFim) ? 'Nenhuma decisão nesse período. Clique em "Ver tudo" para o histórico completo.' : 'Nenhuma decisão registrada ainda';
+      tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state"><div class="empty-icon">🏆</div>${msg}</div></td></tr>`;
       return;
     }
     tbody.innerHTML = decididos.map((c, i) => {
@@ -3422,6 +3456,11 @@
   // Candidatos também abre filtrado no dia de hoje por padrão.
   const pipelineDateEl = document.getElementById('pipelineDateInput');
   if (pipelineDateEl) pipelineDateEl.value = dataLocalYMD(new Date());
+  // Contratados também abre filtrado no dia de hoje por padrão.
+  const contratadosDataIniEl = document.getElementById('contratadosDataIni');
+  const contratadosDataFimEl = document.getElementById('contratadosDataFim');
+  if (contratadosDataIniEl) contratadosDataIniEl.value = dataLocalYMD(new Date());
+  if (contratadosDataFimEl) contratadosDataFimEl.value = dataLocalYMD(new Date());
 
   conectar();
 
