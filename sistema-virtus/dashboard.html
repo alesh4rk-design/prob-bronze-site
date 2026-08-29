@@ -1187,7 +1187,7 @@
             <th style="width:44px;text-align:center;">#</th>
             <th>Candidato</th>
             <th>Testes realizados</th>
-            <th>Nota (módulo escolhido)</th>
+            <th>Nota<br><span style="font-weight:400;text-transform:none;font-size:10px;opacity:0.75;">(módulo escolhido)</span></th>
           </tr>
         </thead>
         <tbody id="pipelineTableBody">
@@ -2551,7 +2551,7 @@
       <th style="width:44px;text-align:center;">#</th>
       <th>Candidato</th>
       <th>Testes realizados</th>
-      <th>Nota (módulo escolhido)</th>
+      <th>Nota<br><span style="font-weight:400;text-transform:none;font-size:10px;opacity:0.75;">(módulo escolhido)</span></th>
       ${podeGerenciar ? '<th>Observação</th><th>Entrevista</th><th>Atualizado</th>' : ''}
     `;
     const colspan = podeGerenciar ? 7 : 4;
@@ -2584,8 +2584,8 @@
       <tr class="clickable" onclick="abrirCandidato('${c.chave.replace(/'/g, "\\'")}')" title="Ver detalhamento e exportar PDF">
         <td style="text-align:center;color:var(--text3);">${i + 1}</td>
         <td class="td-nome">${escapeHtml(c.nome)} <span class="row-hint">▸ detalhes</span></td>
-        <td style="max-width:220px;white-space:normal;">
-          <div style="display:flex;flex-direction:column;gap:3px;font-size:12px;color:var(--text2);">
+        <td style="max-width:280px;white-space:normal;">
+          <div style="display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--text2);white-space:nowrap;">
             ${c.modulos.map(m => `<div title="${m.modulo === c.moduloEscolhido ? 'Módulo escolhido pelo candidato' : 'Módulo automático da trilha'}">${m.modulo === c.moduloEscolhido ? '★ ' : ''}${escapeHtml(m.modulo)}: <b style="color:${m.pct >= 70 ? 'var(--green)' : m.pct >= 50 ? 'var(--amber)' : 'var(--red)'}">${m.pct}%</b></div>`).join('')}
             ${c.digitacao != null ? `<div title="Teste de digitação">⌨️ Digitação: <b style="color:${c.digitacao >= 70 ? 'var(--green)' : c.digitacao >= 50 ? 'var(--amber)' : 'var(--red)'}">${c.digitacao}%</b></div>` : ''}
           </div>
