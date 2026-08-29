@@ -1625,6 +1625,17 @@
   function startMonitoring() { S.testActive = true; S.violationCount = 0; }
   function stopMonitoring() { S.testActive = false; }
 
+  // Confirmação antes de sair/recarregar a página com o teste em andamento —
+  // evita perder tudo por causa de um toque sem querer no botão de voltar do
+  // navegador ou no gesto de fechar do celular. O texto do aviso é definido
+  // pelo próprio navegador (por segurança, sites não podem customizar essa
+  // mensagem), então o preventDefault()/returnValue aqui só liga o aviso.
+  window.addEventListener('beforeunload', (e) => {
+    if (!S.testActive) return;
+    e.preventDefault();
+    e.returnValue = '';
+  });
+
   document.addEventListener('visibilitychange', () => { if (S.testActive && document.hidden) reportViolation('perda_foco'); });
   window.addEventListener('blur', () => {
     if (!S.testActive) return;

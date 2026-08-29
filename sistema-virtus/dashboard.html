@@ -1385,7 +1385,7 @@
     assinarResultados, assinarViolacoes, excluirResultado,
     assinarPendentes, assinarUsuarios, aprovarUsuario, removerUsuario,
     assinarModulos, definirModuloAtivo,
-    gerarCodigoAcesso, assinarCodigosAcesso, cancelarCodigoAcesso, excluirCodigoAcesso,
+    gerarCodigoAcesso, assinarCodigosAcesso, cancelarCodigoAcesso, excluirCodigoAcesso, VALIDADE_CODIGO_MS,
     definirNumeroWhatsapp, assinarNumeroWhatsapp,
     assinarPipeline, definirObservacaoPipeline, definirAprovacaoManual,
     registrarDecisaoFinal
@@ -3147,8 +3147,22 @@
     return isNaN(d) ? '—' : d.toLocaleString('pt-BR');
   }
 
+  // A expiração é sempre calculada a partir de `criado_em` (horário do
+  // SERVIDOR do Firestore) + a duração fixa — nunca de um campo `expira_em`
+  // gravado pelo relógio de quem gerou o código. Ver a explicação completa
+  // em js/dashboard.js (gerarCodigoAcesso).
+  function criadoEmDe(c) {
+    if (!c.criado_em) return null;
+    const d = c.criado_em.toDate ? c.criado_em.toDate() : new Date(c.criado_em);
+    return isNaN(d) ? null : d;
+  }
+  function expiraEmDe(c) {
+    const criadoEm = criadoEmDe(c);
+    return criadoEm ? new Date(criadoEm.getTime() + VALIDADE_CODIGO_MS) : null;
+  }
+
   function statusCodigo(c) {
-    const expiraEm = c.expira_em && c.expira_em.toDate ? c.expira_em.toDate() : null;
+    const expiraEm = expiraEmDe(c);
     const expirado = expiraEm && expiraEm.getTime() <= Date.now();
     if (c.ativo === false) return { txt: '✕ Desativado', cor: 'var(--text4)', ok: false };
     if (expirado) return { txt: '⏱ Expirado', cor: 'var(--text3)', ok: false };
@@ -3174,7 +3188,7 @@
         <td style="color:${st.cor};font-weight:700;">${st.txt}</td>
         <td>${c.usos ?? 0}</td>
         <td>${escapeHtml(c.criado_por || '—')}</td>
-        <td>${fmtDataHora(c.expira_em)}</td>
+        <td>${fmtDataHora(expiraEmDe(c))}</td>
         <td style="white-space:nowrap;">${acao}</td>
       </tr>`;
     }).join('');

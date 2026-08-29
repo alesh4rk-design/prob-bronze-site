@@ -112,13 +112,21 @@ export async function definirModuloAtivo(modulo, ativo) {
 // Impede o candidato de fazer o teste em casa: admin OU viewer gera UM
 // código compartilhado, que serve para TODOS os candidatos da entrevista
 // (útil em dias com muita gente, ex: 20+ candidatos). O código expira
-// sozinho 4 horas depois de gerado — a expiração é validada no SERVIDOR
-// pelas firestore.rules (request.time < resource.data.expira_em), não só
-// no navegador do candidato, então não dá para simplesmente "esperar" ou
-// ajustar o relógio do celular para continuar usando um código vencido.
-// Ver quiz.js para o lado do candidato (verificarCodigoAcesso).
-
-const VALIDADE_CODIGO_MS = 4 * 60 * 60 * 1000; // 4 horas
+// sozinho 4 horas depois de gerado.
+//
+// IMPORTANTE: a expiração é sempre calculada a partir de `criado_em`
+// (serverTimestamp — preenchido pelo relógio do SERVIDOR do Firestore) mais
+// esta duração fixa, nunca a partir de um horário absoluto calculado no
+// navegador de quem gerou o código. Antes este arquivo gravava
+// `expira_em: new Date(Date.now() + 4h)` usando o relógio do CELULAR/
+// COMPUTADOR do avaliador — se esse relógio estivesse errado (comum em
+// celular Android com fuso ou data errada), o código nascia praticamente já
+// vencido, e o candidato via "código expirado" segundos depois de gerado.
+// A validação real acontece no Worker (Cloudflare), que usa o próprio
+// relógio (sempre correto) contra `criado_em` — ver worker/virtus-api.js
+// (handleVerificarCodigo). O Dashboard usa a mesma conta em dashboard.html
+// (statusCodigo/expiraEmDe) só para exibir o status/validade na tela.
+export const VALIDADE_CODIGO_MS = 4 * 60 * 60 * 1000; // 4 horas
 
 // Gera um código novo de 6 dígitos, válido por 4 horas a partir de agora.
 export async function gerarCodigoAcesso(avaliador) {
@@ -136,7 +144,6 @@ export async function gerarCodigoAcesso(avaliador) {
         usos: 0,
         criado_por: nomeAvaliador,
         criado_em: serverTimestamp(),
-        expira_em: new Date(Date.now() + VALIDADE_CODIGO_MS),
         ultimo_uso_em: null
       });
       return codigo;

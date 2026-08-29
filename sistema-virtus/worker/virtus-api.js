@@ -178,6 +178,10 @@ async function firestorePatch(env, token, path, data, updateMaskFields) {
   return resp.json();
 }
 
+// Mesma duração usada em js/dashboard.js (VALIDADE_CODIGO_MS) — precisa
+// ficar igual nos dois lugares.
+const VALIDADE_CODIGO_MS = 4 * 60 * 60 * 1000; // 4 horas
+
 // ── Rotas ───────────────────────────────────────────────────────────────
 async function handleVerificarCodigo(request, env, cors) {
   const { codigo } = await request.json();
@@ -196,8 +200,14 @@ async function handleVerificarCodigo(request, env, cors) {
   const doc = await firestoreGet(env, token, `codigos_acesso/${encodeURIComponent(cod)}`);
   if (!doc) return json({ ok: false, motivo: "nao_encontrado" }, cors);
   if (doc.ativo === false) return json({ ok: false, motivo: "desativado" }, cors);
-  const expiraEm = doc.expira_em ? new Date(doc.expira_em).getTime() : null;
-  if (expiraEm && expiraEm <= Date.now()) return json({ ok: false, motivo: "expirado" }, cors);
+  // A validade sempre parte de `criado_em` (preenchido pelo relógio do
+  // SERVIDOR do Firestore, no momento da criação) mais a duração fixa —
+  // nunca de um horário absoluto calculado no celular/computador de quem
+  // gerou o código. Isso evita que um relógio de dispositivo errado (comum
+  // em celular Android) faça o código nascer já expirado. O relógio usado
+  // aqui (Date.now()) é o do próprio Worker, sempre correto.
+  const criadoEm = doc.criado_em ? new Date(doc.criado_em).getTime() : null;
+  if (criadoEm && (Date.now() - criadoEm) >= VALIDADE_CODIGO_MS) return json({ ok: false, motivo: "expirado" }, cors);
 
   await firestorePatch(
     env,

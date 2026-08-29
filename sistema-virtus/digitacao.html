@@ -545,6 +545,15 @@ let candidate={nome:''};
 let deleteCount=0,lastLength=0;
 let sessionHistory=[],lastResult=null;
 
+// Confirmação antes de sair/recarregar a página com o teste em andamento —
+// evita perder tudo por causa de um toque sem querer no botão de voltar do
+// navegador ou no gesto de fechar do celular.
+window.addEventListener('beforeunload', (e) => {
+  if (!active) return;
+  e.preventDefault();
+  e.returnValue = '';
+});
+
 function setToday(){
   const today = new Date().toISOString().split('T')[0];
   document.getElementById('datateste').value = today;
