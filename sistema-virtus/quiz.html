@@ -922,10 +922,10 @@
       </div>
 
       <div class="next-step-notice" id="whatsappNotice" style="display:none;">
-        <div class="next-step-icon">✅</div>
+        <div class="next-step-icon" id="whatsappNoticeIcone">✅</div>
         <div style="flex:1;">
-          <div class="next-step-title">Avaliação concluída!</div>
-          <div class="next-step-text">Toque no botão abaixo pra avisar o RH pelo WhatsApp que você terminou.</div>
+          <div class="next-step-title" id="whatsappNoticeTitulo">Avaliação concluída!</div>
+          <div class="next-step-text" id="whatsappNoticeTexto">Toque no botão abaixo pra avisar o RH pelo WhatsApp que você terminou.</div>
           <a id="linkWhatsappRH" href="#" target="_blank" rel="noopener" class="btn" style="margin-top:10px;background:#25D366;color:#052e16;display:inline-block;text-decoration:none;">💬 Avisar o RH no WhatsApp</a>
         </div>
       </div>
@@ -1508,13 +1508,20 @@
   // Monta o link wa.me com uma mensagem pronta, se o RH tiver configurado um
   // número de WhatsApp no dashboard. O candidato ainda precisa apertar
   // "Enviar" no WhatsApp — não é um envio automático por trás das câmeras.
-  async function montarBotaoWhatsapp(nome, candidato) {
+  async function montarBotaoWhatsapp(nome, candidato, precisaDigitacao) {
     const numero = await obterNumeroWhatsappRH();
     const notice = document.getElementById('whatsappNotice');
     if (!numero || !notice) return;
     const cargo = (candidato && candidato.cargo_pretendido) || '';
-    const msg = `Olá! Sou ${nome}${cargo ? ', candidato(a) à vaga de ' + cargo : ''} e acabei de concluir minha avaliação no Sistema Virtus.`;
+    const msg = precisaDigitacao
+      ? `Olá! Sou ${nome}${cargo ? ', candidato(a) à vaga de ' + cargo : ''} e acabei de concluir a parte de questões no Sistema Virtus. Estou aguardando o Teste de Digitação.`
+      : `Olá! Sou ${nome}${cargo ? ', candidato(a) à vaga de ' + cargo : ''} e acabei de concluir minha avaliação no Sistema Virtus.`;
     document.getElementById('linkWhatsappRH').href = `https://wa.me/${numero}?text=${encodeURIComponent(msg)}`;
+    document.getElementById('whatsappNoticeIcone').textContent = precisaDigitacao ? '⌨️' : '✅';
+    document.getElementById('whatsappNoticeTitulo').textContent = precisaDigitacao ? 'Falta o Teste de Digitação' : 'Avaliação concluída!';
+    document.getElementById('whatsappNoticeTexto').textContent = precisaDigitacao
+      ? 'Toque no botão abaixo pra avisar o RH pelo WhatsApp que você terminou a parte de questões e está esperando o Teste de Digitação.'
+      : 'Toque no botão abaixo pra avisar o RH pelo WhatsApp que você terminou.';
     notice.style.display = 'flex';
   }
 
@@ -1547,9 +1554,11 @@
     const aviso = document.getElementById('nextStepNotice');
     if (aviso) aviso.style.display = precisaDigitacao ? 'flex' : 'none';
 
-    // Se não precisa de digitação, a avaliação acabou aqui — mostra o botão
-    // de avisar o RH pelo WhatsApp (se o número estiver configurado).
-    if (!precisaDigitacao) montarBotaoWhatsapp(S.nome, S.candidato);
+    // Mostra o botão de avisar o RH pelo WhatsApp (se o número estiver
+    // configurado) nos dois casos: se a avaliação acabou aqui, ou se falta
+    // só o Teste de Digitação (o candidato ainda precisa avisar que
+    // terminou a parte de questões, pra alguém liberar a próxima etapa).
+    montarBotaoWhatsapp(S.nome, S.candidato, precisaDigitacao);
 
     const offset = 364 - (media / 100) * 364;
     setTimeout(() => {
