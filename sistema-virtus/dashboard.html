@@ -922,6 +922,26 @@
   </div>
 </div>
 
+<!-- ══════════ MODAL: CONFIRMAÇÃO (substitui window.confirm) ══════════ -->
+<div class="modal-back" id="confirmModal" onclick="if(event.target===this)responderConfirmacao(false)">
+  <div class="modal-card" style="max-width:440px;">
+    <div class="modal-top">
+      <div class="modal-avatar" id="confirmIcone">❓</div>
+      <div>
+        <div class="modal-cand-nome" id="confirmTitulo">Confirmar ação</div>
+      </div>
+      <button class="modal-close" onclick="responderConfirmacao(false)" title="Fechar">✕</button>
+    </div>
+    <div class="modal-scroll" style="padding:20px;">
+      <div id="confirmMensagem" style="white-space:pre-line;font-size:14px;line-height:1.6;color:var(--text2);"></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-act btn-neutral" id="confirmBtnCancelar" style="padding:12px 20px;border-radius:6px;" onclick="responderConfirmacao(false)">Cancelar</button>
+      <button class="btn-act btn-approve-admin" id="confirmBtnOk" style="padding:12px 20px;border-radius:6px;margin-left:auto;" onclick="responderConfirmacao(true)">Confirmar</button>
+    </div>
+  </div>
+</div>
+
 <!-- ══════════ MODAL: OBSERVAÇÃO DO CANDIDATO ══════════ -->
 <div class="modal-back" id="obsModal" onclick="if(event.target===this)fecharObservacao()">
   <div class="modal-card" style="max-width:480px;">
@@ -1384,6 +1404,34 @@
     setTimeout(() => el.classList.remove('show'), 3500);
   }
 
+  // Modal de confirmação genérico — substitui window.confirm() em todo o
+  // sistema (a caixa nativa do navegador é feia, some sem aviso em telas
+  // pequenas e não combina com o resto da interface). `await abrirConfirmacao(...)`
+  // devolve true/false, igual o confirm() nativo, mas em Promise.
+  let CONFIRM_RESOLVE = null;
+  window.abrirConfirmacao = function (mensagem, opcoes = {}) {
+    const {
+      titulo = 'Confirmar ação',
+      textoConfirmar = 'Confirmar',
+      textoCancelar = 'Cancelar',
+      corConfirmar = 'btn-approve-admin',
+      icone = '❓'
+    } = opcoes;
+    document.getElementById('confirmTitulo').textContent = titulo;
+    document.getElementById('confirmMensagem').textContent = mensagem;
+    document.getElementById('confirmIcone').textContent = icone;
+    const btnOk = document.getElementById('confirmBtnOk');
+    btnOk.textContent = textoConfirmar;
+    btnOk.className = 'btn-act ' + corConfirmar;
+    document.getElementById('confirmBtnCancelar').textContent = textoCancelar;
+    document.getElementById('confirmModal').classList.add('show');
+    return new Promise(resolve => { CONFIRM_RESOLVE = resolve; });
+  };
+  window.responderConfirmacao = function (valor) {
+    document.getElementById('confirmModal').classList.remove('show');
+    if (CONFIRM_RESOLVE) { CONFIRM_RESOLVE(valor); CONFIRM_RESOLVE = null; }
+  };
+
   function updateClock(){ const n=new Date(); document.getElementById('hudClock').textContent=[n.getHours(),n.getMinutes(),n.getSeconds()].map(v=>String(v).padStart(2,'0')).join(':'); }
   setInterval(updateClock,1000); updateClock();
 
@@ -1596,7 +1644,8 @@
     const tents = tentativasDe(CAND_ATUAL);
     if (!tents.length) return;
     const nome = tents[0].nome || CAND_ATUAL;
-    if (!confirm(`Excluir TODOS os testes de "${nome}" (${tents.length} registro(s))?\n\nEssa ação não pode ser desfeita.`)) return;
+    const ok = await abrirConfirmacao(`Excluir TODOS os testes de "${nome}" (${tents.length} registro(s))?\n\nEssa ação não pode ser desfeita.`, { titulo: 'Excluir candidato', textoConfirmar: '🗑 Excluir', corConfirmar: 'btn-danger', icone: '🗑' });
+    if (!ok) return;
 
     const btn = document.getElementById('btnExcluirCandidato');
     btn.disabled = true;
@@ -1624,6 +1673,7 @@
     if (e.key !== 'Escape') return;
     fecharCandidato();
     if (document.getElementById('obsModal').classList.contains('show')) fecharObservacao();
+    if (document.getElementById('confirmModal').classList.contains('show')) responderConfirmacao(false);
   });
 
   function renderModalCandidato() {
@@ -2688,7 +2738,13 @@
 
   window.decidirEntrevista = async function (chave, nome, decisao) {
     const label = decisao === 'contratado' ? 'CONTRATAR' : 'RECUSAR';
-    if (!confirm(`Confirma ${label} o candidato ${nome}?\n\nIsso vai aparecer no histórico da aba "Contratados".`)) return;
+    const ok = await abrirConfirmacao(`Confirma ${label} o candidato ${nome}?\n\nIsso vai aparecer no histórico da aba "Contratados".`, {
+      titulo: decisao === 'contratado' ? 'Contratar candidato' : 'Recusar candidato',
+      textoConfirmar: decisao === 'contratado' ? '🎉 Contratar' : '❌ Recusar',
+      corConfirmar: decisao === 'contratado' ? 'btn-approve-admin' : 'btn-danger',
+      icone: decisao === 'contratado' ? '🎉' : '❌'
+    });
+    if (!ok) return;
     try {
       await registrarDecisaoFinal(chave, decisao, nome, me.usuario);
       toast(decisao === 'contratado' ? '🎉 Candidato contratado!' : '❌ Candidato recusado', 'ok');
@@ -2982,7 +3038,8 @@
     catch (e) { console.error(e); toast('❌ Falha: ' + e.message, 'err'); }
   };
   window.recusar = async function (uid, nome) {
-    if (!confirm(`Remover o acesso de "${nome}"?\n\nA conta continua existindo, mas perde o acesso ao sistema.`)) return;
+    const ok = await abrirConfirmacao(`Remover o acesso de "${nome}"?\n\nA conta continua existindo, mas perde o acesso ao sistema.`, { titulo: 'Remover acesso', textoConfirmar: 'Remover acesso', corConfirmar: 'btn-danger', icone: '🔒' });
+    if (!ok) return;
     try { await removerUsuario(uid); toast('Acesso removido', 'ok'); }
     catch (e) { console.error(e); toast('❌ Falha: ' + e.message, 'err'); }
   };
@@ -3022,7 +3079,8 @@
 
   document.getElementById('btnSeed').onclick = async () => {
     const totalMods = Object.keys(PERGUNTAS_SEED).length;
-    if (!confirm(`Importar/atualizar ${totalMods} módulos?\n\nAs questões atuais de cada módulo serão substituídas pela versão do código.`)) return;
+    const confirmado = await abrirConfirmacao(`Importar/atualizar ${totalMods} módulos?\n\nAs questões atuais de cada módulo serão substituídas pela versão do código.`, { titulo: 'Importar perguntas', textoConfirmar: '📥 Importar', corConfirmar: 'btn-approve-admin', icone: '📥' });
+    if (!confirmado) return;
     const btn = document.getElementById('btnSeed');
     const logEl = document.getElementById('seedLog');
     btn.disabled = true;
@@ -3123,13 +3181,15 @@
   }
 
   window.desativarCodigo = async function (codigo) {
-    if (!confirm(`Desativar o código ${codigo}? Ele deixará de funcionar imediatamente, mesmo antes das 4 horas.`)) return;
+    const ok = await abrirConfirmacao(`Desativar o código ${codigo}? Ele deixará de funcionar imediatamente, mesmo antes das 4 horas.`, { titulo: 'Desativar código', textoConfirmar: 'Desativar', corConfirmar: 'btn-danger', icone: '🔒' });
+    if (!ok) return;
     try { await cancelarCodigoAcesso(codigo); toast('Código desativado', 'ok'); }
     catch (e) { console.error(e); toast('❌ Falha: ' + e.message, 'err'); }
   };
 
   window.excluirCodigo = async function (codigo) {
-    if (!confirm(`Excluir o código ${codigo} da lista? Essa ação não pode ser desfeita.`)) return;
+    const ok = await abrirConfirmacao(`Excluir o código ${codigo} da lista? Essa ação não pode ser desfeita.`, { titulo: 'Excluir código', textoConfirmar: '🗑 Excluir', corConfirmar: 'btn-danger', icone: '🗑' });
+    if (!ok) return;
     try { await excluirCodigoAcesso(codigo); toast('Código excluído', 'ok'); }
     catch (e) { console.error(e); toast('❌ Falha: ' + e.message, 'err'); }
   };
