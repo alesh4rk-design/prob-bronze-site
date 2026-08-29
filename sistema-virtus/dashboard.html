@@ -3419,6 +3419,9 @@
   const bancoDataFimEl = document.getElementById('bancoDataFim');
   if (bancoDataIniEl) bancoDataIniEl.value = dataLocalYMD(new Date());
   if (bancoDataFimEl) bancoDataFimEl.value = dataLocalYMD(new Date());
+  // Candidatos também abre filtrado no dia de hoje por padrão.
+  const pipelineDateEl = document.getElementById('pipelineDateInput');
+  if (pipelineDateEl) pipelineDateEl.value = dataLocalYMD(new Date());
 
   conectar();
 
