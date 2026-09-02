@@ -2650,8 +2650,22 @@
   };
 
   window.alternarAprovadoParaEntrevista = async function (chave, nome, aprovado) {
+    // Se alguém já mexeu nessa marcação antes, avisa quem foi e pede
+    // confirmação antes de mudar — evita desfazer a decisão de outra pessoa
+    // (avaliador, coordenador ou gerência) sem querer/sem saber.
+    const chaveId = chave.replace(/[/]/g, '_');
+    const pipelineInfo = PIPELINE_MAP[chaveId] || {};
+    if (pipelineInfo.aprovado_por && pipelineInfo.aprovado_por !== me.usuario) {
+      const quem = pipelineInfo.aprovado_por + (pipelineInfo.aprovado_por_perfil ? ` (${pipelineInfo.aprovado_por_perfil})` : '');
+      const acaoAnterior = pipelineInfo.aprovado ? 'marcou' : 'desmarcou';
+      const ok = await abrirConfirmacao(
+        `${quem} ${acaoAnterior} "${nome}" para entrevista.\n\nTem certeza que deseja alterar essa decisão?`,
+        { titulo: 'Confirmar alteração', textoConfirmar: 'Sim, alterar', corConfirmar: 'btn-danger', icone: '⚠️' }
+      );
+      if (!ok) return;
+    }
     try {
-      await definirAprovacaoManual(chave, aprovado, nome, me.usuario);
+      await definirAprovacaoManual(chave, aprovado, nome, me.usuario, me.perfil);
       toast(aprovado ? '✅ Marcado para entrevista' : '↩ Desmarcado', 'ok');
     } catch (e) {
       console.error(e);
@@ -2689,10 +2703,15 @@
     const dataIni = document.getElementById('bancoDataIni').value;
     const dataFim = document.getElementById('bancoDataFim').value;
 
-    // Filtra apenas candidatos marcados para entrevista (aprovado = true no pipeline)
+    // Filtra apenas candidatos marcados para entrevista (aprovado = true no
+    // pipeline) que AINDA NÃO tiveram decisão final. Assim que alguém marca
+    // Contratado ou Recusado, o candidato sai daqui na hora e passa a
+    // aparecer só no histórico da aba Contratados (que já mostra os dois
+    // status) — evita registro duplicado/confuso entre as duas abas.
     const marcadosParaEntrevista = todos.filter(c => {
       const chaveId = c.chave.replace(/[/]/g, '_');
-      return PIPELINE_MAP[chaveId] && PIPELINE_MAP[chaveId].aprovado === true;
+      const p = PIPELINE_MAP[chaveId];
+      return p && p.aprovado === true && !p.decisao_final;
     });
 
     // O filtro de data usa QUANDO A PESSOA FOI MARCADA para entrevista

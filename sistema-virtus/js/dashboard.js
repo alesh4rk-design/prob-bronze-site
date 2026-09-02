@@ -224,12 +224,13 @@ export async function definirObservacaoPipeline(chave, observacao, nome, avaliad
 // Aprovação para entrevista — decisão do avaliador/coordenador/gerência
 // sobre qual candidato será chamado para entrevista. Campo separado na
 // coleção pipeline — não mexe na nota do teste nem na etapa do processo seletivo.
-export async function definirAprovacaoManual(chave, aprovado, nome, avaliador) {
+export async function definirAprovacaoManual(chave, aprovado, nome, avaliador, perfilAvaliador) {
   const id = chave.replace(/[/]/g, "_");
   await setDoc(doc(db, "pipeline", id), {
     aprovado,
     nome: nome || null,
     aprovado_por: avaliador || null,
+    aprovado_por_perfil: perfilAvaliador || null,
     aprovado_em: serverTimestamp()
   }, { merge: true });
 }
