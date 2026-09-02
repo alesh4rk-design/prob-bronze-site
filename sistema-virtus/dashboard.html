@@ -2537,6 +2537,16 @@
     }).sort((a, b) => (b.ultima || '').localeCompare(a.ultima || ''));
   }
 
+  // Data em que a pessoa foi marcada para entrevista (pipeline.aprovado_em),
+  // usada para filtrar a aba "Aprovados para Entrevista" por dia — não
+  // confundir com a data do teste (c.ultima).
+  function aprovadoEmDe(c) {
+    const p = PIPELINE_MAP[c.chave.replace(/[/]/g, '_')] || {};
+    if (!p.aprovado_em) return null;
+    const d = p.aprovado_em.toDate ? p.aprovado_em.toDate() : new Date(p.aprovado_em);
+    return isNaN(d) ? null : d;
+  }
+
   window.renderPipeline = function renderPipeline() {
     const tbody = document.getElementById('pipelineTableBody');
     const thead = document.getElementById('pipelineTableHead');
@@ -2683,8 +2693,12 @@
       return PIPELINE_MAP[chaveId] && PIPELINE_MAP[chaveId].aprovado === true;
     });
 
+    // O filtro de data usa QUANDO A PESSOA FOI MARCADA para entrevista
+    // (aprovado_em), não quando ela fez o teste — um candidato que fez o
+    // teste semana passada e foi marcado hoje precisa aparecer hoje.
     const aprovadosFiltrados = marcadosParaEntrevista.filter(c => {
-      const dataC = c.ultima ? dataLocalYMD(c.ultima) : '';
+      const aprovadoEm = aprovadoEmDe(c);
+      const dataC = aprovadoEm ? dataLocalYMD(aprovadoEm) : '';
       if (!dataC) return false;
       if (dataIni && dataC < dataIni) return false;
       if (dataFim && dataC > dataFim) return false;
@@ -3429,9 +3443,14 @@
       }
       // Processo Seletivo: admin/gerência/avaliador (gerenciam) e
       // coordenador (só lê) — viewer não tem acesso nas rules.
+      // PIPELINE_MAP também alimenta Aprovados para Entrevista, Contratados
+      // e o gráfico "Status de Entrevistas" do Dashboard — por isso o
+      // callback chama renderAll() inteiro (não só renderPipeline()), senão
+      // essas telas ficavam com dado desatualizado até a próxima atualização
+      // de resultados (podendo demorar horas, ou nunca acontecer na sessão).
       if (me.perfil !== 'viewer') {
         unsubs.push(assinarPipeline(
-          mapa => { PIPELINE_MAP = mapa; renderPipeline(); },
+          mapa => { PIPELINE_MAP = mapa; renderAll(); },
           () => statusDot(false, 'Reconectando...')
         ));
       }
