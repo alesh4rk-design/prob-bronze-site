@@ -873,6 +873,7 @@
     <div class="sidebar-item active" data-view="pipeline" id="sidebarItemPipeline" onclick="switchView('pipeline')"><span class="si-icon">👥</span> Candidatos</div>
     <div class="sidebar-item" data-view="banco" id="sidebarItemBanco" onclick="switchView('banco')"><span class="si-icon">📊</span> Aprovados para Entrevista</div>
     <div class="sidebar-item" data-view="contratados" id="sidebarItemContratados" onclick="switchView('contratados')"><span class="si-icon">🏆</span> Contratados</div>
+    <div class="sidebar-item" data-view="bancoreserva" id="sidebarItemBancoReserva" onclick="switchView('bancoreserva')"><span class="si-icon">🏦</span> Banco de Reserva</div>
     <div class="sidebar-item" data-view="violacoes" id="sidebarItemViolacoes" onclick="switchView('violacoes')"><span class="si-icon">🚨</span> Violações</div>
     <div class="sidebar-section-lbl" id="sidebarFerramentasLbl">Ferramentas</div>
     <div class="sidebar-item" data-view="testes" id="sidebarItemTestes" onclick="switchView('testes')"><span class="si-icon">⌨️</span> Testes</div>
@@ -1111,6 +1112,39 @@
         </thead>
         <tbody id="contratadosTableBody">
           <tr><td colspan="7"><div class="empty-state"><div class="empty-icon">🏆</div>Nenhuma decisão registrada ainda</div></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ VIEW: BANCO DE RESERVA ══════════ -->
+<section class="app-view" id="view-bancoreserva">
+  <div class="page-title-area">
+    <div>
+      <div class="page-title">Banco de <em>Reserva</em></div>
+      <div class="page-subtitle">Candidatos bons guardados para quando surgir uma vaga futura</div>
+    </div>
+  </div>
+  <div class="panel">
+    <div class="panel-head">
+      <div class="panel-title-sm">🏦 Candidatos no Banco <span class="badge" id="bancoReservaBadge">0 registros</span></div>
+    </div>
+    <div class="results-table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th style="width:40px;text-align:center;">#</th>
+            <th>Candidato</th>
+            <th style="width:70px;">Nota</th>
+            <th>Observação</th>
+            <th>Adicionado por</th>
+            <th>Data</th>
+            <th>Ações</th>
+          </tr>
+        </thead>
+        <tbody id="bancoReservaTableBody">
+          <tr><td colspan="7"><div class="empty-state"><div class="empty-icon">🏦</div>Nenhum candidato no banco de reserva ainda</div></td></tr>
         </tbody>
       </table>
     </div>
@@ -1395,7 +1429,7 @@
     assinarModulos, definirModuloAtivo,
     gerarCodigoAcesso, assinarCodigosAcesso, cancelarCodigoAcesso, excluirCodigoAcesso, VALIDADE_CODIGO_MS,
     definirNumeroWhatsapp, assinarNumeroWhatsapp,
-    assinarPipeline, definirObservacaoPipeline, definirAprovacaoManual,
+    assinarPipeline, definirObservacaoPipeline, definirAprovacaoManual, definirBancoReserva,
     registrarDecisaoFinal
   } from "./js/dashboard.js";
   import { db } from "./js/firebase-config.js";
@@ -1513,6 +1547,7 @@
     document.getElementById('sidebarItemDashboard').style.display = 'none';
     document.getElementById('sidebarItemBanco').style.display = 'none';
     document.getElementById('sidebarItemContratados').style.display = 'none';
+    document.getElementById('sidebarItemBancoReserva').style.display = 'none';
   }
 
   // Coordenador só precisa da lista corrida de candidatos (Processo
@@ -1534,6 +1569,7 @@
     pipeline: 'Candidatos',
     banco: 'Aprovados para Entrevista',
     contratados: 'Contratados',
+    bancoreserva: 'Banco de Reserva',
     testes: 'Aplicar Testes',
     violacoes: 'Violações Registradas',
     qrcodes: 'QR Codes para Imprimir',
@@ -1570,7 +1606,7 @@
     if ((view === 'perguntas' || view === 'usuarios') && !ehGerenciaSV) view = 'dashboard';
     // Viewer só tem a aba Candidatos (vê os testes realizados de todo
     // mundo, sem poder selecionar ninguém pra entrevista).
-    if ((view === 'banco' || view === 'contratados' || view === 'dashboard') && me && me.perfil === 'viewer') view = 'pipeline';
+    if ((view === 'banco' || view === 'contratados' || view === 'bancoreserva' || view === 'dashboard') && me && me.perfil === 'viewer') view = 'pipeline';
     const VIEWS_BLOQUEADAS_COORDENADOR = [...VIEWS_OPERACIONAIS, 'dashboard', 'violacoes'];
     if (VIEWS_BLOQUEADAS_COORDENADOR.includes(view) && me && me.perfil === 'coordenador') view = 'pipeline';
     document.querySelectorAll('.app-view').forEach(v => v.classList.toggle('active', v.id === 'view-' + view));
@@ -1582,6 +1618,7 @@
     if (view === 'qrcodes') gerarQRCodes();
     if (view === 'pipeline') renderPipeline();
     if (view === 'contratados') renderContratados();
+    if (view === 'bancoreserva') renderBancoReserva();
   };
 
 
@@ -2502,6 +2539,10 @@
   // viewer (só leitura). Selecionar para entrevista e escrever observação
   // é exclusivo de avaliador/coordenador/gerência/admin — ver renderPipeline.
   const PODE_GERENCIAR_CANDIDATOS = ['admin', 'gerencia', 'avaliador', 'coordenador'];
+  // Excluir candidato apaga resultados de teste de verdade — mais restrito
+  // que gerenciar (coordenador não exclui, só acompanha; ver firestore.rules
+  // isEquipe()).
+  const PODE_EXCLUIR_CANDIDATOS = ['admin', 'gerencia', 'avaliador'];
 
   function candidatosAgrupados(lista) {
     const quizzes = (lista || ALL_RESULTADOS).filter(r => r.tipo !== 'typing');
@@ -2574,7 +2615,7 @@
       <th>Candidato</th>
       <th>Testes realizados</th>
       <th>Nota<br><span style="font-weight:400;text-transform:none;font-size:10px;opacity:0.75;">(módulo escolhido)</span></th>
-      ${podeGerenciar ? '<th>Observação</th><th>Entrevista</th><th>Atualizado</th>' : ''}
+      ${podeGerenciar ? '<th>Observação</th><th>Ações</th><th>Atualizado</th>' : ''}
     `;
     const colspan = podeGerenciar ? 7 : 4;
 
@@ -2582,23 +2623,33 @@
       tbody.innerHTML = `<tr><td colspan="${colspan}"><div class="empty-state"><div class="empty-icon">🧭</div>Nenhum candidato encontrado.</div></td></tr>`;
       return;
     }
+    const podeExcluir = PODE_EXCLUIR_CANDIDATOS.includes(me.perfil);
     tbody.innerHTML = candidatos.map((c, i) => {
       const chaveId = c.chave.replace(/[/]/g, '_');
       const pipelineInfo = PIPELINE_MAP[chaveId] || {};
       const atualizadoEm = pipelineInfo.atualizado_em ? fmtDataHora(pipelineInfo.atualizado_em) : '—';
       const aprovadoParaEntrevista = pipelineInfo.aprovado === true;
+      const noBancoReserva = pipelineInfo.banco_reserva === true;
       const observacao = pipelineInfo.observacao || '';
+      const chaveEsc = c.chave.replace(/'/g, "\\'");
+      const nomeEsc = escapeHtml(c.nome).replace(/'/g, "\\'");
 
       const colunasGerenciar = podeGerenciar ? `
         <td onclick="event.stopPropagation()">
-          <button class="btn-act btn-neutral" onclick="event.stopPropagation();editarObservacaoPipeline('${c.chave.replace(/'/g, "\\'")}','${escapeHtml(c.nome).replace(/'/g, "\\'")}')" title="${observacao ? escapeHtml(observacao) : 'Nenhuma observação ainda'}">
+          <button class="btn-act btn-neutral" onclick="event.stopPropagation();editarObservacaoPipeline('${chaveEsc}','${nomeEsc}')" title="${observacao ? escapeHtml(observacao) : 'Nenhuma observação ainda'}">
             📝 ${observacao ? 'Ver/editar' : 'Observação'}
           </button>
         </td>
         <td onclick="event.stopPropagation()">
-          <button class="btn-act ${aprovadoParaEntrevista ? 'btn-approve-admin' : 'btn-neutral'}" onclick="event.stopPropagation();alternarAprovadoParaEntrevista('${c.chave.replace(/'/g, "\\'")}','${escapeHtml(c.nome).replace(/'/g, "\\'")}',${!aprovadoParaEntrevista})">
-            ${aprovadoParaEntrevista ? '✅ Entrevista' : '☐ Entrevista'}
-          </button>
+          <div style="display:flex;flex-direction:column;gap:4px;">
+            <button class="btn-act ${aprovadoParaEntrevista ? 'btn-approve-admin' : 'btn-neutral'}" style="font-size:11px;padding:6px 10px;" onclick="event.stopPropagation();alternarAprovadoParaEntrevista('${chaveEsc}','${nomeEsc}',${!aprovadoParaEntrevista})">
+              ${aprovadoParaEntrevista ? '✅ Entrevista' : '☐ Entrevista'}
+            </button>
+            <button class="btn-act ${noBancoReserva ? 'btn-approve-admin' : 'btn-neutral'}" style="font-size:11px;padding:6px 10px;" onclick="event.stopPropagation();alternarBancoReserva('${chaveEsc}','${nomeEsc}',${!noBancoReserva})">
+              ${noBancoReserva ? '✅ Banco de Reserva' : '🏦 Banco de Reserva'}
+            </button>
+            ${podeExcluir ? `<button class="btn-act btn-danger" style="font-size:11px;padding:6px 10px;" onclick="event.stopPropagation();excluirCandidatoDireto('${chaveEsc}','${nomeEsc}')">🗑 Excluir</button>` : ''}
+          </div>
         </td>
         <td class="td-time">${atualizadoEm}</td>` : '';
 
@@ -2671,6 +2722,85 @@
       console.error(e);
       toast('❌ Falha: ' + e.message, 'err');
     }
+  };
+
+  window.alternarBancoReserva = async function (chave, nome, valor) {
+    const chaveId = chave.replace(/[/]/g, '_');
+    const pipelineInfo = PIPELINE_MAP[chaveId] || {};
+    if (pipelineInfo.banco_reserva_por && pipelineInfo.banco_reserva_por !== me.usuario) {
+      const quem = pipelineInfo.banco_reserva_por + (pipelineInfo.banco_reserva_por_perfil ? ` (${pipelineInfo.banco_reserva_por_perfil})` : '');
+      const acaoAnterior = pipelineInfo.banco_reserva ? 'colocou' : 'removeu';
+      const ok = await abrirConfirmacao(
+        `${quem} ${acaoAnterior} "${nome}" no banco de reserva.\n\nTem certeza que deseja alterar essa decisão?`,
+        { titulo: 'Confirmar alteração', textoConfirmar: 'Sim, alterar', corConfirmar: 'btn-danger', icone: '⚠️' }
+      );
+      if (!ok) return;
+    }
+    try {
+      await definirBancoReserva(chave, valor, nome, me.usuario, me.perfil);
+      toast(valor ? '🏦 Adicionado ao banco de reserva' : '↩ Removido do banco de reserva', 'ok');
+    } catch (e) {
+      console.error(e);
+      toast('❌ Falha: ' + e.message, 'err');
+    }
+  };
+
+  window.excluirCandidatoDireto = async function (chave, nome) {
+    const tents = tentativasDe(chave);
+    if (!tents.length) return;
+    const ok = await abrirConfirmacao(
+      `Excluir TODOS os testes de "${nome}" (${tents.length} registro(s))?\n\nEssa ação não pode ser desfeita.`,
+      { titulo: 'Excluir candidato', textoConfirmar: '🗑 Excluir', corConfirmar: 'btn-danger', icone: '🗑' }
+    );
+    if (!ok) return;
+    try {
+      for (const t of tents) await excluirResultado(t.id);
+      toast(`🗑️ ${tents.length} registro(s) de "${nome}" excluído(s)`, 'ok');
+    } catch (e) {
+      console.error(e);
+      toast('❌ Falha ao excluir: ' + e.message, 'err');
+    }
+  };
+
+  // ══════════ BANCO DE RESERVA ══════════
+  window.renderBancoReserva = function renderBancoReserva() {
+    const tbody = document.getElementById('bancoReservaTableBody');
+    if (!tbody) return;
+    const noBanco = candidatosAgrupados().filter(c => {
+      const p = PIPELINE_MAP[c.chave.replace(/[/]/g, '_')];
+      return p && p.banco_reserva === true;
+    }).sort((a, b) => {
+      const ta = (PIPELINE_MAP[a.chave.replace(/[/]/g, '_')] || {}).banco_reserva_em;
+      const tb = (PIPELINE_MAP[b.chave.replace(/[/]/g, '_')] || {}).banco_reserva_em;
+      return String(tb || '').localeCompare(String(ta || ''));
+    });
+    const badge = document.getElementById('bancoReservaBadge');
+    if (badge) badge.textContent = noBanco.length + ' registro' + (noBanco.length !== 1 ? 's' : '');
+    if (!noBanco.length) {
+      tbody.innerHTML = '<tr><td colspan="7"><div class="empty-state"><div class="empty-icon">🏦</div>Nenhum candidato no banco de reserva ainda</div></td></tr>';
+      return;
+    }
+    const podeGerenciar = PODE_GERENCIAR_CANDIDATOS.includes(me.perfil);
+    tbody.innerHTML = noBanco.map((c, i) => {
+      const chaveId = c.chave.replace(/[/]/g, '_');
+      const p = PIPELINE_MAP[chaveId] || {};
+      const observacao = p.observacao || '';
+      const chaveEsc = c.chave.replace(/'/g, "\\'");
+      const nomeEsc = escapeHtml(c.nome).replace(/'/g, "\\'");
+      const acao = podeGerenciar
+        ? `<button class="btn-act btn-neutral" style="font-size:11px;padding:6px 10px;" onclick="event.stopPropagation();alternarBancoReserva('${chaveEsc}','${nomeEsc}',false)">↩ Remover do banco</button>`
+        : '';
+      return `
+      <tr class="clickable" onclick="abrirCandidato('${chaveEsc}')" title="Ver detalhamento e exportar PDF">
+        <td style="text-align:center;color:var(--text3);">${i + 1}</td>
+        <td class="td-nome">${escapeHtml(c.nome)} <span class="row-hint">▸ detalhes</span></td>
+        <td><span class="td-pct" style="color:${c.media >= 70 ? 'var(--green)' : 'var(--red)'}">${c.media}%</span></td>
+        <td style="max-width:200px;white-space:normal;font-size:12px;color:var(--text2);">${observacao ? escapeHtml(observacao) : '<span style="color:var(--text4);">—</span>'}</td>
+        <td>${escapeHtml(p.banco_reserva_por || '—')}</td>
+        <td class="td-time">${p.banco_reserva_em ? fmtDataHora(p.banco_reserva_em) : '—'}</td>
+        <td onclick="event.stopPropagation()">${acao}</td>
+      </tr>`;
+    }).join('');
   };
 
   // ══════════ BANCO DE APROVADOS ══════════
@@ -2872,6 +3002,7 @@
       renderBancoAprovados();
       renderPipeline();
       renderContratados();
+      renderBancoReserva();
     } catch (e) {
       console.error('Erro ao renderizar:', e);
     }
@@ -3493,9 +3624,9 @@
   const bancoDataFimEl = document.getElementById('bancoDataFim');
   if (bancoDataIniEl) bancoDataIniEl.value = dataLocalYMD(new Date());
   if (bancoDataFimEl) bancoDataFimEl.value = dataLocalYMD(new Date());
-  // Candidatos também abre filtrado no dia de hoje por padrão.
-  const pipelineDateEl = document.getElementById('pipelineDateInput');
-  if (pipelineDateEl) pipelineDateEl.value = dataLocalYMD(new Date());
+  // Candidatos abre mostrando TODOS os dias por padrão (mais recentes no
+  // topo) — diferente de Aprovados/Contratados/Violações, que priorizam
+  // hoje. O campo de data continua disponível pra quem quiser filtrar.
   // Contratados também abre filtrado no dia de hoje por padrão.
   const contratadosDataIniEl = document.getElementById('contratadosDataIni');
   const contratadosDataFimEl = document.getElementById('contratadosDataFim');

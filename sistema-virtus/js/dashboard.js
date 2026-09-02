@@ -235,6 +235,21 @@ export async function definirAprovacaoManual(chave, aprovado, nome, avaliador, p
   }, { merge: true });
 }
 
+// Banco de Reserva — candidato bom, mas sem vaga aberta agora. Guardado
+// pra quando surgir uma vaga futura. Campo independente de `aprovado`
+// (aprovação para entrevista) e de `decisao_final` (contratado/recusado) —
+// um candidato pode estar em qualquer combinação desses três estados.
+export async function definirBancoReserva(chave, valor, nome, avaliador, perfilAvaliador) {
+  const id = chave.replace(/[/]/g, "_");
+  await setDoc(doc(db, "pipeline", id), {
+    banco_reserva: valor,
+    nome: nome || null,
+    banco_reserva_por: avaliador || null,
+    banco_reserva_por_perfil: perfilAvaliador || null,
+    banco_reserva_em: serverTimestamp()
+  }, { merge: true });
+}
+
 // Decisão final da entrevista (aba "Aprovados para Entrevista"): contratado
 // ou recusado. Substitui o fluxo antigo de duas etapas (coordenador então
 // gerência) por uma decisão única, que qualquer um de
