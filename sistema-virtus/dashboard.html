@@ -906,12 +906,6 @@
         <div class="fq-btn" id="fqErros" onclick="setFiltroQ('erros')">❌ Só os erros</div>
         <div class="fq-btn" id="fqAcertos" onclick="setFiltroQ('acertos')">✅ Só os acertos</div>
       </div>
-      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px;">
-        <button class="btn-pdf" onclick="gerarPDF()">📄 Relatório completo</button>
-        <button class="btn-pdf" style="background:linear-gradient(135deg,#0088B0,#00C8E8);color:#02222c;" onclick="gerarResumoSkills()">📊 Resumo de competências</button>
-        <button class="btn-act btn-neutral" style="background:#1F8A3B;color:#fff;" onclick="enviarWhatsappRelatorio('completo')">💬 Completo (WhatsApp)</button>
-        <button class="btn-act btn-neutral" style="background:#1F8A3B;color:#fff;" onclick="enviarWhatsappRelatorio('resumo')">💬 Resumo (WhatsApp)</button>
-      </div>
       <div id="cmConteudo"></div>
     </div>
     <div class="modal-actions">
@@ -937,6 +931,29 @@
     <div class="modal-actions">
       <button class="btn-act btn-neutral" id="confirmBtnCancelar" style="padding:12px 20px;border-radius:6px;" onclick="responderConfirmacao(false)">Cancelar</button>
       <button class="btn-act btn-approve-admin" id="confirmBtnOk" style="padding:12px 20px;border-radius:6px;margin-left:auto;" onclick="responderConfirmacao(true)">Confirmar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ MODAL: WHATSAPP DIRETO COM O CANDIDATO ══════════ -->
+<div class="modal-back" id="whatsappCandModal" onclick="if(event.target===this)fecharWhatsappCandidato()">
+  <div class="modal-card" style="max-width:480px;">
+    <div class="modal-top">
+      <div class="modal-avatar">💬</div>
+      <div>
+        <div class="modal-cand-nome">Falar com o candidato</div>
+        <div class="modal-cand-sub" id="whatsappCandNome">—</div>
+      </div>
+      <button class="modal-close" onclick="fecharWhatsappCandidato()" title="Fechar">✕</button>
+    </div>
+    <div class="modal-scroll" style="padding:20px;">
+      <div style="font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--text3);margin-bottom:12px;">Escolha uma frase pronta (você pode editar antes de enviar):</div>
+      <div id="whatsappCandTemplates" style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px;"></div>
+      <textarea class="field-input" id="whatsappCandTextarea" rows="4" style="width:100%;resize:vertical;font-family:inherit;line-height:1.5;" placeholder="Ou escreva sua própria mensagem..."></textarea>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-act btn-neutral" style="padding:12px 20px;border-radius:6px;" onclick="fecharWhatsappCandidato()">Cancelar</button>
+      <button class="btn-act btn-neutral" style="padding:12px 20px;border-radius:6px;margin-left:auto;background:#25D366;color:#052e16;" onclick="enviarWhatsappCandidatoDireto()">💬 Abrir WhatsApp</button>
     </div>
   </div>
 </div>
@@ -1719,6 +1736,7 @@
     fecharCandidato();
     if (document.getElementById('obsModal').classList.contains('show')) fecharObservacao();
     if (document.getElementById('confirmModal').classList.contains('show')) responderConfirmacao(false);
+    if (document.getElementById('whatsappCandModal').classList.contains('show')) fecharWhatsappCandidato();
   });
 
   function renderModalCandidato() {
@@ -1783,6 +1801,14 @@
           </div>
         </div>`;
     }
+
+    html += `
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin:16px 0 20px;">
+        <button class="btn-pdf" onclick="gerarPDF()">📄 Relatório completo</button>
+        <button class="btn-pdf" style="background:linear-gradient(135deg,#0088B0,#00C8E8);color:#02222c;" onclick="gerarResumoSkills()">📊 Resumo de competências</button>
+        <button class="btn-act btn-neutral" style="background:#1F8A3B;color:#fff;" onclick="enviarWhatsappRelatorio('completo')">💬 Completo (WhatsApp)</button>
+        <button class="btn-act btn-neutral" style="background:#1F8A3B;color:#fff;" onclick="enviarWhatsappRelatorio('resumo')">💬 Resumo (WhatsApp)</button>
+      </div>`;
 
     for (const t of quizzes) {
       const pct = t.pct || 0;
@@ -2648,6 +2674,7 @@
             <button class="btn-act ${noBancoReserva ? 'btn-approve-admin' : 'btn-neutral'}" style="font-size:11px;padding:6px 10px;" onclick="event.stopPropagation();alternarBancoReserva('${chaveEsc}','${nomeEsc}',${!noBancoReserva})">
               ${noBancoReserva ? '✅ Banco de Reserva' : '🏦 Banco de Reserva'}
             </button>
+            <button class="btn-act btn-neutral" style="font-size:11px;padding:6px 10px;background:#1F8A3B;color:#fff;" onclick="event.stopPropagation();abrirWhatsappCandidato('${chaveEsc}','${nomeEsc}')">💬 WhatsApp</button>
             ${podeExcluir ? `<button class="btn-act btn-danger" style="font-size:11px;padding:6px 10px;" onclick="event.stopPropagation();excluirCandidatoDireto('${chaveEsc}','${nomeEsc}')">🗑 Excluir</button>` : ''}
           </div>
         </td>
@@ -2667,6 +2694,51 @@
         ${colunasGerenciar}
       </tr>`;
     }).join('');
+  };
+
+  // ══════════ WHATSAPP DIRETO COM O CANDIDATO ══════════
+  // Frases prontas pra falar com o próprio candidato (diferente do botão
+  // "Avisar o RH" do modal de relatório, que é o CANDIDATO avisando a
+  // equipe — aqui é a equipe entrando em contato com o candidato).
+  let WHATSAPP_CAND_TELEFONE = null;
+  let WHATSAPP_CAND_MSGS = [];
+
+  window.abrirWhatsappCandidato = function (chave, nome) {
+    const tents = tentativasDe(chave);
+    const f = fichaDe(tents);
+    let telefone = f && f.telefone ? f.telefone.replace(/\D/g, '') : '';
+    if (!telefone) { toast('❌ Esse candidato não tem telefone cadastrado', 'err'); return; }
+    if (telefone.length <= 11) telefone = '55' + telefone; // DDI Brasil
+    WHATSAPP_CAND_TELEFONE = telefone;
+
+    const cargo = (f && f.cargo_pretendido) || 'a vaga';
+    WHATSAPP_CAND_MSGS = [
+      { label: '📋 Interesse na vaga', texto: `Olá ${nome}! Tudo bem? Aqui é da equipe de recrutamento. Você ainda tem interesse na vaga de ${cargo}?` },
+      { label: '🎤 Convocação para entrevista', texto: `Olá ${nome}! Você foi selecionado(a) para a próxima etapa do processo seletivo. Podemos agendar uma entrevista?` },
+      { label: '🎉 Aprovado(a) no processo', texto: `Olá ${nome}! Temos uma ótima notícia: você foi aprovado(a) no processo seletivo para a vaga de ${cargo}. Em breve entraremos em contato com os próximos passos.` },
+      { label: '❌ Não aprovado(a) no processo', texto: `Olá ${nome}! Agradecemos sua participação no processo seletivo para a vaga de ${cargo}. No momento você não foi selecionado(a) para esta vaga, mas seu currículo fica em nosso banco de talentos.` }
+    ];
+    document.getElementById('whatsappCandNome').textContent = nome;
+    document.getElementById('whatsappCandTemplates').innerHTML = WHATSAPP_CAND_MSGS.map((m, i) =>
+      `<button type="button" class="btn-act btn-neutral" style="text-align:left;white-space:normal;" onclick="usarTemplateWhatsappCandidato(${i})">${m.label}</button>`
+    ).join('');
+    document.getElementById('whatsappCandTextarea').value = '';
+    document.getElementById('whatsappCandModal').classList.add('show');
+  };
+
+  window.usarTemplateWhatsappCandidato = function (i) {
+    document.getElementById('whatsappCandTextarea').value = WHATSAPP_CAND_MSGS[i].texto;
+  };
+
+  window.fecharWhatsappCandidato = function () {
+    document.getElementById('whatsappCandModal').classList.remove('show');
+  };
+
+  window.enviarWhatsappCandidatoDireto = function () {
+    const texto = document.getElementById('whatsappCandTextarea').value.trim();
+    if (!texto) { toast('Escreva ou escolha uma mensagem antes de enviar', 'err'); return; }
+    window.open(`https://wa.me/${WHATSAPP_CAND_TELEFONE}?text=${encodeURIComponent(texto)}`, '_blank');
+    fecharWhatsappCandidato();
   };
 
   let OBS_CHAVE_ATUAL = null;
@@ -2787,9 +2859,11 @@
       const observacao = p.observacao || '';
       const chaveEsc = c.chave.replace(/'/g, "\\'");
       const nomeEsc = escapeHtml(c.nome).replace(/'/g, "\\'");
-      const acao = podeGerenciar
-        ? `<button class="btn-act btn-neutral" style="font-size:11px;padding:6px 10px;" onclick="event.stopPropagation();alternarBancoReserva('${chaveEsc}','${nomeEsc}',false)">↩ Remover do banco</button>`
-        : '';
+      const acao = `
+        <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;">
+          <button class="btn-act btn-neutral" style="font-size:11px;padding:6px 10px;background:#1F8A3B;color:#fff;" onclick="event.stopPropagation();abrirWhatsappCandidato('${chaveEsc}','${nomeEsc}')">💬 WhatsApp</button>
+          ${podeGerenciar ? `<button class="btn-act btn-neutral" style="font-size:11px;padding:6px 10px;" onclick="event.stopPropagation();alternarBancoReserva('${chaveEsc}','${nomeEsc}',false)">↩ Remover do banco</button>` : ''}
+        </div>`;
       return `
       <tr class="clickable" onclick="abrirCandidato('${chaveEsc}')" title="Ver detalhamento e exportar PDF">
         <td style="text-align:center;color:var(--text3);">${i + 1}</td>
