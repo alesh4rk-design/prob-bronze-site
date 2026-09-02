@@ -905,13 +905,15 @@
         <div class="fq-btn" id="fqErros" onclick="setFiltroQ('erros')">❌ Só os erros</div>
         <div class="fq-btn" id="fqAcertos" onclick="setFiltroQ('acertos')">✅ Só os acertos</div>
       </div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px;">
+        <button class="btn-pdf" onclick="gerarPDF()">📄 Relatório completo</button>
+        <button class="btn-pdf" style="background:linear-gradient(135deg,#0088B0,#00C8E8);color:#02222c;" onclick="gerarResumoSkills()">📊 Resumo de competências</button>
+        <button class="btn-act btn-neutral" style="background:#1F8A3B;color:#fff;" onclick="enviarWhatsappRelatorio('completo')">💬 Completo (WhatsApp)</button>
+        <button class="btn-act btn-neutral" style="background:#1F8A3B;color:#fff;" onclick="enviarWhatsappRelatorio('resumo')">💬 Resumo (WhatsApp)</button>
+      </div>
       <div id="cmConteudo"></div>
     </div>
     <div class="modal-actions">
-      <button class="btn-pdf" onclick="gerarPDF()">📄 Relatório completo</button>
-      <button class="btn-pdf" style="background:linear-gradient(135deg,#0088B0,#00C8E8);color:#02222c;" onclick="gerarResumoSkills()">📊 Resumo de competências</button>
-      <button class="btn-act btn-neutral" style="background:#1F8A3B;color:#fff;" onclick="enviarWhatsappRelatorio('completo')">💬 Completo (WhatsApp)</button>
-      <button class="btn-act btn-neutral" style="background:#1F8A3B;color:#fff;" onclick="enviarWhatsappRelatorio('resumo')">💬 Resumo (WhatsApp)</button>
       <button class="btn-act btn-neutral" style="padding:12px 20px;border-radius:6px;" onclick="fecharCandidato()">Fechar</button>
       <button class="btn-act btn-danger" id="btnExcluirCandidato" style="padding:12px 20px;border-radius:6px;margin-left:auto;" onclick="excluirCandidatoAtual()">🗑 Excluir candidato</button>
     </div>
