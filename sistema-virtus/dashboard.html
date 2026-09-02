@@ -559,6 +559,34 @@
   .btn-danger  { background:transparent; color:var(--red); border:1px solid var(--red); }
   .btn-neutral { background:var(--ink4); color:var(--text2); border:1px solid var(--line2); }
 
+  /* Ações da tabela de Candidatos (Entrevista/Reserva/WhatsApp/Excluir):
+     grade 2x2 compacta em vez de botões empilhados um embaixo do outro. */
+  .acoes-candidato-grid { display:grid; grid-template-columns:1fr 1fr; gap:5px; min-width:150px; }
+  .btn-act-mini {
+    border:1px solid var(--line2); border-radius:4px; padding:6px 4px; cursor:pointer;
+    background:var(--ink4); color:var(--text2);
+    font-family:'Rajdhani',sans-serif; font-weight:700; font-size:10.5px;
+    letter-spacing:0.3px; text-transform:uppercase; transition:all .15s;
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  }
+  .btn-act-mini:hover { transform:translateY(-1px); }
+  .btn-act-mini.ativo { background:var(--green); color:#04170e; border-color:var(--green); }
+  .btn-act-mini.whatsapp { background:transparent; color:#25D366; border-color:#25D366; }
+  .btn-act-mini.excluir { background:transparent; color:var(--red); border-color:var(--red); }
+
+  /* Menu de ações do candidato (modal) — uma linha por opção */
+  .acao-item {
+    display:flex; align-items:center; justify-content:space-between; gap:10px;
+    border:1px solid var(--line2); border-radius:6px; padding:12px 14px; cursor:pointer;
+    background:var(--ink4); color:var(--text); text-align:left;
+    font-family:'Rajdhani',sans-serif; font-weight:700; font-size:13px; letter-spacing:0.5px;
+    transition:all .15s; width:100%;
+  }
+  .acao-item:hover { transform:translateY(-1px); border-color:var(--line3); }
+  .acao-item.ativo { background:var(--greendim); border-color:var(--green); color:var(--green); }
+  .acao-item.perigo { color:var(--red); border-color:rgba(255,85,73,.3); }
+  .acao-item.perigo:hover { background:var(--reddim); }
+
   /* Switch de módulo ativo/inativo */
   .mod-row {
     display:flex; align-items:center; gap:14px; padding:14px 16px;
@@ -931,6 +959,23 @@
     <div class="modal-actions">
       <button class="btn-act btn-neutral" id="confirmBtnCancelar" style="padding:12px 20px;border-radius:6px;" onclick="responderConfirmacao(false)">Cancelar</button>
       <button class="btn-act btn-approve-admin" id="confirmBtnOk" style="padding:12px 20px;border-radius:6px;margin-left:auto;" onclick="responderConfirmacao(true)">Confirmar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ MODAL: MENU DE AÇÕES DO CANDIDATO ══════════ -->
+<div class="modal-back" id="acoesCandModal" onclick="if(event.target===this)fecharAcoesCandidato()">
+  <div class="modal-card" style="max-width:380px;">
+    <div class="modal-top">
+      <div class="modal-avatar">⚙️</div>
+      <div>
+        <div class="modal-cand-nome">Ações</div>
+        <div class="modal-cand-sub" id="acoesCandNome">—</div>
+      </div>
+      <button class="modal-close" onclick="fecharAcoesCandidato()" title="Fechar">✕</button>
+    </div>
+    <div class="modal-scroll" style="padding:14px 20px 20px;">
+      <div id="acoesCandLista" style="display:flex;flex-direction:column;gap:8px;"></div>
     </div>
   </div>
 </div>
@@ -1564,7 +1609,8 @@
     document.getElementById('sidebarItemDashboard').style.display = 'none';
     document.getElementById('sidebarItemBanco').style.display = 'none';
     document.getElementById('sidebarItemContratados').style.display = 'none';
-    document.getElementById('sidebarItemBancoReserva').style.display = 'none';
+    // Banco de Reserva fica visível pro view — só não pode marcar/desmarcar
+    // candidatos (ver renderBancoReserva/PODE_GERENCIAR_CANDIDATOS).
   }
 
   // Coordenador só precisa da lista corrida de candidatos (Processo
@@ -1623,7 +1669,7 @@
     if ((view === 'perguntas' || view === 'usuarios') && !ehGerenciaSV) view = 'dashboard';
     // Viewer só tem a aba Candidatos (vê os testes realizados de todo
     // mundo, sem poder selecionar ninguém pra entrevista).
-    if ((view === 'banco' || view === 'contratados' || view === 'bancoreserva' || view === 'dashboard') && me && me.perfil === 'viewer') view = 'pipeline';
+    if ((view === 'banco' || view === 'contratados' || view === 'dashboard') && me && me.perfil === 'viewer') view = 'pipeline';
     const VIEWS_BLOQUEADAS_COORDENADOR = [...VIEWS_OPERACIONAIS, 'dashboard', 'violacoes'];
     if (VIEWS_BLOQUEADAS_COORDENADOR.includes(view) && me && me.perfil === 'coordenador') view = 'pipeline';
     document.querySelectorAll('.app-view').forEach(v => v.classList.toggle('active', v.id === 'view-' + view));
@@ -1737,6 +1783,7 @@
     if (document.getElementById('obsModal').classList.contains('show')) fecharObservacao();
     if (document.getElementById('confirmModal').classList.contains('show')) responderConfirmacao(false);
     if (document.getElementById('whatsappCandModal').classList.contains('show')) fecharWhatsappCandidato();
+    if (document.getElementById('acoesCandModal').classList.contains('show')) fecharAcoesCandidato();
   });
 
   function renderModalCandidato() {
@@ -2641,42 +2688,26 @@
       <th>Candidato</th>
       <th>Testes realizados</th>
       <th>Nota<br><span style="font-weight:400;text-transform:none;font-size:10px;opacity:0.75;">(módulo escolhido)</span></th>
-      ${podeGerenciar ? '<th>Observação</th><th>Ações</th><th>Atualizado</th>' : ''}
+      ${podeGerenciar ? '<th>Ações</th><th>Atualizado</th>' : ''}
     `;
-    const colspan = podeGerenciar ? 7 : 4;
+    const colspan = podeGerenciar ? 6 : 4;
 
     if (!candidatos.length) {
       tbody.innerHTML = `<tr><td colspan="${colspan}"><div class="empty-state"><div class="empty-icon">🧭</div>Nenhum candidato encontrado.</div></td></tr>`;
       return;
     }
-    const podeExcluir = PODE_EXCLUIR_CANDIDATOS.includes(me.perfil);
     tbody.innerHTML = candidatos.map((c, i) => {
       const chaveId = c.chave.replace(/[/]/g, '_');
       const pipelineInfo = PIPELINE_MAP[chaveId] || {};
       const atualizadoEm = pipelineInfo.atualizado_em ? fmtDataHora(pipelineInfo.atualizado_em) : '—';
       const aprovadoParaEntrevista = pipelineInfo.aprovado === true;
       const noBancoReserva = pipelineInfo.banco_reserva === true;
-      const observacao = pipelineInfo.observacao || '';
       const chaveEsc = c.chave.replace(/'/g, "\\'");
       const nomeEsc = escapeHtml(c.nome).replace(/'/g, "\\'");
 
       const colunasGerenciar = podeGerenciar ? `
         <td onclick="event.stopPropagation()">
-          <button class="btn-act btn-neutral" onclick="event.stopPropagation();editarObservacaoPipeline('${chaveEsc}','${nomeEsc}')" title="${observacao ? escapeHtml(observacao) : 'Nenhuma observação ainda'}">
-            📝 ${observacao ? 'Ver/editar' : 'Observação'}
-          </button>
-        </td>
-        <td onclick="event.stopPropagation()">
-          <div style="display:flex;flex-direction:column;gap:4px;">
-            <button class="btn-act ${aprovadoParaEntrevista ? 'btn-approve-admin' : 'btn-neutral'}" style="font-size:11px;padding:6px 10px;" onclick="event.stopPropagation();alternarAprovadoParaEntrevista('${chaveEsc}','${nomeEsc}',${!aprovadoParaEntrevista})">
-              ${aprovadoParaEntrevista ? '✅ Entrevista' : '☐ Entrevista'}
-            </button>
-            <button class="btn-act ${noBancoReserva ? 'btn-approve-admin' : 'btn-neutral'}" style="font-size:11px;padding:6px 10px;" onclick="event.stopPropagation();alternarBancoReserva('${chaveEsc}','${nomeEsc}',${!noBancoReserva})">
-              ${noBancoReserva ? '✅ Banco de Reserva' : '🏦 Banco de Reserva'}
-            </button>
-            <button class="btn-act btn-neutral" style="font-size:11px;padding:6px 10px;background:#1F8A3B;color:#fff;" onclick="event.stopPropagation();abrirWhatsappCandidato('${chaveEsc}','${nomeEsc}')">💬 WhatsApp</button>
-            ${podeExcluir ? `<button class="btn-act btn-danger" style="font-size:11px;padding:6px 10px;" onclick="event.stopPropagation();excluirCandidatoDireto('${chaveEsc}','${nomeEsc}')">🗑 Excluir</button>` : ''}
-          </div>
+          <button class="btn-act-mini ${aprovadoParaEntrevista || noBancoReserva ? 'ativo' : ''}" onclick="event.stopPropagation();abrirAcoesCandidato('${chaveEsc}','${nomeEsc}')">⚙️ Ações</button>
         </td>
         <td class="td-time">${atualizadoEm}</td>` : '';
 
@@ -2694,6 +2725,46 @@
         ${colunasGerenciar}
       </tr>`;
     }).join('');
+  };
+
+  // ══════════ MENU DE AÇÕES DO CANDIDATO (aba Candidatos) ══════════
+  // Um botão só que abre a lista de ações, em vez de vários botões
+  // empilhados na linha da tabela.
+  window.abrirAcoesCandidato = function (chave, nome) {
+    const chaveId = chave.replace(/[/]/g, '_');
+    const p = PIPELINE_MAP[chaveId] || {};
+    const aprovado = p.aprovado === true;
+    const noBanco = p.banco_reserva === true;
+    const podeExcluirAqui = PODE_EXCLUIR_CANDIDATOS.includes(me.perfil);
+    const chaveEsc = chave.replace(/'/g, "\\'");
+    const nomeEsc = escapeHtml(nome).replace(/'/g, "\\'");
+
+    document.getElementById('acoesCandNome').textContent = nome;
+    const itens = [
+      {
+        label: (aprovado ? '✅ Marcado para Entrevista' : '☐ Aprovar para Entrevista'),
+        onclick: `fecharAcoesCandidato();alternarAprovadoParaEntrevista('${chaveEsc}','${nomeEsc}',${!aprovado})`,
+        ativo: aprovado
+      },
+      {
+        label: (noBanco ? '✅ No Banco de Reserva' : '🏦 Colocar no Banco de Reserva'),
+        onclick: `fecharAcoesCandidato();alternarBancoReserva('${chaveEsc}','${nomeEsc}',${!noBanco})`,
+        ativo: noBanco
+      },
+      { label: '📝 ' + (p.observacao ? 'Ver/editar observação' : 'Escrever observação'), onclick: `fecharAcoesCandidato();editarObservacaoPipeline('${chaveEsc}','${nomeEsc}')` },
+      { label: '💬 Falar no WhatsApp', onclick: `fecharAcoesCandidato();abrirWhatsappCandidato('${chaveEsc}','${nomeEsc}')` }
+    ];
+    if (podeExcluirAqui) {
+      itens.push({ label: '🗑 Excluir candidato', onclick: `fecharAcoesCandidato();excluirCandidatoDireto('${chaveEsc}','${nomeEsc}')`, perigo: true });
+    }
+    document.getElementById('acoesCandLista').innerHTML = itens.map(it =>
+      `<button type="button" class="acao-item ${it.ativo ? 'ativo' : ''} ${it.perigo ? 'perigo' : ''}" onclick="${it.onclick}">${it.label}</button>`
+    ).join('');
+    document.getElementById('acoesCandModal').classList.add('show');
+  };
+
+  window.fecharAcoesCandidato = function () {
+    document.getElementById('acoesCandModal').classList.remove('show');
   };
 
   // ══════════ WHATSAPP DIRETO COM O CANDIDATO ══════════
@@ -2860,9 +2931,9 @@
       const chaveEsc = c.chave.replace(/'/g, "\\'");
       const nomeEsc = escapeHtml(c.nome).replace(/'/g, "\\'");
       const acao = `
-        <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;">
-          <button class="btn-act btn-neutral" style="font-size:11px;padding:6px 10px;background:#1F8A3B;color:#fff;" onclick="event.stopPropagation();abrirWhatsappCandidato('${chaveEsc}','${nomeEsc}')">💬 WhatsApp</button>
-          ${podeGerenciar ? `<button class="btn-act btn-neutral" style="font-size:11px;padding:6px 10px;" onclick="event.stopPropagation();alternarBancoReserva('${chaveEsc}','${nomeEsc}',false)">↩ Remover do banco</button>` : ''}
+        <div style="display:flex;gap:5px;flex-wrap:wrap;justify-content:flex-end;">
+          <button class="btn-act-mini whatsapp" onclick="event.stopPropagation();abrirWhatsappCandidato('${chaveEsc}','${nomeEsc}')">💬 WhatsApp</button>
+          ${podeGerenciar ? `<button class="btn-act-mini" onclick="event.stopPropagation();alternarBancoReserva('${chaveEsc}','${nomeEsc}',false)">↩ Remover</button>` : ''}
         </div>`;
       return `
       <tr class="clickable" onclick="abrirCandidato('${chaveEsc}')" title="Ver detalhamento e exportar PDF">
@@ -3667,19 +3738,18 @@
           () => statusDot(false, 'Reconectando...')
         ));
       }
-      // Processo Seletivo: admin/gerência/avaliador (gerenciam) e
-      // coordenador (só lê) — viewer não tem acesso nas rules.
+      // Processo Seletivo: admin/gerência/avaliador/coordenador gerenciam;
+      // viewer só lê (precisa disso pra ver quem está no Banco de Reserva —
+      // as regras do Firestore liberam leitura pra qualquer perfil aprovado).
       // PIPELINE_MAP também alimenta Aprovados para Entrevista, Contratados
       // e o gráfico "Status de Entrevistas" do Dashboard — por isso o
       // callback chama renderAll() inteiro (não só renderPipeline()), senão
       // essas telas ficavam com dado desatualizado até a próxima atualização
       // de resultados (podendo demorar horas, ou nunca acontecer na sessão).
-      if (me.perfil !== 'viewer') {
-        unsubs.push(assinarPipeline(
-          mapa => { PIPELINE_MAP = mapa; renderAll(); },
-          () => statusDot(false, 'Reconectando...')
-        ));
-      }
+      unsubs.push(assinarPipeline(
+        mapa => { PIPELINE_MAP = mapa; renderAll(); },
+        () => statusDot(false, 'Reconectando...')
+      ));
     } catch (e) {
       console.error(e);
       statusDot(false, 'Falha ao conectar ao servidor');
