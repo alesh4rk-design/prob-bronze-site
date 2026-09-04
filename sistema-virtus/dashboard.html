@@ -1792,9 +1792,11 @@
 
     const quizzes = tents.filter(t => t.tipo !== 'typing');
     const typings = tents.filter(t => t.tipo === 'typing');
-    const viols = violacoesDe(CAND_ATUAL);
+    const nomeAtual = tents[0].nome || CAND_ATUAL;
+    // violacoesDe espera o NOME, não a chave — ver nota em gerarPDF.
+    const viols = violacoesDe(nomeAtual);
 
-    document.getElementById('cmNome').textContent = tents[0].nome || CAND_ATUAL;
+    document.getElementById('cmNome').textContent = nomeAtual;
     document.getElementById('cmSub').textContent =
       `${tents.length} teste(s) · ${quizzes.length} quiz · ${typings.length} digitação` +
       (viols.length ? ` · ⚠ ${viols.length} violação(ões)` : '');
@@ -1950,8 +1952,12 @@
 
     const quizzes = tents.filter(t => t.tipo !== 'typing');
     const typings = tents.filter(t => t.tipo === 'typing');
-    const viols = violacoesDe(CAND_ATUAL);
     const nome = tents[0].nome || CAND_ATUAL;
+    // violacoesDe espera o NOME do candidato, não a chave (CAND_ATUAL pode
+    // ser "cpf:..." ou "nome:..." desde que o agrupamento passou a usar
+    // CPF) — passar a chave direto nunca batia com nada e escondia
+    // violações de verdade nos relatórios.
+    const viols = violacoesDe(nome);
 
     // Média geral considera apenas os quizzes (digitação tem escala própria).
     const media = quizzes.length
@@ -2162,9 +2168,10 @@
 
     const quizzes = tents.filter(t => t.tipo !== 'typing');
     const typings = tents.filter(t => t.tipo === 'typing');
-    const viols = violacoesDe(CAND_ATUAL);
     const f = fichaDe(tents);
     const nome = tents[0].nome || CAND_ATUAL;
+    // violacoesDe espera o NOME, não a chave — ver nota em gerarPDF.
+    const viols = violacoesDe(nome);
 
     const mods = consolidarModulos(quizzes);
     const media = mods.length ? Math.round(mods.reduce((a, m) => a + m.pct, 0) / mods.length) : null;
@@ -2362,9 +2369,10 @@
 
     const quizzes = tents.filter(t => t.tipo !== 'typing');
     const typings = tents.filter(t => t.tipo === 'typing');
-    const viols = violacoesDe(CAND_ATUAL);
     const f = fichaDe(tents);
     const nome = tents[0].nome || CAND_ATUAL;
+    // violacoesDe espera o NOME, não a chave — ver nota em gerarPDF.
+    const viols = violacoesDe(nome);
 
     let msg = `*SISTEMA VIRTUS*\n`;
     msg += tipo === 'resumo' ? `_Resumo de Competências_\n\n` : `_Relatório Completo_\n\n`;
