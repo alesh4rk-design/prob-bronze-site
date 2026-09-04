@@ -92,3 +92,42 @@ export function descricaoViolacao(v) {
   const base = tipoViolacaoLabel(v.tipo);
   return v.detalhe ? `${base} — ${v.detalhe}` : base;
 }
+
+// Consolida o melhor resultado por módulo (se refez o teste, vale o maior).
+export function consolidarModulos(quizzes) {
+  const porMod = {};
+  for (const t of quizzes) {
+    const m = t.modulo || '—';
+    const pct = t.pct || 0;
+    if (!porMod[m] || pct > porMod[m].pct) {
+      porMod[m] = { modulo: m, pct, acertos: t.acertos, total: t.total, tentativas: 0 };
+    }
+  }
+  for (const t of quizzes) {
+    const m = t.modulo || '—';
+    if (porMod[m]) porMod[m].tentativas++;
+  }
+  return Object.values(porMod).sort((a, b) => b.pct - a.pct);
+}
+
+export function criadoEmDe(c) {
+  if (!c.criado_em) return null;
+  const d = c.criado_em.toDate ? c.criado_em.toDate() : new Date(c.criado_em);
+  return isNaN(d) ? null : d;
+}
+
+export function expiraEmDe(c, validadeMs) {
+  const criadoEm = criadoEmDe(c);
+  return criadoEm ? new Date(criadoEm.getTime() + validadeMs) : null;
+}
+
+// `agora` é injetado (em vez de usar Date.now() direto) para a função dar
+// sempre o mesmo resultado com a mesma entrada — assim dá pra testar sem
+// depender do relógio real.
+export function statusCodigo(c, validadeMs, agora = Date.now()) {
+  const expiraEm = expiraEmDe(c, validadeMs);
+  const expirado = expiraEm && expiraEm.getTime() <= agora;
+  if (c.ativo === false) return { txt: '✕ Desativado', cor: 'var(--text4)', ok: false };
+  if (expirado) return { txt: '⏱ Expirado', cor: 'var(--text3)', ok: false };
+  return { txt: '✓ Ativo', cor: 'var(--green)', ok: true };
+}
