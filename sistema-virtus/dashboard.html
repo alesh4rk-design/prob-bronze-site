@@ -1933,10 +1933,9 @@
           </div>
           <div class="tent-body">
             ${viols.map(v => `
-              <div style="font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--text2);padding:5px 0;border-bottom:1px solid var(--line);">
-                <span style="color:var(--red);">${escapeHtml(v.tipo || '—')}</span>
-                ${v.detalhe ? ' · ' + escapeHtml(v.detalhe) : ''}
-                <span style="color:var(--text4);"> — ${escapeHtml(v.modulo || '')} ${escapeHtml(v.hora_recebimento || '')} ${escapeHtml(v.data || '')}</span>
+              <div style="font-family:'Exo 2',sans-serif;font-size:12px;color:var(--text2);padding:8px 0;border-bottom:1px solid var(--line);">
+                <div style="color:var(--red);font-weight:700;">⚠ ${escapeHtml(descricaoViolacao(v))}</div>
+                <div style="font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--text4);margin-top:2px;">${escapeHtml(v.modulo || '')} · ${escapeHtml(v.data || '')} ${escapeHtml(v.hora_recebimento || '')}</div>
               </div>`).join('')}
           </div>
         </div>`;
@@ -2105,8 +2104,11 @@
 
     if (viols.length) {
       h += `<div class="pr-sec-title">Ocorrências durante os testes</div>
-            <div class="pr-viol">` +
-        viols.map(v => `▸ ${escapeHtml(v.tipo || '—')}${v.detalhe ? ' — ' + escapeHtml(v.detalhe) : ''} · ${escapeHtml(v.modulo || '')} · ${escapeHtml(v.data || '')} ${escapeHtml(v.hora_recebimento || '')}`).join('<br>') +
+            <div class="pr-viol" style="font-family:'Exo 2',sans-serif;line-height:1.5;">` +
+        viols.map((v, i) => `<div style="${i > 0 ? 'margin-top:8px;padding-top:8px;border-top:1px solid #F0C0BC;' : ''}">
+              <b>${i + 1}. ${escapeHtml(descricaoViolacao(v))}</b><br>
+              <span style="font-family:'Share Tech Mono',monospace;font-size:9px;">${escapeHtml(v.modulo || '')} · ${escapeHtml(v.data || '')} ${escapeHtml(v.hora_recebimento || '')}</span>
+            </div>`).join('') +
         `</div>`;
     }
 
@@ -2332,9 +2334,9 @@
     // Conduta
     h += `<div class="pr-sec-title">Conduta durante a avaliação</div>`;
     if (viols.length) {
-      const tipos = [...new Set(viols.map(v => v.tipo))].join(', ');
+      const tipos = [...new Set(viols.map(v => tipoViolacaoLabel(v.tipo)))].join('; ');
       h += `<div class="sk-alerta">
-              ⚠ <strong>${viols.length} ocorrência(s)</strong> registradas durante os testes (${escapeHtml(tipos)}).
+              ⚠ <strong>${viols.length} ocorrência(s)</strong> registradas durante os testes: ${escapeHtml(tipos)}.
               Considerar no processo: o sistema monitora saída de aba, tentativa de cópia e uso de atalhos.
             </div>`;
     } else {
@@ -2606,13 +2608,30 @@
       <tr>
         <td class="td-nome">${escapeHtml(v.nome || '—')}</td>
         <td><span class="badge-modulo">${escapeHtml(v.modulo || '—')}</span></td>
-        <td>${escapeHtml(v.tipo || '—')}</td>
+        <td>${escapeHtml(tipoViolacaoLabel(v.tipo))}</td>
         <td>${escapeHtml(v.detalhe || '—')}</td>
         <td class="td-time">${escapeHtml(v.data || '')} ${escapeHtml(v.hora_recebimento || '')}</td>
       </tr>`).join('');
   }
 
   function escapeHtml(s) { return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
+
+  // Traduz o código técnico da violação (gravado por quiz.html/reportViolation)
+  // em uma frase que qualquer avaliador entende, sem precisar saber o nome
+  // interno do evento.
+  const VIOLACAO_LABELS = {
+    perda_foco: 'Saiu da aba ou perdeu o foco da janela durante o teste',
+    tentativa_copia: 'Tentou copiar o conteúdo da tela (Ctrl+C)',
+    menu_contexto: 'Tentou abrir o menu de contexto (botão direito do mouse)',
+    devtools: 'Tentou abrir as ferramentas de desenvolvedor do navegador',
+    teclas_bloqueadas: 'Tentou usar um atalho de teclado bloqueado',
+    tecla_escape: 'Tentou sair do teste apertando ESC'
+  };
+  function tipoViolacaoLabel(tipo) { return VIOLACAO_LABELS[tipo] || (tipo ? `Ocorrência: ${tipo}` : '—'); }
+  function descricaoViolacao(v) {
+    const base = tipoViolacaoLabel(v.tipo);
+    return v.detalhe ? `${base} — ${v.detalhe}` : base;
+  }
 
   // ══════════ CANDIDATOS ══════════
   // Agrupa por candidato (mesma chave usada no resto do dashboard) e mostra
