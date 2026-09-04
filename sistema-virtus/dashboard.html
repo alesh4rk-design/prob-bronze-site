@@ -1497,6 +1497,11 @@
   import { db } from "./js/firebase-config.js";
   import { doc, setDoc } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
   import { PERGUNTAS_SEED } from "./js/perguntas-seed-data.js";
+  import {
+    normNome, chaveDe, fichaDe, fmtNasc, fmtData, fmtDataHora, corNota, pctClass,
+    classificarModulo, classificarDigitacao, dataLocalYMD, escapeHtml,
+    VIOLACAO_LABELS, tipoViolacaoLabel, descricaoViolacao
+  } from "./js/dashboard-format.js";
 
   let ALL_RESULTADOS = [];
   let ALL_VIOLACOES = [];
@@ -1693,42 +1698,14 @@
   // Agrupa todas as tentativas (quiz + digitação) de um mesmo candidato.
   // A comparação ignora maiúsculas/acentos porque o nome é digitado à mão
   // pelo candidato a cada teste (ex: "cobaia 1" e "Cobaia 1").
-  function normNome(n) {
-    return (n || '').trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-  }
-  // Agrupa por CPF quando a ficha do candidato existe (identificador confiável);
-  // cai para o nome normalizado nos registros antigos, anteriores à ficha.
-  function chaveDe(r) {
-    const cpf = (r.cpf || (r.candidato && r.candidato.cpf) || '').replace(/\D/g, '');
-    return cpf ? 'cpf:' + cpf : 'nome:' + normNome(r.nome);
-  }
   function tentativasDe(chave) {
     return ALL_RESULTADOS
       .filter(r => chaveDe(r) === chave)
       .sort((a, b) => String(a.data_conclusao || '').localeCompare(String(b.data_conclusao || '')));
   }
-  // Ficha mais recente entre as tentativas (o candidato pode ter refeito o
-  // cadastro com dados atualizados).
-  function fichaDe(tents) {
-    for (let i = tents.length - 1; i >= 0; i--) if (tents[i].candidato) return tents[i].candidato;
-    return null;
-  }
   function violacoesDe(nome) {
     const alvo = normNome(nome);
     return ALL_VIOLACOES.filter(v => normNome(v.nome) === alvo);
-  }
-  function fmtNasc(iso) {
-    if (!iso) return '—';
-    const d = new Date(iso + 'T12:00:00');
-    return isNaN(d) ? '—' : d.toLocaleDateString('pt-BR');
-  }
-  function fmtData(iso) {
-    if (!iso) return '—';
-    const d = new Date(iso);
-    return isNaN(d) ? '—' : d.toLocaleString('pt-BR');
-  }
-  function corNota(pct) {
-    return pct >= 70 ? 'var(--green)' : pct >= 50 ? 'var(--amber)' : 'var(--red)';
   }
 
   window.abrirCandidato = function (chave) {
@@ -2131,21 +2108,6 @@
   // Relatório enxuto, sem o detalhamento questão a questão: mostra onde o
   // candidato é forte, onde precisa de treinamento e sugere alocação.
 
-  // Faixas de classificação por módulo.
-  function classificarModulo(pct) {
-    if (pct >= 85) return { tag: 'Domínio forte', cls: 'sk-t-forte',  cor: '#00A85A' };
-    if (pct >= 70) return { tag: 'Apto',          cls: 'sk-t-apto',   cor: '#0088B0' };
-    if (pct >= 50) return { tag: 'Requer treino', cls: 'sk-t-treino', cor: '#E8A000' };
-    return            { tag: 'Baixo domínio', cls: 'sk-t-baixo',  cor: '#E0483C' };
-  }
-
-  function classificarDigitacao(wpm) {
-    if (wpm == null) return null;
-    if (wpm >= 45) return { txt: 'Rápida', obs: 'apta a funções com muito registro em sistema' };
-    if (wpm >= 30) return { txt: 'Adequada', obs: 'atende rotinas administrativas comuns' };
-    if (wpm >= 20) return { txt: 'Moderada', obs: 'suficiente para registros pontuais' };
-    return { txt: 'Lenta', obs: 'evitar funções com digitação intensiva' };
-  }
 
   // Consolida o melhor resultado por módulo (se refez o teste, vale o maior).
   function consolidarModulos(quizzes) {
@@ -2424,14 +2386,6 @@
   // toISOString().slice(0,10) aqui, porque isso converte para UTC e, no
   // Brasil (UTC-3), a partir das ~21h o "dia UTC" já virou amanhã. Isso
   // fazia testes de hoje só aparecerem no filtro "Ontem" à noite.
-  function dataLocalYMD(d) {
-    const dt = d instanceof Date ? d : new Date(d);
-    if (isNaN(dt)) return '';
-    const ano = dt.getFullYear();
-    const mes = String(dt.getMonth() + 1).padStart(2, '0');
-    const dia = String(dt.getDate()).padStart(2, '0');
-    return `${ano}-${mes}-${dia}`;
-  }
 
   // Dados do Dashboard (KPIs + gráficos), filtrados pelo campo de dia opcional
   // "dashData" — vazio mostra todos os dias.
@@ -2462,7 +2416,6 @@
     document.getElementById('kpiTaxa').textContent = total ? Math.round((aprov / total) * 100) + '%' : '—';
   }
 
-  function pctClass(pct) { return pct >= 70 ? 'pct-high' : pct >= 50 ? 'pct-mid' : 'pct-low'; }
 
   function renderModuloBars(lista) {
     const el = document.getElementById('moduloBars');
@@ -2614,24 +2567,7 @@
       </tr>`).join('');
   }
 
-  function escapeHtml(s) { return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
 
-  // Traduz o código técnico da violação (gravado por quiz.html/reportViolation)
-  // em uma frase que qualquer avaliador entende, sem precisar saber o nome
-  // interno do evento.
-  const VIOLACAO_LABELS = {
-    perda_foco: 'Saiu da aba ou perdeu o foco da janela durante o teste',
-    tentativa_copia: 'Tentou copiar o conteúdo da tela (Ctrl+C)',
-    menu_contexto: 'Tentou abrir o menu de contexto (botão direito do mouse)',
-    devtools: 'Tentou abrir as ferramentas de desenvolvedor do navegador',
-    teclas_bloqueadas: 'Tentou usar um atalho de teclado bloqueado',
-    tecla_escape: 'Tentou sair do teste apertando ESC'
-  };
-  function tipoViolacaoLabel(tipo) { return VIOLACAO_LABELS[tipo] || (tipo ? `Ocorrência: ${tipo}` : '—'); }
-  function descricaoViolacao(v) {
-    const base = tipoViolacaoLabel(v.tipo);
-    return v.detalhe ? `${base} — ${v.detalhe}` : base;
-  }
 
   // ══════════ CANDIDATOS ══════════
   // Agrupa por candidato (mesma chave usada no resto do dashboard) e mostra
@@ -3514,11 +3450,6 @@
     }
   };
 
-  function fmtDataHora(ts) {
-    if (!ts) return '—';
-    const d = ts.toDate ? ts.toDate() : new Date(ts);
-    return isNaN(d) ? '—' : d.toLocaleString('pt-BR');
-  }
 
   // A expiração é sempre calculada a partir de `criado_em` (horário do
   // SERVIDOR do Firestore) + a duração fixa — nunca de um campo `expira_em`
