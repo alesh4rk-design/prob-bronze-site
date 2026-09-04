@@ -23,7 +23,8 @@ export function buildMocks({
   resultados = [],
   pipeline = {},
   violacoes = [],
-  whatsappNumero = null
+  whatsappNumero = null,
+  usuarios = []
 } = {}) {
   const APP = `export function initializeApp(){ return { name: 'mock' }; }`;
 
@@ -73,6 +74,7 @@ export async function deleteDoc(ref){ window.__writes.push({ path: ref.__doc, op
 
 const R = ${JSON.stringify(resultados)};
 const VI = ${JSON.stringify(violacoes)};
+const US = ${JSON.stringify(usuarios)};
 
 export function onSnapshot(ref, cb) {
   if (ref.__name === 'resultados') {
@@ -92,6 +94,10 @@ export function onSnapshot(ref, cb) {
   }
   if (ref.__name === 'codigos_acesso') {
     cb({ forEach(){} });
+    return () => {};
+  }
+  if (ref.__name === 'usuarios') {
+    cb({ forEach(f) { US.forEach(d => f({ id: d.uid, data: () => d })); } });
     return () => {};
   }
   cb({ forEach(){}, exists: () => false, data: () => ({}) });

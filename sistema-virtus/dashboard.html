@@ -1501,7 +1501,8 @@
     normNome, chaveDe, fichaDe, fmtNasc, fmtData, fmtDataHora, corNota, pctClass,
     classificarModulo, classificarDigitacao, dataLocalYMD, escapeHtml,
     VIOLACAO_LABELS, tipoViolacaoLabel, descricaoViolacao,
-    consolidarModulos, criadoEmDe, expiraEmDe as _expiraEmDe, statusCodigo as _statusCodigo
+    consolidarModulos, criadoEmDe, expiraEmDe as _expiraEmDe, statusCodigo as _statusCodigo,
+    escapeJsAttr
   } from "./js/dashboard-format.js";
 
   let ALL_RESULTADOS = [];
@@ -2651,8 +2652,8 @@
       const atualizadoEm = pipelineInfo.atualizado_em ? fmtDataHora(pipelineInfo.atualizado_em) : '—';
       const aprovadoParaEntrevista = pipelineInfo.aprovado === true;
       const noBancoReserva = pipelineInfo.banco_reserva === true;
-      const chaveEsc = c.chave.replace(/'/g, "\\'");
-      const nomeEsc = escapeHtml(c.nome).replace(/'/g, "\\'");
+      const chaveEsc = escapeJsAttr(c.chave);
+      const nomeEsc = escapeJsAttr(c.nome);
 
       const colunasGerenciar = podeGerenciar ? `
         <td onclick="event.stopPropagation()">
@@ -2661,7 +2662,7 @@
         <td class="td-time">${atualizadoEm}</td>` : '';
 
       return `
-      <tr class="clickable" onclick="abrirCandidato('${c.chave.replace(/'/g, "\\'")}')" title="Ver detalhamento e exportar PDF">
+      <tr class="clickable" onclick="abrirCandidato('${escapeJsAttr(c.chave)}')" title="Ver detalhamento e exportar PDF">
         <td style="text-align:center;color:var(--text3);">${i + 1}</td>
         <td class="td-nome">${escapeHtml(c.nome)} <span class="row-hint">▸ detalhes</span></td>
         <td style="max-width:280px;white-space:normal;">
@@ -2685,8 +2686,8 @@
     const aprovado = p.aprovado === true;
     const noBanco = p.banco_reserva === true;
     const podeExcluirAqui = PODE_EXCLUIR_CANDIDATOS.includes(me.perfil);
-    const chaveEsc = chave.replace(/'/g, "\\'");
-    const nomeEsc = escapeHtml(nome).replace(/'/g, "\\'");
+    const chaveEsc = escapeJsAttr(chave);
+    const nomeEsc = escapeJsAttr(nome);
 
     document.getElementById('acoesCandNome').textContent = nome;
     const itens = [
@@ -2877,8 +2878,8 @@
       const chaveId = c.chave.replace(/[/]/g, '_');
       const p = PIPELINE_MAP[chaveId] || {};
       const observacao = p.observacao || '';
-      const chaveEsc = c.chave.replace(/'/g, "\\'");
-      const nomeEsc = escapeHtml(c.nome).replace(/'/g, "\\'");
+      const chaveEsc = escapeJsAttr(c.chave);
+      const nomeEsc = escapeJsAttr(c.nome);
       const acao = `
         <div style="display:flex;gap:5px;flex-wrap:wrap;justify-content:flex-end;">
           <button class="btn-act-mini whatsapp" onclick="event.stopPropagation();abrirWhatsappCandidato('${chaveEsc}','${nomeEsc}')">💬 WhatsApp</button>
@@ -2971,14 +2972,14 @@
       const temViolacao = violacoesDe(c.nome).length > 0;
 
       const botoesAcao = (podeDecidir && !decisaoFinal) ? `
-          <button class="btn-act btn-approve-admin" style="font-size:11px;padding:6px 10px;" onclick="event.stopPropagation();decidirEntrevista('${c.chave.replace(/'/g, "\\'")}','${escapeHtml(c.nome).replace(/'/g, "\\'")}','contratado')">🎉 Contratado</button>
-          <button class="btn-act btn-neutral" style="font-size:11px;padding:6px 10px;" onclick="event.stopPropagation();decidirEntrevista('${c.chave.replace(/'/g, "\\'")}','${escapeHtml(c.nome).replace(/'/g, "\\'")}','recusado')">❌ Recusado</button>
+          <button class="btn-act btn-approve-admin" style="font-size:11px;padding:6px 10px;" onclick="event.stopPropagation();decidirEntrevista('${escapeJsAttr(c.chave)}','${escapeJsAttr(c.nome)}','contratado')">🎉 Contratado</button>
+          <button class="btn-act btn-neutral" style="font-size:11px;padding:6px 10px;" onclick="event.stopPropagation();decidirEntrevista('${escapeJsAttr(c.chave)}','${escapeJsAttr(c.nome)}','recusado')">❌ Recusado</button>
         ` : '';
 
       return `
       <tr class="row-aprovado">
         <td style="text-align:center;color:var(--text3);">${i + 1}</td>
-        <td class="td-nome" onclick="abrirCandidato('${c.chave.replace(/'/g, "\\'")}')" style="cursor:pointer;">
+        <td class="td-nome" onclick="abrirCandidato('${escapeJsAttr(c.chave)}')" style="cursor:pointer;">
           ${escapeHtml(c.nome)}${temViolacao ? ' <span style="color:var(--red);font-weight:700;" title="Violação registrada">*</span>' : ''}
           <span class="row-hint">▸ detalhes</span>
         </td>
@@ -2997,7 +2998,7 @@
         <td onclick="event.stopPropagation()" style="font-size:11px;">
           <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;">
             ${botoesAcao}
-            <button class="btn-act btn-neutral" style="font-size:11px;padding:6px 10px;" onclick="event.stopPropagation();abrirCandidato('${c.chave.replace(/'/g, "\\'")}')" title="Ver detalhes completos">
+            <button class="btn-act btn-neutral" style="font-size:11px;padding:6px 10px;" onclick="event.stopPropagation();abrirCandidato('${escapeJsAttr(c.chave)}')" title="Ver detalhes completos">
               📋
             </button>
           </div>
@@ -3072,7 +3073,7 @@
       const observacao = p.observacao || '';
       const contratado = p.decisao_final === 'contratado';
       return `
-      <tr class="clickable" onclick="abrirCandidato('${c.chave.replace(/'/g, "\\'")}')" title="Ver detalhamento e exportar PDF">
+      <tr class="clickable" onclick="abrirCandidato('${escapeJsAttr(c.chave)}')" title="Ver detalhamento e exportar PDF">
         <td style="text-align:center;color:var(--text3);">${i + 1}</td>
         <td class="td-nome">${escapeHtml(c.nome)} <span class="row-hint">▸ detalhes</span></td>
         <td><span class="td-pct" style="color:${c.media >= 70 ? 'var(--green)' : 'var(--red)'}">${c.media}%</span></td>
@@ -3276,7 +3277,9 @@
     }
     // Aba Usuários é exclusiva de admin/gerência — todos os perfis ficam
     // disponíveis pra aprovar (são os únicos que cadastram gente).
-    tbody.innerHTML = lista.map(p => `
+    tbody.innerHTML = lista.map(p => {
+      const nomeEsc = escapeJsAttr(p.nome || p.email || '');
+      return `
       <tr>
         <td class="td-nome">${escapeHtml(p.nome || '—')}</td>
         <td><span class="email-hover" data-email="${escapeHtml(p.email || '—')}">•••••</span></td>
@@ -3288,8 +3291,9 @@
             <button class="btn-act btn-neutral" onclick="aprovar('${p.uid}','coordenador')">Coordenador</button>
           </div>
         </td>
-        <td><button class="btn-act btn-danger" onclick="recusar('${p.uid}','${escapeHtml(p.nome || p.email || '')}')">✕</button></td>
-      </tr>`).join('');
+        <td><button class="btn-act btn-danger" onclick="recusar('${p.uid}','${nomeEsc}')">✕</button></td>
+      </tr>`;
+    }).join('');
   }
 
   // ── Avaliadores já com acesso ─────────────────────────────────────────
@@ -3307,6 +3311,7 @@
     tbody.innerHTML = ativos.map(u => {
       const souEu = u.uid === me.uid;
       const outrosPerfis = PERFIS.filter(p => p !== u.perfil && p !== 'admin');
+      const nomeEsc = escapeJsAttr(u.nome || u.email || '');
       return `
         <tr>
           <td class="td-nome">${escapeHtml(u.nome || '—')}${souEu ? ' <span style="color:var(--text3);font-size:11px;">(você)</span>' : ''}</td>
@@ -3317,7 +3322,7 @@
               ${souEu
                 ? '<span style="color:var(--text4);font-size:11px;font-family:\'Share Tech Mono\',monospace;">—</span>'
                 : outrosPerfis.map(p => `<button class="btn-act btn-neutral" onclick="alterarPerfil('${u.uid}','${p}')">→ ${p}</button>`).join('') +
-                  `<button class="btn-act btn-danger" onclick="recusar('${u.uid}','${escapeHtml(u.nome || u.email || '')}')">Revogar</button>`}
+                  `<button class="btn-act btn-danger" onclick="recusar('${u.uid}','${nomeEsc}')">Revogar</button>`}
             </div>
           </td>
         </tr>`;

@@ -324,6 +324,43 @@ export const tests = [
       assertEqual(erros.length, 0, 'erros de JS: ' + erros.join(' | '));
       await page.close();
     }
+  },
+
+  {
+    name: 'Nome malicioso de usuário pendente/ativo não escapa do onclick (XSS)',
+    async run({ browser, baseUrl }) {
+      // Um nome como este, se colocado sem escapar dentro de onclick="...('nome')",
+      // fecha a string JS e injeta código executável no clique do botão.
+      const nomeMalicioso = "x');window.__pwned=true;//";
+      const usuarios = [
+        { uid: 'p1', nome: nomeMalicioso, email: 'p1@x.com', perfil: 'pendente' },
+        { uid: 'u2', nome: nomeMalicioso, email: 'u2@x.com', perfil: 'viewer' }
+      ];
+      const { page, erros } = await abrirDashboard(browser, baseUrl, { perfil: 'admin', usuarios });
+
+      await page.evaluate(() => switchView('usuarios'));
+      await page.waitForTimeout(300);
+
+      // Clica no botão "✕" (recusar) da linha do pendente e no "Revogar" do
+      // ativo — se o nome tivesse escapado do onclick, o clique executaria
+      // o payload injetado e window.__pwned ficaria true.
+      await page.evaluate(() => {
+        const btnPend = document.querySelector('#pendTableBody .btn-danger');
+        if (btnPend) btnPend.click();
+      });
+      await page.waitForTimeout(200);
+      await page.evaluate(() => {
+        const btnUser = document.querySelector('#usersTableBody .btn-danger');
+        if (btnUser) btnUser.click();
+      });
+      await page.waitForTimeout(200);
+
+      const pwned = await page.evaluate(() => window.__pwned === true);
+      assert(!pwned, 'o nome malicioso escapou do onclick e executou código injetado');
+
+      assertEqual(erros.length, 0, 'erros de JS: ' + erros.join(' | '));
+      await page.close();
+    }
   }
 
 ];
