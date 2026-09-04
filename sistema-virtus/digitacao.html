@@ -477,7 +477,7 @@ async function montarBotaoWhatsapp(nome) {
 }
 import { verificarCodigoAcesso } from "./js/quiz.js";
 import { db } from "./js/firebase-config.js";
-import { collection, getDocs, limit, query } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
 
 // ── 15 frases LGPD + 15 Controle de Acesso (~160 caracteres cada) ──
 const FRASES = {
@@ -901,9 +901,14 @@ async function checkStatus() {
   label.textContent = 'Verificando...';
   ping.textContent  = '';
 
+  // Usa config/whatsapp_rh (propositalmente público nas regras — allow
+  // read: if true) só pra medir a latência, em vez de tocar em qualquer
+  // coleção com dados de candidato. O candidato nunca está logado nessa
+  // tela, então uma consulta em "resultados" seria barrada mesmo, mas é
+  // melhor nem tentar tocar numa coleção sensível a partir daqui.
   const t0 = Date.now();
   try {
-    await getDocs(query(collection(db, "resultados"), limit(1)));
+    await getDoc(doc(db, "config", "whatsapp_rh"));
     const ms = Date.now() - t0;
     dot.className     = 'status-dot online';
     label.className   = 'status-label online';
