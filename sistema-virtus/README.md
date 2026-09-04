@@ -170,6 +170,46 @@ commitado**:
   `js/perguntas-seed-data.js`, usado unicamente pela ferramenta de seed
   `seed-perguntas.html` para popular o Firestore uma vez.
 
+## Testes automatizados (`tests/`)
+
+O `dashboard.html` não tem build nem framework — é HTML/CSS/JS puro. Por
+isso a suíte de testes também não usa Jest/Mocha/Vitest: é um script Node
+com Playwright que sobe um servidor estático local, simula o Firestore
+(sem precisar de internet nem de um projeto Firebase de verdade) e abre o
+dashboard num Chromium de verdade pra conferir o comportamento.
+
+**Rodar a suíte:**
+```bash
+cd sistema-virtus
+node tests/run.mjs
+```
+Precisa do Playwright instalado (`npm install -D playwright` na primeira
+vez, ou já disponível globalmente no ambiente).
+
+**Estrutura:**
+- `tests/mock-firestore.mjs` — gera um Firestore falso a partir de uma
+  fixture (perfil do usuário logado, resultados, pipeline, violações).
+  Escritas na coleção `pipeline` atualizam o estado em memória e
+  disparam o listener de novo, do jeito que o Firestore real notifica.
+- `tests/server.mjs` — servidor estático mínimo (sem dependências) só
+  pra servir os arquivos durante o teste.
+- `tests/helpers.mjs` — `abrirDashboard(...)` (abre a página já com o
+  mock plugado) e os `assert`/`assertEqual` usados nos testes.
+- `tests/dashboard.spec.mjs` — os casos de teste em si.
+- `tests/run.mjs` — executa tudo e sai com código de erro se algo falhar
+  (dá pra plugar numa Action do GitHub futuramente).
+
+**Sempre que mexer no `dashboard.html`, rode a suíte antes de publicar.**
+Ela não cobre 100% do sistema — cobre especificamente os bugs que já
+apareceram nesta sessão e são fáceis de reintroduzir sem querer (script
+quebrando inteiro por um elemento removido do DOM, uma aba não
+atualizando em tempo real, filtro de data usando o campo errado,
+permissão por perfil, violação aparecendo crua ou não aparecendo, dado
+de um candidato vazando pro relatório de outro). Se você corrigir um bug
+novo, vale a pena adicionar um teste pra ele na mesma hora — é o que
+impede o mesmo bug de voltar da próxima vez que alguém mexer no código
+por perto.
+
 ## Pendências / próximos passos manuais
 
 - [ ] Criar o projeto Firebase e colar a config real em `js/firebase-config.js`.
