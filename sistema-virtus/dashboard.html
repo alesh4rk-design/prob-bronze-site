@@ -1501,8 +1501,7 @@
     normNome, chaveDe, fichaDe, fmtNasc, fmtData, fmtDataHora, corNota, pctClass,
     classificarModulo, classificarDigitacao, dataLocalYMD, escapeHtml,
     VIOLACAO_LABELS, tipoViolacaoLabel, descricaoViolacao,
-    consolidarModulos, criadoEmDe, expiraEmDe as _expiraEmDe, statusCodigo as _statusCodigo,
-    escapeJsAttr
+    consolidarModulos, criadoEmDe, expiraEmDe as _expiraEmDe, statusCodigo as _statusCodigo
   } from "./js/dashboard-format.js";
 
   let ALL_RESULTADOS = [];
@@ -2613,10 +2612,47 @@
     return isNaN(d) ? null : d;
   }
 
+  // ══════════ AÇÕES DAS TABELAS (sem onclick montado como texto) ══════════
+  // Cada linha/botão carrega data-acao + os dados de que precisa
+  // (data-chave, data-nome...), e um único listener no <tbody> despacha o
+  // clique. O valor chega como string via dataset — nunca é interpretado
+  // como código, então nome de candidato com aspas, & ou < não tem como
+  // virar JS (era exatamente assim que dava pra injetar código antes).
+  //
+  // Bônus: como o despacho usa o [data-acao] MAIS PRÓXIMO do clique, um
+  // botão dentro de uma linha clicável já "ganha" da linha sozinho, sem
+  // precisar de event.stopPropagation() espalhado pelo HTML.
+  const ACOES_TABELA = {
+    ignorar: () => {},
+    abrirCandidato: el => window.abrirCandidato(el.dataset.chave),
+    acoesCandidato: el => window.abrirAcoesCandidato(el.dataset.chave, el.dataset.nome),
+    whatsappCandidato: el => window.abrirWhatsappCandidato(el.dataset.chave, el.dataset.nome),
+    removerBancoReserva: el => window.alternarBancoReserva(el.dataset.chave, el.dataset.nome, false),
+    decidirEntrevista: el => window.decidirEntrevista(el.dataset.chave, el.dataset.nome, el.dataset.decisao),
+    aprovarUsuario: el => window.aprovar(el.dataset.uid, el.dataset.perfil),
+    recusarUsuario: el => window.recusar(el.dataset.uid, el.dataset.nome),
+    alterarPerfil: el => window.alterarPerfil(el.dataset.uid, el.dataset.perfil),
+    desativarCodigo: el => window.desativarCodigo(el.dataset.codigo),
+    excluirCodigo: el => window.excluirCodigo(el.dataset.codigo)
+  };
+
+  function ligarAcoesDelegadas(id) {
+    const container = document.getElementById(id);
+    if (!container || container.dataset.acoesLigadas === '1') return;
+    container.dataset.acoesLigadas = '1';
+    container.addEventListener('click', ev => {
+      const alvo = ev.target.closest('[data-acao]');
+      if (!alvo || !container.contains(alvo)) return;
+      const fn = ACOES_TABELA[alvo.dataset.acao];
+      if (fn) fn(alvo, ev);
+    });
+  }
+
   window.renderPipeline = function renderPipeline() {
     const tbody = document.getElementById('pipelineTableBody');
     const thead = document.getElementById('pipelineTableHead');
     if (!tbody || !thead || !me) return;
+    ligarAcoesDelegadas('pipelineTableBody');
     const podeGerenciar = PODE_GERENCIAR_CANDIDATOS.includes(me.perfil);
 
     let candidatos = candidatosAgrupados();
@@ -2652,17 +2688,16 @@
       const atualizadoEm = pipelineInfo.atualizado_em ? fmtDataHora(pipelineInfo.atualizado_em) : '—';
       const aprovadoParaEntrevista = pipelineInfo.aprovado === true;
       const noBancoReserva = pipelineInfo.banco_reserva === true;
-      const chaveEsc = escapeJsAttr(c.chave);
-      const nomeEsc = escapeJsAttr(c.nome);
+      const dadosCand = `data-chave="${escapeHtml(c.chave)}" data-nome="${escapeHtml(c.nome)}"`;
 
       const colunasGerenciar = podeGerenciar ? `
-        <td onclick="event.stopPropagation()">
-          <button class="btn-act-mini ${aprovadoParaEntrevista || noBancoReserva ? 'ativo' : ''}" onclick="event.stopPropagation();abrirAcoesCandidato('${chaveEsc}','${nomeEsc}')">⚙️ Ações</button>
+        <td data-acao="ignorar">
+          <button class="btn-act-mini ${aprovadoParaEntrevista || noBancoReserva ? 'ativo' : ''}" data-acao="acoesCandidato" ${dadosCand}>⚙️ Ações</button>
         </td>
         <td class="td-time">${atualizadoEm}</td>` : '';
 
       return `
-      <tr class="clickable" onclick="abrirCandidato('${escapeJsAttr(c.chave)}')" title="Ver detalhamento e exportar PDF">
+      <tr class="clickable" data-acao="abrirCandidato" ${dadosCand} title="Ver detalhamento e exportar PDF">
         <td style="text-align:center;color:var(--text3);">${i + 1}</td>
         <td class="td-nome">${escapeHtml(c.nome)} <span class="row-hint">▸ detalhes</span></td>
         <td style="max-width:280px;white-space:normal;">
@@ -2686,30 +2721,44 @@
     const aprovado = p.aprovado === true;
     const noBanco = p.banco_reserva === true;
     const podeExcluirAqui = PODE_EXCLUIR_CANDIDATOS.includes(me.perfil);
-    const chaveEsc = escapeJsAttr(chave);
-    const nomeEsc = escapeJsAttr(nome);
 
     document.getElementById('acoesCandNome').textContent = nome;
+    // Cada item leva a própria função (fechando por closure em cima de
+    // chave/nome), em vez de uma string de código montada na mão.
     const itens = [
       {
         label: (aprovado ? '✅ Marcado para Entrevista' : '☐ Aprovar para Entrevista'),
-        onclick: `fecharAcoesCandidato();alternarAprovadoParaEntrevista('${chaveEsc}','${nomeEsc}',${!aprovado})`,
-        ativo: aprovado
+        ativo: aprovado,
+        fn: () => { window.fecharAcoesCandidato(); window.alternarAprovadoParaEntrevista(chave, nome, !aprovado); }
       },
       {
         label: (noBanco ? '✅ No Banco de Reserva' : '🏦 Colocar no Banco de Reserva'),
-        onclick: `fecharAcoesCandidato();alternarBancoReserva('${chaveEsc}','${nomeEsc}',${!noBanco})`,
-        ativo: noBanco
+        ativo: noBanco,
+        fn: () => { window.fecharAcoesCandidato(); window.alternarBancoReserva(chave, nome, !noBanco); }
       },
-      { label: '📝 ' + (p.observacao ? 'Ver/editar observação' : 'Escrever observação'), onclick: `fecharAcoesCandidato();editarObservacaoPipeline('${chaveEsc}','${nomeEsc}')` },
-      { label: '💬 Falar no WhatsApp', onclick: `fecharAcoesCandidato();abrirWhatsappCandidato('${chaveEsc}','${nomeEsc}')` }
+      {
+        label: '📝 ' + (p.observacao ? 'Ver/editar observação' : 'Escrever observação'),
+        fn: () => { window.fecharAcoesCandidato(); window.editarObservacaoPipeline(chave, nome); }
+      },
+      {
+        label: '💬 Falar no WhatsApp',
+        fn: () => { window.fecharAcoesCandidato(); window.abrirWhatsappCandidato(chave, nome); }
+      }
     ];
     if (podeExcluirAqui) {
-      itens.push({ label: '🗑 Excluir candidato', onclick: `fecharAcoesCandidato();excluirCandidatoDireto('${chaveEsc}','${nomeEsc}')`, perigo: true });
+      itens.push({
+        label: '🗑 Excluir candidato',
+        perigo: true,
+        fn: () => { window.fecharAcoesCandidato(); window.excluirCandidatoDireto(chave, nome); }
+      });
     }
-    document.getElementById('acoesCandLista').innerHTML = itens.map(it =>
-      `<button type="button" class="acao-item ${it.ativo ? 'ativo' : ''} ${it.perigo ? 'perigo' : ''}" onclick="${it.onclick}">${it.label}</button>`
+    const lista = document.getElementById('acoesCandLista');
+    lista.innerHTML = itens.map((it, i) =>
+      `<button type="button" class="acao-item ${it.ativo ? 'ativo' : ''} ${it.perigo ? 'perigo' : ''}" data-item="${i}">${it.label}</button>`
     ).join('');
+    lista.querySelectorAll('[data-item]').forEach(btn => {
+      btn.addEventListener('click', itens[Number(btn.dataset.item)].fn);
+    });
     document.getElementById('acoesCandModal').classList.add('show');
   };
 
@@ -2740,9 +2789,13 @@
       { label: '❌ Não aprovado(a) no processo', texto: `Olá ${nome}! Agradecemos sua participação no processo seletivo para a vaga de ${cargo}. No momento você não foi selecionado(a) para esta vaga, mas seu currículo fica em nosso banco de talentos.` }
     ];
     document.getElementById('whatsappCandNome').textContent = nome;
-    document.getElementById('whatsappCandTemplates').innerHTML = WHATSAPP_CAND_MSGS.map((m, i) =>
-      `<button type="button" class="btn-act btn-neutral" style="text-align:left;white-space:normal;" onclick="usarTemplateWhatsappCandidato(${i})">${m.label}</button>`
+    const templates = document.getElementById('whatsappCandTemplates');
+    templates.innerHTML = WHATSAPP_CAND_MSGS.map((m, i) =>
+      `<button type="button" class="btn-act btn-neutral" style="text-align:left;white-space:normal;" data-item="${i}">${m.label}</button>`
     ).join('');
+    templates.querySelectorAll('[data-item]').forEach(btn => {
+      btn.addEventListener('click', () => window.usarTemplateWhatsappCandidato(Number(btn.dataset.item)));
+    });
     document.getElementById('whatsappCandTextarea').value = '';
     document.getElementById('whatsappCandModal').classList.add('show');
   };
@@ -2859,6 +2912,7 @@
   window.renderBancoReserva = function renderBancoReserva() {
     const tbody = document.getElementById('bancoReservaTableBody');
     if (!tbody) return;
+    ligarAcoesDelegadas('bancoReservaTableBody');
     const noBanco = candidatosAgrupados().filter(c => {
       const p = PIPELINE_MAP[c.chave.replace(/[/]/g, '_')];
       return p && p.banco_reserva === true;
@@ -2878,15 +2932,14 @@
       const chaveId = c.chave.replace(/[/]/g, '_');
       const p = PIPELINE_MAP[chaveId] || {};
       const observacao = p.observacao || '';
-      const chaveEsc = escapeJsAttr(c.chave);
-      const nomeEsc = escapeJsAttr(c.nome);
+      const dadosCand = `data-chave="${escapeHtml(c.chave)}" data-nome="${escapeHtml(c.nome)}"`;
       const acao = `
         <div style="display:flex;gap:5px;flex-wrap:wrap;justify-content:flex-end;">
-          <button class="btn-act-mini whatsapp" onclick="event.stopPropagation();abrirWhatsappCandidato('${chaveEsc}','${nomeEsc}')">💬 WhatsApp</button>
-          ${podeGerenciar ? `<button class="btn-act-mini" onclick="event.stopPropagation();alternarBancoReserva('${chaveEsc}','${nomeEsc}',false)">↩ Remover</button>` : ''}
+          <button class="btn-act-mini whatsapp" data-acao="whatsappCandidato" ${dadosCand}>💬 WhatsApp</button>
+          ${podeGerenciar ? `<button class="btn-act-mini" data-acao="removerBancoReserva" ${dadosCand}>↩ Remover</button>` : ''}
         </div>`;
       return `
-      <tr class="clickable" onclick="abrirCandidato('${chaveEsc}')" title="Ver detalhamento e exportar PDF">
+      <tr class="clickable" data-acao="abrirCandidato" ${dadosCand} title="Ver detalhamento e exportar PDF">
         <td style="text-align:center;color:var(--text3);">${i + 1}</td>
         <td class="td-nome">${escapeHtml(c.nome)} <span class="row-hint">▸ detalhes</span></td>
         <td><span class="td-pct" style="color:${c.media >= 70 ? 'var(--green)' : 'var(--red)'}">${c.media}%</span></td>
@@ -2923,6 +2976,7 @@
   window.renderBancoAprovados = function renderBancoAprovados() {
     const tbody = document.getElementById('bancoTableBody');
     if (!tbody) return;
+    ligarAcoesDelegadas('bancoTableBody');
     const todos = candidatosAgrupados();
 
     const dataIni = document.getElementById('bancoDataIni').value;
@@ -2971,15 +3025,16 @@
 
       const temViolacao = violacoesDe(c.nome).length > 0;
 
+      const dadosCand = `data-chave="${escapeHtml(c.chave)}" data-nome="${escapeHtml(c.nome)}"`;
       const botoesAcao = (podeDecidir && !decisaoFinal) ? `
-          <button class="btn-act btn-approve-admin" style="font-size:11px;padding:6px 10px;" onclick="event.stopPropagation();decidirEntrevista('${escapeJsAttr(c.chave)}','${escapeJsAttr(c.nome)}','contratado')">🎉 Contratado</button>
-          <button class="btn-act btn-neutral" style="font-size:11px;padding:6px 10px;" onclick="event.stopPropagation();decidirEntrevista('${escapeJsAttr(c.chave)}','${escapeJsAttr(c.nome)}','recusado')">❌ Recusado</button>
+          <button class="btn-act btn-approve-admin" style="font-size:11px;padding:6px 10px;" data-acao="decidirEntrevista" data-decisao="contratado" ${dadosCand}>🎉 Contratado</button>
+          <button class="btn-act btn-neutral" style="font-size:11px;padding:6px 10px;" data-acao="decidirEntrevista" data-decisao="recusado" ${dadosCand}>❌ Recusado</button>
         ` : '';
 
       return `
       <tr class="row-aprovado">
         <td style="text-align:center;color:var(--text3);">${i + 1}</td>
-        <td class="td-nome" onclick="abrirCandidato('${escapeJsAttr(c.chave)}')" style="cursor:pointer;">
+        <td class="td-nome" data-acao="abrirCandidato" ${dadosCand} style="cursor:pointer;">
           ${escapeHtml(c.nome)}${temViolacao ? ' <span style="color:var(--red);font-weight:700;" title="Violação registrada">*</span>' : ''}
           <span class="row-hint">▸ detalhes</span>
         </td>
@@ -2995,10 +3050,10 @@
         </td>
         <td style="max-width:200px;white-space:normal;font-size:12px;color:var(--text2);">${observacao ? escapeHtml(observacao) : '<span style="color:var(--text4);">—</span>'}</td>
         <td style="font-size:12px;color:${corStatus};font-weight:700;">${statusTxt}</td>
-        <td onclick="event.stopPropagation()" style="font-size:11px;">
+        <td data-acao="ignorar" style="font-size:11px;">
           <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;">
             ${botoesAcao}
-            <button class="btn-act btn-neutral" style="font-size:11px;padding:6px 10px;" onclick="event.stopPropagation();abrirCandidato('${escapeJsAttr(c.chave)}')" title="Ver detalhes completos">
+            <button class="btn-act btn-neutral" style="font-size:11px;padding:6px 10px;" data-acao="abrirCandidato" ${dadosCand} title="Ver detalhes completos">
               📋
             </button>
           </div>
@@ -3042,6 +3097,7 @@
   window.renderContratados = function renderContratados() {
     const tbody = document.getElementById('contratadosTableBody');
     if (!tbody) return;
+    ligarAcoesDelegadas('contratadosTableBody');
     const dataIni = document.getElementById('contratadosDataIni').value;
     const dataFim = document.getElementById('contratadosDataFim').value;
     const decididos = candidatosAgrupados().filter(c => {
@@ -3073,7 +3129,7 @@
       const observacao = p.observacao || '';
       const contratado = p.decisao_final === 'contratado';
       return `
-      <tr class="clickable" onclick="abrirCandidato('${escapeJsAttr(c.chave)}')" title="Ver detalhamento e exportar PDF">
+      <tr class="clickable" data-acao="abrirCandidato" data-chave="${escapeHtml(c.chave)}" title="Ver detalhamento e exportar PDF">
         <td style="text-align:center;color:var(--text3);">${i + 1}</td>
         <td class="td-nome">${escapeHtml(c.nome)} <span class="row-hint">▸ detalhes</span></td>
         <td><span class="td-pct" style="color:${c.media >= 70 ? 'var(--green)' : 'var(--red)'}">${c.media}%</span></td>
@@ -3271,6 +3327,7 @@
   function renderPendentes(lista) {
     document.getElementById('pendBadge').textContent = lista.length;
     const tbody = document.getElementById('pendTableBody');
+    ligarAcoesDelegadas('pendTableBody');
     if (!lista.length) {
       tbody.innerHTML = '<tr><td colspan="4"><div class="empty-state"><div class="empty-icon">🔑</div>Nenhuma solicitação pendente</div></td></tr>';
       return;
@@ -3278,20 +3335,20 @@
     // Aba Usuários é exclusiva de admin/gerência — todos os perfis ficam
     // disponíveis pra aprovar (são os únicos que cadastram gente).
     tbody.innerHTML = lista.map(p => {
-      const nomeEsc = escapeJsAttr(p.nome || p.email || '');
+      const dadosUser = `data-uid="${escapeHtml(p.uid)}" data-nome="${escapeHtml(p.nome || p.email || '')}"`;
       return `
       <tr>
         <td class="td-nome">${escapeHtml(p.nome || '—')}</td>
         <td><span class="email-hover" data-email="${escapeHtml(p.email || '—')}">•••••</span></td>
         <td>
           <div style="display:flex;gap:6px;flex-wrap:wrap;">
-            <button class="btn-act btn-approve-admin" onclick="aprovar('${p.uid}','gerencia')">Gerência</button>
-            <button class="btn-act btn-approve-viewer" onclick="aprovar('${p.uid}','avaliador')">Avaliador</button>
-            <button class="btn-act btn-neutral" onclick="aprovar('${p.uid}','viewer')">Viewer</button>
-            <button class="btn-act btn-neutral" onclick="aprovar('${p.uid}','coordenador')">Coordenador</button>
+            <button class="btn-act btn-approve-admin" data-acao="aprovarUsuario" data-perfil="gerencia" ${dadosUser}>Gerência</button>
+            <button class="btn-act btn-approve-viewer" data-acao="aprovarUsuario" data-perfil="avaliador" ${dadosUser}>Avaliador</button>
+            <button class="btn-act btn-neutral" data-acao="aprovarUsuario" data-perfil="viewer" ${dadosUser}>Viewer</button>
+            <button class="btn-act btn-neutral" data-acao="aprovarUsuario" data-perfil="coordenador" ${dadosUser}>Coordenador</button>
           </div>
         </td>
-        <td><button class="btn-act btn-danger" onclick="recusar('${p.uid}','${nomeEsc}')">✕</button></td>
+        <td><button class="btn-act btn-danger" data-acao="recusarUsuario" ${dadosUser}>✕</button></td>
       </tr>`;
     }).join('');
   }
@@ -3302,6 +3359,7 @@
     const ativos = todos.filter(u => PERFIS.includes(u.perfil));
     document.getElementById('ativosBadge').textContent = ativos.length;
     const tbody = document.getElementById('usersTableBody');
+    ligarAcoesDelegadas('usersTableBody');
     if (!ativos.length) {
       tbody.innerHTML = '<tr><td colspan="4"><div class="empty-state"><div class="empty-icon">👥</div>Nenhum avaliador aprovado ainda</div></td></tr>';
       return;
@@ -3311,7 +3369,7 @@
     tbody.innerHTML = ativos.map(u => {
       const souEu = u.uid === me.uid;
       const outrosPerfis = PERFIS.filter(p => p !== u.perfil && p !== 'admin');
-      const nomeEsc = escapeJsAttr(u.nome || u.email || '');
+      const dadosUser = `data-uid="${escapeHtml(u.uid)}" data-nome="${escapeHtml(u.nome || u.email || '')}"`;
       return `
         <tr>
           <td class="td-nome">${escapeHtml(u.nome || '—')}${souEu ? ' <span style="color:var(--text3);font-size:11px;">(você)</span>' : ''}</td>
@@ -3321,8 +3379,8 @@
             <div style="display:flex;gap:6px;flex-wrap:wrap;">
               ${souEu
                 ? '<span style="color:var(--text4);font-size:11px;font-family:\'Share Tech Mono\',monospace;">—</span>'
-                : outrosPerfis.map(p => `<button class="btn-act btn-neutral" onclick="alterarPerfil('${u.uid}','${p}')">→ ${p}</button>`).join('') +
-                  `<button class="btn-act btn-danger" onclick="recusar('${u.uid}','${nomeEsc}')">Revogar</button>`}
+                : outrosPerfis.map(p => `<button class="btn-act btn-neutral" data-acao="alterarPerfil" data-perfil="${escapeHtml(p)}" ${dadosUser}>→ ${p}</button>`).join('') +
+                  `<button class="btn-act btn-danger" data-acao="recusarUsuario" ${dadosUser}>Revogar</button>`}
             </div>
           </td>
         </tr>`;
@@ -3453,6 +3511,7 @@
     const ativos = lista.filter(c => statusCodigo(c).ok);
     document.getElementById('cntCodigosDisp').textContent = ativos.length;
     const tbody = document.getElementById('codigosTableBody');
+    ligarAcoesDelegadas('codigosTableBody');
     if (!lista.length) {
       tbody.innerHTML = '<tr><td colspan="6"><div class="empty-state"><div class="empty-icon">🔑</div>Nenhum código gerado ainda</div></td></tr>';
       return;
@@ -3460,9 +3519,9 @@
     tbody.innerHTML = lista.map(c => {
       const st = statusCodigo(c);
       const acao = (st.ok
-        ? `<button class="btn-act btn-danger" onclick="desativarCodigo('${c.codigo}')">Desativar</button> `
+        ? `<button class="btn-act btn-danger" data-acao="desativarCodigo" data-codigo="${escapeHtml(c.codigo)}">Desativar</button> `
         : '') +
-        `<button class="btn-act btn-neutral" onclick="excluirCodigo('${c.codigo}')" title="Remove este código da lista">🗑 Excluir</button>`;
+        `<button class="btn-act btn-neutral" data-acao="excluirCodigo" data-codigo="${escapeHtml(c.codigo)}" title="Remove este código da lista">🗑 Excluir</button>`;
       return `<tr>
         <td style="font-family:'Share Tech Mono',monospace;font-weight:700;letter-spacing:2px;">${escapeHtml(c.codigo)}</td>
         <td style="color:${st.cor};font-weight:700;">${st.txt}</td>

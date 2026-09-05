@@ -10,30 +10,6 @@ export function normNome(n) {
   return (n || '').trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 }
 
-// Escapa um valor pra uso seguro dentro de `onclick="fn('${valor}')"` \u2014 ou
-// seja, dentro de uma string JS de aspas simples que por sua vez fica
-// dentro de um atributo HTML de aspas duplas.
-//
-// A ORDEM importa e \u00e9 f\u00e1cil de errar: escapar primeiro pra HTML (com
-// escapeHtml, que troca ' por &#39;) e s\u00f3 depois tentar escapar ' pra JS
-// (.replace(/'/g, "\\'")) N\u00c3O FUNCIONA \u2014 nesse ponto j\u00e1 n\u00e3o sobra nenhuma
-// aspas simples crua pra substituir (virou o texto "&#39;"), e o navegador
-// decodifica essa entidade de volta pra ' ANTES do onclick rodar como JS.
-// O resultado \u00e9 a aspas simples original voltando intacta e escapando da
-// string, permitindo injetar c\u00f3digo (ex: nome de candidato/avaliador
-// "x');algumaCoisaMaliciosa();//" quebra o onclick e executa no clique).
-//
-// Por isso a ordem certa \u00e9: escapar pra JS primeiro (barra invertida e
-// aspas simples), e s\u00f3 then escapar pra HTML (& e "), que s\u00e3o os \u00fanicos
-// caracteres que o navegador decodifica antes do JS rodar.
-export function escapeJsAttr(s) {
-  return String(s)
-    .replace(/\\/g, '\\\\')
-    .replace(/'/g, "\\'")
-    .replace(/&/g, '&amp;')
-    .replace(/"/g, '&quot;');
-}
-
 // Agrupa por CPF quando a ficha do candidato existe (identificador confiável);
 // cai para o nome normalizado nos registros antigos, anteriores à ficha.
 export function chaveDe(r) {

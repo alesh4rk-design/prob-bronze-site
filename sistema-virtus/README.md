@@ -210,6 +210,28 @@ novo, vale a pena adicionar um teste pra ele na mesma hora — é o que
 impede o mesmo bug de voltar da próxima vez que alguém mexer no código
 por perto.
 
+## Como os botões das tabelas funcionam (e por que não usar `onclick`)
+
+Nas tabelas do dashboard, os botões e as linhas clicáveis **não** usam
+`onclick="minhaFuncao('valor')"`. Em vez disso, cada elemento carrega
+`data-acao` mais os dados de que precisa (`data-chave`, `data-nome`,
+`data-uid`...), e um único listener no `<tbody>` despacha o clique — ver
+`ACOES_TABELA` e `ligarAcoesDelegadas()` em `dashboard.html`.
+
+Isso não é preferência de estilo: é segurança. Montar `onclick` como
+texto significa colar o nome do candidato/avaliador dentro de código
+JavaScript. Um nome com aspas simples fecha a string e o resto vira
+código executável — foi uma falha real, encontrada e corrigida aqui
+(um nome como `x');algumaCoisa();//` executava no clique de "Revogar",
+"Contratado" ou ao abrir um candidato). Escapar pra HTML **não** resolve,
+porque o navegador desfaz esse escape antes do JavaScript rodar.
+
+Com `data-*` o problema não existe: o valor chega como string via
+`dataset` e nunca é interpretado como código. **Ao adicionar um botão
+novo numa tabela, siga esse padrão em vez de criar um `onclick`.** O
+teste "Nome malicioso de usuário pendente/ativo não escapa do onclick"
+guarda esse comportamento.
+
 ## Pendências / próximos passos manuais
 
 - [ ] Criar o projeto Firebase e colar a config real em `js/firebase-config.js`.
