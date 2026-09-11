@@ -362,5 +362,57 @@ export const tests = [
       await page.close();
     }
   }
+,
+
+  {
+    name: 'Aprovar para entrevista quem já teve decisão final volta a mostrar em Aprovados',
+    async run({ browser, baseUrl }) {
+      // Cenário real relatado: a mesma pessoa é reavaliada numa rodada nova.
+      // Ela já tinha decisão final de antes (recusado), e ao ser aprovada pra
+      // entrevista de novo não aparecia na aba — porque a aba esconde quem
+      // tem decisao_final, e aprovar não limpava esse campo.
+      const resultados = [{ id: '1', tipo: 'quiz', nome: 'Revisitado', modulo: 'Atendimento', pct: 80, acertos: 8, total: 10, data_conclusao: hoje() }];
+      const pipeline = { 'nome:revisitado': { nome: 'Revisitado', aprovado: false, decisao_final: 'recusado', decisao_final_em: hoje() } };
+      const { page, erros } = await abrirDashboard(browser, baseUrl, { perfil: 'admin', resultados, pipeline });
+
+      await page.evaluate(() => window.alternarAprovadoParaEntrevista('nome:revisitado', 'Revisitado', true));
+      await page.waitForTimeout(400);
+      await page.evaluate(() => switchView('banco'));
+      await page.waitForTimeout(300);
+
+      const linhas = await page.evaluate(() => document.getElementById('bancoTableBody').innerText);
+      assert(linhas.includes('Revisitado'), `quem foi aprovado pra entrevista de novo devia aparecer em Aprovados. Conteúdo: ${linhas}`);
+
+      // E não pode continuar no histórico de Contratados como decidido.
+      await page.evaluate(() => switchView('contratados'));
+      await page.waitForTimeout(300);
+      const contratados = await page.evaluate(() => document.getElementById('contratadosTableBody').innerText);
+      assert(!contratados.includes('Revisitado'), `não devia continuar em Contratados com a decisão antiga. Conteúdo: ${contratados}`);
+
+      assertEqual(erros.length, 0, 'erros de JS: ' + erros.join(' | '));
+      await page.close();
+    }
+  },
+
+  {
+    name: 'Aprovado sem horário de aprovação ainda aparece em Aprovados',
+    async run({ browser, baseUrl }) {
+      // O serverTimestamp() do Firestore chega como null no primeiro
+      // snapshot local (compensação de latência), e registros antigos podem
+      // nem ter o campo. Nesses casos o candidato não pode simplesmente
+      // desaparecer da aba.
+      const resultados = [{ id: '1', tipo: 'quiz', nome: 'Sem Horario', modulo: 'Atendimento', pct: 75, acertos: 7, total: 10, data_conclusao: hoje() }];
+      const pipeline = { 'nome:sem horario': { nome: 'Sem Horario', aprovado: true } };
+      const { page, erros } = await abrirDashboard(browser, baseUrl, { perfil: 'admin', resultados, pipeline });
+
+      await page.evaluate(() => switchView('banco'));
+      await page.waitForTimeout(300);
+      const linhas = await page.evaluate(() => document.getElementById('bancoTableBody').innerText);
+      assert(linhas.includes('Sem Horario'), `aprovado sem aprovado_em devia aparecer em vez de sumir. Conteúdo: ${linhas}`);
+
+      assertEqual(erros.length, 0, 'erros de JS: ' + erros.join(' | '));
+      await page.close();
+    }
+  }
 
 ];

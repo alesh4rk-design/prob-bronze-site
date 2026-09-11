@@ -12,7 +12,7 @@
 
 import { db } from "./firebase-config.js";
 import {
-  collection, query, where, orderBy, limit, onSnapshot, getDoc, doc, setDoc, updateDoc, deleteDoc, serverTimestamp
+  collection, query, where, orderBy, limit, onSnapshot, getDoc, doc, setDoc, updateDoc, deleteDoc, serverTimestamp, deleteField
 } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
 
 // Assina a coleção `resultados` em tempo real (substitui o polling de 10s do
@@ -226,13 +226,23 @@ export async function definirObservacaoPipeline(chave, observacao, nome, avaliad
 // coleção pipeline — não mexe na nota do teste nem na etapa do processo seletivo.
 export async function definirAprovacaoManual(chave, aprovado, nome, avaliador, perfilAvaliador) {
   const id = chave.replace(/[/]/g, "_");
-  await setDoc(doc(db, "pipeline", id), {
+  const dados = {
     aprovado,
     nome: nome || null,
     aprovado_por: avaliador || null,
     aprovado_por_perfil: perfilAvaliador || null,
     aprovado_em: serverTimestamp()
-  }, { merge: true });
+  };
+  // Marcar pra entrevista de novo é reabrir o processo — se a pessoa já
+  // tinha decisão final de uma rodada anterior (ex: recusada e reavaliada
+  // depois), essa decisão antiga não pode continuar escondendo o
+  // candidato da aba Aprovados nem aparecendo como se ainda valesse.
+  if (aprovado) {
+    dados.decisao_final = deleteField();
+    dados.decisao_final_por = deleteField();
+    dados.decisao_final_em = deleteField();
+  }
+  await setDoc(doc(db, "pipeline", id), dados, { merge: true });
 }
 
 // Banco de Reserva — candidato bom, mas sem vaga aberta agora. Guardado

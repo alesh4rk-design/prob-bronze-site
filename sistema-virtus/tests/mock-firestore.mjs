@@ -45,6 +45,7 @@ export function orderBy(){ return {}; }
 export function limit(){ return {}; }
 export function doc(db, ...parts){ return { __doc: parts.join('/') }; }
 export function serverTimestamp(){ return new Date(); }
+export function deleteField(){ return { __deleteField: true }; }
 
 export async function getDoc(ref){
   if (ref.__doc && ref.__doc.startsWith('usuarios/')) {
@@ -65,7 +66,12 @@ export async function setDoc(ref, data){
   window.__writes.push({ path: ref.__doc, data });
   if (ref.__doc && ref.__doc.startsWith('pipeline/')) {
     const id = ref.__doc.split('/')[1];
-    window.__PIPE[id] = { ...(window.__PIPE[id] || {}), ...data };
+    const atual = { ...(window.__PIPE[id] || {}) };
+    for (const [k, v] of Object.entries(data)) {
+      if (v && typeof v === 'object' && v.__deleteField) delete atual[k];
+      else atual[k] = v;
+    }
+    window.__PIPE[id] = atual;
     if (window.__notifyPipeline) window.__notifyPipeline();
   }
 }

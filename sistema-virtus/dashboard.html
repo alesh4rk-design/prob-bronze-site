@@ -2998,8 +2998,11 @@
     // teste semana passada e foi marcado hoje precisa aparecer hoje.
     const aprovadosFiltrados = marcadosParaEntrevista.filter(c => {
       const aprovadoEm = aprovadoEmDe(c);
-      const dataC = aprovadoEm ? dataLocalYMD(aprovadoEm) : '';
-      if (!dataC) return false;
+      // Sem aprovado_em ainda resolvido (serverTimestamp() chega como null
+      // no primeiro instante local, ou o registro é antigo o bastante pra
+      // nem ter esse campo) — trata como "agora" em vez de esconder o
+      // candidato da aba logo depois de marcado.
+      const dataC = aprovadoEm ? dataLocalYMD(aprovadoEm) : dataLocalYMD(new Date());
       if (dataIni && dataC < dataIni) return false;
       if (dataFim && dataC > dataFim) return false;
       return true;
@@ -3106,8 +3109,9 @@
     }).filter(c => {
       if (!dataIni && !dataFim) return true;
       const d = decisaoFinalEmDe(c);
-      const dataC = d ? dataLocalYMD(d) : '';
-      if (!dataC) return false;
+      // Mesmo raciocínio de Aprovados: sem decisao_final_em ainda resolvido,
+      // trata como "agora" em vez de esconder o candidato.
+      const dataC = d ? dataLocalYMD(d) : dataLocalYMD(new Date());
       if (dataIni && dataC < dataIni) return false;
       if (dataFim && dataC > dataFim) return false;
       return true;
