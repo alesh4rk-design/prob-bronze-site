@@ -400,6 +400,15 @@
     font-family:'Share Tech Mono',monospace; font-size:9px; letter-spacing:1px;
     margin-top:5px; min-height:12px; color:var(--text4);
   }
+  .file-drop {
+    display:flex; align-items:center; justify-content:center; gap:8px;
+    width:100%; background:var(--ink3); border:1px dashed var(--line2); border-radius:2px;
+    padding:16px 14px; color:var(--text3); font-size:13px; text-align:center;
+    cursor:pointer; transition:border-color .2s,color .2s;
+  }
+  .file-drop:hover { border-color:var(--amber); color:var(--text); }
+  .file-drop.ok { border-style:solid; border-color:var(--green); color:var(--green); }
+  .file-drop.err { border-style:solid; border-color:var(--red); color:var(--red); }
   .field-msg.ok  { color:var(--green); }
   .field-msg.err { color:var(--red); }
   .field-input.invalid { border-color:var(--red) !important; box-shadow:0 0 0 3px var(--reddim) !important; }
@@ -769,6 +778,20 @@
       </div>
 
       <div class="field-group">
+        <span class="field-label">Conte um pouco das suas experiências <span style="color:var(--text4);">(opcional)</span></span>
+        <textarea class="field-input" id="inExperienciaTexto" rows="3" maxlength="800" placeholder="Ex: 2 anos como vigilante patrimonial na empresa X, atendimento ao público, uso de CFTV..." style="resize:vertical;min-height:70px;font-family:inherit;"></textarea>
+      </div>
+
+      <div class="field-group">
+        <span class="field-label">Currículo <span style="color:var(--text4);">(opcional — PDF ou foto, até 5 MB)</span></span>
+        <label class="file-drop" id="curriculoDrop" for="inCurriculo">
+          <span id="curriculoDropTxt">📎 Toque para anexar o currículo</span>
+        </label>
+        <input type="file" id="inCurriculo" accept="application/pdf,image/jpeg,image/png" style="display:none;">
+        <div class="field-msg" id="msgCurriculo"></div>
+      </div>
+
+      <div class="field-group">
         <span class="field-label">Disponibilidade de turno *</span>
         <select class="field-input" id="inTurno">
           <option value="">— Selecionar —</option>
@@ -818,7 +841,7 @@
         armazenados por 6 meses, conforme o aviso de LGPD que você aceitou.
       </div>
 
-      <button class="btn btn-amber" onclick="startTest()" style="margin-top:14px;">
+      <button class="btn btn-amber" id="btnIniciarAvaliacao" onclick="startTest()" style="margin-top:14px;">
         <span>Iniciar Avaliação</span>
         <span style="opacity:0.7;">→</span>
       </button>
@@ -1243,6 +1266,34 @@
         p.classList.add('sel');
       };
     });
+
+    // Currículo — validação de tipo/tamanho no momento em que a pessoa
+    // escolhe o arquivo (feedback imediato, antes de tentar enviar nada).
+    document.getElementById('inCurriculo').addEventListener('change', () => {
+      const input = document.getElementById('inCurriculo');
+      const drop = document.getElementById('curriculoDrop');
+      const txt = document.getElementById('curriculoDropTxt');
+      const msg = document.getElementById('msgCurriculo');
+      const file = input.files[0];
+      if (!file) { drop.className = 'file-drop'; txt.textContent = '📎 Toque para anexar o currículo'; msg.textContent = ''; msg.className = 'field-msg'; return; }
+
+      const tiposAceitos = ['application/pdf', 'image/jpeg', 'image/png'];
+      if (!tiposAceitos.includes(file.type)) {
+        input.value = '';
+        drop.className = 'file-drop err'; txt.textContent = '📎 Toque para anexar o currículo';
+        msg.textContent = '✕ Formato não aceito — envie PDF, JPG ou PNG'; msg.className = 'field-msg err';
+        return;
+      }
+      if (file.size > 5 * 1024 * 1024) {
+        input.value = '';
+        drop.className = 'file-drop err'; txt.textContent = '📎 Toque para anexar o currículo';
+        msg.textContent = '✕ Arquivo maior que 5 MB'; msg.className = 'field-msg err';
+        return;
+      }
+      drop.className = 'file-drop ok';
+      txt.textContent = `✓ ${file.name}`;
+      msg.textContent = `${(file.size / (1024 * 1024)).toFixed(1)} MB`; msg.className = 'field-msg ok';
+    });
   })();
 
   // Monta o objeto do candidato validando tudo. Retorna null se algo falhar
@@ -1291,6 +1342,7 @@
     if (!pillDispTotal) return falha('Informe se possui disponibilidade total de horário', 'inDispTotal');
 
     const certificacoes = [...document.querySelectorAll('#inCerts input:checked')].map(c => c.value);
+    const experienciaTexto = document.getElementById('inExperienciaTexto').value.trim();
 
     return {
       nome,
@@ -1302,10 +1354,41 @@
       bairro,
       cargo_pretendido: cargo,
       experiencia: pillSel.dataset.val === 'sim',
+      experiencia_texto: experienciaTexto || null,
       turno,
       disponibilidade_total: pillDispTotal.dataset.val === 'sim',
       certificacoes
     };
+  }
+
+  // Sobe o currículo pro Firebase Storage (upload direto do navegador, sem
+  // passar pelo Worker — mesmo modelo de "escrita aberta com regra estreita"
+  // já usado em violações e no resultado do teste de digitação; storage.rules
+  // valida tipo e tamanho no servidor, então não dá pra burlar só editando o
+  // JS do navegador). Devolve { url, nomeArquivo } ou null se não houver
+  // arquivo selecionado.
+  async function enviarCurriculoSeHouver(cpf) {
+    const input = document.getElementById('inCurriculo');
+    const file = input.files[0];
+    if (!file) return null;
+
+    const drop = document.getElementById('curriculoDrop');
+    const txtEl = document.getElementById('curriculoDropTxt');
+    txtEl.textContent = '⏳ Enviando currículo...';
+
+    const { getStorage, ref, uploadBytes, getDownloadURL } =
+      await import("https://www.gstatic.com/firebasejs/10.13.0/firebase-storage.js");
+    const { app } = await import("./js/firebase-config.js");
+    const storage = getStorage(app);
+    const ext = (file.name.split('.').pop() || 'bin').toLowerCase();
+    const caminho = `curriculos/${cpf.replace(/\D/g, '')}-${Date.now()}.${ext}`;
+    const storageRef = ref(storage, caminho);
+    await uploadBytes(storageRef, file, { contentType: file.type });
+    const url = await getDownloadURL(storageRef);
+
+    drop.className = 'file-drop ok';
+    txtEl.textContent = `✓ ${file.name}`;
+    return { url, nomeArquivo: file.name };
   }
 
   window.startTest = async function() {
@@ -1319,6 +1402,23 @@
     const tema = document.getElementById('inTema').value;
     if (!dataPref) { toast('▸ Informe a data de preferência', 'err'); playErr(); return; }
     if (!tema) { toast('▸ Selecione o módulo do teste', 'err'); playErr(); return; }
+
+    // Envia o currículo (se houver) ANTES de travar o resto do fluxo — assim
+    // ele fica salvo desde já, mesmo que o candidato abandone o teste no meio.
+    const btnIniciar = document.getElementById('btnIniciarAvaliacao');
+    btnIniciar.disabled = true;
+    try {
+      const curriculo = await enviarCurriculoSeHouver(ficha.cpf);
+      if (curriculo) {
+        ficha.curriculo_url = curriculo.url;
+        ficha.curriculo_nome = curriculo.nomeArquivo;
+      }
+    } catch (e) {
+      console.error('Falha ao enviar currículo:', e);
+      toast('⚠️ Não foi possível enviar o currículo — a avaliação vai continuar sem ele.', 'err');
+    } finally {
+      btnIniciar.disabled = false;
+    }
 
     S.nome = ficha.nome; S.dataPref = dataPref;
     S.candidato = ficha;

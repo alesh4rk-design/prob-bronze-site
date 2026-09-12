@@ -1,0 +1,35 @@
+rules_version = '2';
+
+// Regras do Firebase Storage — publicar em Firebase Console → Storage → Rules,
+// igual já é feito com firestore.rules. Sem isso, o upload de currículo em
+// quiz.html não funciona (fica bloqueado por padrão).
+//
+// Mesmo modelo já usado em firestore.rules pra violações e pro resultado do
+// teste de digitação: o candidato NÃO tem login, então a escrita fica aberta
+// (sem exigir request.auth), mas validada no servidor por tipo e tamanho —
+// não dá pra burlar só editando o JS do navegador. A leitura (abrir o
+// currículo) fica restrita à equipe autenticada, do mesmo jeito que os dados
+// do candidato em resultados/pipeline.
+service firebase.storage {
+  match /b/{bucket}/o {
+    match /curriculos/{arquivo} {
+      allow create: if request.resource.size < 5 * 1024 * 1024
+                     && request.resource.contentType.matches('application/pdf|image/jpeg|image/png');
+
+      // Sem update/delete: um currículo enviado não pode ser sobrescrito nem
+      // apagado por quem não tem login (evita alguém trocar o arquivo do
+      // candidato depois do envio).
+      allow update, delete: if false;
+
+      allow read: if request.auth != null &&
+                     firestore.exists(/databases/(default)/documents/usuarios/$(request.auth.uid)) &&
+                     firestore.get(/databases/(default)/documents/usuarios/$(request.auth.uid)).data.perfil
+                       in ['admin', 'gerencia', 'avaliador', 'coordenador', 'viewer'];
+    }
+
+    // Bloqueia qualquer outro caminho do bucket por padrão.
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

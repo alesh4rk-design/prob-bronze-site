@@ -1830,6 +1830,19 @@
                   : '<span class="ficha-val" style="color:var(--text4);">Nenhuma informada</span>'}
               </div>
             </div>
+            ${f.experiencia_texto ? `
+            <div class="ficha-item" style="margin-top:10px;">
+              <div class="ficha-lbl">Experiências relatadas</div>
+              <div class="ficha-val" style="margin-top:5px;white-space:pre-wrap;">${escapeHtml(f.experiencia_texto)}</div>
+            </div>` : ''}
+            <div class="ficha-item" style="margin-top:10px;">
+              <div class="ficha-lbl">Currículo</div>
+              <div style="margin-top:5px;">
+                ${f.curriculo_url
+                  ? `<a href="${escapeHtml(f.curriculo_url)}" target="_blank" rel="noopener" class="btn-act btn-neutral" style="display:inline-flex;">📎 ${escapeHtml(f.curriculo_nome || 'Ver currículo')}</a>`
+                  : '<span class="ficha-val" style="color:var(--text4);">Não enviado</span>'}
+              </div>
+            </div>
           </div>
         </div>`;
     } else {
@@ -2022,6 +2035,15 @@
           ${(f.certificacoes && f.certificacoes.length)
             ? f.certificacoes.map(c => `<span class="pr-chip">✓ ${escapeHtml(c)}</span>`).join(' ')
             : '<span class="pr-f-val" style="color:#7A8EA8;">Nenhuma informada</span>'}
+        </div>
+        ${f.experiencia_texto ? `
+        <div class="pr-f-certs" style="margin-top:8px;">
+          <span class="pr-f-lbl">Experiências relatadas:</span>
+          <div class="pr-f-val" style="margin-top:4px;white-space:pre-wrap;">${escapeHtml(f.experiencia_texto)}</div>
+        </div>` : ''}
+        <div class="pr-f-certs" style="margin-top:8px;">
+          <span class="pr-f-lbl">Currículo:</span>
+          <span class="pr-f-val">${f.curriculo_url ? escapeHtml(f.curriculo_nome || 'enviado') + ' (link no relatório digital — abra pelo painel)' : 'não enviado'}</span>
         </div>`;
     }
 
@@ -2242,7 +2264,12 @@
           ${(f.certificacoes && f.certificacoes.length)
             ? f.certificacoes.map(c => `<span class="pr-chip">✓ ${escapeHtml(c)}</span>`).join(' ')
             : '<span class="pr-f-val" style="color:#7A8EA8;">Nenhuma informada</span>'}
-        </div>`;
+        </div>
+        ${f.curriculo_url ? `
+        <div class="pr-f-certs" style="margin-top:8px;">
+          <span class="pr-f-lbl">Currículo:</span>
+          <span class="pr-f-val">📎 enviado (abra pelo painel pra baixar)</span>
+        </div>` : ''}`;
     }
 
     // Observação do avaliador (Processo Seletivo), se houver.
@@ -2350,6 +2377,7 @@
     msg += tipo === 'resumo' ? `_Resumo de Competências_\n\n` : `_Relatório Completo_\n\n`;
     msg += `*Candidato:* ${nome}\n`;
     if (f && f.cargo_pretendido) msg += `*Cargo pretendido:* ${f.cargo_pretendido}\n`;
+    if (f && f.curriculo_url) msg += `*Currículo:* ${f.curriculo_url}\n`;
 
     if (tipo === 'resumo') {
       const mods = consolidarModulos(quizzes);

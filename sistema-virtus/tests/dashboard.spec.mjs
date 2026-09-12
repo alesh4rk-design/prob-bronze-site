@@ -478,5 +478,55 @@ export const tests = [
       await page.close();
     }
   }
+,
+  {
+    name: 'Ficha do candidato mostra experiência relatada e link do currículo, quando enviados',
+    async run({ browser, baseUrl }) {
+      const resultados = [{
+        id: '1', tipo: 'quiz', nome: 'Com Curriculo', modulo: 'Atendimento', pct: 80, acertos: 8, total: 10,
+        data_conclusao: hoje(),
+        candidato: {
+          cpf: '33333333333', cargo_pretendido: 'Vigilante', experiencia: true,
+          experiencia_texto: '3 anos como vigilante patrimonial na empresa Acme.',
+          curriculo_url: 'https://firebasestorage.googleapis.com/curriculo-teste.pdf',
+          curriculo_nome: 'curriculo-joao.pdf'
+        }
+      }];
+      const { page, erros } = await abrirDashboard(browser, baseUrl, { perfil: 'admin', resultados });
+
+      await page.evaluate(() => abrirCandidato('cpf:33333333333'));
+      await page.waitForTimeout(300);
+      const html = await page.evaluate(() => document.getElementById('cmConteudo').innerHTML);
+
+      assert(html.includes('3 anos como vigilante patrimonial'), `deveria mostrar o texto de experiência. HTML: ${html}`);
+      assert(html.includes('curriculo-joao.pdf'), `deveria mostrar o nome do arquivo do currículo. HTML: ${html}`);
+      assert(html.includes('https://firebasestorage.googleapis.com/curriculo-teste.pdf'), `deveria linkar pro arquivo real. HTML: ${html}`);
+
+      // Candidato sem nenhum dos dois não pode mostrar link/texto vazio nem quebrar.
+      await page.evaluate(() => fecharCandidato());
+
+      assertEqual(erros.length, 0, 'erros de JS: ' + erros.join(' | '));
+      await page.close();
+    }
+  },
+
+  {
+    name: 'Ficha sem currículo mostra "Não enviado" em vez de link quebrado',
+    async run({ browser, baseUrl }) {
+      const resultados = [{
+        id: '1', tipo: 'quiz', nome: 'Sem Curriculo', modulo: 'Atendimento', pct: 80, acertos: 8, total: 10,
+        data_conclusao: hoje(), candidato: { cpf: '44444444444', cargo_pretendido: 'Vigilante' }
+      }];
+      const { page, erros } = await abrirDashboard(browser, baseUrl, { perfil: 'admin', resultados });
+
+      await page.evaluate(() => abrirCandidato('cpf:44444444444'));
+      await page.waitForTimeout(300);
+      const html = await page.evaluate(() => document.getElementById('cmConteudo').innerHTML);
+      assert(html.includes('Não enviado'), `sem currículo deveria mostrar "Não enviado". HTML: ${html}`);
+
+      assertEqual(erros.length, 0, 'erros de JS: ' + erros.join(' | '));
+      await page.close();
+    }
+  }
 
 ];
