@@ -47,6 +47,9 @@ export async function salvarResultadoDigitacao(resultado) {
     wpm: resultado.wpm,
     cpm: resultado.cpm,
     categoria: resultado.categoria,
+    // 'mobile' ou 'desktop' — o dashboard usa isso pra aplicar a régua de
+    // WPM certa (digitar com o polegar é mais lento, não é o mesmo teste).
+    dispositivo: resultado.dispositivo || 'desktop',
     deleteCount: resultado.deleteCount,
     elapsedSec: resultado.elapsedSec,
     data_conclusao: agora.toISOString(),

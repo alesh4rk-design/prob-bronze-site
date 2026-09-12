@@ -527,6 +527,35 @@ const FRASES = {
   ]
 };
 
+// ── Versão curta, pra celular ───────────────────────────────────────────
+// Digitar com o polegar é naturalmente mais lento e cansativo — um texto de
+// ~160 caracteres e 90s pensado pra teclado físico não faz sentido aqui.
+// Frases mais curtas (~80 caracteres), sem a categoria "números" (trocar de
+// teclado numérico o tempo todo no celular mede paciência, não digitação).
+const FRASES_MOBILE = {
+  lgpd: [
+    "A LGPD entrou em vigor em setembro de 2020 e regula o tratamento de dados pessoais no Brasil.",
+    "O titular pode pedir acesso aos próprios dados; a empresa tem até 15 dias pra responder.",
+    "Dados sensíveis como biometria e saúde exigem consentimento específico do titular.",
+    "O encarregado de dados, ou DPO, deve ter contato divulgado publicamente pela empresa.",
+    "Incidentes de segurança devem ser informados à ANPD em prazo razoável, de preferência rápido.",
+    "A ANPD pode aplicar multas de até 2% do faturamento da empresa, limitada a 50 milhões.",
+    "Consentimento deve ser livre, informado e específico para cada finalidade de uso dos dados.",
+    "Crianças têm proteção extra: é preciso consentimento de um responsável legal antes da coleta."
+  ],
+  acesso: [
+    "Controle de acesso físico usa catraca, biometria e crachá para identificar cada pessoa.",
+    "Autenticação em duas etapas reduz muito o risco de uma conta ser invadida por terceiros.",
+    "Visitantes devem ser identificados e acompanhados por um colaborador durante toda a visita.",
+    "Cada colaborador deve acessar só o que precisa para o próprio trabalho, nada além disso.",
+    "Senhas fortes têm ao menos 12 caracteres, misturando letras, números e símbolos diferentes.",
+    "Acesso de quem sai da empresa deve ser revogado o quanto antes, de preferência no mesmo dia.",
+    "Nunca deixe outra pessoa entrar num ambiente restrito usando o seu próprio crachá de acesso.",
+    "Documentos sigilosos devem ficar guardados, nunca visíveis sobre a mesa de trabalho."
+  ]
+};
+function getCategoriaMobile(f){ return FRASES_MOBILE.lgpd.includes(f) ? 'lgpd' : 'acesso'; }
+
 function shuffle(arr) {
   const a=[...arr];
   for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}
@@ -538,7 +567,19 @@ function getCategoria(f){
   return 'acesso';
 }
 
-const TEST_DURATION=90;
+// Mobile = ponteiro "grosso" (dedo) como entrada primária — cobre celular e
+// tablet, mesmo com teclado físico plugado o navegador reporta o ponteiro
+// primário do aparelho. Notebook com tela touch tem ponteiro fino (trackpad/
+// mouse) como primário, então cai como desktop, que é o esperado.
+function ehDispositivoMovel(){
+  const temToque = ('ontouchstart' in window) || (navigator.maxTouchPoints || 0) > 0;
+  const ponteiroGrosso = window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
+  return temToque && ponteiroGrosso;
+}
+
+const TEST_DURATION_DESKTOP=90, TEST_DURATION_MOBILE=60;
+let TEST_DURATION=TEST_DURATION_DESKTOP;
+let dispositivoAtual='desktop';
 let active=false,timerInterval=null,timeLeft=TEST_DURATION,startTime=null;
 let originalText='',textoCategoria='';
 let candidate={nome:''};
@@ -712,7 +753,7 @@ function finishTest(){
   const cpm=elapsedSec>0?Math.round((typed.length/elapsedSec)*60):0;
   const wpm=Math.round(cpm/5);
 
-  lastResult={nome:candidate.nome,cpf:candidate.cpf,categoria:textoCategoria,acertos:correct,total:totalChars,pct:prec,wpm,cpm,deleteCount,elapsedSec,data:new Date().toLocaleString('pt-BR')};
+  lastResult={nome:candidate.nome,cpf:candidate.cpf,categoria:textoCategoria,dispositivo:dispositivoAtual,acertos:correct,total:totalChars,pct:prec,wpm,cpm,deleteCount,elapsedSec,data:new Date().toLocaleString('pt-BR')};
   sessionHistory.unshift(lastResult);
   renderHistory();
 
@@ -837,9 +878,13 @@ function startTest(){
 
 function iniciarTesteReal(){
   const nome=candidate.nome;
-  const pool=shuffle([...FRASES.lgpd,...FRASES.acesso,...FRASES.numeros]);
+  dispositivoAtual = ehDispositivoMovel() ? 'mobile' : 'desktop';
+  TEST_DURATION = dispositivoAtual === 'mobile' ? TEST_DURATION_MOBILE : TEST_DURATION_DESKTOP;
+  const pool = dispositivoAtual === 'mobile'
+    ? shuffle([...FRASES_MOBILE.lgpd, ...FRASES_MOBILE.acesso])
+    : shuffle([...FRASES.lgpd, ...FRASES.acesso, ...FRASES.numeros]);
   originalText=pool[0];
-  textoCategoria=getCategoria(originalText);
+  textoCategoria=(dispositivoAtual === 'mobile' ? getCategoriaMobile : getCategoria)(originalText);
   deleteCount=0;lastLength=0;
 
   document.getElementById('candidateName').textContent=nome;

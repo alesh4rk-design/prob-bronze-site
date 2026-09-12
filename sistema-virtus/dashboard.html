@@ -1499,7 +1499,7 @@
   import { PERGUNTAS_SEED } from "./js/perguntas-seed-data.js";
   import {
     normNome, chaveDe, fichaDe, fmtNasc, fmtData, fmtDataHora, corNota, pctClass,
-    classificarModulo, classificarDigitacao, dataLocalYMD, escapeHtml,
+    classificarModulo, classificarDigitacao, melhorDigitacao, dataLocalYMD, escapeHtml,
     VIOLACAO_LABELS, tipoViolacaoLabel, descricaoViolacao,
     consolidarModulos, criadoEmDe, expiraEmDe as _expiraEmDe, statusCodigo as _statusCodigo
   } from "./js/dashboard-format.js";
@@ -1884,7 +1884,7 @@
       html += `
         <div class="tent-card">
           <div class="tent-head">
-            <div class="tent-mod">⌨️ Digitação${t.categoria ? ' · ' + escapeHtml(t.categoria) : ''}</div>
+            <div class="tent-mod">${t.dispositivo === 'mobile' ? '📱' : '💻'} Digitação${t.categoria ? ' · ' + escapeHtml(t.categoria) : ''}</div>
             <div class="tent-nota" style="color:${corNota(t.pct || 0)}">${t.pct || 0}%</div>
             <div class="tent-meta">${fmtData(t.data_conclusao)}</div>
           </div>
@@ -2064,7 +2064,7 @@
         h += `
           <div class="pr-mod">
             <div class="pr-mod-head">
-              <div class="pr-mod-nome">${escapeHtml(t.categoria || 'Digitação')}</div>
+              <div class="pr-mod-nome">${t.dispositivo === 'mobile' ? '📱' : '💻'} ${escapeHtml(t.categoria || 'Digitação')}</div>
               <div class="pr-mod-nota" style="color:${corPct(t.pct || 0)}">${t.pct || 0}%</div>
               <div class="pr-mod-meta">${fmtData(t.data_conclusao)}</div>
             </div>
@@ -2127,8 +2127,9 @@
     const media = mods.length ? Math.round(mods.reduce((a, m) => a + m.pct, 0) / mods.length) : null;
     const fortes = mods.filter(m => m.pct >= 70);
     const fracos = mods.filter(m => m.pct < 70);
-    const melhorWpm = typings.length ? Math.max(...typings.map(t => t.wpm || 0)) : null;
-    const dig = classificarDigitacao(melhorWpm);
+    const melhorTyping = melhorDigitacao(typings);
+    const melhorWpm = melhorTyping ? melhorTyping.wpm : null;
+    const dig = melhorTyping ? classificarDigitacao(melhorTyping.wpm, melhorTyping.dispositivo) : null;
 
     const agora = new Date().toLocaleString('pt-BR');
 
@@ -2334,8 +2335,9 @@
       const media = mods.length ? Math.round(mods.reduce((a, m) => a + m.pct, 0) / mods.length) : null;
       const fortes = mods.filter(m => m.pct >= 70);
       const fracos = mods.filter(m => m.pct < 70);
-      const melhorWpm = typings.length ? Math.max(...typings.map(t => t.wpm || 0)) : null;
-      const dig = classificarDigitacao(melhorWpm);
+      const melhorTyping = melhorDigitacao(typings);
+      const melhorWpm = melhorTyping ? melhorTyping.wpm : null;
+      const dig = melhorTyping ? classificarDigitacao(melhorTyping.wpm, melhorTyping.dispositivo) : null;
       const situacao = media === null ? 'SEM PROVA TÉCNICA' : media >= 70 ? 'APROVADO' : media >= 50 ? 'EM ANÁLISE' : 'NÃO APROVADO';
 
       msg += `*Média geral:* ${media !== null ? media + '%' : '—'}\n`;

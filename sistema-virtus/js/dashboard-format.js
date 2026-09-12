@@ -55,12 +55,37 @@ export function classificarModulo(pct) {
   return            { tag: 'Baixo domínio', cls: 'sk-t-baixo',  cor: '#E0483C' };
 }
 
-export function classificarDigitacao(wpm) {
+// Digitar no celular (com os polegares) é naturalmente mais lento que num
+// teclado físico — comparar os dois com a mesma régua reprovaria injustamente
+// quem só teve a opção de fazer o teste pelo celular. Por isso o teste de
+// digitação tem uma versão por dispositivo (ver digitacao.html) e a régua de
+// classificação acompanha qual delas o candidato fez.
+const FAIXAS_DIGITACAO = {
+  desktop: [
+    { min: 45, txt: 'Rápida', obs: 'apta a funções com muito registro em sistema' },
+    { min: 30, txt: 'Adequada', obs: 'atende rotinas administrativas comuns' },
+    { min: 20, txt: 'Moderada', obs: 'suficiente para registros pontuais' }
+  ],
+  mobile: [
+    { min: 28, txt: 'Rápida', obs: 'apta a funções com muito registro em sistema' },
+    { min: 20, txt: 'Adequada', obs: 'atende rotinas administrativas comuns' },
+    { min: 14, txt: 'Moderada', obs: 'suficiente para registros pontuais' }
+  ]
+};
+
+export function classificarDigitacao(wpm, dispositivo = 'desktop') {
   if (wpm == null) return null;
-  if (wpm >= 45) return { txt: 'Rápida', obs: 'apta a funções com muito registro em sistema' };
-  if (wpm >= 30) return { txt: 'Adequada', obs: 'atende rotinas administrativas comuns' };
-  if (wpm >= 20) return { txt: 'Moderada', obs: 'suficiente para registros pontuais' };
+  const faixas = FAIXAS_DIGITACAO[dispositivo] || FAIXAS_DIGITACAO.desktop;
+  for (const f of faixas) if (wpm >= f.min) return { txt: f.txt, obs: f.obs };
   return { txt: 'Lenta', obs: 'evitar funções com digitação intensiva' };
+}
+
+// Entre várias tentativas de digitação (a pessoa pode ter refeito o teste),
+// pega a de maior WPM — junto com o dispositivo usado NAQUELA tentativa,
+// pra classificar pela régua certa.
+export function melhorDigitacao(typings) {
+  if (!typings || !typings.length) return null;
+  return typings.reduce((melhor, t) => (!melhor || (t.wpm || 0) > melhor.wpm) ? { wpm: t.wpm || 0, dispositivo: t.dispositivo || 'desktop' } : melhor, null);
 }
 
 export function dataLocalYMD(d) {
