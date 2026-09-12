@@ -414,5 +414,38 @@ export const tests = [
       await page.close();
     }
   }
+,
+  {
+    name: 'Dashboard mostra digitação separada por dispositivo (computador x celular)',
+    async run({ browser, baseUrl }) {
+      const resultados = [
+        { id: '1', tipo: 'typing', nome: 'Digitou no PC', dispositivo: 'desktop', wpm: 50, pct: 95, data_conclusao: hoje() },
+        { id: '2', tipo: 'typing', nome: 'Digitou no PC 2', dispositivo: 'desktop', wpm: 40, pct: 60, data_conclusao: hoje() },
+        { id: '3', tipo: 'typing', nome: 'Digitou no Cel', dispositivo: 'mobile', wpm: 25, pct: 90, data_conclusao: hoje() }
+      ];
+      const { page, erros } = await abrirDashboard(browser, baseUrl, { perfil: 'admin', resultados });
+
+      await page.evaluate(() => switchView('dashboard'));
+      await page.waitForTimeout(300);
+      const texto = await page.evaluate(() => document.getElementById('digitacaoDeviceStats').innerText);
+
+      assert(texto.includes('Computador'), `deveria ter um bloco "Computador". Conteúdo: ${texto}`);
+      assert(texto.includes('Celular'), `deveria ter um bloco "Celular". Conteúdo: ${texto}`);
+      // Computador: 2 testes, WPM médio (50+40)/2=45, aprovação 1/2=50% (pct>=70)
+      assert(texto.includes('45'), `WPM médio do computador devia ser 45. Conteúdo: ${texto}`);
+      assert(texto.includes('50%'), `aprovação do computador devia ser 50%. Conteúdo: ${texto}`);
+      // Celular: 1 teste, WPM médio 25, aprovação 100% (pct=90>=70)
+      assert(texto.includes('25'), `WPM médio do celular devia ser 25. Conteúdo: ${texto}`);
+      assert(texto.includes('100%'), `aprovação do celular devia ser 100%. Conteúdo: ${texto}`);
+
+      // Testes de digitação não podem contaminar os gráficos de quiz (que
+      // filtram tipo !== 'typing').
+      const kpiTotal = await page.evaluate(() => document.getElementById('kpiTotal').textContent);
+      assertEqual(kpiTotal, '0', 'KPI geral de testes não deveria contar os de digitação');
+
+      assertEqual(erros.length, 0, 'erros de JS: ' + erros.join(' | '));
+      await page.close();
+    }
+  }
 
 ];

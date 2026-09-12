@@ -203,6 +203,14 @@
   .charts-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:16px; }
   @media(max-width:860px){.charts-grid{grid-template-columns:1fr;}}
   .chart-wrap { padding:16px 20px 20px; }
+  .digit-device-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+  @media(max-width:700px){ .digit-device-grid{ grid-template-columns:1fr; } }
+  .digit-device-card { background:var(--ink3); border:1px solid var(--line2); border-radius:2px; padding:16px; }
+  .digit-device-head { display:flex; align-items:center; gap:8px; font-weight:700; font-size:14px; margin-bottom:14px; }
+  .digit-device-stats { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
+  .digit-stat { text-align:center; }
+  .digit-stat-val { font-family:'Rajdhani',sans-serif; font-size:22px; font-weight:700; color:var(--cyan); line-height:1; }
+  .digit-stat-lbl { font-family:'Share Tech Mono',monospace; font-size:9px; color:var(--text3); letter-spacing:1px; margin-top:4px; }
   .mod-bar-list { display:flex; flex-direction:column; gap:12px; }
   .mod-bar-header { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:5px; }
   .mod-bar-name { font-size:13px; color:var(--text); font-weight:600; }
@@ -1089,6 +1097,12 @@
     <div class="panel">
       <div class="panel-head"><div class="panel-title-sm">📊 Desempenho por Módulo</div></div>
       <div class="chart-wrap"><div class="mod-bar-list" id="moduloBars"><div class="empty-state"><div class="empty-icon">📊</div>Sem dados ainda</div></div></div>
+    </div>
+    <div class="panel" style="grid-column:1 / -1;">
+      <div class="panel-head"><div class="panel-title-sm">⌨️ Digitação — Computador x Celular</div></div>
+      <div class="chart-wrap">
+        <div id="digitacaoDeviceStats" class="digit-device-grid"></div>
+      </div>
     </div>
   </div>
 
@@ -2405,6 +2419,41 @@
   }
 
 
+  // Digitação fica de fora dos gráficos gerais (não tem "módulo" nem
+  // "aprovação para entrevista" no mesmo sentido dos quizzes) — tem o
+  // próprio bloco, separado por dispositivo porque a régua de WPM de
+  // computador e celular não é a mesma (ver classificarDigitacao).
+  function renderDigitacaoDashboard() {
+    const el = document.getElementById('digitacaoDeviceStats');
+    if (!el) return;
+    const dataEl = document.getElementById('dashData');
+    const dataFiltro = dataEl ? dataEl.value : '';
+    const typings = ALL_RESULTADOS.filter(r => {
+      if (r.tipo !== 'typing') return false;
+      if (dataFiltro) {
+        const dataR = r.data_conclusao ? dataLocalYMD(r.data_conclusao) : '';
+        if (dataR !== dataFiltro) return false;
+      }
+      return true;
+    });
+    const blocoDe = (dispositivo, icone, label) => {
+      const lista = typings.filter(t => (t.dispositivo || 'desktop') === dispositivo);
+      const total = lista.length;
+      const wpmMedio = total ? Math.round(lista.reduce((a, t) => a + (t.wpm || 0), 0) / total) : null;
+      const aprov = total ? Math.round((lista.filter(t => (t.pct || 0) >= 70).length / total) * 100) : null;
+      return `
+        <div class="digit-device-card">
+          <div class="digit-device-head">${icone} ${label}</div>
+          <div class="digit-device-stats">
+            <div class="digit-stat"><div class="digit-stat-val">${total}</div><div class="digit-stat-lbl">TESTES</div></div>
+            <div class="digit-stat"><div class="digit-stat-val">${wpmMedio ?? '—'}</div><div class="digit-stat-lbl">WPM MÉDIO</div></div>
+            <div class="digit-stat"><div class="digit-stat-val">${aprov !== null ? aprov + '%' : '—'}</div><div class="digit-stat-lbl">APROVAÇÃO</div></div>
+          </div>
+        </div>`;
+    };
+    el.innerHTML = blocoDe('desktop', '💻', 'Computador') + blocoDe('mobile', '📱', 'Celular');
+  }
+
   function renderModuloBars(lista) {
     const el = document.getElementById('moduloBars');
     if (!el) return;
@@ -3155,6 +3204,7 @@
       renderChartModulosAprovados(lista);
       renderChartEntrevistas(lista);
       renderModuloBars(lista);
+      renderDigitacaoDashboard();
       renderViolacoes();
       renderBancoAprovados();
       renderPipeline();
