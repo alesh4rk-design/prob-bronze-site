@@ -447,5 +447,36 @@ export const tests = [
       await page.close();
     }
   }
+,
+  {
+    name: 'PDF do candidato mostra a MELHOR tentativa de digitação, com dispositivo e régua certa',
+    async run({ browser, baseUrl }) {
+      // Regressão: o resumo no topo do PDF usava a ÚLTIMA tentativa de
+      // digitação (não a melhor) e não dizia o dispositivo — um WPM de
+      // celular aparecia cru, sem contexto, podendo parecer "fraco" quando
+      // na régua de celular é "Rápida".
+      const resultados = [
+        { id: '1', tipo: 'typing', nome: 'Digitou Duas Vezes', dispositivo: 'desktop', wpm: 20, pct: 80, data_conclusao: diasAtras(2) },
+        { id: '2', tipo: 'typing', nome: 'Digitou Duas Vezes', dispositivo: 'mobile', wpm: 30, pct: 90, data_conclusao: hoje() }
+      ];
+      const { page, erros } = await abrirDashboard(browser, baseUrl, { perfil: 'admin', resultados });
+
+      await page.evaluate(() => abrirCandidato('nome:digitou duas vezes'));
+      await page.evaluate(() => gerarPDF());
+      await page.waitForTimeout(200);
+      const html = await page.evaluate(() => document.getElementById('printReport').innerHTML);
+
+      // A melhor tentativa é a de 30 WPM no celular (não a de 20 no PC, que
+      // foi a última cronologicamente na lista acima).
+      assert(html.includes('30 WPM'), `deveria mostrar a melhor tentativa (30 WPM), não a última. HTML: ${html}`);
+      assert(html.includes('📱'), `deveria indicar que a melhor tentativa foi no celular. HTML: ${html}`);
+      // 30 WPM no celular é "Rápida" (régua mobile: >=28), não "Adequada"
+      // (que seria a leitura errada pela régua de computador).
+      assert(html.includes('Rápida'), `30 WPM no celular deveria classificar como "Rápida". HTML: ${html}`);
+
+      assertEqual(erros.length, 0, 'erros de JS: ' + erros.join(' | '));
+      await page.close();
+    }
+  }
 
 ];

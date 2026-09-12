@@ -1954,6 +1954,13 @@
     const media = quizzes.length
       ? Math.round(quizzes.reduce((a, t) => a + (t.pct || 0), 0) / quizzes.length) : null;
 
+    // Melhor tentativa de digitação (não a última) — e SEMPRE junto com o
+    // dispositivo daquela tentativa, porque WPM cru sem dizer se foi
+    // celular ou computador induz a uma leitura errada (25 WPM é bom no
+    // celular e fraco no computador — ver classificarDigitacao).
+    const melhorTyping = melhorDigitacao(typings);
+    const digCabecalho = melhorTyping ? classificarDigitacao(melhorTyping.wpm, melhorTyping.dispositivo) : null;
+
     // Veredito puramente automático, a partir da média de quiz (≥70% = aprovado).
     // Não existe mais decisão manual do avaliador neste sistema.
     const vLabel = media === null ? '⏳ Sem prova técnica' : media >= 70 ? '✓ Aprovado' : '✕ Não aprovado';
@@ -1983,7 +1990,7 @@
         </div>
         <div class="pr-cand-item">Módulos<b>${quizzes.length}</b></div>
         <div class="pr-cand-item">Média geral<b style="color:${media !== null ? corPct(media) : '#5A6880'}">${media !== null ? media + '%' : '—'}</b></div>
-        <div class="pr-cand-item">Digitação<b>${typings.length ? (typings[typings.length - 1].wpm ?? '—') + ' WPM' : '—'}</b></div>
+        <div class="pr-cand-item">Digitação<b>${melhorTyping ? `${melhorTyping.dispositivo === 'mobile' ? '📱' : '💻'} ${melhorTyping.wpm} WPM — ${digCabecalho.txt}` : '—'}</b></div>
         <div class="pr-cand-item">Violações<b style="color:${viols.length ? '#B32218' : '#00713C'}">${viols.length}</b></div>
         <div class="pr-veredito ${vClass}">${vLabel}</div>
       </div>`;
