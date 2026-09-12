@@ -341,18 +341,18 @@ export const tests = [
       await page.evaluate(() => switchView('usuarios'));
       await page.waitForTimeout(300);
 
-      // Clica no botão "✕" (recusar) da linha do pendente e no "Revogar" do
-      // ativo — se o nome tivesse escapado do onclick, o clique executaria
-      // o payload injetado e window.__pwned ficaria true.
+      // Clica no botão "✕" (recusar) da linha do pendente, e no usuário ativo
+      // passa pelo botão único "⚙️ Ações" -> item "Remover acesso" do menu —
+      // se o nome tivesse escapado do dataset, o clique executaria o payload
+      // injetado e window.__pwned ficaria true.
       await page.evaluate(() => {
         const btnPend = document.querySelector('#pendTableBody .btn-danger');
         if (btnPend) btnPend.click();
       });
       await page.waitForTimeout(200);
-      await page.evaluate(() => {
-        const btnUser = document.querySelector('#usersTableBody .btn-danger');
-        if (btnUser) btnUser.click();
-      });
+      await page.evaluate(() => document.querySelector('#usersTableBody [data-acao="acoesUsuario"]')?.click());
+      await page.waitForTimeout(200);
+      await page.evaluate(() => document.querySelector('#acoesCandLista .perigo')?.click());
       await page.waitForTimeout(200);
 
       const pwned = await page.evaluate(() => window.__pwned === true);
@@ -523,6 +523,43 @@ export const tests = [
       await page.waitForTimeout(300);
       const html = await page.evaluate(() => document.getElementById('cmConteudo').innerHTML);
       assert(html.includes('Não enviado'), `sem currículo deveria mostrar "Não enviado". HTML: ${html}`);
+
+      assertEqual(erros.length, 0, 'erros de JS: ' + erros.join(' | '));
+      await page.close();
+    }
+  }
+,
+  {
+    name: 'Usuários: botão único de Ações lista promoções corretas e promove ao clicar',
+    async run({ browser, baseUrl }) {
+      const usuarios = [{ uid: 'u9', nome: 'Avaliadora Teste', email: 'a@x.com', perfil: 'avaliador' }];
+      const { page, erros } = await abrirDashboard(browser, baseUrl, { perfil: 'admin', usuarios });
+
+      await page.evaluate(() => switchView('usuarios'));
+      await page.waitForTimeout(300);
+
+      // Não pode ter mais os botões antigos empilhados (→ gerencia, → viewer...),
+      // só o botão único.
+      const botoesNaLinha = await page.evaluate(() => document.querySelectorAll('#usersTableBody .btn-act').length);
+      assertEqual(botoesNaLinha, 1, 'deveria ter só o botão "Ações", não um por perfil');
+
+      await page.click('#usersTableBody [data-acao="acoesUsuario"]');
+      await page.waitForTimeout(200);
+      const opcoes = await page.evaluate(() => document.getElementById('acoesCandLista').innerText);
+      // avaliador -> pode virar gerencia, viewer ou coordenador; NÃO admin
+      // (promoção pra admin é deliberadamente bloqueada na lista) nem
+      // "avaliador" de novo (é o perfil atual).
+      assert(opcoes.includes('gerencia'), `deveria oferecer promover a gerencia. Opções: ${opcoes}`);
+      assert(opcoes.includes('viewer'), `deveria oferecer promover a viewer. Opções: ${opcoes}`);
+      assert(opcoes.includes('coordenador'), `deveria oferecer promover a coordenador. Opções: ${opcoes}`);
+      assert(!opcoes.includes('Promover a admin'), `não deveria oferecer promover a admin. Opções: ${opcoes}`);
+      assert(!/Promover a avaliador\b/.test(opcoes), `não devia oferecer "virar" o próprio perfil atual. Opções: ${opcoes}`);
+      assert(opcoes.includes('Remover acesso'), `deveria ter a opção de remover acesso. Opções: ${opcoes}`);
+
+      await page.click('#acoesCandLista .acao-item:has-text("gerencia")');
+      await page.waitForTimeout(200);
+      const escreveu = await page.evaluate(() => window.__writes.some(w => w.path === 'usuarios/u9' && w.data && w.data.perfil === 'gerencia'));
+      assert(escreveu, 'clicar em "Promover a gerencia" deveria gravar perfil=gerencia no doc do usuário');
 
       assertEqual(erros.length, 0, 'erros de JS: ' + erros.join(' | '));
       await page.close();

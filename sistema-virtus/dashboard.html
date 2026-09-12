@@ -972,7 +972,7 @@
 </div>
 
 <!-- ══════════ MODAL: MENU DE AÇÕES DO CANDIDATO ══════════ -->
-<div class="modal-back" id="acoesCandModal" onclick="if(event.target===this)fecharAcoesCandidato()">
+<div class="modal-back" id="acoesCandModal" onclick="if(event.target===this)fecharAcoesModal()">
   <div class="modal-card" style="max-width:380px;">
     <div class="modal-top">
       <div class="modal-avatar">⚙️</div>
@@ -980,7 +980,7 @@
         <div class="modal-cand-nome">Ações</div>
         <div class="modal-cand-sub" id="acoesCandNome">—</div>
       </div>
-      <button class="modal-close" onclick="fecharAcoesCandidato()" title="Fechar">✕</button>
+      <button class="modal-close" onclick="fecharAcoesModal()" title="Fechar">✕</button>
     </div>
     <div class="modal-scroll" style="padding:14px 20px 20px;">
       <div id="acoesCandLista" style="display:flex;flex-direction:column;gap:8px;"></div>
@@ -1775,7 +1775,7 @@
     if (document.getElementById('obsModal').classList.contains('show')) fecharObservacao();
     if (document.getElementById('confirmModal').classList.contains('show')) responderConfirmacao(false);
     if (document.getElementById('whatsappCandModal').classList.contains('show')) fecharWhatsappCandidato();
-    if (document.getElementById('acoesCandModal').classList.contains('show')) fecharAcoesCandidato();
+    if (document.getElementById('acoesCandModal').classList.contains('show')) fecharAcoesModal();
   });
 
   function renderModalCandidato() {
@@ -2718,6 +2718,7 @@
     aprovarUsuario: el => window.aprovar(el.dataset.uid, el.dataset.perfil),
     recusarUsuario: el => window.recusar(el.dataset.uid, el.dataset.nome),
     alterarPerfil: el => window.alterarPerfil(el.dataset.uid, el.dataset.perfil),
+    acoesUsuario: el => window.abrirAcoesUsuario(el.dataset.uid, el.dataset.nome, el.dataset.perfil),
     desativarCodigo: el => window.desativarCodigo(el.dataset.codigo),
     excluirCodigo: el => window.excluirCodigo(el.dataset.codigo)
   };
@@ -2815,27 +2816,27 @@
       {
         label: (aprovado ? '✅ Marcado para Entrevista' : '☐ Aprovar para Entrevista'),
         ativo: aprovado,
-        fn: () => { window.fecharAcoesCandidato(); window.alternarAprovadoParaEntrevista(chave, nome, !aprovado); }
+        fn: () => { window.fecharAcoesModal(); window.alternarAprovadoParaEntrevista(chave, nome, !aprovado); }
       },
       {
         label: (noBanco ? '✅ No Banco de Reserva' : '🏦 Colocar no Banco de Reserva'),
         ativo: noBanco,
-        fn: () => { window.fecharAcoesCandidato(); window.alternarBancoReserva(chave, nome, !noBanco); }
+        fn: () => { window.fecharAcoesModal(); window.alternarBancoReserva(chave, nome, !noBanco); }
       },
       {
         label: '📝 ' + (p.observacao ? 'Ver/editar observação' : 'Escrever observação'),
-        fn: () => { window.fecharAcoesCandidato(); window.editarObservacaoPipeline(chave, nome); }
+        fn: () => { window.fecharAcoesModal(); window.editarObservacaoPipeline(chave, nome); }
       },
       {
         label: '💬 Falar no WhatsApp',
-        fn: () => { window.fecharAcoesCandidato(); window.abrirWhatsappCandidato(chave, nome); }
+        fn: () => { window.fecharAcoesModal(); window.abrirWhatsappCandidato(chave, nome); }
       }
     ];
     if (podeExcluirAqui) {
       itens.push({
         label: '🗑 Excluir candidato',
         perigo: true,
-        fn: () => { window.fecharAcoesCandidato(); window.excluirCandidatoDireto(chave, nome); }
+        fn: () => { window.fecharAcoesModal(); window.excluirCandidatoDireto(chave, nome); }
       });
     }
     const lista = document.getElementById('acoesCandLista');
@@ -2848,7 +2849,7 @@
     document.getElementById('acoesCandModal').classList.add('show');
   };
 
-  window.fecharAcoesCandidato = function () {
+  window.fecharAcoesModal = function () {
     document.getElementById('acoesCandModal').classList.remove('show');
   };
 
@@ -3459,20 +3460,16 @@
     // qualquer conta, inclusive outras contas admin/gerência.
     tbody.innerHTML = ativos.map(u => {
       const souEu = u.uid === me.uid;
-      const outrosPerfis = PERFIS.filter(p => p !== u.perfil && p !== 'admin');
-      const dadosUser = `data-uid="${escapeHtml(u.uid)}" data-nome="${escapeHtml(u.nome || u.email || '')}"`;
+      const dadosUser = `data-uid="${escapeHtml(u.uid)}" data-nome="${escapeHtml(u.nome || u.email || '')}" data-perfil="${escapeHtml(u.perfil)}"`;
       return `
         <tr>
           <td class="td-nome">${escapeHtml(u.nome || '—')}${souEu ? ' <span style="color:var(--text3);font-size:11px;">(você)</span>' : ''}</td>
           <td><span class="email-hover" data-email="${escapeHtml(u.email || '—')}">•••••</span></td>
           <td><span class="perfil-chip perfil-${u.perfil}">${u.perfil}</span></td>
           <td>
-            <div style="display:flex;gap:6px;flex-wrap:wrap;">
-              ${souEu
-                ? '<span style="color:var(--text4);font-size:11px;font-family:\'Share Tech Mono\',monospace;">—</span>'
-                : outrosPerfis.map(p => `<button class="btn-act btn-neutral" data-acao="alterarPerfil" data-perfil="${escapeHtml(p)}" ${dadosUser}>→ ${p}</button>`).join('') +
-                  `<button class="btn-act btn-danger" data-acao="recusarUsuario" ${dadosUser}>Revogar</button>`}
-            </div>
+            ${souEu
+              ? '<span style="color:var(--text4);font-size:11px;font-family:\'Share Tech Mono\',monospace;">—</span>'
+              : `<button class="btn-act btn-neutral" data-acao="acoesUsuario" ${dadosUser}>⚙️ Ações</button>`}
           </td>
         </tr>`;
     }).join('');
@@ -3491,6 +3488,37 @@
     if (!ok) return;
     try { await removerUsuario(uid); toast('Acesso removido', 'ok'); }
     catch (e) { console.error(e); toast('❌ Falha: ' + e.message, 'err'); }
+  };
+
+  // Botão único de Ações na aba Usuários — reaproveita o mesmo modal de
+  // Candidatos (é só uma lista de opções, não tem nada de específico de
+  // candidato nele). A aba Usuários já é exclusiva de admin/gerência (ver
+  // switchView e firestore.rules isGerencia()), então quem chega aqui já
+  // pode promover — não tem uma checagem extra de permissão dentro da
+  // função, só o botão "Ações" mesmo não aparecendo pra mais ninguém.
+  window.abrirAcoesUsuario = function (uid, nome, perfilAtual) {
+    const PERFIS = ['admin', 'gerencia', 'avaliador', 'viewer', 'coordenador'];
+    const outrosPerfis = PERFIS.filter(p => p !== perfilAtual && p !== 'admin');
+
+    document.getElementById('acoesCandNome').textContent = `${nome} — atualmente ${perfilAtual}`;
+    const itens = outrosPerfis.map(p => ({
+      label: `→ Promover a ${p}`,
+      fn: () => { window.fecharAcoesModal(); window.alterarPerfil(uid, p); }
+    }));
+    itens.push({
+      label: '🔒 Remover acesso',
+      perigo: true,
+      fn: () => { window.fecharAcoesModal(); window.recusar(uid, nome); }
+    });
+
+    const lista = document.getElementById('acoesCandLista');
+    lista.innerHTML = itens.map((it, i) =>
+      `<button type="button" class="acao-item ${it.perigo ? 'perigo' : ''}" data-item="${i}">${it.label}</button>`
+    ).join('');
+    lista.querySelectorAll('[data-item]').forEach(btn => {
+      btn.addEventListener('click', itens[Number(btn.dataset.item)].fn);
+    });
+    document.getElementById('acoesCandModal').classList.add('show');
   };
 
   // ── Módulos de perguntas ──────────────────────────────────────────────
