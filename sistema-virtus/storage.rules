@@ -4,10 +4,11 @@ rules_version = '2';
 // igual já é feito com firestore.rules.
 //
 // O currículo NÃO fica mais aqui: o upload passa pelo Worker (Cloudflare,
-// worker/virtus-api.js) e é guardado no Cloudflare R2, pra não depender do
-// plano pago (Blaze) do Firebase Storage. Este bucket do Firebase Storage
-// fica sem nenhum uso no Sistema Virtus — fechado por completo, por segurança
-// (caso alguém tente escrever ou ler qualquer coisa nele).
+// worker/virtus-api.js) e é guardado num KV Namespace da própria Cloudflare,
+// pra não depender do plano pago (Blaze) do Firebase Storage. Este bucket do
+// Firebase Storage fica sem nenhum uso no Sistema Virtus — fechado por
+// completo, por segurança (caso alguém tente escrever ou ler qualquer coisa
+// nele).
 service firebase.storage {
   match /b/{bucket}/o {
     match /{allPaths=**} {

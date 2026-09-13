@@ -25,12 +25,11 @@
 //     -> { ok: true, url, nomeArquivo } ou { ok: false, erro }
 //     Antes o navegador do candidato subia o currículo direto pro Firebase
 //     Storage (client SDK, que exige o plano pago Blaze). Agora passa por
-//     aqui: o Worker valida tipo/tamanho no servidor e grava no Cloudflare
-//     R2 (armazenamento de arquivos da própria Cloudflare — 10GB grátis por
-//     mês, sem cobrança por download, e já fica na mesma conta do Worker).
-//     Com limite de 5 envios a cada 10 minutos por IP. O nome do arquivo
-//     inclui um trecho aleatório — só quem tem o link consegue baixar (não
-//     existe listagem pública do bucket).
+//     aqui: o Worker valida tipo/tamanho no servidor e grava num KV Namespace
+//     do Cloudflare (mesmo tipo de armazenamento já usado no RATE_LIMIT_KV —
+//     gratuito, sem pedir cartão de crédito). Com limite de 5 envios a cada
+//     10 minutos por IP. O nome do arquivo inclui um trecho aleatório — só
+//     quem tem o link exato consegue baixar (não existe listagem pública).
 //
 //   GET /curriculo/{caminho}
 //     Serve de volta o arquivo gravado pela rota acima — é o link que fica
@@ -41,11 +40,14 @@
 //   FIREBASE_SERVICE_ACCOUNT  (secret)  conteúdo INTEIRO do .json baixado do
 //                                       Firebase (Configurações → Contas de
 //                                       serviço → Gerar nova chave privada)
-// Bindings necessários (Settings → Bindings):
-//   RATE_LIMIT_KV             (KV Namespace, pode criar um novo vazio)
-//   CURRICULOS_BUCKET         (R2 Bucket — crie um bucket novo em
-//                              Workers e Pages → R2 → Create bucket, ex:
-//                              "virtus-curriculos", e associe aqui)
+// Bindings necessários (Settings → Bindings → KV Namespace):
+//   RATE_LIMIT_KV             (já deve existir, usado pro código de acesso)
+//   CURRICULOS_KV             (crie um novo, do mesmo jeito que criou o
+//                              RATE_LIMIT_KV — sem custo, sem cartão)
+//
+// Limite: cada currículo pode ter até 5MB, e o KV grátis da Cloudflare
+// aceita até 1.000 gravações por dia e 1GB armazenado no total — de sobra
+// pro volume de um processo seletivo.
 
 const FIRESTORE_BASE = (projectId) =>
   `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents`;
@@ -337,7 +339,7 @@ async function handleSubmeterQuiz(request, env, cors) {
   return json({ ok: true, acertos, total, pct, id }, cors);
 }
 
-// ── Upload/leitura de currículo (Cloudflare R2) ────────────────────────────
+// ── Upload/leitura de currículo (Cloudflare KV) ────────────────────────────
 const TIPOS_CURRICULO_PERMITIDOS = ["application/pdf", "image/jpeg", "image/png"];
 const TAMANHO_MAX_CURRICULO = 5 * 1024 * 1024; // 5 MB, mesmo limite de antes (storage.rules)
 const EXT_POR_TIPO = { "application/pdf": "pdf", "image/jpeg": "jpg", "image/png": "png" };
@@ -360,26 +362,28 @@ async function handleEnviarCurriculo(request, env, cors) {
   if (!TIPOS_CURRICULO_PERMITIDOS.includes(contentType)) return json({ ok: false, erro: "tipo_nao_permitido" }, cors, 400);
 
   const ext = EXT_POR_TIPO[contentType] || "bin";
-  // O trecho aleatório no nome é o que protege o arquivo — o bucket R2 não
-  // tem listagem pública, então só quem tem o link exato (com esse trecho)
-  // consegue baixar. Mesmo princípio do "token" que o Firebase Storage usava.
+  // O trecho aleatório na chave é o que protege o arquivo — não existe
+  // "listar tudo que tem no KV" pra quem só conhece a URL, então só quem tem
+  // o link exato (com esse trecho) consegue baixar. Mesmo princípio do
+  // "token" que o Firebase Storage usava.
   const aleatorio = crypto.randomUUID().replace(/-/g, "");
-  const caminho = `curriculos/${cpf}-${Date.now()}-${aleatorio}.${ext}`;
+  const chave = `curriculos/${cpf}-${Date.now()}-${aleatorio}.${ext}`;
+  const nomeOriginal = arquivo.name || `curriculo.${ext}`;
 
-  await env.CURRICULOS_BUCKET.put(caminho, await arquivo.arrayBuffer(), {
-    httpMetadata: { contentType },
+  await env.CURRICULOS_KV.put(chave, await arquivo.arrayBuffer(), {
+    metadata: { contentType, nomeOriginal },
   });
 
-  const url = `${new URL(request.url).origin}/curriculo/${caminho}`;
-  return json({ ok: true, url, nomeArquivo: arquivo.name || `curriculo.${ext}` }, cors);
+  const url = `${new URL(request.url).origin}/curriculo/${chave}`;
+  return json({ ok: true, url, nomeArquivo: nomeOriginal }, cors);
 }
 
-async function handleObterCurriculo(caminho, env) {
-  const obj = await env.CURRICULOS_BUCKET.get(caminho);
-  if (!obj) return new Response("Não encontrado", { status: 404 });
-  return new Response(obj.body, {
+async function handleObterCurriculo(chave, env) {
+  const { value, metadata } = await env.CURRICULOS_KV.getWithMetadata(chave, { type: "arrayBuffer" });
+  if (!value) return new Response("Não encontrado", { status: 404 });
+  return new Response(value, {
     headers: {
-      "Content-Type": obj.httpMetadata?.contentType || "application/octet-stream",
+      "Content-Type": (metadata && metadata.contentType) || "application/octet-stream",
       "Cache-Control": "private, max-age=3600",
     },
   });
