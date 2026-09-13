@@ -932,6 +932,7 @@
     <div class="sidebar-item" data-view="dashboard" id="sidebarItemDashboard" onclick="switchView('dashboard')"><span class="si-icon">📊</span> Dashboard</div>
     <div class="sidebar-item" data-view="pendencias" id="sidebarItemPendencias" onclick="switchView('pendencias')"><span class="si-icon">🔔</span> Pendências</div>
     <div class="sidebar-item active" data-view="pipeline" id="sidebarItemPipeline" onclick="switchView('pipeline')"><span class="si-icon">👥</span> Candidatos</div>
+    <div class="sidebar-item" data-view="ranking" id="sidebarItemRanking" onclick="switchView('ranking')"><span class="si-icon">🏅</span> Ranking</div>
     <div class="sidebar-item" data-view="banco" id="sidebarItemBanco" onclick="switchView('banco')"><span class="si-icon">🎯</span> Aprovados para Entrevista<span class="sb-badge" id="badgeAptosEntrevista" style="display:none;">0</span></div>
     <div class="sidebar-item" data-view="contratados" id="sidebarItemContratados" onclick="switchView('contratados')"><span class="si-icon">🏆</span> Contratados</div>
     <div class="sidebar-item" data-view="bancoreserva" id="sidebarItemBancoReserva" onclick="switchView('bancoreserva')"><span class="si-icon">🏦</span> Banco de Reserva</div>
@@ -1365,6 +1366,47 @@
   </div>
 </section>
 
+<!-- ══════════ VIEW: RANKING POR SCORE VIRTUS ══════════ -->
+<section class="app-view" id="view-ranking">
+  <div class="page-title-area">
+    <div>
+      <div class="page-title">Ranking por <em>Score Virtus</em></div>
+      <div class="page-subtitle">Candidatos ordenados pela nota única ponderada — filtre por cargo para comparar quem concorre à mesma vaga</div>
+    </div>
+  </div>
+  <div class="panel">
+    <div class="panel-head">
+      <div class="panel-title-sm">🏅 Ranking <span class="badge" id="rankingBadge">0 candidatos</span></div>
+    </div>
+    <div class="panel-body" style="padding:16px 20px 6px;">
+      <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;">
+        <div class="field-group" style="max-width:280px;">
+          <span class="field-label">Cargo pretendido</span>
+          <select class="field-input" id="rankingCargoSelect" onchange="renderRanking()">
+            <option value="">Todos os cargos</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <div class="results-table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th style="width:44px;text-align:center;">#</th>
+            <th>Candidato</th>
+            <th>Cargo pretendido</th>
+            <th>Score Virtus</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody id="rankingTableBody">
+          <tr><td colspan="5"><div class="empty-state"><div class="empty-icon">🏅</div>Nenhum candidato com Score Virtus calculável ainda.</div></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
 <!-- ══════════ VIEW: APROVADOS (decisão manual da equipe) ══════════ -->
 <!-- ══════════ VIEW: QR CODES (de admin.html / sec-qrcodes) ══════════ -->
 <section class="app-view" id="view-qrcodes">
@@ -1728,6 +1770,7 @@
     document.getElementById('sidebarItemPendencias').style.display = 'none';
     document.getElementById('sidebarItemBanco').style.display = 'none';
     document.getElementById('sidebarItemContratados').style.display = 'none';
+    document.getElementById('sidebarItemRanking').style.display = 'none';
     // Banco de Reserva fica visível pro view — só não pode marcar/desmarcar
     // candidatos (ver renderBancoReserva/PODE_GERENCIAR_CANDIDATOS).
   }
@@ -1751,6 +1794,7 @@
     dashboard: 'Dashboard',
     pendencias: 'Central de Pendências',
     pipeline: 'Candidatos',
+    ranking: 'Ranking por Score Virtus',
     banco: 'Aprovados para Entrevista',
     contratados: 'Contratados',
     bancoreserva: 'Banco de Reserva',
@@ -1791,7 +1835,7 @@
     if ((view === 'perguntas' || view === 'usuarios' || view === 'pesos') && !ehGerenciaSV) view = 'dashboard';
     // Viewer só tem a aba Candidatos (vê os testes realizados de todo
     // mundo, sem poder selecionar ninguém pra entrevista).
-    if ((view === 'banco' || view === 'contratados' || view === 'dashboard' || view === 'pendencias') && me && me.perfil === 'viewer') view = 'pipeline';
+    if ((view === 'banco' || view === 'contratados' || view === 'dashboard' || view === 'pendencias' || view === 'ranking') && me && me.perfil === 'viewer') view = 'pipeline';
     const VIEWS_BLOQUEADAS_COORDENADOR = [...VIEWS_OPERACIONAIS, 'dashboard', 'pendencias', 'violacoes'];
     if (VIEWS_BLOQUEADAS_COORDENADOR.includes(view) && me && me.perfil === 'coordenador') view = 'pipeline';
     document.querySelectorAll('.app-view').forEach(v => v.classList.toggle('active', v.id === 'view-' + view));
@@ -1806,6 +1850,7 @@
     if (view === 'bancoreserva') renderBancoReserva();
     if (view === 'pendencias') renderPendencias();
     if (view === 'pesos') renderPesosView();
+    if (view === 'ranking') renderRanking();
   };
 
 
@@ -1825,6 +1870,36 @@
   function violacoesDe(nome) {
     const alvo = normNome(nome);
     return ALL_VIOLACOES.filter(v => normNome(v.nome) === alvo);
+  }
+
+  // Score Virtus de um candidato — usado na Ficha 360° e no Ranking, pra
+  // não duplicar (e não desalinhar) a mesma conta em dois lugares.
+  // Componente "digitação" é convertido de PPM pra uma escala 0-100 (o teto
+  // de PPM considerado "cheio" muda por dispositivo — ver FAIXAS_DIGITACAO).
+  function scoreVirtusDeCandidato(chave) {
+    const tents = tentativasDe(chave);
+    if (!tents.length) return { score: null, cargoPretendido: null, temOverride: false };
+    const quizzes = tents.filter(t => t.tipo !== 'typing');
+    const typings = tents.filter(t => t.tipo === 'typing');
+    const f = fichaDe(tents);
+    const mods = consolidarModulos(quizzes);
+    const melhorTyping = melhorDigitacao(typings);
+    const buscarPct = (nomeModulo) => { const m = mods.find(x => x.modulo === nomeModulo); return m ? m.pct : null; };
+    const digitacaoPct = melhorTyping
+      ? Math.min(100, Math.round((melhorTyping.wpm / (melhorTyping.dispositivo === 'mobile' ? 35 : 50)) * 100))
+      : null;
+    const componentes = {
+      cargo: f && f.cargo_pretendido ? buscarPct(f.cargo_pretendido) : null,
+      atendimento: buscarPct('Atendimento ao Cliente'),
+      linguagem_positiva: buscarPct('Linguagem Positiva'),
+      informatica: buscarPct('Informática'),
+      digitacao: digitacaoPct
+    };
+    const cargoPretendido = f && f.cargo_pretendido;
+    const pesos = pesosDoCargo(cargoPretendido, PESOS_SCORE);
+    const score = calcularScore(componentes, pesos);
+    const temOverride = !!(cargoPretendido && (PESOS_SCORE.porCargo || {})[cargoPretendido]);
+    return { score, cargoPretendido, temOverride };
   }
 
   window.abrirCandidato = function (chave) {
@@ -2016,22 +2091,8 @@
     }
 
     // ── Score Virtus: nota única ponderada, pra comparar candidatos do
-    // mesmo cargo de relance sem precisar olhar módulo por módulo. Componente
-    // "digitação" é convertido de PPM pra uma escala 0-100 (o teto de PPM
-    // considerado "cheio" muda por dispositivo — ver FAIXAS_DIGITACAO).
-    const buscarPct = (nomeModulo) => { const m = mods.find(x => x.modulo === nomeModulo); return m ? m.pct : null; };
-    const digitacaoPct = melhorTypingModal
-      ? Math.min(100, Math.round((melhorTypingModal.wpm / (melhorTypingModal.dispositivo === 'mobile' ? 35 : 50)) * 100))
-      : null;
-    const componentesScore = {
-      cargo: f && f.cargo_pretendido ? buscarPct(f.cargo_pretendido) : null,
-      atendimento: buscarPct('Atendimento ao Cliente'),
-      linguagem_positiva: buscarPct('Linguagem Positiva'),
-      informatica: buscarPct('Informática'),
-      digitacao: digitacaoPct
-    };
-    const pesosCargoAtual = pesosDoCargo(f && f.cargo_pretendido, PESOS_SCORE);
-    const scoreVirtus = calcularScore(componentesScore, pesosCargoAtual);
+    // mesmo cargo de relance sem precisar olhar módulo por módulo.
+    const { score: scoreVirtus, temOverride: scoreTemOverride } = scoreVirtusDeCandidato(CAND_ATUAL);
     if (scoreVirtus !== null) {
       html += `
         <div class="tent-card" style="border-color:var(--ambermid);">
@@ -2041,7 +2102,7 @@
               <div style="font-size:28px;font-weight:800;color:${corNota(scoreVirtus)};line-height:1.1;">${scoreVirtus}</div>
             </div>
             <div style="font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--text3);">
-              Nota única ponderada, calculada com os pesos ${f && f.cargo_pretendido && (PESOS_SCORE.porCargo || {})[f.cargo_pretendido] ? `de "${escapeHtml(f.cargo_pretendido)}"` : 'padrão'}.
+              Nota única ponderada, calculada com os pesos ${scoreTemOverride ? `de "${escapeHtml(f.cargo_pretendido)}"` : 'padrão'}.
             </div>
           </div>
         </div>`;
@@ -3212,6 +3273,59 @@
     }).join('');
   };
 
+  // ══════════ RANKING POR SCORE VIRTUS ══════════
+  // Reaproveita candidatosAgrupados() só pra ter a lista de chave+nome (não
+  // usa a nota/módulo de lá — o Score Virtus é outra conta, ver
+  // scoreVirtusDeCandidato). ligarAcoesDelegadas dá o clique-pra-abrir-ficha
+  // de graça, igual a aba Candidatos.
+  window.renderRanking = function renderRanking() {
+    const tbody = document.getElementById('rankingTableBody');
+    if (!tbody || !me) return;
+    ligarAcoesDelegadas('rankingTableBody');
+
+    const base = candidatosAgrupados().map(c => {
+      const { score, cargoPretendido } = scoreVirtusDeCandidato(c.chave);
+      return { chave: c.chave, nome: c.nome, score, cargoPretendido };
+    });
+
+    // Opções do filtro de cargo: só os valores que existem de verdade entre
+    // os candidatos carregados agora (cargo_pretendido é texto livre da
+    // ficha, não uma lista fixa — não tem sentido oferecer cargo sem gente).
+    const sel = document.getElementById('rankingCargoSelect');
+    if (sel) {
+      const cargosPresentes = [...new Set(base.filter(c => c.cargoPretendido).map(c => c.cargoPretendido))].sort((a, b) => a.localeCompare(b, 'pt-BR'));
+      const valorAtual = sel.value;
+      sel.innerHTML = '<option value="">Todos os cargos</option>' +
+        cargosPresentes.map(c => `<option value="${escapeHtml(c)}" ${c === valorAtual ? 'selected' : ''}>${escapeHtml(c)}</option>`).join('');
+    }
+    const cargoFiltro = sel ? sel.value : '';
+
+    let candidatos = base.filter(c => c.score !== null);
+    if (cargoFiltro) candidatos = candidatos.filter(c => c.cargoPretendido === cargoFiltro);
+    candidatos.sort((a, b) => b.score - a.score);
+
+    document.getElementById('rankingBadge').textContent = candidatos.length + ' candidato' + (candidatos.length === 1 ? '' : 's');
+
+    if (!candidatos.length) {
+      tbody.innerHTML = `<tr><td colspan="5"><div class="empty-state"><div class="empty-icon">🏅</div>Nenhum candidato com Score Virtus calculável ${cargoFiltro ? 'para esse cargo' : 'ainda'}.</div></td></tr>`;
+      return;
+    }
+    tbody.innerHTML = candidatos.map((c, i) => {
+      const chaveId = c.chave.replace(/[/]/g, '_');
+      const etapaCand = etapaDoPipeline(PIPELINE_MAP[chaveId] || {});
+      const dadosCand = `data-chave="${escapeHtml(c.chave)}" data-nome="${escapeHtml(c.nome)}"`;
+      const medalha = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : (i + 1);
+      return `
+      <tr class="clickable" data-acao="abrirCandidato" ${dadosCand} title="Ver Ficha 360°">
+        <td style="text-align:center;font-weight:700;">${medalha}</td>
+        <td class="td-nome">${escapeHtml(c.nome)} <span class="row-hint">▸ detalhes</span></td>
+        <td>${c.cargoPretendido ? escapeHtml(c.cargoPretendido) : '<span style="color:var(--text4);">—</span>'}</td>
+        <td><span class="td-pct" style="color:${corNota(c.score)};font-weight:800;font-size:15px;">${c.score}</span></td>
+        <td><span style="font-size:12px;font-weight:700;color:${etapaCand.cor};white-space:nowrap;">${etapaCand.icone} ${etapaCand.txt}</span></td>
+      </tr>`;
+    }).join('');
+  };
+
   // ══════════ MENU DE AÇÕES DO CANDIDATO (aba Candidatos) ══════════
   // Um botão só que abre a lista de ações, em vez de vários botões
   // empilhados na linha da tabela.
@@ -3658,6 +3772,7 @@
       renderViolacoes();
       renderBancoAprovados();
       renderPipeline();
+      renderRanking();
       renderContratados();
       renderBancoReserva();
       // Se a ficha de um candidato estiver aberta (ex: alguém clicou

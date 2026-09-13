@@ -960,6 +960,63 @@ export const tests = [
       assertEqual(erros.length, 0, 'erros de JS: ' + erros.join(' | '));
       await page.close();
     }
+  },
+
+  {
+    name: 'Ranking: ordena candidatos por Score Virtus (maior primeiro) e filtra por cargo',
+    async run({ browser, baseUrl }) {
+      const resultados = [
+        { id: '1', tipo: 'quiz', nome: 'Candidato Alto', candidato: { cpf: '11111111111', cargo_pretendido: 'ASG' }, modulo: 'ASG', pct: 90, acertos: 9, total: 10, data_conclusao: hoje() },
+        { id: '2', tipo: 'quiz', nome: 'Candidato Baixo', candidato: { cpf: '22222222222', cargo_pretendido: 'ASG' }, modulo: 'ASG', pct: 40, acertos: 4, total: 10, data_conclusao: hoje() },
+        { id: '3', tipo: 'quiz', nome: 'Candidato Jardineiro', candidato: { cpf: '33333333333', cargo_pretendido: 'Jardineiro' }, modulo: 'Jardineiro', pct: 60, acertos: 6, total: 10, data_conclusao: hoje() }
+      ];
+      const pesosScore = { default: { cargo: 100, atendimento: 0, linguagem_positiva: 0, informatica: 0, digitacao: 0 } };
+      const { page, erros } = await abrirDashboard(browser, baseUrl, { perfil: 'admin', resultados, pesosScore });
+
+      await page.evaluate(() => switchView('ranking'));
+      await page.waitForTimeout(300);
+
+      const nomesEmOrdem = await page.evaluate(() => [...document.querySelectorAll('#rankingTableBody tr')].map(tr => tr.querySelector('.td-nome').textContent.trim()));
+      assert(nomesEmOrdem[0].includes('Candidato Alto'), `esperava "Candidato Alto" em 1º lugar. Ordem: ${nomesEmOrdem.join(' | ')}`);
+
+      // Filtra só por "Jardineiro" — só um candidato deve sobrar.
+      await page.evaluate(() => {
+        const sel = document.getElementById('rankingCargoSelect');
+        sel.value = 'Jardineiro';
+        sel.dispatchEvent(new Event('change'));
+      });
+      await page.waitForTimeout(200);
+      const badgeTxt = await page.evaluate(() => document.getElementById('rankingBadge').textContent);
+      assert(badgeTxt.includes('1'), `filtro por cargo deveria deixar 1 candidato. Badge: ${badgeTxt}`);
+      const linhasFiltradas = await page.evaluate(() => [...document.querySelectorAll('#rankingTableBody tr')].map(tr => tr.textContent));
+      assert(linhasFiltradas.some(t => t.includes('Jardineiro')), 'linha filtrada deveria mostrar o candidato de Jardineiro');
+
+      // Clicar na linha abre a Ficha 360° do candidato certo.
+      await page.evaluate(() => document.querySelector('#rankingTableBody tr[data-acao="abrirCandidato"]').click());
+      await page.waitForTimeout(300);
+      const nomeModal = await page.evaluate(() => document.getElementById('cmNome').textContent);
+      assert(nomeModal.includes('Candidato Jardineiro'), `clicar na linha do ranking deveria abrir a ficha certa. Veio: ${nomeModal}`);
+
+      assertEqual(erros.length, 0, 'erros de JS: ' + erros.join(' | '));
+      await page.close();
+    }
+  },
+
+  {
+    name: 'Ranking: viewer não vê a aba (só Candidatos); admin e coordenador veem',
+    async run({ browser, baseUrl }) {
+      for (const [perfil, deveVer] of [['admin', true], ['coordenador', true], ['viewer', false]]) {
+        const { page, erros } = await abrirDashboard(browser, baseUrl, { perfil });
+        const visivel = await page.evaluate(() => getComputedStyle(document.getElementById('sidebarItemRanking')).display !== 'none');
+        assertEqual(visivel, deveVer, `perfil ${perfil}: visibilidade da aba Ranking incorreta`);
+        await page.evaluate(() => switchView('ranking'));
+        await page.waitForTimeout(150);
+        const viewAtiva = await page.evaluate((idEsperado) => document.getElementById(idEsperado).classList.contains('active'), deveVer ? 'view-ranking' : 'view-pipeline');
+        assert(viewAtiva, `perfil ${perfil}: switchView('ranking') deveria terminar na view esperada`);
+        assertEqual(erros.length, 0, `perfil ${perfil} teve erro(s) de JS: ${erros.join(' | ')}`);
+        await page.close();
+      }
+    }
   }
 
 ];
