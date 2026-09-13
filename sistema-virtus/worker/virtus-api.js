@@ -30,6 +30,7 @@
 //     gratuito, sem pedir cartão de crédito). Com limite de 5 envios a cada
 //     10 minutos por IP. O nome do arquivo inclui um trecho aleatório — só
 //     quem tem o link exato consegue baixar (não existe listagem pública).
+//     Apaga sozinho depois de 60 dias (ver EXPIRACAO_CURRICULO_SEGUNDOS).
 //
 //   GET /curriculo/{caminho}
 //     Serve de volta o arquivo gravado pela rota acima — é o link que fica
@@ -343,6 +344,10 @@ async function handleSubmeterQuiz(request, env, cors) {
 const TIPOS_CURRICULO_PERMITIDOS = ["application/pdf", "image/jpeg", "image/png"];
 const TAMANHO_MAX_CURRICULO = 5 * 1024 * 1024; // 5 MB, mesmo limite de antes (storage.rules)
 const EXT_POR_TIPO = { "application/pdf": "pdf", "image/jpeg": "jpg", "image/png": "png" };
+// O KV apaga o valor sozinho depois desse tempo (recurso nativo do
+// Cloudflare, não precisa de rotina/cron pra limpar nada). 60 dias ~= 2
+// meses — depois disso o link do currículo para de funcionar (404).
+const EXPIRACAO_CURRICULO_SEGUNDOS = 60 * 60 * 24 * 60;
 
 async function handleEnviarCurriculo(request, env, cors) {
   const ip = request.headers.get("CF-Connecting-IP") || "desconhecido";
@@ -372,6 +377,7 @@ async function handleEnviarCurriculo(request, env, cors) {
 
   await env.CURRICULOS_KV.put(chave, await arquivo.arrayBuffer(), {
     metadata: { contentType, nomeOriginal },
+    expirationTtl: EXPIRACAO_CURRICULO_SEGUNDOS,
   });
 
   const url = `${new URL(request.url).origin}/curriculo/${chave}`;
