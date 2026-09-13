@@ -38,7 +38,7 @@ export async function signOut(){}
 
   const FS = `
 export function getFirestore(){ return {}; }
-export function collection(db, name){ return { __name: name }; }
+export function collection(db, ...parts){ return { __name: parts.join('/') }; }
 export function query(ref){ return ref; }
 export function where(){ return {}; }
 export function orderBy(){ return {}; }
@@ -77,6 +77,25 @@ export async function setDoc(ref, data){
 }
 export async function updateDoc(ref, data){ window.__writes.push({ path: ref.__doc, data, op: 'update' }); }
 export async function deleteDoc(ref){ window.__writes.push({ path: ref.__doc, op: 'delete' }); }
+
+// Subcoleções (ex: pipeline/{id}/historico) — guardadas à parte de
+// window.__PIPE porque não são um documento único, e sim uma lista que só
+// cresce (addDoc), nunca é sobrescrita. Sem orderBy/where de verdade — o
+// mock devolve mais recente primeiro (ordem inversa de inserção), que é o
+// único uso que o app faz disso hoje (linha do tempo do candidato).
+window.__SUBCOLECOES = {};
+let __proximoId = 1;
+export async function addDoc(ref, data){
+  window.__writes.push({ path: ref.__name, data, op: 'add' });
+  const lista = window.__SUBCOLECOES[ref.__name] || (window.__SUBCOLECOES[ref.__name] = []);
+  const id = 'mock' + (__proximoId++);
+  lista.push({ id, data });
+  return { id };
+}
+export async function getDocs(ref){
+  const lista = [...(window.__SUBCOLECOES[ref.__name] || [])].reverse();
+  return { forEach(f) { lista.forEach(d => f({ id: d.id, data: () => d.data })); } };
+}
 
 const R = ${JSON.stringify(resultados)};
 const VI = ${JSON.stringify(violacoes)};

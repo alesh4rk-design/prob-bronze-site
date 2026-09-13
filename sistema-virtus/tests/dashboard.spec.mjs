@@ -565,5 +565,94 @@ export const tests = [
       await page.close();
     }
   }
+,
+  {
+    name: 'Etapa central: Banco de Reserva e Aprovado para Entrevista agora são exclusivos',
+    async run({ browser, baseUrl }) {
+      // Antes, um candidato podia estar aprovado E no banco de reserva ao
+      // mesmo tempo. Isso mudou: agora "etapa" é sempre uma coisa só —
+      // entrar num estado tira o candidato do outro.
+      const resultados = [{ id: '1', tipo: 'quiz', nome: 'Etapa Unica', modulo: 'Atendimento', pct: 80, acertos: 8, total: 10, data_conclusao: hoje() }];
+      const { page, erros } = await abrirDashboard(browser, baseUrl, { perfil: 'admin', resultados });
+
+      // Aprova pra entrevista primeiro.
+      await page.evaluate(() => window.alternarAprovadoParaEntrevista('nome:etapa unica', 'Etapa Unica', true));
+      await page.waitForTimeout(300);
+      await page.evaluate(() => switchView('banco'));
+      await page.waitForTimeout(200);
+      let aprovados = await page.evaluate(() => document.getElementById('bancoTableBody').innerText);
+      assert(aprovados.includes('Etapa Unica'), `deveria estar em Aprovados depois de marcado. Conteúdo: ${aprovados}`);
+
+      // Agora coloca no banco de reserva — deve SAIR de Aprovados.
+      await page.evaluate(() => window.alternarBancoReserva('nome:etapa unica', 'Etapa Unica', true));
+      await page.waitForTimeout(300);
+      aprovados = await page.evaluate(() => document.getElementById('bancoTableBody').innerText);
+      assert(!aprovados.includes('Etapa Unica'), `deveria ter saído de Aprovados ao entrar no banco de reserva. Conteúdo: ${aprovados}`);
+
+      await page.evaluate(() => switchView('bancoreserva'));
+      await page.waitForTimeout(200);
+      const banco = await page.evaluate(() => document.getElementById('bancoReservaTableBody').innerText);
+      assert(banco.includes('Etapa Unica'), `deveria estar no Banco de Reserva. Conteúdo: ${banco}`);
+
+      // E o caminho inverso: aprovar de novo tira do banco de reserva.
+      await page.evaluate(() => window.alternarAprovadoParaEntrevista('nome:etapa unica', 'Etapa Unica', true));
+      await page.waitForTimeout(300);
+      const bancoDepois = await page.evaluate(() => document.getElementById('bancoReservaTableBody').innerText);
+      assert(!bancoDepois.includes('Etapa Unica'), `deveria ter saído do banco de reserva ao ser aprovado de novo. Conteúdo: ${bancoDepois}`);
+
+      assertEqual(erros.length, 0, 'erros de JS: ' + erros.join(' | '));
+      await page.close();
+    }
+  },
+
+  {
+    name: 'Linha do tempo registra cada mudança de etapa e aparece na ficha do candidato',
+    async run({ browser, baseUrl }) {
+      const resultados = [{ id: '1', tipo: 'quiz', nome: 'Com Historico', modulo: 'Atendimento', pct: 80, acertos: 8, total: 10, data_conclusao: hoje() }];
+      const { page, erros } = await abrirDashboard(browser, baseUrl, { perfil: 'admin', resultados });
+
+      await page.evaluate(() => window.alternarAprovadoParaEntrevista('nome:com historico', 'Com Historico', true));
+      await page.waitForTimeout(200);
+      page.evaluate(() => { decidirEntrevista('nome:com historico', 'Com Historico', 'contratado'); });
+      await page.waitForTimeout(200);
+      await page.click('#confirmBtnOk');
+      await page.waitForTimeout(300);
+
+      await page.evaluate(() => abrirCandidato('nome:com historico'));
+      // A linha do tempo é buscada sob demanda (não é instantânea como o
+      // resto do modal) — dá um tempo pra terminar de carregar.
+      await page.waitForTimeout(400);
+      const timeline = await page.evaluate(() => document.getElementById('cmTimeline').innerText);
+      assert(timeline.includes('Aguardando entrevista'), `deveria ter a entrada de quando foi aprovado. Conteúdo: ${timeline}`);
+      assert(timeline.includes('Contratado'), `deveria ter a entrada da decisão final. Conteúdo: ${timeline}`);
+
+      const status = await page.evaluate(() => document.getElementById('cmConteudo').innerText);
+      assert(status.includes('STATUS ATUAL') && status.includes('Contratado'), `deveria mostrar o status atual como Contratado. Conteúdo: ${status}`);
+
+      assertEqual(erros.length, 0, 'erros de JS: ' + erros.join(' | '));
+      await page.close();
+    }
+  },
+
+  {
+    name: 'Tabela de Candidatos mostra a coluna Status com a etapa certa',
+    async run({ browser, baseUrl }) {
+      const resultados = [
+        { id: '1', tipo: 'quiz', nome: 'Sem Acao', modulo: 'Atendimento', pct: 80, acertos: 8, total: 10, data_conclusao: hoje() },
+        { id: '2', tipo: 'quiz', nome: 'Ja Aprovado', modulo: 'Atendimento', pct: 80, acertos: 8, total: 10, data_conclusao: hoje() }
+      ];
+      const pipeline = { 'nome:ja aprovado': { aprovado: true, etapa: 'aguardando_entrevista' } };
+      const { page, erros } = await abrirDashboard(browser, baseUrl, { perfil: 'admin', resultados, pipeline });
+
+      await page.evaluate(() => switchView('pipeline'));
+      await page.waitForTimeout(300);
+      const texto = await page.evaluate(() => document.getElementById('pipelineTableBody').innerText);
+      assert(texto.includes('Testes concluídos'), `candidato sem ação da equipe deveria mostrar "Testes concluídos". Conteúdo: ${texto}`);
+      assert(texto.includes('Aguardando entrevista'), `candidato já aprovado deveria mostrar "Aguardando entrevista". Conteúdo: ${texto}`);
+
+      assertEqual(erros.length, 0, 'erros de JS: ' + erros.join(' | '));
+      await page.close();
+    }
+  }
 
 ];

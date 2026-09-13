@@ -130,6 +130,19 @@ service cloud.firestore {
       allow write: if request.auth != null &&
                      exists(/databases/$(database)/documents/usuarios/$(request.auth.uid)) &&
                      get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.perfil in ['admin', 'gerencia', 'avaliador', 'coordenador'];
+
+      // pipeline/{chave}/historico/{id}: trilha de auditoria — uma entrada
+      // por mudança de etapa (quem mudou, quando, pra qual etapa). NUNCA é
+      // sobrescrita nem apagada, nem por quem tem permissão de escrever no
+      // documento pai: um doc novo por mudança, pra nenhuma decisão
+      // importante "desaparecer" quando alguém muda de ideia depois.
+      match /historico/{id} {
+        allow read: if request.auth != null && isLeitor();
+        allow create: if request.auth != null &&
+                         exists(/databases/$(database)/documents/usuarios/$(request.auth.uid)) &&
+                         get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.perfil in ['admin', 'gerencia', 'avaliador', 'coordenador'];
+        allow update, delete: if false;
+      }
     }
 
     // Acesso total (admin ou gerência) — únicos que mexem em usuários e

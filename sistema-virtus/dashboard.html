@@ -1506,7 +1506,7 @@
     gerarCodigoAcesso, assinarCodigosAcesso, cancelarCodigoAcesso, excluirCodigoAcesso, VALIDADE_CODIGO_MS,
     definirNumeroWhatsapp, assinarNumeroWhatsapp,
     assinarPipeline, definirObservacaoPipeline, definirAprovacaoManual, definirBancoReserva,
-    registrarDecisaoFinal
+    registrarDecisaoFinal, buscarHistorico
   } from "./js/dashboard.js";
   import { db } from "./js/firebase-config.js";
   import { doc, setDoc } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
@@ -1515,7 +1515,8 @@
     normNome, chaveDe, fichaDe, fmtNasc, fmtData, fmtDataHora, corNota, pctClass,
     classificarModulo, classificarDigitacao, melhorDigitacao, dataLocalYMD, escapeHtml,
     VIOLACAO_LABELS, tipoViolacaoLabel, descricaoViolacao,
-    consolidarModulos, criadoEmDe, expiraEmDe as _expiraEmDe, statusCodigo as _statusCodigo
+    consolidarModulos, criadoEmDe, expiraEmDe as _expiraEmDe, statusCodigo as _statusCodigo,
+    etapaDoPipeline
   } from "./js/dashboard-format.js";
 
   let ALL_RESULTADOS = [];
@@ -1793,7 +1794,24 @@
       `${tents.length} teste(s) · ${quizzes.length} quiz · ${typings.length} digitação` +
       (viols.length ? ` · ⚠ ${viols.length} violação(ões)` : '');
 
-    let html = '';
+    // Status central: a partir da etapa única gravada no pipeline (ver
+    // dashboard.js) — nunca mais uma combinação ambígua de flags.
+    const chaveIdEtapa = CAND_ATUAL.replace(/[/]/g, '_');
+    const etapa = etapaDoPipeline(PIPELINE_MAP[chaveIdEtapa]);
+
+    let html = `
+      <div class="tent-card" style="border-color:${etapa.cor};">
+        <div class="tent-body">
+          <div style="font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--text3);letter-spacing:1px;">STATUS ATUAL</div>
+          <div style="font-size:16px;font-weight:700;color:${etapa.cor};margin-top:3px;">${etapa.icone} ${etapa.txt}</div>
+        </div>
+      </div>
+      <div class="tent-card">
+        <div class="tent-head"><div class="tent-mod">📝 Linha do tempo</div></div>
+        <div class="tent-body" id="cmTimeline">
+          <div style="font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--text3);">Carregando…</div>
+        </div>
+      </div>`;
 
     // Ficha preenchida pelo candidato antes do teste
     const f = fichaDe(tents);
@@ -1947,6 +1965,44 @@
     }
 
     document.getElementById('cmConteudo').innerHTML = html;
+    carregarLinhaDoTempo(CAND_ATUAL);
+  }
+
+  // Busca sob demanda (não em tempo real — ver buscarHistorico em
+  // dashboard.js) e preenche a linha do tempo depois que o resto da ficha
+  // já apareceu, pra não travar a abertura do modal esperando essa consulta.
+  async function carregarLinhaDoTempo(chave) {
+    const el = document.getElementById('cmTimeline');
+    if (!el) return;
+    try {
+      const historico = await buscarHistorico(chave);
+      // O candidato pode ter fechado o modal (ou aberto outro) enquanto a
+      // busca estava em andamento — não pisa em cima do conteúdo de outra tela.
+      if (CAND_ATUAL !== chave || !document.getElementById('cmTimeline')) return;
+      if (!historico.length) {
+        el.innerHTML = '<div style="font-family:\'Share Tech Mono\',monospace;font-size:11px;color:var(--text3);">Nenhuma mudança de status registrada ainda.</div>';
+        return;
+      }
+      el.innerHTML = historico.map(h => {
+        const et = etapaDoPipeline({ etapa: h.etapa });
+        const quem = h.por ? `${escapeHtml(h.por)}${h.por_perfil ? ' (' + escapeHtml(h.por_perfil) + ')' : ''}` : '—';
+        return `
+          <div style="display:flex;gap:10px;padding:8px 0;border-bottom:1px solid var(--line);align-items:flex-start;">
+            <div style="font-size:15px;line-height:1.4;">${et.icone}</div>
+            <div style="flex:1;">
+              <div style="font-size:12.5px;font-weight:700;color:${et.cor};">${et.txt}</div>
+              <div style="font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--text4);margin-top:2px;">${fmtDataHora(h.em)} · ${quem}</div>
+              ${h.motivo ? `<div style="font-size:11.5px;color:var(--text2);margin-top:3px;">${escapeHtml(h.motivo)}</div>` : ''}
+            </div>
+          </div>`;
+      }).join('');
+    } catch (e) {
+      console.error('Falha ao carregar linha do tempo:', e);
+      if (CAND_ATUAL === chave) {
+        const el2 = document.getElementById('cmTimeline');
+        if (el2) el2.innerHTML = '<div style="color:var(--red);font-size:11px;">Falha ao carregar o histórico.</div>';
+      }
+    }
   }
 
   // ── Geração do relatório em PDF (via impressão do navegador) ───────────
@@ -2761,9 +2817,10 @@
       <th>Candidato</th>
       <th>Testes realizados</th>
       <th>Nota<br><span style="font-weight:400;text-transform:none;font-size:10px;opacity:0.75;">(módulo escolhido)</span></th>
+      <th>Status</th>
       ${podeGerenciar ? '<th>Ações</th><th>Atualizado</th>' : ''}
     `;
-    const colspan = podeGerenciar ? 6 : 4;
+    const colspan = podeGerenciar ? 7 : 5;
 
     if (!candidatos.length) {
       tbody.innerHTML = `<tr><td colspan="${colspan}"><div class="empty-state"><div class="empty-icon">🧭</div>Nenhum candidato encontrado.</div></td></tr>`;
@@ -2776,6 +2833,7 @@
       const aprovadoParaEntrevista = pipelineInfo.aprovado === true;
       const noBancoReserva = pipelineInfo.banco_reserva === true;
       const dadosCand = `data-chave="${escapeHtml(c.chave)}" data-nome="${escapeHtml(c.nome)}"`;
+      const etapaCand = etapaDoPipeline(pipelineInfo);
 
       const colunasGerenciar = podeGerenciar ? `
         <td data-acao="ignorar">
@@ -2794,6 +2852,7 @@
           </div>
         </td>
         <td><span class="td-pct" style="color:${c.media >= 70 ? 'var(--green)' : c.media >= 50 ? 'var(--amber)' : 'var(--red)'}">${c.media >= 70 ? '✅' : '❌'} ${c.media}%</span></td>
+        <td><span style="font-size:12px;font-weight:700;color:${etapaCand.cor};white-space:nowrap;">${etapaCand.icone} ${etapaCand.txt}</span></td>
         ${colunasGerenciar}
       </tr>`;
     }).join('');
@@ -3162,7 +3221,7 @@
     });
     if (!ok) return;
     try {
-      await registrarDecisaoFinal(chave, decisao, nome, me.usuario);
+      await registrarDecisaoFinal(chave, decisao, nome, me.usuario, me.perfil);
       toast(decisao === 'contratado' ? '🎉 Candidato contratado!' : '❌ Candidato recusado', 'ok');
     } catch (e) {
       console.error(e);

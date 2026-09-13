@@ -88,6 +88,25 @@ export function melhorDigitacao(typings) {
   return typings.reduce((melhor, t) => (!melhor || (t.wpm || 0) > melhor.wpm) ? { wpm: t.wpm || 0, dispositivo: t.dispositivo || 'desktop' } : melhor, null);
 }
 
+// Status central do candidato — a partir de agora ele está SEMPRE em
+// exatamente uma dessas etapas (nunca em duas ao mesmo tempo). Quando o
+// documento pipeline não tem `etapa` definida ainda (candidato terminou o
+// teste mas ninguém tomou nenhuma decisão), o padrão é "testes_concluidos".
+export const ETAPA_LABELS = {
+  testes_concluidos: { txt: 'Testes concluídos', cor: 'var(--text3)', icone: '🟣' },
+  aguardando_entrevista: { txt: 'Aguardando entrevista', cor: 'var(--amber)', icone: '🟠' },
+  contratado: { txt: 'Contratado', cor: 'var(--green)', icone: '🏆' },
+  recusado: { txt: 'Recusado', cor: 'var(--red)', icone: '❌' },
+  banco_reserva: { txt: 'Banco de Reserva', cor: 'var(--cyan)', icone: '🏦' }
+};
+
+// `p` é o valor de PIPELINE_MAP[chaveId] (pode ser undefined — candidato
+// que ainda não teve nenhuma ação da equipe).
+export function etapaDoPipeline(p) {
+  const chave = (p && p.etapa) || 'testes_concluidos';
+  return { chave, ...(ETAPA_LABELS[chave] || ETAPA_LABELS.testes_concluidos) };
+}
+
 export function dataLocalYMD(d) {
   const dt = d instanceof Date ? d : new Date(d);
   if (isNaN(dt)) return '';

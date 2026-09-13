@@ -12,7 +12,7 @@
 
 import { db } from "./firebase-config.js";
 import {
-  collection, query, where, orderBy, limit, onSnapshot, getDoc, doc, setDoc, updateDoc, deleteDoc, serverTimestamp, deleteField
+  collection, query, where, orderBy, limit, onSnapshot, getDoc, getDocs, doc, addDoc, setDoc, updateDoc, deleteDoc, serverTimestamp, deleteField
 } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
 
 // Assina a coleção `resultados` em tempo real (substitui o polling de 10s do
@@ -221,60 +221,124 @@ export async function definirObservacaoPipeline(chave, observacao, nome, avaliad
   }, { merge: true });
 }
 
+// Trilha de auditoria: uma entrada NOVA por mudança de etapa (nunca
+// sobrescreve a anterior — é uma subcoleção, cada mudança é um doc à
+// parte). Isso é o que alimenta a "linha do tempo" na ficha do candidato,
+// e é a diferença entre "o status mudou" e "dá pra saber quem mudou,
+// quando e pra onde".
+export async function registrarHistorico(chave, { etapa, nome, por, por_perfil, motivo }) {
+  const id = chave.replace(/[/]/g, "_");
+  await addDoc(collection(db, "pipeline", id, "historico"), {
+    etapa,
+    nome: nome || null,
+    por: por || null,
+    por_perfil: por_perfil || null,
+    motivo: motivo || null,
+    em: serverTimestamp()
+  });
+}
+
+// Lê o histórico de um candidato, mais recente primeiro. Buscado sob
+// demanda (ao abrir a ficha), não fica assinado em tempo real — um
+// listener por candidato só pra alimentar uma tela que mostra um de
+// cada vez seria desperdício.
+export async function buscarHistorico(chave) {
+  const id = chave.replace(/[/]/g, "_");
+  const q = query(collection(db, "pipeline", id, "historico"), orderBy("em", "desc"));
+  const snap = await getDocs(q);
+  const lista = [];
+  snap.forEach((d) => lista.push({ id: d.id, ...d.data() }));
+  return lista;
+}
+
+// `etapa` é o status central do candidato — a partir daqui, ele SEMPRE
+// está em exatamente uma: aguardando_entrevista | contratado | recusado |
+// banco_reserva | testes_concluidos (implícito, quando nenhuma das
+// anteriores foi definida ainda). Antes disso, aprovado/decisao_final/
+// banco_reserva eram três campos independentes que podiam ficar
+// combinados de qualquer jeito (ex: aprovado E no banco de reserva ao
+// mesmo tempo) — cada função abaixo agora LIMPA os campos das outras
+// etapas ao gravar a sua, pra "etapa" nunca ficar ambíguo.
+
 // Aprovação para entrevista — decisão do avaliador/coordenador/gerência
-// sobre qual candidato será chamado para entrevista. Campo separado na
-// coleção pipeline — não mexe na nota do teste nem na etapa do processo seletivo.
+// sobre qual candidato será chamado para entrevista.
 export async function definirAprovacaoManual(chave, aprovado, nome, avaliador, perfilAvaliador) {
   const id = chave.replace(/[/]/g, "_");
+  const etapa = aprovado ? "aguardando_entrevista" : "testes_concluidos";
   const dados = {
     aprovado,
     nome: nome || null,
     aprovado_por: avaliador || null,
     aprovado_por_perfil: perfilAvaliador || null,
-    aprovado_em: serverTimestamp()
+    aprovado_em: serverTimestamp(),
+    etapa
   };
-  // Marcar pra entrevista de novo é reabrir o processo — se a pessoa já
-  // tinha decisão final de uma rodada anterior (ex: recusada e reavaliada
-  // depois), essa decisão antiga não pode continuar escondendo o
-  // candidato da aba Aprovados nem aparecendo como se ainda valesse.
   if (aprovado) {
+    // Reabre o processo: uma decisão final ou uma marcação de banco de
+    // reserva de uma rodada anterior não pode continuar valendo.
     dados.decisao_final = deleteField();
     dados.decisao_final_por = deleteField();
+    dados.decisao_final_por_perfil = deleteField();
     dados.decisao_final_em = deleteField();
+    dados.banco_reserva = deleteField();
+    dados.banco_reserva_por = deleteField();
+    dados.banco_reserva_por_perfil = deleteField();
+    dados.banco_reserva_em = deleteField();
   }
   await setDoc(doc(db, "pipeline", id), dados, { merge: true });
+  await registrarHistorico(chave, { etapa, nome, por: avaliador, por_perfil: perfilAvaliador });
 }
 
-// Banco de Reserva — candidato bom, mas sem vaga aberta agora. Guardado
-// pra quando surgir uma vaga futura. Campo independente de `aprovado`
-// (aprovação para entrevista) e de `decisao_final` (contratado/recusado) —
-// um candidato pode estar em qualquer combinação desses três estados.
+// Banco de Reserva — etapa final: candidato bom, mas sem vaga aberta
+// agora, guardado pra quando surgir uma vaga futura. Exclusiva com
+// aprovação/decisão final — entrar no banco tira o candidato do funil
+// ativo (Aprovados/Contratados), e aprovar/decidir de novo tira do banco.
 export async function definirBancoReserva(chave, valor, nome, avaliador, perfilAvaliador) {
   const id = chave.replace(/[/]/g, "_");
-  await setDoc(doc(db, "pipeline", id), {
+  const etapa = valor ? "banco_reserva" : "testes_concluidos";
+  const dados = {
     banco_reserva: valor,
     nome: nome || null,
     banco_reserva_por: avaliador || null,
     banco_reserva_por_perfil: perfilAvaliador || null,
-    banco_reserva_em: serverTimestamp()
-  }, { merge: true });
+    banco_reserva_em: serverTimestamp(),
+    etapa
+  };
+  if (valor) {
+    dados.aprovado = deleteField();
+    dados.aprovado_por = deleteField();
+    dados.aprovado_por_perfil = deleteField();
+    dados.aprovado_em = deleteField();
+    dados.decisao_final = deleteField();
+    dados.decisao_final_por = deleteField();
+    dados.decisao_final_por_perfil = deleteField();
+    dados.decisao_final_em = deleteField();
+  }
+  await setDoc(doc(db, "pipeline", id), dados, { merge: true });
+  await registrarHistorico(chave, { etapa, nome, por: avaliador, por_perfil: perfilAvaliador });
 }
 
 // Decisão final da entrevista (aba "Aprovados para Entrevista"): contratado
-// ou recusado. Substitui o fluxo antigo de duas etapas (coordenador então
-// gerência) por uma decisão única, que qualquer um de
-// avaliador/coordenador/gerência/admin pode registrar. Alimenta a aba
-// "Contratados" (histórico de quem decidiu o quê e quando).
-export async function registrarDecisaoFinal(chave, decisao, nome, quem) {
+// ou recusado. Qualquer um de avaliador/coordenador/gerência/admin pode
+// registrar. Alimenta a aba "Contratados" (histórico de quem decidiu o
+// quê e quando).
+export async function registrarDecisaoFinal(chave, decisao, nome, quem, perfilQuem) {
   const id = chave.replace(/[/]/g, "_");
   await setDoc(doc(db, "pipeline", id), {
     decisao_final: decisao,
     decisao_final_por: quem || null,
+    decisao_final_por_perfil: perfilQuem || null,
     decisao_final_em: serverTimestamp(),
     nome: nome || null,
     etapa: decisao,
+    // Uma decisão final tira o candidato do banco de reserva, se estava lá.
+    banco_reserva: deleteField(),
+    banco_reserva_por: deleteField(),
+    banco_reserva_por_perfil: deleteField(),
+    banco_reserva_em: deleteField(),
     atualizado_em: serverTimestamp()
   }, { merge: true });
+  await registrarHistorico(chave, { etapa: decisao, nome, por: quem, por_perfil: perfilQuem });
 }
 
 export function assinarPipeline(callback, onError) {
