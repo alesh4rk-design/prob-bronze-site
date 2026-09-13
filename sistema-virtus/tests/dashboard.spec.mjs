@@ -656,7 +656,7 @@ export const tests = [
   }
 ,
   {
-    name: 'Central de Pendências conta por etapa e cada card leva pra aba certa',
+    name: 'Central de Pendências tem aba própria, conta por etapa e cada card filtra a lista',
     async run({ browser, baseUrl }) {
       const resultados = [
         { id: '1', tipo: 'quiz', nome: 'Aguarda Avaliacao', modulo: 'Atendimento', pct: 80, acertos: 8, total: 10, data_conclusao: hoje() },
@@ -671,7 +671,13 @@ export const tests = [
       const violacoes = [{ id: 'v1', nome: 'Com Violacao', tipo: 'perda_foco', modulo: 'Atendimento', data: '2026-09-04', hora_recebimento: '09:00' }];
       const { page, erros } = await abrirDashboard(browser, baseUrl, { perfil: 'admin', resultados, pipeline, violacoes });
 
-      await page.evaluate(() => switchView('dashboard'));
+      // Não fica mais dentro do Dashboard — tem item próprio na barra lateral.
+      const dentroDoDashboard = await page.evaluate(() => !!document.querySelector('#view-dashboard #pendenciasGrid'));
+      assert(!dentroDoDashboard, 'o painel de pendências não deveria mais estar dentro da aba Dashboard');
+      const dentroDaPropriaAba = await page.evaluate(() => !!document.querySelector('#view-pendencias #pendenciasGrid'));
+      assert(dentroDaPropriaAba, 'o painel de pendências deveria estar na sua própria aba');
+
+      await page.evaluate(() => switchView('pendencias'));
       await page.waitForTimeout(300);
       const texto = await page.evaluate(() => document.getElementById('pendenciasGrid').innerText);
 
@@ -682,11 +688,27 @@ export const tests = [
       assert(/1[\s\S]*NO BANCO DE RESERVA/i.test(texto), `esperava 1 no banco de reserva. Conteúdo: ${texto}`);
       assert(/1[\s\S]*COM VIOLAÇÃO PENDENTE/i.test(texto), `esperava 1 com violação pendente. Conteúdo: ${texto}`);
 
-      // Clicar no card de "aguardando entrevista" leva pra aba Aprovados.
-      await page.click('[data-acao="irParaView"][data-view="banco"]');
-      await page.waitForTimeout(300);
-      const abaAtiva = await page.evaluate(() => document.getElementById('view-banco').classList.contains('active'));
-      assert(abaAtiva, 'clicar no card deveria ter trocado pra aba Aprovados para Entrevista');
+      // O filtro padrão é "aguardando avaliação" — a lista já deve mostrar
+      // os dois candidatos certos assim que a aba abre.
+      let lista = await page.evaluate(() => document.getElementById('pendenciasLista').innerText);
+      assert(lista.includes('Aguarda Avaliacao') && lista.includes('Com Violacao'), `lista inicial devia mostrar os 2 aguardando avaliação. Conteúdo: ${lista}`);
+      assert(!lista.includes('No Banco'), `"No Banco" não deveria aparecer no filtro de aguardando avaliação. Conteúdo: ${lista}`);
+
+      // Clicar no card de "no banco de reserva" troca o filtro da lista,
+      // sem sair da aba.
+      await page.click('[data-acao="filtrarPendencia"][data-filtro="banco_reserva"]');
+      await page.waitForTimeout(200);
+      lista = await page.evaluate(() => document.getElementById('pendenciasLista').innerText);
+      assert(lista.includes('No Banco'), `depois de filtrar por banco de reserva, deveria mostrar "No Banco". Conteúdo: ${lista}`);
+      assert(!lista.includes('Aguarda Avaliacao'), `não deveria misturar com outro grupo. Conteúdo: ${lista}`);
+      const aindaNaAba = await page.evaluate(() => document.getElementById('view-pendencias').classList.contains('active'));
+      assert(aindaNaAba, 'filtrar não deveria trocar de aba');
+
+      // E clicar no nome leva pro detalhe do candidato de verdade.
+      await page.click('#pendenciasLista [data-acao="abrirCandidato"]');
+      await page.waitForTimeout(200);
+      const modalAberto = await page.evaluate(() => document.getElementById('candModal').classList.contains('show'));
+      assert(modalAberto, 'clicar no candidato da lista de pendências deveria abrir a ficha dele');
 
       assertEqual(erros.length, 0, 'erros de JS: ' + erros.join(' | '));
       await page.close();

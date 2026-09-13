@@ -162,6 +162,10 @@
   .pend-card { cursor:pointer; transition:transform .15s,border-color .15s; }
   .pend-card:hover { transform:translateY(-2px); border-color:var(--line2); }
   .pend-card.zerado { opacity:0.45; }
+  .pend-card.selecionado { border-color:var(--amber); box-shadow:0 0 0 1px var(--amber) inset; }
+  .pend-row { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:14px 20px; border-bottom:1px solid var(--line); flex-wrap:wrap; cursor:pointer; transition:background .15s; }
+  .pend-row:hover { background:var(--ink3); }
+  .pend-row:last-child { border-bottom:none; }
 
   .panel { background:var(--ink2); border:1px solid var(--line2); border-radius:2px; position:relative; overflow:hidden; }
   .panel::before { content:''; position:absolute; top:0; left:0; right:0; height:2px; background:linear-gradient(90deg,transparent 5%,var(--amber) 20%,var(--amber3) 50%,var(--amber) 80%,transparent 95%); }
@@ -909,6 +913,7 @@
   <div class="sidebar-nav">
     <div class="sidebar-section-lbl">Resultados</div>
     <div class="sidebar-item" data-view="dashboard" id="sidebarItemDashboard" onclick="switchView('dashboard')"><span class="si-icon">📊</span> Dashboard</div>
+    <div class="sidebar-item" data-view="pendencias" id="sidebarItemPendencias" onclick="switchView('pendencias')"><span class="si-icon">🔔</span> Pendências</div>
     <div class="sidebar-item active" data-view="pipeline" id="sidebarItemPipeline" onclick="switchView('pipeline')"><span class="si-icon">👥</span> Candidatos</div>
     <div class="sidebar-item" data-view="banco" id="sidebarItemBanco" onclick="switchView('banco')"><span class="si-icon">📊</span> Aprovados para Entrevista</div>
     <div class="sidebar-item" data-view="contratados" id="sidebarItemContratados" onclick="switchView('contratados')"><span class="si-icon">🏆</span> Contratados</div>
@@ -1060,13 +1065,6 @@
     </div>
   </div>
 
-  <div class="panel" style="margin-bottom:16px;">
-    <div class="panel-head"><div class="panel-title-sm">🔔 Pendências — o que precisa da sua atenção agora</div></div>
-    <div class="chart-wrap">
-      <div class="kpi-bar-5" id="pendenciasGrid" style="margin-bottom:0;"></div>
-    </div>
-  </div>
-
   <div class="toolbar" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:16px;">
     <label style="font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--text3);display:flex;align-items:center;gap:6px;">📅 Dia:
       <input type="date" class="field-input" id="dashData" style="max-width:150px;" onchange="renderAll()">
@@ -1117,6 +1115,25 @@
   </div>
 
 
+</section>
+
+<!-- ══════════ VIEW: PENDÊNCIAS ══════════ -->
+<section class="app-view" id="view-pendencias">
+  <div class="page-title-area">
+    <div>
+      <div class="page-title">Central de <em>Pendências</em></div>
+      <div class="page-subtitle">O que precisa da sua atenção agora — clique num cartão pra filtrar a lista</div>
+    </div>
+  </div>
+
+  <div class="kpi-bar-5" id="pendenciasGrid" style="margin-bottom:16px;"></div>
+
+  <div class="panel">
+    <div class="panel-head"><div class="panel-title-sm" id="pendenciasListaTitulo">Aguardando avaliação</div></div>
+    <div class="chart-wrap" style="padding:0;">
+      <div id="pendenciasLista"></div>
+    </div>
+  </div>
 </section>
 
 <!-- ══════════ VIEW: APROVADOS PARA ENTREVISTA ══════════ -->
@@ -1638,6 +1655,7 @@
   // entrevista nem escrever observação — ver renderPipeline).
   if (ehView) {
     document.getElementById('sidebarItemDashboard').style.display = 'none';
+    document.getElementById('sidebarItemPendencias').style.display = 'none';
     document.getElementById('sidebarItemBanco').style.display = 'none';
     document.getElementById('sidebarItemContratados').style.display = 'none';
     // Banco de Reserva fica visível pro view — só não pode marcar/desmarcar
@@ -1649,6 +1667,7 @@
   // ferramentas operacionais.
   if (ehCoordenador) {
     document.getElementById('sidebarItemDashboard').style.display = 'none';
+    document.getElementById('sidebarItemPendencias').style.display = 'none';
     document.getElementById('sidebarItemViolacoes').style.display = 'none';
     document.getElementById('sidebarFerramentasLbl').style.display = 'none';
     document.getElementById('sidebarItemTestes').style.display = 'none';
@@ -1660,6 +1679,7 @@
   // ══════════ NAVEGAÇÃO LATERAL (SIDEBAR) — SPA sem reload ══════════
   const VIEW_TITULOS = {
     dashboard: 'Dashboard',
+    pendencias: 'Central de Pendências',
     pipeline: 'Candidatos',
     banco: 'Aprovados para Entrevista',
     contratados: 'Contratados',
@@ -1700,8 +1720,8 @@
     if ((view === 'perguntas' || view === 'usuarios') && !ehGerenciaSV) view = 'dashboard';
     // Viewer só tem a aba Candidatos (vê os testes realizados de todo
     // mundo, sem poder selecionar ninguém pra entrevista).
-    if ((view === 'banco' || view === 'contratados' || view === 'dashboard') && me && me.perfil === 'viewer') view = 'pipeline';
-    const VIEWS_BLOQUEADAS_COORDENADOR = [...VIEWS_OPERACIONAIS, 'dashboard', 'violacoes'];
+    if ((view === 'banco' || view === 'contratados' || view === 'dashboard' || view === 'pendencias') && me && me.perfil === 'viewer') view = 'pipeline';
+    const VIEWS_BLOQUEADAS_COORDENADOR = [...VIEWS_OPERACIONAIS, 'dashboard', 'pendencias', 'violacoes'];
     if (VIEWS_BLOQUEADAS_COORDENADOR.includes(view) && me && me.perfil === 'coordenador') view = 'pipeline';
     document.querySelectorAll('.app-view').forEach(v => v.classList.toggle('active', v.id === 'view-' + view));
     document.querySelectorAll('.sidebar-item').forEach(i => i.classList.toggle('active', i.dataset.view === view));
@@ -1713,6 +1733,7 @@
     if (view === 'pipeline') renderPipeline();
     if (view === 'contratados') renderContratados();
     if (view === 'bancoreserva') renderBancoReserva();
+    if (view === 'pendencias') renderPendencias();
   };
 
 
@@ -2524,36 +2545,88 @@
   // ainda sem decisão, sempre sobre TODO o histórico (não usa o filtro de
   // dia do Dashboard: pendência não desaparece só porque hoje é outro dia).
   // Cada card é clicável e leva direto pra aba onde aquilo se resolve.
-  function renderPendencias() {
-    const el = document.getElementById('pendenciasGrid');
-    if (!el) return;
-    ligarAcoesDelegadas('pendenciasGrid');
-    const candidatos = candidatosAgrupados();
-    let aguardandoAvaliacao = 0, aguardandoEntrevista = 0, noBanco = 0;
-    let violacoesPendentes = 0;
-    for (const c of candidatos) {
+  // Filtro selecionado na aba Pendências — qual dos 4 cartões está ativo.
+  let FILTRO_PENDENCIA = 'testes_concluidos';
+
+  const PENDENCIA_DEFS = [
+    { chave: 'testes_concluidos', lbl: 'Aguardando avaliação', icone: '🔴', cor: 'red' },
+    { chave: 'aguardando_entrevista', lbl: 'Aguardando entrevista', icone: '🟠', cor: 'amber' },
+    { chave: 'banco_reserva', lbl: 'No banco de reserva', icone: '🏦', cor: 'cyan' },
+    { chave: 'violacao', lbl: 'Com violação pendente', icone: '🚨', cor: 'red' }
+  ];
+
+  // Separa os candidatos nos 4 grupos de pendência de uma vez só — usado
+  // tanto pelos cartões (na aba Pendências) quanto pelo card do Dashboard.
+  function agruparPendencias() {
+    const grupos = { testes_concluidos: [], aguardando_entrevista: [], banco_reserva: [], violacao: [] };
+    for (const c of candidatosAgrupados()) {
       const chaveId = c.chave.replace(/[/]/g, '_');
       const etapa = etapaDoPipeline(PIPELINE_MAP[chaveId]).chave;
-      if (etapa === 'testes_concluidos') aguardandoAvaliacao++;
-      else if (etapa === 'aguardando_entrevista') aguardandoEntrevista++;
-      else if (etapa === 'banco_reserva') noBanco++;
-      // Só conta violação como pendência enquanto o candidato ainda está em
-      // etapa ativa — quem já foi contratado/recusado não precisa mais de
-      // ninguém revisar a violação antiga.
+      if (grupos[etapa]) grupos[etapa].push(c);
+      // Violação pendente é ortogonal à etapa (um candidato aguardando
+      // avaliação OU entrevista pode estar aqui também, ao mesmo tempo).
       if ((etapa === 'testes_concluidos' || etapa === 'aguardando_entrevista') && violacoesDe(c.nome).length) {
-        violacoesPendentes++;
+        grupos.violacao.push(c);
       }
     }
-    const cards = [
-      { n: aguardandoAvaliacao, lbl: 'Aguardando avaliação', icone: '🔴', cor: 'red', view: 'pipeline' },
-      { n: aguardandoEntrevista, lbl: 'Aguardando entrevista', icone: '🟠', cor: 'amber', view: 'banco' },
-      { n: noBanco, lbl: 'No banco de reserva', icone: '🏦', cor: 'cyan', view: 'bancoreserva' },
-      { n: violacoesPendentes, lbl: 'Com violação pendente', icone: '🚨', cor: 'red', view: 'violacoes' }
-    ];
-    el.innerHTML = cards.map(c => `
-      <div class="kpi-card ${c.cor} pend-card ${c.n === 0 ? 'zerado' : ''}" data-acao="irParaView" data-view="${c.view}">
-        <div class="kpi-icon">${c.icone}</div><div class="kpi-val">${c.n}</div><div class="kpi-lbl">${c.lbl}</div>
-      </div>`).join('');
+    return grupos;
+  }
+
+  // Alimenta tanto o painel-resumo do Dashboard (`pendenciasGrid`, se
+  // existir na tela) quanto a aba própria de Pendências (cartões + lista
+  // filtrável). As duas telas usam os mesmos dados, só mudam o que o
+  // clique num cartão faz: no Dashboard leva pra outra aba; na aba
+  // Pendências, filtra a lista que já está ali embaixo.
+  function renderPendencias() {
+    const grid = document.getElementById('pendenciasGrid');
+    if (!grid) return;
+    const grupos = agruparPendencias();
+
+    grid.innerHTML = PENDENCIA_DEFS.map(d => {
+      const n = grupos[d.chave].length;
+      const ativo = FILTRO_PENDENCIA === d.chave;
+      return `
+      <div class="kpi-card ${d.cor} pend-card ${n === 0 ? 'zerado' : ''} ${ativo ? 'selecionado' : ''}" data-acao="filtrarPendencia" data-filtro="${d.chave}">
+        <div class="kpi-icon">${d.icone}</div><div class="kpi-val">${n}</div><div class="kpi-lbl">${d.lbl}</div>
+      </div>`;
+    }).join('');
+    ligarAcoesDelegadas('pendenciasGrid');
+
+    renderListaPendencia(grupos);
+  }
+
+  window.filtrarPendencia = function (chave) {
+    FILTRO_PENDENCIA = chave;
+    renderPendencias();
+  };
+
+  function renderListaPendencia(grupos) {
+    const def = PENDENCIA_DEFS.find(d => d.chave === FILTRO_PENDENCIA) || PENDENCIA_DEFS[0];
+    const titulo = document.getElementById('pendenciasListaTitulo');
+    if (titulo) titulo.textContent = `${def.icone} ${def.lbl}`;
+
+    const el = document.getElementById('pendenciasLista');
+    if (!el) return;
+    const lista = grupos[FILTRO_PENDENCIA] || [];
+    if (!lista.length) {
+      el.innerHTML = '<div class="empty-state" style="padding:30px;"><div class="empty-icon">✅</div>Nada pendente aqui — tudo em dia.</div>';
+      return;
+    }
+    el.innerHTML = lista.map(c => {
+      const f = fichaDe(tentativasDe(c.chave));
+      const cargo = (f && f.cargo_pretendido) || '—';
+      const viols = violacoesDe(c.nome).length;
+      const dadosCand = `data-chave="${escapeHtml(c.chave)}" data-nome="${escapeHtml(c.nome)}"`;
+      return `
+      <div class="pend-row" data-acao="abrirCandidato" ${dadosCand}>
+        <div>
+          <div style="font-weight:700;font-size:14px;">${escapeHtml(c.nome)} <span class="row-hint">▸ detalhes</span></div>
+          <div style="font-family:'Share Tech Mono',monospace;font-size:10.5px;color:var(--text3);margin-top:2px;">${escapeHtml(cargo)}${viols ? ` · ⚠ ${viols} violação(ões)` : ''}</div>
+        </div>
+        <span class="td-pct" style="color:${c.media >= 70 ? 'var(--green)' : c.media >= 50 ? 'var(--amber)' : 'var(--red)'}">${c.media}%</span>
+      </div>`;
+    }).join('');
+    ligarAcoesDelegadas('pendenciasLista');
   }
 
   // Digitação fica de fora dos gráficos gerais (não tem "módulo" nem
@@ -2821,7 +2894,7 @@
     recusarUsuario: el => window.recusar(el.dataset.uid, el.dataset.nome),
     alterarPerfil: el => window.alterarPerfil(el.dataset.uid, el.dataset.perfil),
     acoesUsuario: el => window.abrirAcoesUsuario(el.dataset.uid, el.dataset.nome, el.dataset.perfil),
-    irParaView: el => window.switchView(el.dataset.view),
+    filtrarPendencia: el => window.filtrarPendencia(el.dataset.filtro),
     desativarCodigo: el => window.desativarCodigo(el.dataset.codigo),
     excluirCodigo: el => window.excluirCodigo(el.dataset.codigo)
   };
