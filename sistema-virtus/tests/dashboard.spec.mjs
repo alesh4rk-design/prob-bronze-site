@@ -1141,6 +1141,50 @@ export const tests = [
       assertEqual(erros.length, 0, 'erros de JS: ' + erros.join(' | '));
       await page.close();
     }
+  },
+
+  {
+    name: 'Banco de Reserva inteligente: filtro por cargo ordena pelo Score Virtus e sugere o melhor encaixe',
+    async run({ browser, baseUrl }) {
+      const resultados = [
+        { id: '1', tipo: 'quiz', nome: 'Reserva Fraco', candidato: { cpf: '10101010101', cargo_pretendido: 'ASG' }, modulo: 'ASG', pct: 55, acertos: 5, total: 10, data_conclusao: hoje() },
+        { id: '2', tipo: 'quiz', nome: 'Reserva Forte', candidato: { cpf: '20202020202', cargo_pretendido: 'ASG' }, modulo: 'ASG', pct: 88, acertos: 9, total: 10, data_conclusao: hoje() },
+        { id: '3', tipo: 'quiz', nome: 'Reserva Outro Cargo', candidato: { cpf: '30303030303', cargo_pretendido: 'Jardineiro' }, modulo: 'Jardineiro', pct: 95, acertos: 9, total: 10, data_conclusao: hoje() }
+      ];
+      const pipeline = {
+        'cpf:10101010101': { banco_reserva: true, banco_reserva_em: diasAtras(1) },
+        'cpf:20202020202': { banco_reserva: true, banco_reserva_em: diasAtras(2) },
+        'cpf:30303030303': { banco_reserva: true, banco_reserva_em: diasAtras(3) }
+      };
+      const pesosScore = { default: { cargo: 100, atendimento: 0, linguagem_positiva: 0, informatica: 0, digitacao: 0 } };
+      const { page, erros } = await abrirDashboard(browser, baseUrl, { perfil: 'admin', resultados, pipeline, pesosScore });
+
+      await page.evaluate(() => switchView('bancoreserva'));
+      await page.waitForTimeout(300);
+
+      // Sem filtro: todos os 3 aparecem, ordenados por data (o mais recente é o "Reserva Fraco").
+      let badge = await page.evaluate(() => document.getElementById('bancoReservaBadge').textContent);
+      assert(badge.includes('3'), `sem filtro deveria mostrar os 3. Badge: ${badge}`);
+
+      // Filtra por ASG: só 2 candidatos, ordenados pelo Score (o mais forte primeiro).
+      await page.evaluate(() => {
+        const sel = document.getElementById('bancoReservaCargoSelect');
+        sel.value = 'ASG';
+        sel.dispatchEvent(new Event('change'));
+      });
+      await page.waitForTimeout(200);
+      badge = await page.evaluate(() => document.getElementById('bancoReservaBadge').textContent);
+      assert(badge.includes('2'), `filtro ASG deveria mostrar 2 candidatos. Badge: ${badge}`);
+
+      const primeiraLinha = await page.evaluate(() => document.querySelector('#bancoReservaTableBody tr').textContent);
+      assert(primeiraLinha.includes('Reserva Forte'), `"Reserva Forte" (score maior) deveria vir primeiro. Linha: ${primeiraLinha}`);
+
+      const sugestaoTxt = await page.evaluate(() => document.getElementById('bancoReservaSugestao').textContent);
+      assert(/Reserva Forte/.test(sugestaoTxt), `sugestão deveria citar "Reserva Forte" como melhor encaixe. Veio: ${sugestaoTxt}`);
+
+      assertEqual(erros.length, 0, 'erros de JS: ' + erros.join(' | '));
+      await page.close();
+    }
   }
 
 ];

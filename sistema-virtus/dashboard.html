@@ -1252,13 +1252,25 @@
     <div class="panel-head">
       <div class="panel-title-sm">🏦 Candidatos no Banco <span class="badge" id="bancoReservaBadge">0 registros</span></div>
     </div>
+    <div class="panel-body" style="padding:16px 20px 6px;">
+      <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;">
+        <div class="field-group" style="max-width:280px;">
+          <span class="field-label">Abriu vaga para o cargo</span>
+          <select class="field-input" id="bancoReservaCargoSelect" onchange="renderBancoReserva()">
+            <option value="">Todos os cargos</option>
+          </select>
+        </div>
+      </div>
+      <div class="warn-note" style="margin-top:12px;" id="bancoReservaSugestao" hidden></div>
+    </div>
     <div class="results-table-wrap">
       <table>
         <thead>
           <tr>
             <th style="width:40px;text-align:center;">#</th>
             <th>Candidato</th>
-            <th style="width:70px;">Nota</th>
+            <th>Cargo pretendido</th>
+            <th style="width:70px;">Score</th>
             <th>Observação</th>
             <th>Adicionado por</th>
             <th>Data</th>
@@ -1266,7 +1278,7 @@
           </tr>
         </thead>
         <tbody id="bancoReservaTableBody">
-          <tr><td colspan="7"><div class="empty-state"><div class="empty-icon">🏦</div>Nenhum candidato no banco de reserva ainda</div></td></tr>
+          <tr><td colspan="8"><div class="empty-state"><div class="empty-icon">🏦</div>Nenhum candidato no banco de reserva ainda</div></td></tr>
         </tbody>
       </table>
     </div>
@@ -3727,22 +3739,67 @@
   };
 
   // ══════════ BANCO DE RESERVA ══════════
+  // Banco de reserva inteligente: em vez de só listar por data de quando
+  // entrou no banco, filtra por cargo (a vaga que abriu agora) e ordena pelo
+  // Score Virtus — assim, ao surgir uma vaga, quem já está guardado e é o
+  // MELHOR encaixe aparece primeiro, sem precisar garimpar a lista inteira.
   window.renderBancoReserva = function renderBancoReserva() {
     const tbody = document.getElementById('bancoReservaTableBody');
     if (!tbody) return;
     ligarAcoesDelegadas('bancoReservaTableBody');
-    const noBanco = candidatosAgrupados().filter(c => {
-      const p = PIPELINE_MAP[c.chave.replace(/[/]/g, '_')];
-      return p && p.banco_reserva === true;
-    }).sort((a, b) => {
-      const ta = (PIPELINE_MAP[a.chave.replace(/[/]/g, '_')] || {}).banco_reserva_em;
-      const tb = (PIPELINE_MAP[b.chave.replace(/[/]/g, '_')] || {}).banco_reserva_em;
-      return String(tb || '').localeCompare(String(ta || ''));
-    });
+
+    const base = candidatosAgrupados()
+      .filter(c => {
+        const p = PIPELINE_MAP[c.chave.replace(/[/]/g, '_')];
+        return p && p.banco_reserva === true;
+      })
+      .map(c => {
+        const { score, cargoPretendido } = scoreVirtusDeCandidato(c.chave);
+        return { ...c, score, cargoPretendido };
+      });
+
+    // Filtro de cargo: só os valores que existem de verdade entre quem está
+    // no banco agora — cargo_pretendido é a vaga que a pessoa quer, não uma
+    // lista fixa arbitrária.
+    const sel = document.getElementById('bancoReservaCargoSelect');
+    if (sel) {
+      const cargosPresentes = [...new Set(base.filter(c => c.cargoPretendido).map(c => c.cargoPretendido))].sort((a, b) => a.localeCompare(b, 'pt-BR'));
+      const valorAtual = sel.value;
+      sel.innerHTML = '<option value="">Todos os cargos</option>' +
+        cargosPresentes.map(c => `<option value="${escapeHtml(c)}" ${c === valorAtual ? 'selected' : ''}>${escapeHtml(c)}</option>`).join('');
+    }
+    const cargoFiltro = sel ? sel.value : '';
+
+    let noBanco = cargoFiltro ? base.filter(c => c.cargoPretendido === cargoFiltro) : base;
+
+    // Com filtro de cargo: melhor Score Virtus primeiro (quem não tem score
+    // calculável vai pro fim). Sem filtro: mantém a ordem original, por data
+    // de quando entrou no banco (mais recente primeiro).
+    if (cargoFiltro) {
+      noBanco = [...noBanco].sort((a, b) => (b.score ?? -1) - (a.score ?? -1));
+    } else {
+      noBanco = [...noBanco].sort((a, b) => {
+        const ta = (PIPELINE_MAP[a.chave.replace(/[/]/g, '_')] || {}).banco_reserva_em;
+        const tb = (PIPELINE_MAP[b.chave.replace(/[/]/g, '_')] || {}).banco_reserva_em;
+        return String(tb || '').localeCompare(String(ta || ''));
+      });
+    }
+
     const badge = document.getElementById('bancoReservaBadge');
     if (badge) badge.textContent = noBanco.length + ' registro' + (noBanco.length !== 1 ? 's' : '');
+
+    const sugestao = document.getElementById('bancoReservaSugestao');
+    if (sugestao) {
+      if (cargoFiltro && noBanco.length && noBanco[0].score != null) {
+        sugestao.hidden = false;
+        sugestao.innerHTML = `🏅 Melhor encaixe pra <strong>${escapeHtml(cargoFiltro)}</strong> agora: <strong>${escapeHtml(noBanco[0].nome)}</strong> (Score Virtus ${noBanco[0].score}).`;
+      } else {
+        sugestao.hidden = true;
+      }
+    }
+
     if (!noBanco.length) {
-      tbody.innerHTML = '<tr><td colspan="7"><div class="empty-state"><div class="empty-icon">🏦</div>Nenhum candidato no banco de reserva ainda</div></td></tr>';
+      tbody.innerHTML = `<tr><td colspan="8"><div class="empty-state"><div class="empty-icon">🏦</div>Nenhum candidato no banco de reserva ${cargoFiltro ? 'para esse cargo' : 'ainda'}</div></td></tr>`;
       return;
     }
     const podeGerenciar = PODE_GERENCIAR_CANDIDATOS.includes(me.perfil);
@@ -3756,11 +3813,13 @@
           <button class="btn-act-mini whatsapp" data-acao="whatsappCandidato" ${dadosCand}>💬 WhatsApp</button>
           ${podeGerenciar ? `<button class="btn-act-mini" data-acao="removerBancoReserva" ${dadosCand}>↩ Remover</button>` : ''}
         </div>`;
+      const destaqueMelhor = cargoFiltro && i === 0 && c.score != null;
       return `
       <tr class="clickable" data-acao="abrirCandidato" ${dadosCand} title="Ver detalhamento e exportar PDF">
-        <td style="text-align:center;color:var(--text3);">${i + 1}</td>
+        <td style="text-align:center;color:var(--text3);">${destaqueMelhor ? '🏅' : i + 1}</td>
         <td class="td-nome">${escapeHtml(c.nome)} <span class="row-hint">▸ detalhes</span></td>
-        <td><span class="td-pct" style="color:${c.media >= 70 ? 'var(--green)' : 'var(--red)'}">${c.media}%</span></td>
+        <td>${c.cargoPretendido ? escapeHtml(c.cargoPretendido) : '<span style="color:var(--text4);">—</span>'}</td>
+        <td>${c.score != null ? `<span class="td-pct" style="color:${corNota(c.score)};font-weight:800;">${c.score}</span>` : '<span style="color:var(--text4);">—</span>'}</td>
         <td style="max-width:200px;white-space:normal;font-size:12px;color:var(--text2);">${observacao ? escapeHtml(observacao) : '<span style="color:var(--text4);">—</span>'}</td>
         <td>${escapeHtml(p.banco_reserva_por || '—')}</td>
         <td class="td-time">${p.banco_reserva_em ? fmtDataHora(p.banco_reserva_em) : '—'}</td>
