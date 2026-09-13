@@ -74,6 +74,22 @@ export async function verificarCodigoAcesso(codigoDigitado) {
   }
 }
 
+// Upload de currículo — antes ia direto do navegador pro Firebase Storage
+// (client SDK); agora passa pelo Worker, que valida tipo/tamanho no
+// servidor e grava com uma conta de serviço (storage.rules fecha a escrita
+// pública). `arquivo` é o File escolhido no <input type="file">.
+export async function enviarCurriculo(arquivo, cpf) {
+  const form = new FormData();
+  form.append("arquivo", arquivo);
+  form.append("cpf", cpf);
+  try {
+    const resp = await fetch(`${API_BASE}/enviar-curriculo`, { method: "POST", body: form });
+    return await resp.json();
+  } catch (e) {
+    return { ok: false, erro: "erro_conexao" };
+  }
+}
+
 // ── Configuração por módulo ────────────────────────────────────────────────
 // Módulos comportamentais (criados depois): 10 questões em 3min30.
 // Módulos técnicos: 15 questões, 5min (ASG mantém os 8min originais).

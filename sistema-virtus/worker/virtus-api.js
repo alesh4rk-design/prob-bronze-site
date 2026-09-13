@@ -21,8 +21,20 @@
 //     Busca o módulo em `perguntas/{modulo}`, corrige aqui dentro (o
 //     candidato nunca recebe o campo `resposta`) e grava o resultado.
 //
+//   POST /enviar-curriculo  (multipart/form-data: campos "arquivo" e "cpf")
+//     -> { ok: true, url, nomeArquivo } ou { ok: false, erro }
+//     Antes o navegador do candidato subia o currículo direto pro Firebase
+//     Storage (client SDK). Agora passa por aqui: o Worker valida tipo/
+//     tamanho no servidor (não dá pra burlar editando o JS do navegador) e
+//     ele mesmo grava no Storage usando a conta de serviço — mesmo padrão
+//     já usado pra correção do quiz (o Storage nunca precisa de uma regra
+//     pública de escrita). Com limite de 5 envios a cada 10 minutos por IP.
+//
 // Variáveis/segredos necessários no Worker (Settings → Variables):
 //   FIREBASE_PROJECT_ID       (texto)   ex: projeto-virtus-f608a
+//   FIREBASE_STORAGE_BUCKET   (texto)   ex: projeto-virtus-f608a.appspot.com
+//                                       (o mesmo bucket que aparece em
+//                                       Firebase Console → Storage → Files)
 //   FIREBASE_SERVICE_ACCOUNT  (secret)  conteúdo INTEIRO do .json baixado do
 //                                       Firebase (Configurações → Contas de
 //                                       serviço → Gerar nova chave privada)
@@ -58,7 +70,10 @@ async function getAccessToken(env) {
   const header = { alg: "RS256", typ: "JWT" };
   const claim = {
     iss: sa.client_email,
-    scope: "https://www.googleapis.com/auth/datastore",
+    // Um token só, com os dois escopos — Firestore (correção/gravação dos
+    // resultados) e Storage (upload de currículo). Pedir os dois junto evita
+    // uma segunda chamada ao Google só pra trocar de escopo.
+    scope: "https://www.googleapis.com/auth/datastore https://www.googleapis.com/auth/devstorage.read_write",
     aud: "https://oauth2.googleapis.com/token",
     exp: now + 3600,
     iat: now,
@@ -319,6 +334,73 @@ async function handleSubmeterQuiz(request, env, cors) {
   return json({ ok: true, acertos, total, pct, id }, cors);
 }
 
+// ── Upload de currículo (Firebase Storage via API do Google Cloud Storage) ─
+const TIPOS_CURRICULO_PERMITIDOS = ["application/pdf", "image/jpeg", "image/png"];
+const TAMANHO_MAX_CURRICULO = 5 * 1024 * 1024; // 5 MB, mesmo limite de antes (storage.rules)
+const EXT_POR_TIPO = { "application/pdf": "pdf", "image/jpeg": "jpg", "image/png": "png" };
+
+// Monta o corpo de um upload "multipart" pra API do GCS — precisa ser
+// multipart (não o "media" simples) porque só assim dá pra mandar junto o
+// metadata com firebaseStorageDownloadTokens, que é o que faz o link final
+// funcionar como um getDownloadURL() de verdade (like o app.js do Firebase
+// gera sozinho num upload feito pelo navegador).
+function montarCorpoMultipart(metadata, bytes, contentType, boundary) {
+  const encoder = new TextEncoder();
+  const abrePart = encoder.encode(
+    `--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${JSON.stringify(metadata)}\r\n--${boundary}\r\nContent-Type: ${contentType}\r\n\r\n`
+  );
+  const fechaPart = encoder.encode(`\r\n--${boundary}--`);
+  const corpo = new Uint8Array(abrePart.length + bytes.length + fechaPart.length);
+  corpo.set(abrePart, 0);
+  corpo.set(bytes, abrePart.length);
+  corpo.set(fechaPart, abrePart.length + bytes.length);
+  return corpo;
+}
+
+async function handleEnviarCurriculo(request, env, cors) {
+  const ip = request.headers.get("CF-Connecting-IP") || "desconhecido";
+  const rlKey = `curriculo:${ip}`;
+  const tentativasRaw = await env.RATE_LIMIT_KV.get(rlKey);
+  const tentativas = tentativasRaw ? parseInt(tentativasRaw, 10) : 0;
+  if (tentativas >= 5) return json({ ok: false, erro: "muitas_tentativas" }, cors, 429);
+  await env.RATE_LIMIT_KV.put(rlKey, String(tentativas + 1), { expirationTtl: 600 });
+
+  const form = await request.formData();
+  const arquivo = form.get("arquivo");
+  const cpf = (form.get("cpf") || "").toString().replace(/\D/g, "");
+  if (!arquivo || typeof arquivo === "string") return json({ ok: false, erro: "arquivo_ausente" }, cors, 400);
+  if (!cpf) return json({ ok: false, erro: "cpf_ausente" }, cors, 400);
+  if (arquivo.size > TAMANHO_MAX_CURRICULO) return json({ ok: false, erro: "arquivo_muito_grande" }, cors, 400);
+  const contentType = arquivo.type || "application/octet-stream";
+  if (!TIPOS_CURRICULO_PERMITIDOS.includes(contentType)) return json({ ok: false, erro: "tipo_nao_permitido" }, cors, 400);
+
+  const ext = EXT_POR_TIPO[contentType] || "bin";
+  const caminho = `curriculos/${cpf}-${Date.now()}.${ext}`;
+  const token = await getAccessToken(env);
+  const downloadToken = crypto.randomUUID();
+  const bytes = new Uint8Array(await arquivo.arrayBuffer());
+  const boundary = "virtus" + crypto.randomUUID().replace(/-/g, "");
+  const corpo = montarCorpoMultipart(
+    { name: caminho, contentType, metadata: { firebaseStorageDownloadTokens: downloadToken } },
+    bytes,
+    contentType,
+    boundary
+  );
+
+  const resp = await fetch(
+    `https://storage.googleapis.com/upload/storage/v1/b/${encodeURIComponent(env.FIREBASE_STORAGE_BUCKET)}/o?uploadType=multipart`,
+    {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}`, "Content-Type": `multipart/related; boundary=${boundary}` },
+      body: corpo,
+    }
+  );
+  if (!resp.ok) return json({ ok: false, erro: `falha_upload_${resp.status}` }, cors, 502);
+
+  const url = `https://firebasestorage.googleapis.com/v0/b/${encodeURIComponent(env.FIREBASE_STORAGE_BUCKET)}/o/${encodeURIComponent(caminho)}?alt=media&token=${downloadToken}`;
+  return json({ ok: true, url, nomeArquivo: arquivo.name || `curriculo.${ext}` }, cors);
+}
+
 export default {
   async fetch(request, env) {
     const origin = request.headers.get("Origin") || "";
@@ -339,6 +421,9 @@ export default {
       }
       if (url.pathname === "/carregar-perguntas" && request.method === "POST") {
         return await handleCarregarPerguntas(request, env, cors);
+      }
+      if (url.pathname === "/enviar-curriculo" && request.method === "POST") {
+        return await handleEnviarCurriculo(request, env, cors);
       }
       return json({ ok: false, erro: "rota_nao_encontrada" }, cors, 404);
     } catch (e) {

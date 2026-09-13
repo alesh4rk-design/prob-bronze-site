@@ -970,7 +970,7 @@
 </div>
 
 <script type="module">
-  import { listarModulos, carregarPerguntasDoModulo, salvarResultadoQuiz, registrarViolacao, tempoLimiteParaModulo, montarTrilha, verificarCodigoAcesso, obterNumeroWhatsappRH, CARGO_PRETENDIDO_OPCOES } from "./js/quiz.js";
+  import { listarModulos, carregarPerguntasDoModulo, salvarResultadoQuiz, registrarViolacao, tempoLimiteParaModulo, montarTrilha, verificarCodigoAcesso, obterNumeroWhatsappRH, CARGO_PRETENDIDO_OPCOES, enviarCurriculo } from "./js/quiz.js";
 
   let globalConsentGiven = false;
   let globalLgpdAccepted = false;
@@ -1397,12 +1397,11 @@
     };
   }
 
-  // Sobe o currículo pro Firebase Storage (upload direto do navegador, sem
-  // passar pelo Worker — mesmo modelo de "escrita aberta com regra estreita"
-  // já usado em violações e no resultado do teste de digitação; storage.rules
-  // valida tipo e tamanho no servidor, então não dá pra burlar só editando o
-  // JS do navegador). Devolve { url, nomeArquivo } ou null se não houver
-  // arquivo selecionado.
+  // Sobe o currículo através do Worker (Cloudflare) — ele valida tipo/tamanho
+  // no servidor e grava no Firebase Storage com uma conta de serviço (o
+  // navegador do candidato não escreve mais direto no Storage; ver
+  // storage.rules e worker/virtus-api.js, rota /enviar-curriculo). Devolve
+  // { url, nomeArquivo } ou null se não houver arquivo selecionado.
   async function enviarCurriculoSeHouver(cpf) {
     const input = document.getElementById('inCurriculo');
     const file = input.files[0];
@@ -1412,19 +1411,16 @@
     const txtEl = document.getElementById('curriculoDropTxt');
     txtEl.textContent = '⏳ Enviando currículo...';
 
-    const { getStorage, ref, uploadBytes, getDownloadURL } =
-      await import("https://www.gstatic.com/firebasejs/10.13.0/firebase-storage.js");
-    const { app } = await import("./js/firebase-config.js");
-    const storage = getStorage(app);
-    const ext = (file.name.split('.').pop() || 'bin').toLowerCase();
-    const caminho = `curriculos/${cpf.replace(/\D/g, '')}-${Date.now()}.${ext}`;
-    const storageRef = ref(storage, caminho);
-    await uploadBytes(storageRef, file, { contentType: file.type });
-    const url = await getDownloadURL(storageRef);
+    const r = await enviarCurriculo(file, cpf);
+    if (!r.ok) {
+      drop.className = 'file-drop err';
+      txtEl.textContent = '✕ Falha ao enviar currículo';
+      throw new Error('Falha ao enviar currículo: ' + (r.erro || 'desconhecido'));
+    }
 
     drop.className = 'file-drop ok';
     txtEl.textContent = `✓ ${file.name}`;
-    return { url, nomeArquivo: file.name };
+    return { url: r.url, nomeArquivo: file.name };
   }
 
   window.startTest = async function() {
