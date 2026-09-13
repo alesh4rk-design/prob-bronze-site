@@ -36,6 +36,13 @@
 //     Serve de volta o arquivo gravado pela rota acima — é o link que fica
 //     salvo em `candidato.curriculo_url` e aparece na Ficha 360°/relatórios.
 //
+//   Cron Trigger (roda sozinho, não é uma rota HTTP)
+//     Configure em Settings → Triggers → Cron Triggers, ex: "0 3 * * *"
+//     (todo dia às 3h da manhã). Chama limparDadosAntigos(): candidato sem
+//     NENHUMA atividade nova há 60 dias tem nome, CPF, resultados, registro
+//     no processo seletivo e violações apagados por completo (retenção
+//     mínima de dados, LGPD).
+//
 // Variáveis/segredos necessários no Worker (Settings → Variables):
 //   FIREBASE_PROJECT_ID       (texto)   ex: projeto-virtus-f608a
 //   FIREBASE_SERVICE_ACCOUNT  (secret)  conteúdo INTEIRO do .json baixado do
@@ -199,6 +206,48 @@ async function firestorePatch(env, token, path, data, updateMaskFields) {
   return resp.json();
 }
 
+// Apaga um documento pelo caminho relativo (ex: "pipeline/cpf_123").
+async function firestoreDelete(env, token, path) {
+  const resp = await fetch(`${FIRESTORE_BASE(env.FIREBASE_PROJECT_ID)}/${path}`, {
+    method: "DELETE",
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!resp.ok && resp.status !== 404) throw new Error(`Firestore DELETE falhou (${resp.status}): ${await resp.text()}`);
+}
+
+// Apaga um documento pelo NOME COMPLETO que a API devolve nas listagens
+// (ex: "projects/x/databases/(default)/documents/resultados/abc") — não
+// precisa (nem pode) ser combinado com FIRESTORE_BASE de novo.
+async function firestoreDeleteByFullName(token, fullName) {
+  const resp = await fetch(`https://firestore.googleapis.com/v1/${fullName}`, {
+    method: "DELETE",
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!resp.ok && resp.status !== 404) throw new Error(`Firestore DELETE falhou (${resp.status}): ${await resp.text()}`);
+}
+
+// Lista TODOS os documentos de uma coleção/subcoleção, passando por todas as
+// páginas — a API do Firestore devolve só um pedaço de cada vez. Devolve
+// {name, fields} de cada doc, com `fields` já convertido (sem os tipos
+// "stringValue"/"integerValue" etc da API crua).
+async function firestoreListAll(env, token, collectionPath) {
+  const documentos = [];
+  let pageToken = null;
+  do {
+    const qs = new URLSearchParams({ pageSize: "300" });
+    if (pageToken) qs.set("pageToken", pageToken);
+    const resp = await fetch(`${FIRESTORE_BASE(env.FIREBASE_PROJECT_ID)}/${collectionPath}?${qs}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (resp.status === 404) break; // coleção/subcoleção vazia (não existe ainda)
+    if (!resp.ok) throw new Error(`Firestore LIST falhou (${resp.status}): ${await resp.text()}`);
+    const data = await resp.json();
+    for (const d of data.documents || []) documentos.push({ name: d.name, fields: fromFirestoreFields(d.fields) });
+    pageToken = data.nextPageToken || null;
+  } while (pageToken);
+  return documentos;
+}
+
 // Mesma duração usada em js/dashboard.js (VALIDADE_CODIGO_MS) — precisa
 // ficar igual nos dois lugares.
 const VALIDADE_CODIGO_MS = 4 * 60 * 60 * 1000; // 4 horas
@@ -340,6 +389,69 @@ async function handleSubmeterQuiz(request, env, cors) {
   return json({ ok: true, acertos, total, pct, id }, cors);
 }
 
+// ── Limpeza automática de dados antigos (retenção LGPD) ────────────────────
+// Roda sozinha todo dia (Cron Trigger, configurado no painel do Worker —
+// Settings → Triggers → Cron Triggers). Depois de 60 dias SEM NENHUMA
+// atividade nova, apaga o candidato por completo: nome, CPF, todas as
+// tentativas (quiz + digitação), o registro no processo seletivo
+// (`pipeline`) e a linha do tempo dele, e as violações registradas em nome
+// dele. Não existe "corte pela metade" — ou o candidato ainda está dentro
+// do prazo (nada é tocado), ou passou do prazo (tudo dele some).
+const RETENCAO_DADOS_MS = 60 * 24 * 60 * 60 * 1000; // 60 dias
+
+// Mesma lógica de agrupamento usada em js/dashboard-format.js (chaveDe/
+// normNome) — precisada aqui pra saber quais tentativas são da MESMA pessoa
+// mesmo que o nome tenha sido digitado de forma diferente entre uma
+// tentativa e outra (só o CPF, quando existe, é um identificador confiável).
+function normNome(n) {
+  return (n || "").trim().toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+}
+function chaveDeResultado(fields) {
+  const cpf = (fields.cpf || (fields.candidato && fields.candidato.cpf) || "").replace(/\D/g, "");
+  return cpf ? "cpf:" + cpf : "nome:" + normNome(fields.nome);
+}
+
+async function limparDadosAntigos(env) {
+  const token = await getAccessToken(env);
+  const agora = Date.now();
+
+  const resultados = await firestoreListAll(env, token, "resultados");
+  const violacoes = await firestoreListAll(env, token, "violacoes");
+
+  // Agrupa os resultados por candidato — precisamos da tentativa MAIS
+  // RECENTE de cada um pra saber se ele já passou dos 60 dias sem atividade.
+  const porCandidato = new Map();
+  for (const doc of resultados) {
+    const chave = chaveDeResultado(doc.fields);
+    const dataMs = doc.fields.data_conclusao ? new Date(doc.fields.data_conclusao).getTime() : 0;
+    if (!porCandidato.has(chave)) porCandidato.set(chave, { docs: [], maisRecente: 0, nome: doc.fields.nome || "" });
+    const info = porCandidato.get(chave);
+    info.docs.push(doc.name);
+    if (dataMs > info.maisRecente) { info.maisRecente = dataMs; info.nome = doc.fields.nome || info.nome; }
+  }
+
+  let candidatosApagados = 0;
+  for (const [chave, info] of porCandidato) {
+    if (!info.maisRecente || (agora - info.maisRecente) < RETENCAO_DADOS_MS) continue; // ainda dentro do prazo
+
+    for (const nomeCompleto of info.docs) await firestoreDeleteByFullName(token, nomeCompleto);
+
+    const chaveId = chave.replace(/\//g, "_");
+    const historico = await firestoreListAll(env, token, `pipeline/${chaveId}/historico`);
+    for (const h of historico) await firestoreDeleteByFullName(token, h.name);
+    await firestoreDelete(env, token, `pipeline/${chaveId}`);
+
+    const nomeNorm = normNome(info.nome);
+    if (nomeNorm) {
+      for (const v of violacoes) {
+        if (normNome(v.fields.nome) === nomeNorm) await firestoreDeleteByFullName(token, v.name);
+      }
+    }
+    candidatosApagados++;
+  }
+  return { candidatosApagados, candidatosVerificados: porCandidato.size };
+}
+
 // ── Upload/leitura de currículo (Cloudflare KV) ────────────────────────────
 const TIPOS_CURRICULO_PERMITIDOS = ["application/pdf", "image/jpeg", "image/png"];
 const TAMANHO_MAX_CURRICULO = 5 * 1024 * 1024; // 5 MB, mesmo limite de antes (storage.rules)
@@ -426,5 +538,17 @@ export default {
     } catch (e) {
       return json({ ok: false, erro: e.message }, cors, 500);
     }
+  },
+
+  // Disparado sozinho pelo Cron Trigger configurado no painel do Worker
+  // (Settings → Triggers → Cron Triggers) — não precisa de nenhuma chamada
+  // HTTP pra rodar. `ctx.waitUntil` garante que o Worker não seja encerrado
+  // no meio da limpeza.
+  async scheduled(event, env, ctx) {
+    ctx.waitUntil(
+      limparDadosAntigos(env).then((r) =>
+        console.log(`Limpeza de dados: ${r.candidatosApagados} candidato(s) apagado(s) de ${r.candidatosVerificados} verificado(s).`)
+      )
+    );
   },
 };
