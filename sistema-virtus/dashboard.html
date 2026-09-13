@@ -653,6 +653,17 @@
 
   .pesos-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(160px,1fr)); gap:14px; }
 
+  /* Pills sim/não — usadas no modal de Entrevista (mesmo padrão visual do quiz.html) */
+  .opt-pills { display:flex; gap:10px; }
+  .pill {
+    flex:1; text-align:center; padding:13px 10px; border-radius:4px; cursor:pointer;
+    background:var(--ink3); border:1px solid var(--line2); color:var(--text2);
+    font-family:'Rajdhani',sans-serif; font-weight:700; font-size:15px;
+    letter-spacing:1.5px; transition:all .15s; user-select:none;
+  }
+  .pill:hover { border-color:var(--ambermid); color:var(--text); }
+  .pill.sel { background:var(--amberdim); border-color:var(--amber); color:var(--amber); }
+
   /* ── QR Codes: prévia na tela ── */
   .qr-preview-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(240px,1fr)); gap:16px; }
   .qr-preview-card {
@@ -1055,6 +1066,52 @@
     <div class="modal-actions">
       <button class="btn-act btn-neutral" style="padding:12px 20px;border-radius:6px;" onclick="fecharObservacao()">Cancelar</button>
       <button class="btn-act btn-approve-admin" style="padding:12px 20px;border-radius:6px;margin-left:auto;" onclick="salvarObservacao()">💾 Salvar observação</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ MODAL: ENTREVISTA ══════════ -->
+<div class="modal-back" id="entrevistaModal" onclick="if(event.target===this)fecharEntrevista()">
+  <div class="modal-card" style="max-width:520px;">
+    <div class="modal-top">
+      <div class="modal-avatar">🎤</div>
+      <div>
+        <div class="modal-cand-nome">Entrevista</div>
+        <div class="modal-cand-sub" id="entrevistaNomeCandidato">—</div>
+      </div>
+      <button class="modal-close" onclick="fecharEntrevista()" title="Fechar">✕</button>
+    </div>
+    <div class="modal-scroll" style="padding:20px;">
+      <div class="field-group">
+        <span class="field-label">Possui disponibilidade para escala 12x36?</span>
+        <div class="opt-pills" id="entrevistaDisponibilidade">
+          <div class="pill" data-val="sim">✓ Sim</div>
+          <div class="pill" data-val="nao">✕ Não</div>
+        </div>
+      </div>
+      <div class="field-group">
+        <span class="field-label">Possui experiência anterior na função?</span>
+        <div class="opt-pills" id="entrevistaExperiencia">
+          <div class="pill" data-val="sim">✓ Sim</div>
+          <div class="pill" data-val="nao">✕ Não</div>
+        </div>
+      </div>
+      <div class="field-group">
+        <span class="field-label">Avaliação comportamental</span>
+        <div id="entrevistaEstrelas" style="font-size:26px;letter-spacing:4px;cursor:pointer;">
+          <span data-estrela="1">☆</span><span data-estrela="2">☆</span><span data-estrela="3">☆</span><span data-estrela="4">☆</span><span data-estrela="5">☆</span>
+        </div>
+      </div>
+      <div class="field-group">
+        <span class="field-label">Observações</span>
+        <textarea class="field-input" id="entrevistaObservacoes" rows="4" style="width:100%;resize:vertical;font-family:inherit;line-height:1.5;" placeholder="Impressões da entrevista, pontos discutidos, ressalvas..."></textarea>
+      </div>
+    </div>
+    <div class="modal-actions" style="flex-wrap:wrap;">
+      <button class="btn-act btn-neutral" style="padding:12px 16px;border-radius:6px;" onclick="fecharEntrevista()">Cancelar</button>
+      <button class="btn-act btn-neutral" style="padding:12px 16px;border-radius:6px;background:var(--amberdim);color:var(--amber);border-color:var(--ambermid);" onclick="concluirEntrevista('complementar')">🟡 Avaliação complementar</button>
+      <button class="btn-act btn-danger" style="padding:12px 16px;border-radius:6px;" onclick="concluirEntrevista('reprovado')">🔴 Reprovar</button>
+      <button class="btn-act btn-approve-admin" style="padding:12px 16px;border-radius:6px;" onclick="concluirEntrevista('aprovado')">🟢 Aprovar</button>
     </div>
   </div>
 </div>
@@ -1674,7 +1731,7 @@
     gerarCodigoAcesso, assinarCodigosAcesso, cancelarCodigoAcesso, excluirCodigoAcesso, VALIDADE_CODIGO_MS,
     definirNumeroWhatsapp, assinarNumeroWhatsapp,
     assinarPipeline, definirObservacaoPipeline, definirAprovacaoManual, definirBancoReserva,
-    registrarDecisaoFinal, buscarHistorico,
+    registrarDecisaoFinal, buscarHistorico, registrarEntrevista,
     obterPesosScore, salvarPesosPadrao, salvarPesosCargo, removerPesosCargo
   } from "./js/dashboard.js";
   import { db } from "./js/firebase-config.js";
@@ -2301,6 +2358,33 @@
         </div>
       </div>`;
 
+    // ── Entrevista — resumo de quando já foi realizada (visível pra
+    // qualquer um que veja a ficha, não só quem gerencia).
+    if (pInfo.entrevista) {
+      const ent = pInfo.entrevista;
+      const decLabel = { aprovado: { txt: '🟢 Aprovado', cor: 'var(--green)' }, reprovado: { txt: '🔴 Reprovado', cor: 'var(--red)' }, complementar: { txt: '🟡 Avaliação complementar', cor: 'var(--amber)' } }[ent.decisao] || { txt: ent.decisao, cor: 'var(--text2)' };
+      html += `
+        <div class="tent-card" style="border-color:var(--ambermid);">
+          <div class="tent-head" style="background:var(--amberdim);">
+            <div class="tent-mod" style="color:var(--amber);">🎤 Entrevista</div>
+            <div style="font-weight:700;color:${decLabel.cor};">${decLabel.txt}</div>
+          </div>
+          <div class="tent-body">
+            <div class="ficha-grid">
+              <div class="ficha-item"><div class="ficha-lbl">Disponibilidade 12x36</div><div class="ficha-val">${ent.disponibilidade_escala ? '✓ Sim' : '✕ Não'}</div></div>
+              <div class="ficha-item"><div class="ficha-lbl">Experiência anterior</div><div class="ficha-val">${ent.experiencia_anterior ? '✓ Sim' : '✕ Não'}</div></div>
+              <div class="ficha-item"><div class="ficha-lbl">Avaliação comportamental</div><div class="ficha-val">${ent.avaliacao_estrelas ? '★'.repeat(ent.avaliacao_estrelas) + '☆'.repeat(5 - ent.avaliacao_estrelas) : '—'}</div></div>
+              <div class="ficha-item"><div class="ficha-lbl">Entrevistador</div><div class="ficha-val">${escapeHtml(ent.por || '—')}</div></div>
+            </div>
+            ${ent.observacoes ? `
+            <div class="ficha-item" style="margin-top:10px;">
+              <div class="ficha-lbl">Observações</div>
+              <div class="ficha-val" style="margin-top:5px;white-space:pre-wrap;">${escapeHtml(ent.observacoes)}</div>
+            </div>` : ''}
+          </div>
+        </div>`;
+    }
+
     // ── Decisão — só quem gerencia processo seletivo vê os botões; view e
     // coordenador enxergam tudo acima (é só leitura pra eles).
     const podeGerenciarModal = me && PODE_GERENCIAR_CANDIDATOS.includes(me.perfil);
@@ -2323,6 +2407,7 @@
                 ${noBancoAtual ? '✅ No Banco de Reserva' : '🏦 Banco de Reserva'}
               </button>
               <button class="btn-act btn-neutral" data-acao="editarObservacao" ${dadosDecisao}>📝 Observação</button>
+              ${aprovadoAtual ? `<button class="btn-act btn-neutral" style="background:var(--cyandim);color:var(--cyan);border-color:var(--cyanmid);" data-acao="abrirEntrevista" ${dadosDecisao}>🎤 ${pInfo.entrevista ? 'Refazer entrevista' : 'Realizar entrevista'}</button>` : ''}
               ${aprovadoAtual && !pInfo.decisao_final ? `
                 <button class="btn-act btn-approve-admin" data-acao="decidirEntrevista" data-decisao="contratado" ${dadosDecisao}>🎉 Contratado</button>
                 <button class="btn-act btn-danger" data-acao="decidirEntrevista" data-decisao="recusado" ${dadosDecisao}>❌ Recusado</button>` : ''}
@@ -2912,18 +2997,26 @@
   const PENDENCIA_DEFS = [
     { chave: 'testes_concluidos', lbl: 'Aguardando avaliação', icone: '🔴', cor: 'red' },
     { chave: 'aguardando_entrevista', lbl: 'Aguardando entrevista', icone: '🟠', cor: 'amber' },
+    { chave: 'complementar', lbl: 'Avaliação complementar pendente', icone: '🟡', cor: 'amber' },
     { chave: 'banco_reserva', lbl: 'No banco de reserva', icone: '🏦', cor: 'cyan' },
     { chave: 'violacao', lbl: 'Com violação pendente', icone: '🚨', cor: 'red' }
   ];
 
-  // Separa os candidatos nos 4 grupos de pendência de uma vez só — usado
+  // Separa os candidatos nos grupos de pendência de uma vez só — usado
   // tanto pelos cartões (na aba Pendências) quanto pelo card do Dashboard.
   function agruparPendencias() {
-    const grupos = { testes_concluidos: [], aguardando_entrevista: [], banco_reserva: [], violacao: [] };
+    const grupos = { testes_concluidos: [], aguardando_entrevista: [], complementar: [], banco_reserva: [], violacao: [] };
     for (const c of candidatosAgrupados()) {
       const chaveId = c.chave.replace(/[/]/g, '_');
-      const etapa = etapaDoPipeline(PIPELINE_MAP[chaveId]).chave;
+      const pInfoPend = PIPELINE_MAP[chaveId];
+      const etapa = etapaDoPipeline(pInfoPend).chave;
       if (grupos[etapa]) grupos[etapa].push(c);
+      // Avaliação complementar é ortogonal à etapa "aguardando_entrevista" —
+      // o candidato continua lá, só ganha um sinalizador extra de que a
+      // entrevista pediu uma avaliação a mais antes da decisão final.
+      if (etapa === 'aguardando_entrevista' && pInfoPend && pInfoPend.entrevista && pInfoPend.entrevista.decisao === 'complementar') {
+        grupos.complementar.push(c);
+      }
       // Violação pendente é ortogonal à etapa (um candidato aguardando
       // avaliação OU entrevista pode estar aqui também, ao mesmo tempo).
       if ((etapa === 'testes_concluidos' || etapa === 'aguardando_entrevista') && violacoesDe(c.nome).length) {
@@ -2942,7 +3035,7 @@
   // para Entrevista" — não dependem da aba Pendências estar aberta, por
   // isso ficam antes do "if (!grid) return" abaixo.
   function atualizarBadgesPendencia(grupos) {
-    const total = grupos.testes_concluidos.length + grupos.aguardando_entrevista.length + grupos.violacao.length;
+    const total = grupos.testes_concluidos.length + grupos.aguardando_entrevista.length + grupos.complementar.length + grupos.violacao.length;
     const sino = document.getElementById('sinoPendenciasBadge');
     if (sino) { sino.textContent = total > 99 ? '99+' : String(total); sino.style.display = total > 0 ? 'flex' : 'none'; }
 
@@ -3274,6 +3367,7 @@
     toggleBanco: el => window.alternarBancoReserva(el.dataset.chave, el.dataset.nome, el.dataset.valor === 'true'),
     toggleComparar: el => window.alternarComparacao(el.dataset.chave, el.checked),
     editarObservacao: el => window.editarObservacaoPipeline(el.dataset.chave, el.dataset.nome),
+    abrirEntrevista: el => window.abrirEntrevista(el.dataset.chave, el.dataset.nome),
     excluirCandidato: el => window.excluirCandidatoDireto(el.dataset.chave, el.dataset.nome),
     filtrarPendencia: el => window.filtrarPendencia(el.dataset.filtro),
     desativarCodigo: el => window.desativarCodigo(el.dataset.codigo),
@@ -3673,6 +3767,67 @@
     } catch (e) {
       console.error(e);
       toast('❌ Falha ao salvar observação: ' + e.message, 'err');
+    }
+  };
+
+  // ══════════ ENTREVISTA (registro estruturado) ══════════
+  let ENTREVISTA_CHAVE_ATUAL = null;
+  let ENTREVISTA_NOME_ATUAL = null;
+  let ENTREVISTA_ESTRELAS_ATUAL = 0;
+
+  function renderEstrelas(qtd) {
+    document.querySelectorAll('#entrevistaEstrelas span').forEach(el => {
+      el.textContent = Number(el.dataset.estrela) <= qtd ? '★' : '☆';
+      el.style.color = Number(el.dataset.estrela) <= qtd ? 'var(--amber)' : 'var(--text4)';
+    });
+  }
+  document.querySelectorAll('#entrevistaEstrelas span').forEach(el => {
+    el.onclick = () => { ENTREVISTA_ESTRELAS_ATUAL = Number(el.dataset.estrela); renderEstrelas(ENTREVISTA_ESTRELAS_ATUAL); };
+  });
+  document.querySelectorAll('#entrevistaDisponibilidade .pill, #entrevistaExperiencia .pill').forEach(p => {
+    p.onclick = () => {
+      p.parentElement.querySelectorAll('.pill').forEach(x => x.classList.remove('sel'));
+      p.classList.add('sel');
+    };
+  });
+
+  window.abrirEntrevista = function (chave, nome) {
+    ENTREVISTA_CHAVE_ATUAL = chave;
+    ENTREVISTA_NOME_ATUAL = nome;
+    ENTREVISTA_ESTRELAS_ATUAL = 0;
+    document.getElementById('entrevistaNomeCandidato').textContent = nome;
+    document.querySelectorAll('#entrevistaDisponibilidade .pill, #entrevistaExperiencia .pill').forEach(p => p.classList.remove('sel'));
+    document.getElementById('entrevistaObservacoes').value = '';
+    renderEstrelas(0);
+    document.getElementById('entrevistaModal').classList.add('show');
+  };
+
+  window.fecharEntrevista = function () {
+    document.getElementById('entrevistaModal').classList.remove('show');
+    ENTREVISTA_CHAVE_ATUAL = null;
+    ENTREVISTA_NOME_ATUAL = null;
+  };
+
+  window.concluirEntrevista = async function (decisao) {
+    const pillDisp = document.querySelector('#entrevistaDisponibilidade .pill.sel');
+    const pillExp = document.querySelector('#entrevistaExperiencia .pill.sel');
+    if (!pillDisp || !pillExp) { toast('❌ Responda as duas perguntas de sim/não antes de concluir', 'err'); return; }
+
+    const dados = {
+      decisao,
+      disponibilidadeEscala: pillDisp.dataset.val === 'sim',
+      experienciaAnterior: pillExp.dataset.val === 'sim',
+      avaliacaoEstrelas: ENTREVISTA_ESTRELAS_ATUAL || null,
+      observacoes: document.getElementById('entrevistaObservacoes').value.trim()
+    };
+    try {
+      await registrarEntrevista(ENTREVISTA_CHAVE_ATUAL, dados, ENTREVISTA_NOME_ATUAL, me.usuario, me.perfil);
+      const msgs = { aprovado: '✅ Entrevista registrada — aprovado', reprovado: '❌ Entrevista registrada — reprovado (candidato recusado)', complementar: '🟡 Entrevista registrada — avaliação complementar solicitada' };
+      toast(msgs[decisao], decisao === 'reprovado' ? 'err' : 'ok');
+      fecharEntrevista();
+    } catch (e) {
+      console.error(e);
+      toast('❌ Falha ao registrar entrevista: ' + e.message, 'err');
     }
   };
 

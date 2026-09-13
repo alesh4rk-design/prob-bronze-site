@@ -341,6 +341,49 @@ export async function registrarDecisaoFinal(chave, decisao, nome, quem, perfilQu
   await registrarHistorico(chave, { etapa: decisao, nome, por: quem, por_perfil: perfilQuem });
 }
 
+// Entrevista — registro estruturado de quando a entrevista (etapa
+// "aguardando_entrevista") de fato acontece: perguntas de sim/não,
+// avaliação comportamental (1-5) e observações, com uma decisão de saída
+// (aprovado | reprovado | complementar). Fica junto do resto do pipeline,
+// não é uma coleção separada — um candidato só tem UMA entrevista ativa por
+// vez (refazer sobrescreve, não acumula histórico próprio; a mudança de
+// decisão em si já fica registrada no histórico geral do candidato).
+//
+// "Reprovado" na entrevista já fecha o processo (chama
+// registrarDecisaoFinal com 'recusado' direto) — não faz sentido reprovar
+// na entrevista e o candidato continuar em "Aguardando entrevista".
+// "Aprovado" e "Solicitar avaliação complementar" NÃO decidem sozinhos:
+// aprovado ainda passa pelos botões de Contratado/Recusado (a entrevista
+// pode ir bem e a empresa decidir não contratar por outro motivo, tipo não
+// ter mais vaga); complementar só marca um sinalizador pra alguém
+// acompanhar depois, sem tirar o candidato de "Aguardando entrevista".
+export async function registrarEntrevista(chave, dados, nome, quem, perfilQuem) {
+  const id = chave.replace(/[/]/g, "_");
+  await setDoc(doc(db, "pipeline", id), {
+    entrevista: {
+      decisao: dados.decisao,
+      disponibilidade_escala: dados.disponibilidadeEscala,
+      experiencia_anterior: dados.experienciaAnterior,
+      avaliacao_estrelas: dados.avaliacaoEstrelas,
+      observacoes: dados.observacoes || null,
+      por: quem || null,
+      por_perfil: perfilQuem || null,
+      em: serverTimestamp()
+    },
+    nome: nome || null,
+    atualizado_em: serverTimestamp()
+  }, { merge: true });
+
+  const motivo = dados.decisao === "aprovado" ? "Entrevista aprovada"
+    : dados.decisao === "reprovado" ? "Entrevista reprovada"
+    : "Avaliação complementar solicitada na entrevista";
+  await registrarHistorico(chave, { etapa: "entrevista_realizada", nome, por: quem, por_perfil: perfilQuem, motivo });
+
+  if (dados.decisao === "reprovado") {
+    await registrarDecisaoFinal(chave, "recusado", nome, quem, perfilQuem);
+  }
+}
+
 export function assinarPipeline(callback, onError) {
   return onSnapshot(collection(db, "pipeline"), (snap) => {
     const mapa = {};

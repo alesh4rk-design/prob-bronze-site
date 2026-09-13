@@ -1185,6 +1185,109 @@ export const tests = [
       assertEqual(erros.length, 0, 'erros de JS: ' + erros.join(' | '));
       await page.close();
     }
+  },
+
+  {
+    name: 'Entrevista: aprovar registra o resumo na Ficha 360°, mas não decide contratação sozinho',
+    async run({ browser, baseUrl }) {
+      const resultados = [{ id: '1', tipo: 'quiz', nome: 'Entrevista Aprovada', candidato: { cpf: '40404040404', cargo_pretendido: 'ASG' }, modulo: 'ASG', pct: 80, acertos: 8, total: 10, data_conclusao: hoje() }];
+      const pipeline = { 'cpf:40404040404': { aprovado: true, aprovado_em: hoje() } };
+      const { page, erros } = await abrirDashboard(browser, baseUrl, { perfil: 'admin', resultados, pipeline });
+
+      await page.evaluate(() => abrirCandidato('cpf:40404040404'));
+      await page.waitForTimeout(300);
+      await page.evaluate(() => document.querySelector('[data-acao="abrirEntrevista"]').click());
+      await page.waitForTimeout(200);
+      const modalAberto = await page.evaluate(() => document.getElementById('entrevistaModal').classList.contains('show'));
+      assert(modalAberto, 'modal de entrevista deveria abrir');
+
+      await page.evaluate(() => {
+        document.querySelector('#entrevistaDisponibilidade .pill[data-val="sim"]').click();
+        document.querySelector('#entrevistaExperiencia .pill[data-val="nao"]').click();
+        document.querySelector('#entrevistaEstrelas span[data-estrela="4"]').click();
+        document.getElementById('entrevistaObservacoes').value = 'Boa comunicação, um pouco tímido.';
+      });
+      await page.evaluate(() => concluirEntrevista('aprovado'));
+      await page.waitForTimeout(300);
+
+      const gravado = await page.evaluate(() => window.__PIPE['cpf:40404040404'].entrevista);
+      assertEqual(gravado.decisao, 'aprovado', 'decisão da entrevista deveria ser "aprovado"');
+      assertEqual(gravado.disponibilidade_escala, true, 'disponibilidade deveria ser true');
+      assertEqual(gravado.experiencia_anterior, false, 'experiência anterior deveria ser false');
+      assertEqual(gravado.avaliacao_estrelas, 4, 'avaliação deveria ser 4 estrelas');
+
+      const decisaoFinalAinda = await page.evaluate(() => window.__PIPE['cpf:40404040404'].decisao_final);
+      assert(!decisaoFinalAinda, 'aprovar na entrevista não deveria decidir Contratado/Recusado sozinho');
+
+      const texto = await page.evaluate(() => document.getElementById('cmConteudo').innerText);
+      assert(/entrevista/i.test(texto) && /aprovado/i.test(texto), `Ficha 360° deveria mostrar o resumo da entrevista. Conteúdo: ${texto}`);
+      assert(/boa comunica[çc][ãa]o/i.test(texto), 'observações da entrevista deveriam aparecer na ficha');
+
+      assertEqual(erros.length, 0, 'erros de JS: ' + erros.join(' | '));
+      await page.close();
+    }
+  },
+
+  {
+    name: 'Entrevista: reprovar já fecha o processo (decisao_final = recusado) sozinho',
+    async run({ browser, baseUrl }) {
+      const resultados = [{ id: '1', tipo: 'quiz', nome: 'Entrevista Reprovada', candidato: { cpf: '50505050505', cargo_pretendido: 'ASG' }, modulo: 'ASG', pct: 80, acertos: 8, total: 10, data_conclusao: hoje() }];
+      const pipeline = { 'cpf:50505050505': { aprovado: true, aprovado_em: hoje() } };
+      const { page, erros } = await abrirDashboard(browser, baseUrl, { perfil: 'admin', resultados, pipeline });
+
+      await page.evaluate(() => abrirCandidato('cpf:50505050505'));
+      await page.waitForTimeout(300);
+      await page.evaluate(() => document.querySelector('[data-acao="abrirEntrevista"]').click());
+      await page.waitForTimeout(200);
+      await page.evaluate(() => {
+        document.querySelector('#entrevistaDisponibilidade .pill[data-val="nao"]').click();
+        document.querySelector('#entrevistaExperiencia .pill[data-val="nao"]').click();
+      });
+      await page.evaluate(() => concluirEntrevista('reprovado'));
+      await page.waitForTimeout(300);
+
+      const p = await page.evaluate(() => window.__PIPE['cpf:50505050505']);
+      assertEqual(p.entrevista.decisao, 'reprovado', 'decisão da entrevista deveria ser "reprovado"');
+      assertEqual(p.decisao_final, 'recusado', 'reprovar na entrevista deveria fechar o processo como recusado automaticamente');
+
+      assertEqual(erros.length, 0, 'erros de JS: ' + erros.join(' | '));
+      await page.close();
+    }
+  },
+
+  {
+    name: 'Entrevista: "avaliação complementar" aparece na Central de Pendências, sem tirar o candidato de Aguardando entrevista',
+    async run({ browser, baseUrl }) {
+      const resultados = [{ id: '1', tipo: 'quiz', nome: 'Entrevista Complementar', candidato: { cpf: '60606060606', cargo_pretendido: 'ASG' }, modulo: 'ASG', pct: 80, acertos: 8, total: 10, data_conclusao: hoje() }];
+      const pipeline = { 'cpf:60606060606': { aprovado: true, aprovado_em: hoje(), etapa: 'aguardando_entrevista' } };
+      const { page, erros } = await abrirDashboard(browser, baseUrl, { perfil: 'admin', resultados, pipeline });
+
+      await page.evaluate(() => abrirCandidato('cpf:60606060606'));
+      await page.waitForTimeout(300);
+      await page.evaluate(() => document.querySelector('[data-acao="abrirEntrevista"]').click());
+      await page.waitForTimeout(200);
+      await page.evaluate(() => {
+        document.querySelector('#entrevistaDisponibilidade .pill[data-val="sim"]').click();
+        document.querySelector('#entrevistaExperiencia .pill[data-val="sim"]').click();
+      });
+      await page.evaluate(() => concluirEntrevista('complementar'));
+      await page.waitForTimeout(300);
+
+      const p = await page.evaluate(() => window.__PIPE['cpf:60606060606']);
+      assertEqual(p.entrevista.decisao, 'complementar', 'decisão deveria ser "complementar"');
+      assert(!p.decisao_final, 'complementar não deveria decidir contratação sozinho');
+      assertEqual(p.aprovado, true, 'candidato deveria continuar aprovado/em Aguardando entrevista');
+
+      await page.evaluate(() => switchView('pendencias'));
+      await page.waitForTimeout(300);
+      await page.evaluate(() => filtrarPendencia('complementar'));
+      await page.waitForTimeout(200);
+      const lista = await page.evaluate(() => document.getElementById('pendenciasLista').textContent);
+      assert(lista.includes('Entrevista Complementar'), `candidato deveria aparecer no filtro de avaliação complementar. Lista: ${lista}`);
+
+      assertEqual(erros.length, 0, 'erros de JS: ' + erros.join(' | '));
+      await page.close();
+    }
   }
 
 ];
