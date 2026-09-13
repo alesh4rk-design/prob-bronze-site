@@ -128,6 +128,17 @@
   .hud-btn  { height:32px; border-radius:4px; border:1px solid var(--line2); background:var(--ink3); color:var(--text2); font-size:11px; font-family:'Share Tech Mono',monospace; letter-spacing:1px; cursor:pointer; transition:all 0.15s; display:flex; align-items:center; justify-content:center; padding:0 12px; gap:6px; white-space:nowrap; text-decoration:none; }
   .hud-btn:hover { border-color:var(--amber); color:var(--amber); background:var(--amberdim); }
   .theme-toggle { background:var(--ink3); border:1px solid var(--line2); border-radius:30px; width:36px; height:36px; display:flex; align-items:center; justify-content:center; cursor:pointer; transition:all 0.2s; color:var(--text2); font-size:16px; }
+  .bell-toggle { position:relative; background:var(--ink3); border:1px solid var(--line2); border-radius:30px; width:36px; height:36px; display:flex; align-items:center; justify-content:center; cursor:pointer; transition:all 0.2s; color:var(--text2); font-size:16px; }
+  .bell-toggle:hover { border-color:var(--amber); color:var(--amber); }
+  .bell-badge {
+    position:absolute; top:-4px; right:-4px; min-width:16px; height:16px; padding:0 4px; border-radius:9px;
+    background:var(--red); color:#fff; font-family:'Share Tech Mono',monospace; font-size:9.5px; font-weight:700;
+    display:flex; align-items:center; justify-content:center; line-height:1; border:2px solid var(--ink2);
+  }
+  .sidebar-item .sb-badge {
+    margin-left:auto; background:var(--amber); color:#1a1300; font-family:'Share Tech Mono',monospace; font-size:10px;
+    font-weight:700; border-radius:9px; min-width:18px; height:18px; display:flex; align-items:center; justify-content:center; padding:0 5px;
+  }
   .theme-toggle:hover { border-color:var(--amber); color:var(--amber); background:var(--amberdim); }
 
   .hud-foot { position:fixed; bottom:0; left:0; right:0; height:32px; display:flex; align-items:center; padding:0 20px; background:var(--ink2); border-top:1px solid var(--line2); z-index:100; gap:16px; }
@@ -897,6 +908,10 @@
   </div>
   <div class="hud-right">
     <span class="hud-time" id="hudClock">--:--:--</span>
+    <div class="bell-toggle" id="sinoPendencias" onclick="switchView('pendencias')" title="Ver pendências">
+      🔔
+      <span class="bell-badge" id="sinoPendenciasBadge" style="display:none;">0</span>
+    </div>
     <div class="theme-toggle" id="themeToggle" onclick="toggleTheme()" title="Alternar tema">🌙</div>
     <span id="authUserBadge" style="display:inline-flex;align-items:center;gap:6px;height:32px;padding:0 12px;border-radius:4px;border:1px solid rgba(232,160,0,0.4);background:rgba(232,160,0,0.08);color:#E8A000;font-size:11px;font-family:'Share Tech Mono',monospace;letter-spacing:1px;">👤 <span id="authUserName">...</span></span>
     <button class="hud-btn" id="btnLogout" style="border-color:rgba(248,81,73,0.4);color:#f85149;">⏻ Sair</button>
@@ -915,7 +930,7 @@
     <div class="sidebar-item" data-view="dashboard" id="sidebarItemDashboard" onclick="switchView('dashboard')"><span class="si-icon">📊</span> Dashboard</div>
     <div class="sidebar-item" data-view="pendencias" id="sidebarItemPendencias" onclick="switchView('pendencias')"><span class="si-icon">🔔</span> Pendências</div>
     <div class="sidebar-item active" data-view="pipeline" id="sidebarItemPipeline" onclick="switchView('pipeline')"><span class="si-icon">👥</span> Candidatos</div>
-    <div class="sidebar-item" data-view="banco" id="sidebarItemBanco" onclick="switchView('banco')"><span class="si-icon">📊</span> Aprovados para Entrevista</div>
+    <div class="sidebar-item" data-view="banco" id="sidebarItemBanco" onclick="switchView('banco')"><span class="si-icon">🎯</span> Aprovados para Entrevista<span class="sb-badge" id="badgeAptosEntrevista" style="display:none;">0</span></div>
     <div class="sidebar-item" data-view="contratados" id="sidebarItemContratados" onclick="switchView('contratados')"><span class="si-icon">🏆</span> Contratados</div>
     <div class="sidebar-item" data-view="bancoreserva" id="sidebarItemBancoReserva" onclick="switchView('bancoreserva')"><span class="si-icon">🏦</span> Banco de Reserva</div>
     <div class="sidebar-item" data-view="violacoes" id="sidebarItemViolacoes" onclick="switchView('violacoes')"><span class="si-icon">🚨</span> Violações</div>
@@ -2577,10 +2592,25 @@
   // filtrável). As duas telas usam os mesmos dados, só mudam o que o
   // clique num cartão faz: no Dashboard leva pra outra aba; na aba
   // Pendências, filtra a lista que já está ali embaixo.
+  // Sino no topo (visível em qualquer aba) e emblema no item "Aprovados
+  // para Entrevista" — não dependem da aba Pendências estar aberta, por
+  // isso ficam antes do "if (!grid) return" abaixo.
+  function atualizarBadgesPendencia(grupos) {
+    const total = grupos.testes_concluidos.length + grupos.aguardando_entrevista.length + grupos.violacao.length;
+    const sino = document.getElementById('sinoPendenciasBadge');
+    if (sino) { sino.textContent = total > 99 ? '99+' : String(total); sino.style.display = total > 0 ? 'flex' : 'none'; }
+
+    const aptos = grupos.aguardando_entrevista.length;
+    const badgeEntrevista = document.getElementById('badgeAptosEntrevista');
+    if (badgeEntrevista) { badgeEntrevista.textContent = aptos > 99 ? '99+' : String(aptos); badgeEntrevista.style.display = aptos > 0 ? 'flex' : 'none'; }
+  }
+
   function renderPendencias() {
+    const grupos = agruparPendencias();
+    atualizarBadgesPendencia(grupos);
+
     const grid = document.getElementById('pendenciasGrid');
     if (!grid) return;
-    const grupos = agruparPendencias();
 
     grid.innerHTML = PENDENCIA_DEFS.map(d => {
       const n = grupos[d.chave].length;

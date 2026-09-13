@@ -714,5 +714,58 @@ export const tests = [
       await page.close();
     }
   }
+,
+  {
+    name: 'Sino de pendências e emblema de "aptos para entrevista" aparecem e somem com a conta real',
+    async run({ browser, baseUrl }) {
+      const resultados = [
+        { id: '1', tipo: 'quiz', nome: 'Aguarda Avaliacao', modulo: 'Atendimento', pct: 80, acertos: 8, total: 10, data_conclusao: hoje() },
+        { id: '2', tipo: 'quiz', nome: 'Apto Entrevista', modulo: 'Atendimento', pct: 80, acertos: 8, total: 10, data_conclusao: hoje() }
+      ];
+      const pipeline = { 'nome:apto entrevista': { aprovado: true, etapa: 'aguardando_entrevista' } };
+      const { page, erros } = await abrirDashboard(browser, baseUrl, { perfil: 'admin', resultados, pipeline });
+
+      // 2 pendências no total (1 aguardando avaliação + 1 aguardando entrevista),
+      // 1 apto para entrevista especificamente.
+      let sino = await page.evaluate(() => ({
+        visivel: document.getElementById('sinoPendenciasBadge').style.display !== 'none',
+        texto: document.getElementById('sinoPendenciasBadge').textContent
+      }));
+      assert(sino.visivel, 'sino deveria estar visível com pendências existindo');
+      assertEqual(sino.texto, '2', 'sino deveria contar as 2 pendências (avaliação + entrevista)');
+
+      let badgeEntrevista = await page.evaluate(() => ({
+        visivel: document.getElementById('badgeAptosEntrevista').style.display !== 'none',
+        texto: document.getElementById('badgeAptosEntrevista').textContent
+      }));
+      assert(badgeEntrevista.visivel, 'emblema de aptos pra entrevista deveria estar visível');
+      assertEqual(badgeEntrevista.texto, '1', 'deveria contar 1 apto pra entrevista');
+
+      // Clicar no sino leva pra aba Pendências.
+      await page.click('#sinoPendencias');
+      await page.waitForTimeout(300);
+      const naAba = await page.evaluate(() => document.getElementById('view-pendencias').classList.contains('active'));
+      assert(naAba, 'clicar no sino deveria levar pra aba Pendências');
+
+      // Resolvendo a pendência de entrevista (decide contratado), a conta
+      // cai de verdade — não é um "dispensar" manual, é a conta real.
+      page.evaluate(() => decidirEntrevista('nome:apto entrevista', 'Apto Entrevista', 'contratado'));
+      await page.waitForTimeout(200);
+      await page.click('#confirmBtnOk');
+      await page.waitForTimeout(300);
+
+      sino = await page.evaluate(() => ({
+        visivel: document.getElementById('sinoPendenciasBadge').style.display !== 'none',
+        texto: document.getElementById('sinoPendenciasBadge').textContent
+      }));
+      assertEqual(sino.texto, '1', 'sino deveria cair pra 1 depois da decisão (só resta aguardando avaliação)');
+
+      badgeEntrevista = await page.evaluate(() => document.getElementById('badgeAptosEntrevista').style.display);
+      assertEqual(badgeEntrevista, 'none', 'emblema de aptos pra entrevista deveria sumir (ninguém mais aguardando)');
+
+      assertEqual(erros.length, 0, 'erros de JS: ' + erros.join(' | '));
+      await page.close();
+    }
+  }
 
 ];
