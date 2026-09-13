@@ -3,25 +3,13 @@ rules_version = '2';
 // Regras do Firebase Storage — publicar em Firebase Console → Storage → Rules,
 // igual já é feito com firestore.rules.
 //
-// O upload de currículo NÃO vem mais direto do navegador do candidato — o
-// Worker (Cloudflare, worker/virtus-api.js, rota /enviar-curriculo) valida
-// tipo/tamanho no servidor e grava usando uma conta de serviço, que ignora
-// estas regras (mesmo padrão já usado pra correção do quiz). Por isso a
-// escrita fica totalmente fechada aqui: ninguém grava currículo direto no
-// Storage passando pelas regras, só o Worker, por fora delas. A leitura
-// (abrir o currículo) continua restrita à equipe autenticada.
+// O currículo NÃO fica mais aqui: o upload passa pelo Worker (Cloudflare,
+// worker/virtus-api.js) e é guardado no Cloudflare R2, pra não depender do
+// plano pago (Blaze) do Firebase Storage. Este bucket do Firebase Storage
+// fica sem nenhum uso no Sistema Virtus — fechado por completo, por segurança
+// (caso alguém tente escrever ou ler qualquer coisa nele).
 service firebase.storage {
   match /b/{bucket}/o {
-    match /curriculos/{arquivo} {
-      allow write: if false;
-
-      allow read: if request.auth != null &&
-                     firestore.exists(/databases/(default)/documents/usuarios/$(request.auth.uid)) &&
-                     firestore.get(/databases/(default)/documents/usuarios/$(request.auth.uid)).data.perfil
-                       in ['admin', 'gerencia', 'avaliador', 'coordenador', 'viewer'];
-    }
-
-    // Bloqueia qualquer outro caminho do bucket por padrão.
     match /{allPaths=**} {
       allow read, write: if false;
     }
