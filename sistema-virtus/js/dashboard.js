@@ -348,3 +348,25 @@ export function assinarPipeline(callback, onError) {
     callback(mapa);
   }, (err) => { console.error("assinarPipeline:", err); if (onError) onError(err); });
 }
+
+// ── Pesos do Score Virtus ───────────────────────────────────────────────
+// Coleção separada (não dentro de `config`, que já tem uma regra aberta de
+// leitura pública pro número de WhatsApp) porque só a equipe pode ler os
+// pesos, e só admin/gerência pode alterá-los — ver firestore.rules.
+// Um doc só (`pesos`), com { default: {...}, porCargo: { "Cargo": {...} } }.
+export async function obterPesosScore() {
+  const snap = await getDoc(doc(db, "config_pesos", "pesos"));
+  return snap.exists() ? snap.data() : {};
+}
+
+export async function salvarPesosPadrao(pesos) {
+  await setDoc(doc(db, "config_pesos", "pesos"), { default: pesos }, { merge: true });
+}
+
+export async function salvarPesosCargo(cargo, pesos) {
+  await setDoc(doc(db, "config_pesos", "pesos"), { porCargo: { [cargo]: pesos } }, { merge: true });
+}
+
+export async function removerPesosCargo(cargo) {
+  await updateDoc(doc(db, "config_pesos", "pesos"), { [`porCargo.${cargo}`]: deleteField() });
+}

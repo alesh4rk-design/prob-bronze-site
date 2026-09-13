@@ -651,6 +651,8 @@
     border-radius:6px; padding:12px 14px; margin-bottom:14px;
   }
 
+  .pesos-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(160px,1fr)); gap:14px; }
+
   /* ── QR Codes: prévia na tela ── */
   .qr-preview-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(240px,1fr)); gap:16px; }
   .qr-preview-card {
@@ -940,6 +942,7 @@
     <div class="sidebar-item" data-view="codigos" id="sidebarItemCodigos" onclick="switchView('codigos')"><span class="si-icon">🔑</span> Código de Acesso</div>
     <div class="sidebar-section-lbl" id="sidebarAdminLbl" style="display:none;">Administração</div>
     <div class="sidebar-item" data-view="perguntas" id="sidebarItemPerguntas" style="display:none;" onclick="switchView('perguntas')"><span class="si-icon">📚</span> Perguntas</div>
+    <div class="sidebar-item" data-view="pesos" id="sidebarItemPesos" style="display:none;" onclick="switchView('pesos')"><span class="si-icon">⚖️</span> Pesos do Score</div>
     <div class="sidebar-item" data-view="usuarios" id="sidebarItemUsuarios" style="display:none;" onclick="switchView('usuarios')"><span class="si-icon">👥</span> Usuários</div>
   </div>
   <div class="sidebar-foot">Sistema Virtus · v3.0</div>
@@ -1486,6 +1489,49 @@
     </div>
 </section>
 
+<!-- ══════════ VIEW: PESOS DO SCORE VIRTUS ══════════ -->
+<section class="app-view" id="view-pesos">
+  <div class="page-title-area">
+    <div>
+      <div class="page-title">Pesos do <em>Score Virtus</em></div>
+      <div class="page-subtitle">Nota única ponderada, pra comparar candidatos do mesmo cargo de relance</div>
+    </div>
+  </div>
+
+  <div class="panel" style="margin-bottom:16px;">
+    <div class="panel-head"><div class="panel-title-sm">⚖️ Pesos padrão</div></div>
+    <div class="panel-body" style="padding:16px 20px;">
+      <div class="warn-note">
+        Vale pra qualquer cargo sem peso próprio configurado abaixo. Os 5 valores devem somar <strong>100</strong>.
+        Um candidato de cargo sem trilha completa (ex: ASG, Jardineiro) não é penalizado pelos módulos que nem fez —
+        o peso deles é redistribuído entre o que existe.
+      </div>
+      <div class="pesos-grid" id="pesosPadraoGrid"></div>
+      <div style="display:flex;align-items:center;gap:14px;margin-top:14px;flex-wrap:wrap;">
+        <span id="pesosPadraoSoma" class="mono" style="font-size:12px;"></span>
+        <button class="btn-act btn-approve-admin" id="btnSalvarPesosPadrao">💾 Salvar pesos padrão</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-head"><div class="panel-title-sm">🎯 Peso específico por cargo</div></div>
+    <div class="panel-body" style="padding:16px 20px;">
+      <div class="field-group" style="max-width:340px;margin-bottom:14px;">
+        <span class="field-label">Cargo</span>
+        <select class="field-input" id="pesosCargoSelect"></select>
+      </div>
+      <div class="pesos-grid" id="pesosCargoGrid"></div>
+      <div style="display:flex;align-items:center;gap:10px;margin-top:14px;flex-wrap:wrap;">
+        <span id="pesosCargoSoma" class="mono" style="font-size:12px;"></span>
+        <button class="btn-act btn-approve-admin" id="btnSalvarPesosCargo">💾 Salvar peso deste cargo</button>
+        <button class="btn-act btn-neutral" id="btnRestaurarPesosCargo">↩ Usar o padrão (remover override)</button>
+      </div>
+      <div id="pesosCargoLista" style="margin-top:18px;"></div>
+    </div>
+  </div>
+</section>
+
 <!-- ══════════ VIEW: USUÁRIOS (admin only, de admin.html / sec-usuarios) ══════════ -->
 <section class="app-view" id="view-usuarios">
   <div class="page-title-area">
@@ -1548,7 +1594,8 @@
     gerarCodigoAcesso, assinarCodigosAcesso, cancelarCodigoAcesso, excluirCodigoAcesso, VALIDADE_CODIGO_MS,
     definirNumeroWhatsapp, assinarNumeroWhatsapp,
     assinarPipeline, definirObservacaoPipeline, definirAprovacaoManual, definirBancoReserva,
-    registrarDecisaoFinal, buscarHistorico
+    registrarDecisaoFinal, buscarHistorico,
+    obterPesosScore, salvarPesosPadrao, salvarPesosCargo, removerPesosCargo
   } from "./js/dashboard.js";
   import { db } from "./js/firebase-config.js";
   import { doc, setDoc } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
@@ -1558,12 +1605,19 @@
     classificarModulo, classificarDigitacao, melhorDigitacao, dataLocalYMD, escapeHtml,
     VIOLACAO_LABELS, tipoViolacaoLabel, descricaoViolacao,
     consolidarModulos, criadoEmDe, expiraEmDe as _expiraEmDe, statusCodigo as _statusCodigo,
-    etapaDoPipeline
+    etapaDoPipeline, PESOS_PADRAO, calcularScore, pesosDoCargo
   } from "./js/dashboard-format.js";
 
   let ALL_RESULTADOS = [];
   let ALL_VIOLACOES = [];
   let PIPELINE_MAP = {};
+  let PESOS_SCORE = {};
+
+  const CARGOS_ESPECIFICOS = [
+    'Controle de Acesso', 'CFTV', 'Vigilante Patrimonial', 'Manutenção', 'ASG',
+    'VSPP', 'Recepcionista', 'Bombeiro Civil', 'Liderança de Equipe',
+    'Encarregado de Facilities', 'Jardineiro'
+  ];
 
   function toast(msg, type='') {
     const el = document.getElementById('toast');
@@ -1661,6 +1715,7 @@
   if (ehGerencia) {
     document.getElementById('sidebarAdminLbl').style.display = 'block';
     document.getElementById('sidebarItemPerguntas').style.display = 'flex';
+    document.getElementById('sidebarItemPesos').style.display = 'flex';
     document.getElementById('sidebarItemUsuarios').style.display = 'flex';
   }
 
@@ -1704,6 +1759,7 @@
     qrcodes: 'QR Codes para Imprimir',
     codigos: 'Código de Acesso',
     perguntas: 'Banco de Perguntas',
+    pesos: 'Pesos do Score Virtus',
     usuarios: 'Gestão de Usuários'
   };
   const VIEWS_OPERACIONAIS = ['testes', 'qrcodes', 'codigos'];
@@ -1732,7 +1788,7 @@
 
   window.switchView = function (view) {
     const ehGerenciaSV = me && (me.perfil === 'admin' || me.perfil === 'gerencia');
-    if ((view === 'perguntas' || view === 'usuarios') && !ehGerenciaSV) view = 'dashboard';
+    if ((view === 'perguntas' || view === 'usuarios' || view === 'pesos') && !ehGerenciaSV) view = 'dashboard';
     // Viewer só tem a aba Candidatos (vê os testes realizados de todo
     // mundo, sem poder selecionar ninguém pra entrevista).
     if ((view === 'banco' || view === 'contratados' || view === 'dashboard' || view === 'pendencias') && me && me.perfil === 'viewer') view = 'pipeline';
@@ -1749,6 +1805,7 @@
     if (view === 'contratados') renderContratados();
     if (view === 'bancoreserva') renderBancoReserva();
     if (view === 'pendencias') renderPendencias();
+    if (view === 'pesos') renderPesosView();
   };
 
 
@@ -1953,6 +2010,38 @@
                   <div class="ficha-lbl">${melhorTypingModal.dispositivo === 'mobile' ? '📱' : '💻'} Digitação</div>
                   <div class="ficha-val" style="font-weight:700;">${melhorTypingModal.wpm} PPM${digModal ? ` — ${digModal.txt}` : ''}</div>
                 </div>` : ''}
+            </div>
+          </div>
+        </div>`;
+    }
+
+    // ── Score Virtus: nota única ponderada, pra comparar candidatos do
+    // mesmo cargo de relance sem precisar olhar módulo por módulo. Componente
+    // "digitação" é convertido de PPM pra uma escala 0-100 (o teto de PPM
+    // considerado "cheio" muda por dispositivo — ver FAIXAS_DIGITACAO).
+    const buscarPct = (nomeModulo) => { const m = mods.find(x => x.modulo === nomeModulo); return m ? m.pct : null; };
+    const digitacaoPct = melhorTypingModal
+      ? Math.min(100, Math.round((melhorTypingModal.wpm / (melhorTypingModal.dispositivo === 'mobile' ? 35 : 50)) * 100))
+      : null;
+    const componentesScore = {
+      cargo: f && f.cargo_pretendido ? buscarPct(f.cargo_pretendido) : null,
+      atendimento: buscarPct('Atendimento ao Cliente'),
+      linguagem_positiva: buscarPct('Linguagem Positiva'),
+      informatica: buscarPct('Informática'),
+      digitacao: digitacaoPct
+    };
+    const pesosCargoAtual = pesosDoCargo(f && f.cargo_pretendido, PESOS_SCORE);
+    const scoreVirtus = calcularScore(componentesScore, pesosCargoAtual);
+    if (scoreVirtus !== null) {
+      html += `
+        <div class="tent-card" style="border-color:var(--ambermid);">
+          <div class="tent-body" style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
+            <div>
+              <div style="font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--text3);letter-spacing:1px;">⚖️ SCORE VIRTUS</div>
+              <div style="font-size:28px;font-weight:800;color:${corNota(scoreVirtus)};line-height:1.1;">${scoreVirtus}</div>
+            </div>
+            <div style="font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--text3);">
+              Nota única ponderada, calculada com os pesos ${f && f.cargo_pretendido && (PESOS_SCORE.porCargo || {})[f.cargo_pretendido] ? `de "${escapeHtml(f.cargo_pretendido)}"` : 'padrão'}.
             </div>
           </div>
         </div>`;
@@ -3881,6 +3970,106 @@
     } catch (e) { console.error(e); toast('❌ Falha: ' + e.message, 'err'); }
   };
 
+  // ── Pesos do Score Virtus ───────────────────────────────────────────
+  const CAMPOS_PESO = [
+    { chave: 'cargo', rotulo: 'Cargo específico' },
+    { chave: 'atendimento', rotulo: 'Atendimento' },
+    { chave: 'linguagem_positiva', rotulo: 'Linguagem Positiva' },
+    { chave: 'informatica', rotulo: 'Informática' },
+    { chave: 'digitacao', rotulo: 'Digitação' }
+  ];
+
+  function montarGridPesos(containerId, valores) {
+    const el = document.getElementById(containerId);
+    el.innerHTML = CAMPOS_PESO.map(c => `
+      <div class="field-group">
+        <span class="field-label">${c.rotulo}</span>
+        <input type="number" class="field-input peso-input" min="0" max="100" step="1"
+               data-campo="${c.chave}" value="${valores[c.chave] ?? 0}">
+      </div>`).join('');
+  }
+
+  function lerGridPesos(containerId) {
+    const el = document.getElementById(containerId);
+    const pesos = {};
+    el.querySelectorAll('.peso-input').forEach(inp => { pesos[inp.dataset.campo] = Number(inp.value) || 0; });
+    return pesos;
+  }
+
+  function somaPesos(pesos) { return CAMPOS_PESO.reduce((a, c) => a + (Number(pesos[c.chave]) || 0), 0); }
+
+  function atualizarSomaLabel(elId, pesos) {
+    const soma = somaPesos(pesos);
+    const el = document.getElementById(elId);
+    el.textContent = `Soma atual: ${soma} / 100`;
+    el.style.color = soma === 100 ? 'var(--green)' : 'var(--amber)';
+  }
+
+  function renderPesosView() {
+    const padrao = pesosDoCargo(null, PESOS_SCORE);
+    montarGridPesos('pesosPadraoGrid', padrao);
+    atualizarSomaLabel('pesosPadraoSoma', padrao);
+    document.getElementById('pesosPadraoGrid').oninput = () => atualizarSomaLabel('pesosPadraoSoma', lerGridPesos('pesosPadraoGrid'));
+
+    const sel = document.getElementById('pesosCargoSelect');
+    const cargoAtual = sel.value && CARGOS_ESPECIFICOS.includes(sel.value) ? sel.value : CARGOS_ESPECIFICOS[0];
+    sel.innerHTML = CARGOS_ESPECIFICOS.map(c => `<option value="${escapeHtml(c)}" ${c === cargoAtual ? 'selected' : ''}>${escapeHtml(c)}</option>`).join('');
+
+    function renderCargoGrid() {
+      const cargo = sel.value;
+      const pesos = pesosDoCargo(cargo, PESOS_SCORE);
+      montarGridPesos('pesosCargoGrid', pesos);
+      atualizarSomaLabel('pesosCargoSoma', pesos);
+      document.getElementById('pesosCargoGrid').oninput = () => atualizarSomaLabel('pesosCargoSoma', lerGridPesos('pesosCargoGrid'));
+    }
+    sel.onchange = renderCargoGrid;
+    renderCargoGrid();
+
+    const overrides = Object.keys((PESOS_SCORE && PESOS_SCORE.porCargo) || {});
+    const lista = document.getElementById('pesosCargoLista');
+    if (!overrides.length) {
+      lista.innerHTML = '<div class="empty-state"><div class="empty-icon">⚖️</div>Nenhum cargo com peso próprio — todos usam o padrão.</div>';
+    } else {
+      lista.innerHTML = '<div class="field-label" style="margin-bottom:8px;">Cargos com peso próprio configurado</div>' +
+        overrides.map(c => `<span class="badge cyan" style="margin:3px;">${escapeHtml(c)}</span>`).join('');
+    }
+  }
+
+  document.getElementById('btnSalvarPesosPadrao').onclick = async () => {
+    const pesos = lerGridPesos('pesosPadraoGrid');
+    if (somaPesos(pesos) !== 100) { toast('❌ A soma dos pesos padrão precisa ser 100', 'err'); return; }
+    try {
+      await salvarPesosPadrao(pesos);
+      PESOS_SCORE = { ...PESOS_SCORE, default: pesos };
+      toast('✅ Pesos padrão salvos', 'ok');
+      renderAll();
+    } catch (e) { console.error(e); toast('❌ Falha: ' + e.message, 'err'); }
+  };
+
+  document.getElementById('btnSalvarPesosCargo').onclick = async () => {
+    const cargo = document.getElementById('pesosCargoSelect').value;
+    const pesos = lerGridPesos('pesosCargoGrid');
+    if (somaPesos(pesos) !== 100) { toast('❌ A soma dos pesos precisa ser 100', 'err'); return; }
+    try {
+      await salvarPesosCargo(cargo, pesos);
+      PESOS_SCORE = { ...PESOS_SCORE, porCargo: { ...((PESOS_SCORE && PESOS_SCORE.porCargo) || {}), [cargo]: pesos } };
+      toast(`✅ Peso de "${cargo}" salvo`, 'ok');
+      renderPesosView();
+      renderAll();
+    } catch (e) { console.error(e); toast('❌ Falha: ' + e.message, 'err'); }
+  };
+
+  document.getElementById('btnRestaurarPesosCargo').onclick = async () => {
+    const cargo = document.getElementById('pesosCargoSelect').value;
+    try {
+      await removerPesosCargo(cargo);
+      if (PESOS_SCORE && PESOS_SCORE.porCargo) delete PESOS_SCORE.porCargo[cargo];
+      toast(`✅ "${cargo}" voltou a usar o peso padrão`, 'ok');
+      renderPesosView();
+      renderAll();
+    } catch (e) { console.error(e); toast('❌ Falha: ' + e.message, 'err'); }
+  };
+
   // ── Importação do banco de perguntas ──────────────────────────────────
   document.getElementById('seedQtd').textContent = Object.keys(PERGUNTAS_SEED).length;
 
@@ -4192,6 +4381,9 @@
         mapa => { PIPELINE_MAP = mapa; renderAll(); },
         () => statusDot(false, 'Reconectando...')
       ));
+      // Pesos do Score Virtus: sem onSnapshot (não muda com frequência) —
+      // carrega uma vez na conexão e de novo sempre que a aba Pesos é salva.
+      obterPesosScore().then(pesos => { PESOS_SCORE = pesos || {}; renderAll(); }).catch(() => {});
     } catch (e) {
       console.error(e);
       statusDot(false, 'Falha ao conectar ao servidor');

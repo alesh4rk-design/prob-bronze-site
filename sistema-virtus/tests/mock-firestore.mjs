@@ -24,7 +24,8 @@ export function buildMocks({
   pipeline = {},
   violacoes = [],
   whatsappNumero = null,
-  usuarios = []
+  usuarios = [],
+  pesosScore = null
 } = {}) {
   const APP = `export function initializeApp(){ return { name: 'mock' }; }`;
 
@@ -47,6 +48,8 @@ export function doc(db, ...parts){ return { __doc: parts.join('/') }; }
 export function serverTimestamp(){ return new Date(); }
 export function deleteField(){ return { __deleteField: true }; }
 
+window.__PESOS = ${JSON.stringify(pesosScore)};
+
 export async function getDoc(ref){
   if (ref.__doc && ref.__doc.startsWith('usuarios/')) {
     return { exists: () => true, data: () => (${JSON.stringify({ perfil, usuario })}) };
@@ -56,11 +59,31 @@ export async function getDoc(ref){
       ? `return { exists: () => true, data: () => ({ numero: ${JSON.stringify(whatsappNumero)} }) };`
       : `return { exists: () => false, data: () => ({}) };`}
   }
+  if (ref.__doc === 'config_pesos/pesos') {
+    return window.__PESOS
+      ? { exists: () => true, data: () => window.__PESOS }
+      : { exists: () => false, data: () => ({}) };
+  }
   return { exists: () => false, data: () => ({}) };
 }
 
 window.__writes = [];
 window.__PIPE = ${JSON.stringify(pipeline)};
+
+// Aplica um valor num objeto por um caminho com ponto (ex: "porCargo.ASG"),
+// criando os níveis que faltarem — o suficiente pra simular o updateDoc()
+// usado por removerPesosCargo (que apaga só uma chave aninhada).
+function aplicarCaminho(obj, caminho, valor) {
+  const partes = caminho.split('.');
+  let atual = obj;
+  for (let i = 0; i < partes.length - 1; i++) {
+    if (!atual[partes[i]] || typeof atual[partes[i]] !== 'object') atual[partes[i]] = {};
+    atual = atual[partes[i]];
+  }
+  const ultima = partes[partes.length - 1];
+  if (valor && typeof valor === 'object' && valor.__deleteField) delete atual[ultima];
+  else atual[ultima] = valor;
+}
 
 export async function setDoc(ref, data){
   window.__writes.push({ path: ref.__doc, data });
@@ -74,8 +97,24 @@ export async function setDoc(ref, data){
     window.__PIPE[id] = atual;
     if (window.__notifyPipeline) window.__notifyPipeline();
   }
+  if (ref.__doc === 'config_pesos/pesos') {
+    window.__PESOS = window.__PESOS || {};
+    for (const [k, v] of Object.entries(data)) {
+      if (v && typeof v === 'object' && !v.__deleteField && !Array.isArray(v)) {
+        window.__PESOS[k] = { ...(window.__PESOS[k] || {}), ...v };
+      } else {
+        aplicarCaminho(window.__PESOS, k, v);
+      }
+    }
+  }
 }
-export async function updateDoc(ref, data){ window.__writes.push({ path: ref.__doc, data, op: 'update' }); }
+export async function updateDoc(ref, data){
+  window.__writes.push({ path: ref.__doc, data, op: 'update' });
+  if (ref.__doc === 'config_pesos/pesos') {
+    window.__PESOS = window.__PESOS || {};
+    for (const [caminho, v] of Object.entries(data)) aplicarCaminho(window.__PESOS, caminho, v);
+  }
+}
 export async function deleteDoc(ref){ window.__writes.push({ path: ref.__doc, op: 'delete' }); }
 
 // Subcoleções (ex: pipeline/{id}/historico) — guardadas à parte de

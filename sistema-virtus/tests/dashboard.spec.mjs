@@ -854,6 +854,112 @@ export const tests = [
       assertEqual(erros.length, 0, 'erros de JS: ' + erros.join(' | '));
       await page.close();
     }
+  },
+
+  {
+    name: 'Pesos do Score: só admin/gerência vê a aba; avaliador/coordenador/viewer não',
+    async run({ browser, baseUrl }) {
+      for (const [perfil, deveVer] of [['admin', true], ['gerencia', true], ['avaliador', false], ['coordenador', false], ['viewer', false]]) {
+        const { page, erros } = await abrirDashboard(browser, baseUrl, { perfil });
+        const visivel = await page.evaluate(() => getComputedStyle(document.getElementById('sidebarItemPesos')).display !== 'none');
+        assertEqual(visivel, deveVer, `perfil ${perfil}: visibilidade da aba Pesos incorreta`);
+        assertEqual(erros.length, 0, `perfil ${perfil} teve erro(s) de JS: ${erros.join(' | ')}`);
+        await page.close();
+      }
+    }
+  },
+
+  {
+    name: 'Pesos do Score: salvar peso padrão grava no Firestore e volta a preencher o formulário',
+    async run({ browser, baseUrl }) {
+      const { page, erros } = await abrirDashboard(browser, baseUrl, { perfil: 'admin' });
+
+      await page.evaluate(() => switchView('pesos'));
+      await page.waitForTimeout(300);
+
+      // Muda o peso de "Atendimento" e mantém a soma em 100 (tira de Digitação).
+      await page.evaluate(() => {
+        document.querySelector('#pesosPadraoGrid input[data-campo="atendimento"]').value = '25';
+        document.querySelector('#pesosPadraoGrid input[data-campo="digitacao"]').value = '10';
+      });
+      const somaTxt = await page.evaluate(() => {
+        document.querySelector('#pesosPadraoGrid input[data-campo="atendimento"]').dispatchEvent(new Event('input', { bubbles: true }));
+        return document.getElementById('pesosPadraoSoma').textContent;
+      });
+      assert(somaTxt.includes('100 / 100'), `soma deveria fechar em 100: ${somaTxt}`);
+
+      await page.evaluate(() => document.getElementById('btnSalvarPesosPadrao').click());
+      await page.waitForTimeout(300);
+
+      const gravado = await page.evaluate(() => window.__PESOS && window.__PESOS.default);
+      assertEqual(gravado.atendimento, 25, 'peso de atendimento não foi gravado corretamente');
+      assertEqual(gravado.digitacao, 10, 'peso de digitação não foi gravado corretamente');
+
+      assertEqual(erros.length, 0, 'erros de JS: ' + erros.join(' | '));
+      await page.close();
+    }
+  },
+
+  {
+    name: 'Pesos do Score: peso específico por cargo grava só naquele cargo, e "usar o padrão" remove o override',
+    async run({ browser, baseUrl }) {
+      const { page, erros } = await abrirDashboard(browser, baseUrl, { perfil: 'admin' });
+
+      await page.evaluate(() => switchView('pesos'));
+      await page.waitForTimeout(300);
+      await page.evaluate(() => { document.getElementById('pesosCargoSelect').value = 'ASG'; document.getElementById('pesosCargoSelect').dispatchEvent(new Event('change')); });
+      await page.waitForTimeout(200);
+
+      await page.evaluate(() => {
+        document.querySelector('#pesosCargoGrid input[data-campo="cargo"]').value = '70';
+        document.querySelector('#pesosCargoGrid input[data-campo="atendimento"]').value = '0';
+        document.querySelector('#pesosCargoGrid input[data-campo="linguagem_positiva"]').value = '0';
+        document.querySelector('#pesosCargoGrid input[data-campo="informatica"]').value = '0';
+        document.querySelector('#pesosCargoGrid input[data-campo="digitacao"]').value = '30';
+      });
+      await page.evaluate(() => document.getElementById('btnSalvarPesosCargo').click());
+      await page.waitForTimeout(300);
+
+      let gravado = await page.evaluate(() => window.__PESOS && window.__PESOS.porCargo && window.__PESOS.porCargo.ASG);
+      assertEqual(gravado.cargo, 70, 'peso específico do cargo ASG não foi gravado');
+      let outroCargo = await page.evaluate(() => window.__PESOS && window.__PESOS.porCargo && window.__PESOS.porCargo['Jardineiro']);
+      assert(!outroCargo, 'salvar peso do ASG não deveria afetar outro cargo');
+
+      const listaTxt = await page.evaluate(() => document.getElementById('pesosCargoLista').textContent);
+      assert(listaTxt.includes('ASG'), 'lista de overrides deveria mostrar ASG');
+
+      await page.evaluate(() => document.getElementById('btnRestaurarPesosCargo').click());
+      await page.waitForTimeout(300);
+      gravado = await page.evaluate(() => window.__PESOS && window.__PESOS.porCargo && window.__PESOS.porCargo.ASG);
+      assert(!gravado, 'restaurar padrão deveria remover o override do ASG');
+
+      assertEqual(erros.length, 0, 'erros de JS: ' + erros.join(' | '));
+      await page.close();
+    }
+  },
+
+  {
+    name: 'Score Virtus aparece na Ficha 360°, calculado com os pesos configurados',
+    async run({ browser, baseUrl }) {
+      const resultados = [
+        { id: '1', tipo: 'quiz', nome: 'Score Teste', candidato: { cpf: '11122233344', cargo_pretendido: 'ASG' }, modulo: 'ASG', pct: 80, acertos: 8, total: 10, data_conclusao: hoje() },
+        { id: '2', tipo: 'typing', nome: 'Score Teste', candidato: { cpf: '11122233344', cargo_pretendido: 'ASG' }, wpm: 25, dispositivo: 'desktop', data_conclusao: hoje() }
+      ];
+      // ASG não faz Atendimento/Linguagem/Informática (MODULOS_SEM_TRILHA) — só cargo (80%) e digitação.
+      const pesosScore = { default: { cargo: 40, atendimento: 20, linguagem_positiva: 15, informatica: 10, digitacao: 15 } };
+      const { page, erros } = await abrirDashboard(browser, baseUrl, { perfil: 'admin', resultados, pesosScore });
+
+      await page.evaluate(() => abrirCandidato('cpf:11122233344'));
+      await page.waitForTimeout(300);
+      const texto = await page.evaluate(() => document.getElementById('cmConteudo').innerText);
+      assert(/score virtus/i.test(texto), `Ficha 360° deveria mostrar o Score Virtus. Conteúdo: ${texto}`);
+      // cargo=80 (peso 40) + digitacao=50% de 25/50 (peso 15) -> só esses dois componentes existem,
+      // pesos renormalizados: (80*40 + 50*15) / (40+15) = 71.8...
+      assert(/7[01]([.,]\d)?/.test(texto), `Score calculado fora do esperado. Conteúdo: ${texto}`);
+
+      assertEqual(erros.length, 0, 'erros de JS: ' + erros.join(' | '));
+      await page.close();
+    }
   }
 
 ];

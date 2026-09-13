@@ -107,6 +107,36 @@ export function etapaDoPipeline(p) {
   return { chave, ...(ETAPA_LABELS[chave] || ETAPA_LABELS.testes_concluidos) };
 }
 
+// Score Virtus — nota única ponderada, no lugar de olhar cada módulo
+// separado pra comparar candidatos do mesmo cargo. Os 5 componentes:
+// cargo (o módulo específico escolhido), atendimento, linguagem_positiva,
+// informatica e digitacao — cada um 0-100, na mesma escala de porcentagem
+// já usada em todo o resto do sistema.
+export const PESOS_PADRAO = { cargo: 40, atendimento: 20, linguagem_positiva: 15, informatica: 10, digitacao: 15 };
+const COMPONENTES_SCORE = ['cargo', 'atendimento', 'linguagem_positiva', 'informatica', 'digitacao'];
+
+// Alguns cargos (ASG, Bombeiro Civil, Manutenção, Jardineiro — ver
+// MODULOS_SEM_TRILHA em js/quiz.js) só fazem o próprio módulo, sem
+// Atendimento/Linguagem Positiva/Informática. Em vez de contar o que
+// falta como zero (o que penalizaria injustamente quem nem tinha esse
+// teste pra fazer), os componentes ausentes são excluídos e o peso deles
+// é redistribuído proporcionalmente entre os que existem.
+export function calcularScore(componentes, pesos) {
+  const disponiveis = COMPONENTES_SCORE.filter(k => componentes[k] != null && pesos[k] != null && pesos[k] > 0);
+  const somaPesos = disponiveis.reduce((a, k) => a + pesos[k], 0);
+  if (!somaPesos) return null;
+  const soma = disponiveis.reduce((a, k) => a + componentes[k] * pesos[k], 0);
+  return Math.round((soma / somaPesos) * 10) / 10;
+}
+
+// Pesos que valem pra um cargo específico: usa o override salvo pra esse
+// cargo (config_pesos), senão cai no conjunto padrão.
+export function pesosDoCargo(cargo, config) {
+  const porCargo = (config && config.porCargo) || {};
+  const padrao = (config && config.default) || PESOS_PADRAO;
+  return (cargo && porCargo[cargo]) || padrao;
+}
+
 export function dataLocalYMD(d) {
   const dt = d instanceof Date ? d : new Date(d);
   if (isNaN(dt)) return '';
