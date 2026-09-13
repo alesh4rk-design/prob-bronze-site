@@ -1827,7 +1827,13 @@
 
   function renderModalCandidato() {
     const tents = tentativasDe(CAND_ATUAL);
-    if (!tents.length) return;
+    if (!tents.length) {
+      // Não sobra nenhum registro pra esse candidato — por exemplo,
+      // alguém excluiu de dentro do próprio modal (ver "Decisão" mais
+      // abaixo). Fecha em vez de deixar a ficha presa com dado velho.
+      if (document.getElementById('candModal').classList.contains('show')) window.fecharCandidato();
+      return;
+    }
 
     const quizzes = tents.filter(t => t.tipo !== 'typing');
     const typings = tents.filter(t => t.tipo === 'typing');
@@ -1843,19 +1849,14 @@
     // Status central: a partir da etapa única gravada no pipeline (ver
     // dashboard.js) — nunca mais uma combinação ambígua de flags.
     const chaveIdEtapa = CAND_ATUAL.replace(/[/]/g, '_');
-    const etapa = etapaDoPipeline(PIPELINE_MAP[chaveIdEtapa]);
+    const pInfo = PIPELINE_MAP[chaveIdEtapa] || {};
+    const etapa = etapaDoPipeline(pInfo);
 
     let html = `
       <div class="tent-card" style="border-color:${etapa.cor};">
         <div class="tent-body">
           <div style="font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--text3);letter-spacing:1px;">STATUS ATUAL</div>
           <div style="font-size:16px;font-weight:700;color:${etapa.cor};margin-top:3px;">${etapa.icone} ${etapa.txt}</div>
-        </div>
-      </div>
-      <div class="tent-card">
-        <div class="tent-head"><div class="tent-mod">📝 Linha do tempo</div></div>
-        <div class="tent-body" id="cmTimeline">
-          <div style="font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--text3);">Carregando…</div>
         </div>
       </div>`;
 
@@ -1927,6 +1928,75 @@
         <button class="btn-act btn-neutral" style="background:#1F8A3B;color:#fff;" onclick="enviarWhatsappRelatorio('completo')">💬 Completo (WhatsApp)</button>
         <button class="btn-act btn-neutral" style="background:#1F8A3B;color:#fff;" onclick="enviarWhatsappRelatorio('resumo')">💬 Resumo (WhatsApp)</button>
       </div>`;
+
+    // ── Desempenho (resumo — o detalhe questão a questão vem mais abaixo) ──
+    const mods = consolidarModulos(quizzes);
+    const mediaGeral = mods.length ? Math.round(mods.reduce((a, m) => a + m.pct, 0) / mods.length) : null;
+    const melhorTypingModal = melhorDigitacao(typings);
+    const digModal = melhorTypingModal ? classificarDigitacao(melhorTypingModal.wpm, melhorTypingModal.dispositivo) : null;
+    if (mods.length || melhorTypingModal) {
+      html += `
+        <div class="tent-card" style="border-color:var(--cyanmid);">
+          <div class="tent-head" style="background:var(--cyandim);">
+            <div class="tent-mod" style="color:var(--cyan);">📊 Desempenho</div>
+            ${mediaGeral !== null ? `<div class="tent-nota" style="color:${corNota(mediaGeral)}">${mediaGeral}%</div><div class="tent-meta">média geral</div>` : ''}
+          </div>
+          <div class="tent-body">
+            <div class="ficha-grid">
+              ${mods.map(m => `
+                <div class="ficha-item">
+                  <div class="ficha-lbl">${escapeHtml(m.modulo)}</div>
+                  <div class="ficha-val" style="color:${corNota(m.pct)};font-weight:700;">${m.pct}%</div>
+                </div>`).join('')}
+              ${melhorTypingModal ? `
+                <div class="ficha-item">
+                  <div class="ficha-lbl">${melhorTypingModal.dispositivo === 'mobile' ? '📱' : '💻'} Digitação</div>
+                  <div class="ficha-val" style="font-weight:700;">${melhorTypingModal.wpm} PPM${digModal ? ` — ${digModal.txt}` : ''}</div>
+                </div>` : ''}
+            </div>
+          </div>
+        </div>`;
+    }
+
+    // ── Integridade da avaliação ── só o que dá pra medir de verdade: não
+    // existe registro de "tempo de prova" pros módulos de quiz hoje, então
+    // não inventamos um número — mostramos só violação e nº de tentativas.
+    const totalTentativasModulos = mods.reduce((a, m) => a + (m.tentativas || 0), 0);
+    html += `
+      <div class="tent-card" style="border-color:${viols.length ? 'rgba(255,85,73,.4)' : 'var(--line2)'};">
+        <div class="tent-head" style="background:${viols.length ? 'var(--reddim)' : 'var(--ink3)'};">
+          <div class="tent-mod" style="color:${viols.length ? 'var(--red)' : 'var(--text2)'};">🚨 Integridade da avaliação</div>
+        </div>
+        <div class="tent-body">
+          <div class="ficha-grid">
+            <div class="ficha-item"><div class="ficha-lbl">Violações</div><div class="ficha-val" style="color:${viols.length ? 'var(--red)' : 'var(--green)'};font-weight:700;">${viols.length}</div></div>
+            <div class="ficha-item"><div class="ficha-lbl">Tentativas (módulos)</div><div class="ficha-val">${totalTentativasModulos || quizzes.length}</div></div>
+            <div class="ficha-item"><div class="ficha-lbl">Status antifraude</div><div class="ficha-val" style="color:${viols.length ? 'var(--red)' : 'var(--green)'};font-weight:700;">${viols.length ? '⚠️ Com ocorrência' : '✅ Normal'}</div></div>
+          </div>
+        </div>
+      </div>`;
+
+    // ── Competências (mesma régua ≥70% já usada no Resumo de Competências) ──
+    if (mods.length) {
+      const fortesModal = mods.filter(m => m.pct >= 70);
+      const fracosModal = mods.filter(m => m.pct < 70);
+      html += `
+        <div class="tent-card">
+          <div class="tent-head"><div class="tent-mod">🧠 Competências</div></div>
+          <div class="tent-body">
+            <div class="ficha-lbl" style="color:var(--green);margin-bottom:6px;">✅ Pontos fortes</div>
+            <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;">
+              ${fortesModal.length ? fortesModal.map(m => `<span class="cert-chip" style="border-color:var(--green);color:var(--green);">${escapeHtml(m.modulo)} · ${m.pct}%</span>`).join('')
+                : '<span class="ficha-val" style="color:var(--text4);">Nenhum módulo ≥70% ainda</span>'}
+            </div>
+            <div class="ficha-lbl" style="color:var(--amber);margin-bottom:6px;">⚠ A desenvolver</div>
+            <div style="display:flex;gap:6px;flex-wrap:wrap;">
+              ${fracosModal.length ? fracosModal.map(m => `<span class="cert-chip" style="border-color:var(--amber);color:var(--amber);">${escapeHtml(m.modulo)} · ${m.pct}%</span>`).join('')
+                : '<span class="ficha-val" style="color:var(--text4);">Nenhum</span>'}
+            </div>
+          </div>
+        </div>`;
+    }
 
     for (const t of quizzes) {
       const pct = t.pct || 0;
@@ -2010,7 +2080,48 @@
         </div>`;
     }
 
+    // ── Linha do tempo (histórico de mudanças de etapa) ──
+    html += `
+      <div class="tent-card">
+        <div class="tent-head"><div class="tent-mod">📝 Linha do tempo</div></div>
+        <div class="tent-body" id="cmTimeline">
+          <div style="font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--text3);">Carregando…</div>
+        </div>
+      </div>`;
+
+    // ── Decisão — só quem gerencia processo seletivo vê os botões; view e
+    // coordenador enxergam tudo acima (é só leitura pra eles).
+    const podeGerenciarModal = me && PODE_GERENCIAR_CANDIDATOS.includes(me.perfil);
+    if (podeGerenciarModal) {
+      const aprovadoAtual = pInfo.aprovado === true;
+      const noBancoAtual = pInfo.banco_reserva === true;
+      const dadosDecisao = `data-chave="${escapeHtml(CAND_ATUAL)}" data-nome="${escapeHtml(nomeAtual)}"`;
+      const podeExcluirModal = me && PODE_EXCLUIR_CANDIDATOS.includes(me.perfil);
+      html += `
+        <div class="tent-card" style="border-color:var(--ambermid);">
+          <div class="tent-head" style="background:var(--amberdim);">
+            <div class="tent-mod" style="color:var(--amber);">🎯 Decisão</div>
+          </div>
+          <div class="tent-body">
+            <div style="display:flex;gap:10px;flex-wrap:wrap;">
+              <button class="btn-act ${aprovadoAtual ? 'btn-approve-admin' : 'btn-neutral'}" data-acao="toggleAprovado" data-valor="${!aprovadoAtual}" ${dadosDecisao}>
+                ${aprovadoAtual ? '✅ Marcado para Entrevista' : '☐ Aprovar para Entrevista'}
+              </button>
+              <button class="btn-act ${noBancoAtual ? 'btn-approve-admin' : 'btn-neutral'}" data-acao="toggleBanco" data-valor="${!noBancoAtual}" ${dadosDecisao}>
+                ${noBancoAtual ? '✅ No Banco de Reserva' : '🏦 Banco de Reserva'}
+              </button>
+              <button class="btn-act btn-neutral" data-acao="editarObservacao" ${dadosDecisao}>📝 Observação</button>
+              ${aprovadoAtual && !pInfo.decisao_final ? `
+                <button class="btn-act btn-approve-admin" data-acao="decidirEntrevista" data-decisao="contratado" ${dadosDecisao}>🎉 Contratado</button>
+                <button class="btn-act btn-danger" data-acao="decidirEntrevista" data-decisao="recusado" ${dadosDecisao}>❌ Recusado</button>` : ''}
+              ${podeExcluirModal ? `<button class="btn-act btn-danger" data-acao="excluirCandidato" ${dadosDecisao}>🗑 Excluir candidato</button>` : ''}
+            </div>
+          </div>
+        </div>`;
+    }
+
     document.getElementById('cmConteudo').innerHTML = html;
+    ligarAcoesDelegadas('cmConteudo');
     carregarLinhaDoTempo(CAND_ATUAL);
   }
 
@@ -2924,6 +3035,10 @@
     recusarUsuario: el => window.recusar(el.dataset.uid, el.dataset.nome),
     alterarPerfil: el => window.alterarPerfil(el.dataset.uid, el.dataset.perfil),
     acoesUsuario: el => window.abrirAcoesUsuario(el.dataset.uid, el.dataset.nome, el.dataset.perfil),
+    toggleAprovado: el => window.alternarAprovadoParaEntrevista(el.dataset.chave, el.dataset.nome, el.dataset.valor === 'true'),
+    toggleBanco: el => window.alternarBancoReserva(el.dataset.chave, el.dataset.nome, el.dataset.valor === 'true'),
+    editarObservacao: el => window.editarObservacaoPipeline(el.dataset.chave, el.dataset.nome),
+    excluirCandidato: el => window.excluirCandidatoDireto(el.dataset.chave, el.dataset.nome),
     filtrarPendencia: el => window.filtrarPendencia(el.dataset.filtro),
     desativarCodigo: el => window.desativarCodigo(el.dataset.codigo),
     excluirCodigo: el => window.excluirCodigo(el.dataset.codigo)
@@ -3456,6 +3571,11 @@
       renderPipeline();
       renderContratados();
       renderBancoReserva();
+      // Se a ficha de um candidato estiver aberta (ex: alguém clicou
+      // "Aprovar para Entrevista" dentro do próprio modal), reflete a
+      // mudança na hora — sem isso, o status/decisão ficavam "presos" na
+      // versão de quando o modal abriu até fechar e abrir de novo.
+      if (CAND_ATUAL && document.getElementById('candModal').classList.contains('show')) renderModalCandidato();
     } catch (e) {
       console.error('Erro ao renderizar:', e);
     }

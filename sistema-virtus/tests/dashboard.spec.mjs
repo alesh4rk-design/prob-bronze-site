@@ -767,5 +767,93 @@ export const tests = [
       await page.close();
     }
   }
+,
+  {
+    name: 'Ficha 360°: Desempenho, Integridade e Competências aparecem consolidados na ficha',
+    async run({ browser, baseUrl }) {
+      const resultados = [
+        { id: '1', tipo: 'quiz', nome: 'Ficha Completa', modulo: 'Atendimento', pct: 90, acertos: 9, total: 10, data_conclusao: hoje() },
+        { id: '2', tipo: 'quiz', nome: 'Ficha Completa', modulo: 'Informática', pct: 60, acertos: 6, total: 10, data_conclusao: hoje() },
+        { id: '3', tipo: 'typing', nome: 'Ficha Completa', dispositivo: 'desktop', wpm: 45, pct: 88, data_conclusao: hoje() }
+      ];
+      const violacoes = [{ id: 'v1', nome: 'Ficha Completa', tipo: 'perda_foco', modulo: 'Atendimento', data: '2026-09-13', hora_recebimento: '09:00' }];
+      const { page, erros } = await abrirDashboard(browser, baseUrl, { perfil: 'admin', resultados, violacoes });
+
+      await page.evaluate(() => abrirCandidato('nome:ficha completa'));
+      await page.waitForTimeout(300);
+      const texto = await page.evaluate(() => document.getElementById('cmConteudo').innerText);
+
+      // Desempenho: os dois módulos e a digitação aparecem resumidos.
+      assert(texto.includes('Desempenho'), `deveria ter a seção Desempenho. Conteúdo: ${texto}`);
+      assert(/atendimento[\s\S]*90%/i.test(texto), `deveria mostrar Atendimento 90%. Conteúdo: ${texto}`);
+      assert(/informática[\s\S]*60%/i.test(texto), `deveria mostrar Informática 60%. Conteúdo: ${texto}`);
+      assert(texto.includes('45 PPM'), `deveria mostrar a digitação resumida. Conteúdo: ${texto}`);
+
+      // Integridade: 1 violação, status de atenção.
+      assert(texto.includes('Integridade da avaliação'), `deveria ter a seção Integridade. Conteúdo: ${texto}`);
+      assert(texto.includes('Com ocorrência'), `com violação registrada, status deveria ser "Com ocorrência". Conteúdo: ${texto}`);
+
+      // Competências: Atendimento (90%) é ponto forte, Informática (60%) é a desenvolver.
+      assert(texto.includes('Competências'), `deveria ter a seção Competências. Conteúdo: ${texto}`);
+      // Os rótulos (.ficha-lbl) ficam em CAIXA ALTA por CSS — .innerText
+      // reflete isso, por isso a busca é sem diferenciar maiúsculas.
+      assert(/pontos fortes[\s\S]*atendimento/i.test(texto), `Atendimento deveria estar em pontos fortes. Conteúdo: ${texto}`);
+      assert(/a desenvolver[\s\S]*informática/i.test(texto), `Informática deveria estar em "a desenvolver". Conteúdo: ${texto}`);
+
+      // Decisão: botões de ação aparecem direto na ficha (sem precisar abrir
+      // outro menu), pro perfil admin.
+      assert(texto.includes('Decisão'), `deveria ter a seção Decisão. Conteúdo: ${texto}`);
+      assert(/aprovar para entrevista/i.test(texto), `deveria ter o botão de aprovar direto na ficha. Conteúdo: ${texto}`);
+
+      assertEqual(erros.length, 0, 'erros de JS: ' + erros.join(' | '));
+      await page.close();
+    }
+  },
+
+  {
+    name: 'Ficha 360°: decidir direto na ficha atualiza o status ali mesmo, sem fechar o modal',
+    async run({ browser, baseUrl }) {
+      const resultados = [{ id: '1', tipo: 'quiz', nome: 'Decide Na Ficha', modulo: 'Atendimento', pct: 85, acertos: 8, total: 10, data_conclusao: hoje() }];
+      const { page, erros } = await abrirDashboard(browser, baseUrl, { perfil: 'admin', resultados });
+
+      await page.evaluate(() => abrirCandidato('nome:decide na ficha'));
+      await page.waitForTimeout(300);
+      let status = await page.evaluate(() => document.getElementById('cmConteudo').innerText);
+      assert(status.includes('Testes concluídos'), `status inicial deveria ser "Testes concluídos". Conteúdo: ${status}`);
+
+      await page.click('[data-acao="toggleAprovado"]');
+      await page.waitForTimeout(300);
+
+      status = await page.evaluate(() => document.getElementById('cmConteudo').innerText);
+      assert(status.includes('Aguardando entrevista'), `depois de aprovar direto na ficha, o status deveria atualizar ali mesmo. Conteúdo: ${status}`);
+      // O próprio botão precisa ter virado o de "desmarcar" — prova que a
+      // ficha foi re-renderizada com o pipeline atualizado, não travada.
+      // Botão é .btn-act (CSS text-transform:uppercase) — busca sem
+      // diferenciar maiúsculas de minúsculas.
+      assert(/marcado para entrevista/i.test(status), `o botão deveria refletir o novo estado. Conteúdo: ${status}`);
+
+      const aindaAberto = await page.evaluate(() => document.getElementById('candModal').classList.contains('show'));
+      assert(aindaAberto, 'o modal não deveria fechar sozinho ao decidir');
+
+      assertEqual(erros.length, 0, 'erros de JS: ' + erros.join(' | '));
+      await page.close();
+    }
+  },
+
+  {
+    name: 'Ficha 360°: viewer não vê a seção Decisão (só leitura)',
+    async run({ browser, baseUrl }) {
+      const resultados = [{ id: '1', tipo: 'quiz', nome: 'So Leitura', modulo: 'Atendimento', pct: 85, acertos: 8, total: 10, data_conclusao: hoje() }];
+      const { page, erros } = await abrirDashboard(browser, baseUrl, { perfil: 'viewer', resultados });
+
+      await page.evaluate(() => abrirCandidato('nome:so leitura'));
+      await page.waitForTimeout(300);
+      const texto = await page.evaluate(() => document.getElementById('cmConteudo').innerText);
+      assert(!texto.includes('🎯 Decisão') && !/^Decisão$/m.test(texto), `viewer não deveria ver a seção Decisão. Conteúdo: ${texto}`);
+
+      assertEqual(erros.length, 0, 'erros de JS: ' + erros.join(' | '));
+      await page.close();
+    }
+  }
 
 ];
