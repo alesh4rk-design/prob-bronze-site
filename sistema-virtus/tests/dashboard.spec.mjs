@@ -1109,6 +1109,38 @@ export const tests = [
       assertEqual(erros.length, 0, 'erros de JS: ' + erros.join(' | '));
       await page.close();
     }
+  },
+
+  {
+    name: 'Pendência judicial: aviso aparece na Ficha 360° quando "sim", e some quando "não" ou não informado',
+    async run({ browser, baseUrl }) {
+      const resultados = [
+        { id: '1', tipo: 'quiz', nome: 'Com Pendencia', candidato: { cpf: '99999999901', cargo_pretendido: 'ASG', pendencia_judicial: true }, modulo: 'ASG', pct: 80, acertos: 8, total: 10, data_conclusao: hoje() },
+        { id: '2', tipo: 'quiz', nome: 'Sem Pendencia', candidato: { cpf: '99999999902', cargo_pretendido: 'ASG', pendencia_judicial: false }, modulo: 'ASG', pct: 80, acertos: 8, total: 10, data_conclusao: hoje() },
+        { id: '3', tipo: 'quiz', nome: 'Ficha Antiga', candidato: { cpf: '99999999903', cargo_pretendido: 'ASG' }, modulo: 'ASG', pct: 80, acertos: 8, total: 10, data_conclusao: hoje() }
+      ];
+      const { page, erros } = await abrirDashboard(browser, baseUrl, { perfil: 'admin', resultados });
+
+      await page.evaluate(() => abrirCandidato('cpf:99999999901'));
+      await page.waitForTimeout(300);
+      let texto = await page.evaluate(() => document.getElementById('cmConteudo').innerText);
+      assert(/pend[êe]ncia judicial declarada/i.test(texto), `deveria mostrar o aviso de pendência judicial. Conteúdo: ${texto}`);
+      await page.evaluate(() => fecharCandidato());
+
+      await page.evaluate(() => abrirCandidato('cpf:99999999902'));
+      await page.waitForTimeout(300);
+      texto = await page.evaluate(() => document.getElementById('cmConteudo').innerText);
+      assert(!/pend[êe]ncia judicial declarada/i.test(texto), `não deveria mostrar aviso quando a resposta é "não". Conteúdo: ${texto}`);
+      await page.evaluate(() => fecharCandidato());
+
+      await page.evaluate(() => abrirCandidato('cpf:99999999903'));
+      await page.waitForTimeout(300);
+      texto = await page.evaluate(() => document.getElementById('cmConteudo').innerText);
+      assert(!/pend[êe]ncia judicial declarada/i.test(texto), `não deveria mostrar aviso quando o campo nunca existiu (ficha antiga). Conteúdo: ${texto}`);
+
+      assertEqual(erros.length, 0, 'erros de JS: ' + erros.join(' | '));
+      await page.close();
+    }
   }
 
 ];

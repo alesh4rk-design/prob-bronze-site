@@ -780,6 +780,14 @@
       </div>
 
       <div class="field-group">
+        <span class="field-label">Possui pendência ou processo em andamento na Justiça? *</span>
+        <div class="opt-pills" id="inPendenciaJudicial">
+          <div class="pill" data-val="sim">✓ Sim</div>
+          <div class="pill" data-val="nao">✕ Não</div>
+        </div>
+      </div>
+
+      <div class="field-group">
         <span class="field-label">Conte um pouco das suas experiências <span style="color:var(--text4);">(opcional)</span></span>
         <textarea class="field-input" id="inExperienciaTexto" rows="3" maxlength="800" placeholder="Ex: 2 anos como vigilante patrimonial na empresa X, atendimento ao público, uso de CFTV..." style="resize:vertical;min-height:70px;font-family:inherit;"></textarea>
       </div>
@@ -1269,6 +1277,16 @@
       };
     });
 
+    // Pills de pendência judicial (sim/não) — autodeclaração do candidato,
+    // não é uma consulta de verdade nos tribunais (ver dashboard.html /
+    // renderModalCandidato para o aviso que aparece quando a resposta é "sim").
+    document.querySelectorAll('#inPendenciaJudicial .pill').forEach(p => {
+      p.onclick = () => {
+        document.querySelectorAll('#inPendenciaJudicial .pill').forEach(x => x.classList.remove('sel'));
+        p.classList.add('sel');
+      };
+    });
+
     // Currículo — validação de tipo/tamanho no momento em que a pessoa
     // escolhe o arquivo (feedback imediato, antes de tentar enviar nada).
     document.getElementById('inCurriculo').addEventListener('change', () => {
@@ -1343,6 +1361,9 @@
     const pillDispTotal = document.querySelector('#inDispTotal .pill.sel');
     if (!pillDispTotal) return falha('Informe se possui disponibilidade total de horário', 'inDispTotal');
 
+    const pillPendenciaJudicial = document.querySelector('#inPendenciaJudicial .pill.sel');
+    if (!pillPendenciaJudicial) return falha('Informe se possui pendência ou processo em andamento na Justiça', 'inPendenciaJudicial');
+
     const certificacoes = [...document.querySelectorAll('#inCerts input:checked')].map(c => c.value);
     const experienciaTexto = document.getElementById('inExperienciaTexto').value.trim();
 
@@ -1359,6 +1380,7 @@
       experiencia_texto: experienciaTexto || null,
       turno,
       disponibilidade_total: pillDispTotal.dataset.val === 'sim',
+      pendencia_judicial: pillPendenciaJudicial.dataset.val === 'sim',
       certificacoes
     };
   }

@@ -2028,6 +2028,22 @@
     // Ficha preenchida pelo candidato antes do teste
     const f = fichaDe(tents);
     if (f) {
+      // Pendência judicial: autodeclaração do candidato na ficha (não é uma
+      // consulta de verdade nos tribunais) — quando "sim", chama atenção
+      // logo no topo da ficha, além de aparecer também no relatório completo
+      // e no resumo de competências (ver gerarPDF/gerarResumoSkills).
+      if (f.pendencia_judicial === true) {
+        html += `
+        <div class="tent-card" style="border-color:var(--red);">
+          <div class="tent-body" style="background:var(--reddim);display:flex;align-items:center;gap:10px;">
+            <span style="font-size:22px;">⚠️</span>
+            <div>
+              <div style="font-weight:700;color:var(--red);">Pendência judicial declarada</div>
+              <div style="font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--text3);">O próprio candidato informou ter pendência ou processo em andamento na Justiça (autodeclaração — não é uma consulta oficial nos tribunais).</div>
+            </div>
+          </div>
+        </div>`;
+      }
       const campos = [
         ['CPF', f.cpf],
         ['Nascimento', `${fmtNasc(f.nascimento)}${f.idade != null ? ` (${f.idade} anos)` : ''}`],
@@ -2037,7 +2053,8 @@
         ['Cargo pretendido', f.cargo_pretendido],
         ['Experiência na área', f.experiencia ? '✓ Sim' : '✕ Não'],
         ['Turno disponível', f.turno],
-        ['Disponibilidade total', f.disponibilidade_total == null ? '—' : (f.disponibilidade_total ? '✓ Sim' : '✕ Não')]
+        ['Disponibilidade total', f.disponibilidade_total == null ? '—' : (f.disponibilidade_total ? '✓ Sim' : '✕ Não')],
+        ['Pendência judicial', f.pendencia_judicial == null ? '—' : (f.pendencia_judicial ? '⚠️ Sim' : '✓ Não'), f.pendencia_judicial ? 'var(--red)' : null]
       ];
       html += `
         <div class="tent-card" style="border-color:var(--ambermid);">
@@ -2046,10 +2063,10 @@
           </div>
           <div class="tent-body">
             <div class="ficha-grid">
-              ${campos.map(([l, v]) => `
+              ${campos.map(([l, v, cor]) => `
                 <div class="ficha-item">
                   <div class="ficha-lbl">${l}</div>
-                  <div class="ficha-val">${escapeHtml(v || '—')}</div>
+                  <div class="ficha-val" style="${cor ? `color:${cor};font-weight:700;` : ''}">${escapeHtml(v || '—')}</div>
                 </div>`).join('')}
             </div>
             <div class="ficha-item" style="margin-top:10px;">
@@ -2406,6 +2423,19 @@
 
     const f = fichaDe(tents);
     if (f) {
+      // Pendência judicial: autodeclaração do candidato (não é consulta
+      // oficial nos tribunais) — vira um aviso destacado logo no topo do
+      // relatório, além de aparecer também como campo normal da ficha.
+      if (f.pendencia_judicial === true) {
+        h += `
+        <div style="background:#FBE4E1;border:1px solid #B32218;border-radius:6px;padding:10px 14px;margin-bottom:14px;display:flex;align-items:center;gap:10px;">
+          <span style="font-size:18px;">⚠️</span>
+          <div>
+            <div style="font-weight:700;color:#B32218;">Pendência judicial declarada pelo candidato</div>
+            <div style="font-size:10px;color:#5A6880;">Autodeclaração na ficha — não é uma consulta oficial nos tribunais.</div>
+          </div>
+        </div>`;
+      }
       const campos = [
         ['CPF', f.cpf],
         ['Data de nascimento', `${fmtNasc(f.nascimento)}${f.idade != null ? ` — ${f.idade} anos` : ''}`],
@@ -2415,15 +2445,16 @@
         ['Cargo pretendido', f.cargo_pretendido],
         ['Experiência na área', f.experiencia ? 'Sim' : 'Não'],
         ['Disponibilidade de turno', f.turno],
-        ['Disponibilidade total', f.disponibilidade_total == null ? '—' : (f.disponibilidade_total ? 'Sim' : 'Não')]
+        ['Disponibilidade total', f.disponibilidade_total == null ? '—' : (f.disponibilidade_total ? 'Sim' : 'Não')],
+        ['Pendência judicial', f.pendencia_judicial == null ? '—' : (f.pendencia_judicial ? 'Sim' : 'Não'), f.pendencia_judicial ? '#B32218' : null]
       ];
       h += `
         <div class="pr-sec-title">Ficha do candidato</div>
         <div class="pr-ficha">
-          ${campos.map(([l, v]) => `
+          ${campos.map(([l, v, cor]) => `
             <div class="pr-f-item">
               <div class="pr-f-lbl">${l}</div>
-              <div class="pr-f-val">${escapeHtml(v || '—')}</div>
+              <div class="pr-f-val" style="${cor ? `color:${cor};font-weight:700;` : ''}">${escapeHtml(v || '—')}</div>
             </div>`).join('')}
         </div>
         <div class="pr-f-certs">
@@ -2639,7 +2670,15 @@
           <div class="sk-reco-titulo">${recoTitulo}</div>
           <div class="sk-reco-txt">${recoTxt}</div>
         </div>
-      </div>`;
+      </div>
+      ${f && f.pendencia_judicial === true ? `
+      <div class="sk-reco sk-reco-fraca">
+        <div class="sk-reco-icon">⚠️</div>
+        <div>
+          <div class="sk-reco-titulo">Pendência judicial declarada pelo candidato</div>
+          <div class="sk-reco-txt">Autodeclaração na ficha — não é uma consulta oficial nos tribunais.</div>
+        </div>
+      </div>` : ''}`;
 
     // Perfil operacional
     if (f) {
@@ -2654,6 +2693,7 @@
           <div class="sk-p-cell"><div class="sk-p-lbl">Altura</div><div class="sk-p-val">${f.altura ? String(f.altura).replace('.', ',') + ' m' : '—'}</div></div>
           <div class="sk-p-cell"><div class="sk-p-lbl">Bairro / Região</div><div class="sk-p-val">${escapeHtml(f.bairro || '—')}</div></div>
           <div class="sk-p-cell"><div class="sk-p-lbl">Contato</div><div class="sk-p-val">${escapeHtml(f.telefone || '—')}</div></div>
+          <div class="sk-p-cell"><div class="sk-p-lbl">Pendência judicial</div><div class="sk-p-val" style="${f.pendencia_judicial ? 'color:#FF7A70;font-weight:700;' : ''}">${f.pendencia_judicial == null ? '—' : (f.pendencia_judicial ? 'Sim' : 'Não')}</div></div>
         </div>
         <div class="pr-f-certs" style="margin-top:10px;">
           <span class="pr-f-lbl">Cursos e certificações:</span>
