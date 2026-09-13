@@ -1668,6 +1668,7 @@
   import { db } from "./js/firebase-config.js";
   import { doc, setDoc } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
   import { PERGUNTAS_SEED } from "./js/perguntas-seed-data.js";
+  import { moduloDoCargoPretendido } from "./js/quiz.js";
   import {
     normNome, chaveDe, fichaDe, fmtNasc, fmtData, fmtDataHora, corNota, pctClass,
     classificarModulo, classificarDigitacao, melhorDigitacao, dataLocalYMD, escapeHtml,
@@ -1914,17 +1915,23 @@
     const digitacaoPct = melhorTyping
       ? Math.min(100, Math.round((melhorTyping.wpm / (melhorTyping.dispositivo === 'mobile' ? 35 : 50)) * 100))
       : null;
+    const cargoPretendido = f && f.cargo_pretendido;
+    // cargo_pretendido é o rótulo escolhido na ficha (ex: "Porteiro"), que
+    // pode não ser o mesmo texto do módulo testado (ex: "Controle de
+    // Acesso") — moduloDoCargoPretendido faz essa tradução (ver js/quiz.js).
+    // Fichas antigas, de antes dessa lista fixa existir, tinham texto livre
+    // aqui — a função devolve o próprio texto nesse caso, sem quebrar.
+    const moduloCargo = cargoPretendido ? moduloDoCargoPretendido(cargoPretendido) : null;
     const componentes = {
-      cargo: f && f.cargo_pretendido ? buscarPct(f.cargo_pretendido) : null,
+      cargo: moduloCargo ? buscarPct(moduloCargo) : null,
       atendimento: buscarPct('Atendimento ao Cliente'),
       linguagem_positiva: buscarPct('Linguagem Positiva'),
       informatica: buscarPct('Informática'),
       digitacao: digitacaoPct
     };
-    const cargoPretendido = f && f.cargo_pretendido;
-    const pesos = pesosDoCargo(cargoPretendido, PESOS_SCORE);
+    const pesos = pesosDoCargo(moduloCargo, PESOS_SCORE);
     const score = calcularScore(componentes, pesos);
-    const temOverride = !!(cargoPretendido && (PESOS_SCORE.porCargo || {})[cargoPretendido]);
+    const temOverride = !!(moduloCargo && (PESOS_SCORE.porCargo || {})[moduloCargo]);
     return { score, cargoPretendido, temOverride };
   }
 
@@ -3418,7 +3425,7 @@
       const nome = tents[tents.length - 1] ? (tents[tents.length - 1].nome || '—') : '—';
       return {
         nome, cargoPretendido: f && f.cargo_pretendido, etapaCand, score,
-        cargo: f && f.cargo_pretendido ? buscarPct(f.cargo_pretendido) : null,
+        cargo: f && f.cargo_pretendido ? buscarPct(moduloDoCargoPretendido(f.cargo_pretendido)) : null,
         atendimento: buscarPct('Atendimento ao Cliente'),
         linguagem: buscarPct('Linguagem Positiva'),
         informatica: buscarPct('Informática'),

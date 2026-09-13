@@ -1083,6 +1083,32 @@ export const tests = [
       assertEqual(erros.length, 0, 'erros de JS: ' + erros.join(' | '));
       await page.close();
     }
+  },
+
+  {
+    name: 'Cargo pretendido "Porteiro"/"Fiscal" (rótulo de vaga) casa com o módulo testado ("Controle de Acesso"/"Liderança de Equipe") no Score Virtus',
+    async run({ browser, baseUrl }) {
+      const resultados = [
+        { id: '1', tipo: 'quiz', nome: 'Porteiro Teste', candidato: { cpf: '77777777777', cargo_pretendido: 'Porteiro' }, modulo: 'Controle de Acesso', pct: 80, acertos: 8, total: 10, data_conclusao: hoje() },
+        { id: '2', tipo: 'quiz', nome: 'Fiscal Teste', candidato: { cpf: '88888888888', cargo_pretendido: 'Fiscal' }, modulo: 'Liderança de Equipe', pct: 70, acertos: 7, total: 10, data_conclusao: hoje() }
+      ];
+      const pesosScore = { default: { cargo: 100, atendimento: 0, linguagem_positiva: 0, informatica: 0, digitacao: 0 } };
+      const { page, erros } = await abrirDashboard(browser, baseUrl, { perfil: 'admin', resultados, pesosScore });
+
+      await page.evaluate(() => abrirCandidato('cpf:77777777777'));
+      await page.waitForTimeout(300);
+      let texto = await page.evaluate(() => document.getElementById('cmConteudo').innerText);
+      assert(/score virtus/i.test(texto) && /\b80\b/.test(texto), `"Porteiro" deveria casar com o módulo "Controle de Acesso" (score 80). Conteúdo: ${texto}`);
+      await page.evaluate(() => fecharCandidato());
+
+      await page.evaluate(() => abrirCandidato('cpf:88888888888'));
+      await page.waitForTimeout(300);
+      texto = await page.evaluate(() => document.getElementById('cmConteudo').innerText);
+      assert(/score virtus/i.test(texto) && /\b70\b/.test(texto), `"Fiscal" deveria casar com o módulo "Liderança de Equipe" (score 70). Conteúdo: ${texto}`);
+
+      assertEqual(erros.length, 0, 'erros de JS: ' + erros.join(' | '));
+      await page.close();
+    }
   }
 
 ];

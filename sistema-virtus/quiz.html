@@ -766,7 +766,9 @@
 
       <div class="field-group">
         <span class="field-label">Cargo pretendido *</span>
-        <input class="field-input" type="text" id="inCargo" placeholder="Ex: Vigilante Patrimonial">
+        <select class="field-input" id="inCargo">
+          <option value="">— Selecionar —</option>
+        </select>
       </div>
 
       <div class="field-group">
@@ -960,7 +962,7 @@
 </div>
 
 <script type="module">
-  import { listarModulos, carregarPerguntasDoModulo, salvarResultadoQuiz, registrarViolacao, tempoLimiteParaModulo, montarTrilha, verificarCodigoAcesso, obterNumeroWhatsappRH } from "./js/quiz.js";
+  import { listarModulos, carregarPerguntasDoModulo, salvarResultadoQuiz, registrarViolacao, tempoLimiteParaModulo, montarTrilha, verificarCodigoAcesso, obterNumeroWhatsappRH, CARGO_PRETENDIDO_OPCOES } from "./js/quiz.js";
 
   let globalConsentGiven = false;
   let globalLgpdAccepted = false;
@@ -1329,8 +1331,8 @@
     const bairro = document.getElementById('inCidade').value.trim();
     if (bairro.length < 3) return falha('Informe o bairro/região onde mora', 'inCidade');
 
-    const cargo = document.getElementById('inCargo').value.trim();
-    if (cargo.length < 3) return falha('Informe o cargo pretendido', 'inCargo');
+    const cargo = document.getElementById('inCargo').value;
+    if (!cargo) return falha('Selecione o cargo pretendido', 'inCargo');
 
     const pillSel = document.querySelector('#inExp .pill.sel');
     if (!pillSel) return falha('Informe se possui experiência na área', 'inExp');
@@ -1857,6 +1859,19 @@
     else { document.body.classList.add('light-theme'); document.body.classList.remove('dark-theme'); document.getElementById('themeToggle').textContent = '☀️'; }
   }
   initTheme();
+
+  // Cargo pretendido: lista fixa (não depende do Firestore), preenchida
+  // já de cara — ver CARGO_PRETENDIDO_OPCOES em js/quiz.js.
+  function preencherCargoPretendido() {
+    const sel = document.getElementById('inCargo');
+    for (const opt of CARGO_PRETENDIDO_OPCOES) {
+      const el = document.createElement('option');
+      el.value = opt.label;
+      el.textContent = opt.label;
+      sel.appendChild(el);
+    }
+  }
+  preencherCargoPretendido();
 
   document.getElementById('inData').value = new Date().toISOString().slice(0, 10);
   loadModules();

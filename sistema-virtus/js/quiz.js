@@ -104,6 +104,41 @@ function ehComportamental(modulo) {
   return MODULOS_COMPORTAMENTAIS.includes((modulo || "").trim());
 }
 
+// Cargo pretendido: lista fixa de vagas que a empresa costuma abrir,
+// escolhida pelo candidato na ficha (era texto livre antes — o que
+// deixava candidatos digitando "vigilante", "Vigilante Patrimonial",
+// "Vig. Patrimonial" etc. pro mesmo cargo, sem bater com o nome exato do
+// módulo testado e quebrando o cálculo do Score Virtus, que casa o
+// componente "cargo" pelo nome do módulo).
+// Vários rótulos podem apontar pro mesmo módulo de teste — ex: Porteiro e
+// Vigia são cobertos pelo mesmo módulo "Controle de Acesso"; Supervisor e
+// Fiscal, por "Liderança de Equipe".
+export const CARGO_PRETENDIDO_OPCOES = [
+  { label: "Porteiro", modulo: "Controle de Acesso" },
+  { label: "Vigia", modulo: "Controle de Acesso" },
+  { label: "Operador de CFTV", modulo: "CFTV" },
+  { label: "Vigilante Patrimonial", modulo: "Vigilante Patrimonial" },
+  { label: "Manutenção", modulo: "Manutenção" },
+  { label: "ASG", modulo: "ASG" },
+  { label: "VSPP", modulo: "VSPP" },
+  { label: "Recepcionista", modulo: "Recepcionista" },
+  { label: "Bombeiro Civil", modulo: "Bombeiro Civil" },
+  { label: "Supervisor", modulo: "Liderança de Equipe" },
+  { label: "Fiscal", modulo: "Liderança de Equipe" },
+  { label: "Encarregado de Facilities", modulo: "Encarregado de Facilities" },
+  { label: "Jardineiro", modulo: "Jardineiro" }
+];
+
+// Módulo de teste que corresponde a um rótulo de cargo pretendido — usado
+// pelo Score Virtus/Ranking pra achar a nota do módulo certo. Cai pro
+// próprio texto se não achar (ex: fichas antigas com texto livre) — nesses
+// casos o componente "cargo" do score simplesmente não casa com nada e é
+// excluído do cálculo, sem quebrar.
+export function moduloDoCargoPretendido(cargoPretendido) {
+  const opt = CARGO_PRETENDIDO_OPCOES.find(o => o.label === cargoPretendido);
+  return opt ? opt.modulo : cargoPretendido;
+}
+
 // Quantidade de questões sorteadas do banco para o candidato responder.
 // (só usada internamente por carregarPerguntasDoModulo, abaixo)
 function totalQuestoesParaModulo(modulo) {
