@@ -654,5 +654,43 @@ export const tests = [
       await page.close();
     }
   }
+,
+  {
+    name: 'Central de Pendências conta por etapa e cada card leva pra aba certa',
+    async run({ browser, baseUrl }) {
+      const resultados = [
+        { id: '1', tipo: 'quiz', nome: 'Aguarda Avaliacao', modulo: 'Atendimento', pct: 80, acertos: 8, total: 10, data_conclusao: hoje() },
+        { id: '2', tipo: 'quiz', nome: 'Aguarda Entrevista', modulo: 'Atendimento', pct: 80, acertos: 8, total: 10, data_conclusao: hoje() },
+        { id: '3', tipo: 'quiz', nome: 'No Banco', modulo: 'Atendimento', pct: 80, acertos: 8, total: 10, data_conclusao: hoje() },
+        { id: '4', tipo: 'quiz', nome: 'Com Violacao', modulo: 'Atendimento', pct: 80, acertos: 8, total: 10, data_conclusao: hoje() }
+      ];
+      const pipeline = {
+        'nome:aguarda entrevista': { aprovado: true, etapa: 'aguardando_entrevista' },
+        'nome:no banco': { banco_reserva: true, etapa: 'banco_reserva' }
+      };
+      const violacoes = [{ id: 'v1', nome: 'Com Violacao', tipo: 'perda_foco', modulo: 'Atendimento', data: '2026-09-04', hora_recebimento: '09:00' }];
+      const { page, erros } = await abrirDashboard(browser, baseUrl, { perfil: 'admin', resultados, pipeline, violacoes });
+
+      await page.evaluate(() => switchView('dashboard'));
+      await page.waitForTimeout(300);
+      const texto = await page.evaluate(() => document.getElementById('pendenciasGrid').innerText);
+
+      // "Aguarda Avaliacao" e "Com Violacao" não têm etapa no pipeline —
+      // os dois contam como "aguardando avaliação".
+      assert(/2[\s\S]*AGUARDANDO AVALIAÇÃO/i.test(texto), `esperava 2 aguardando avaliação. Conteúdo: ${texto}`);
+      assert(/1[\s\S]*AGUARDANDO ENTREVISTA/i.test(texto), `esperava 1 aguardando entrevista. Conteúdo: ${texto}`);
+      assert(/1[\s\S]*NO BANCO DE RESERVA/i.test(texto), `esperava 1 no banco de reserva. Conteúdo: ${texto}`);
+      assert(/1[\s\S]*COM VIOLAÇÃO PENDENTE/i.test(texto), `esperava 1 com violação pendente. Conteúdo: ${texto}`);
+
+      // Clicar no card de "aguardando entrevista" leva pra aba Aprovados.
+      await page.click('[data-acao="irParaView"][data-view="banco"]');
+      await page.waitForTimeout(300);
+      const abaAtiva = await page.evaluate(() => document.getElementById('view-banco').classList.contains('active'));
+      assert(abaAtiva, 'clicar no card deveria ter trocado pra aba Aprovados para Entrevista');
+
+      assertEqual(erros.length, 0, 'erros de JS: ' + erros.join(' | '));
+      await page.close();
+    }
+  }
 
 ];

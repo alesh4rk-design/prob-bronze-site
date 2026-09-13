@@ -159,6 +159,9 @@
   .kpi-card.purple .kpi-val{ color:var(--purple); }
   .kpi-card.red   .kpi-val { color:var(--red); }
   .kpi-lbl  { font-family:'Share Tech Mono',monospace; font-size:10px; letter-spacing:1.5px; color:var(--text2); text-transform:uppercase; margin-top:5px; font-weight:600; }
+  .pend-card { cursor:pointer; transition:transform .15s,border-color .15s; }
+  .pend-card:hover { transform:translateY(-2px); border-color:var(--line2); }
+  .pend-card.zerado { opacity:0.45; }
 
   .panel { background:var(--ink2); border:1px solid var(--line2); border-radius:2px; position:relative; overflow:hidden; }
   .panel::before { content:''; position:absolute; top:0; left:0; right:0; height:2px; background:linear-gradient(90deg,transparent 5%,var(--amber) 20%,var(--amber3) 50%,var(--amber) 80%,transparent 95%); }
@@ -1054,6 +1057,13 @@
     </div>
     <div class="page-actions">
       <button class="btn btn-amber" id="btnExportExcel" onclick="exportCSV()">⬇ Exportar Excel</button>
+    </div>
+  </div>
+
+  <div class="panel" style="margin-bottom:16px;">
+    <div class="panel-head"><div class="panel-title-sm">🔔 Pendências — o que precisa da sua atenção agora</div></div>
+    <div class="chart-wrap">
+      <div class="kpi-bar-5" id="pendenciasGrid" style="margin-bottom:0;"></div>
     </div>
   </div>
 
@@ -2509,6 +2519,42 @@
     document.getElementById('kpiTaxa').textContent = total ? Math.round((aprov / total) * 100) + '%' : '—';
   }
 
+  // "Aqui está o que você precisa fazer", não só "aqui estão os dados" —
+  // conta candidatos por etapa central (ver ETAPA_LABELS) e por violação
+  // ainda sem decisão, sempre sobre TODO o histórico (não usa o filtro de
+  // dia do Dashboard: pendência não desaparece só porque hoje é outro dia).
+  // Cada card é clicável e leva direto pra aba onde aquilo se resolve.
+  function renderPendencias() {
+    const el = document.getElementById('pendenciasGrid');
+    if (!el) return;
+    ligarAcoesDelegadas('pendenciasGrid');
+    const candidatos = candidatosAgrupados();
+    let aguardandoAvaliacao = 0, aguardandoEntrevista = 0, noBanco = 0;
+    let violacoesPendentes = 0;
+    for (const c of candidatos) {
+      const chaveId = c.chave.replace(/[/]/g, '_');
+      const etapa = etapaDoPipeline(PIPELINE_MAP[chaveId]).chave;
+      if (etapa === 'testes_concluidos') aguardandoAvaliacao++;
+      else if (etapa === 'aguardando_entrevista') aguardandoEntrevista++;
+      else if (etapa === 'banco_reserva') noBanco++;
+      // Só conta violação como pendência enquanto o candidato ainda está em
+      // etapa ativa — quem já foi contratado/recusado não precisa mais de
+      // ninguém revisar a violação antiga.
+      if ((etapa === 'testes_concluidos' || etapa === 'aguardando_entrevista') && violacoesDe(c.nome).length) {
+        violacoesPendentes++;
+      }
+    }
+    const cards = [
+      { n: aguardandoAvaliacao, lbl: 'Aguardando avaliação', icone: '🔴', cor: 'red', view: 'pipeline' },
+      { n: aguardandoEntrevista, lbl: 'Aguardando entrevista', icone: '🟠', cor: 'amber', view: 'banco' },
+      { n: noBanco, lbl: 'No banco de reserva', icone: '🏦', cor: 'cyan', view: 'bancoreserva' },
+      { n: violacoesPendentes, lbl: 'Com violação pendente', icone: '🚨', cor: 'red', view: 'violacoes' }
+    ];
+    el.innerHTML = cards.map(c => `
+      <div class="kpi-card ${c.cor} pend-card ${c.n === 0 ? 'zerado' : ''}" data-acao="irParaView" data-view="${c.view}">
+        <div class="kpi-icon">${c.icone}</div><div class="kpi-val">${c.n}</div><div class="kpi-lbl">${c.lbl}</div>
+      </div>`).join('');
+  }
 
   // Digitação fica de fora dos gráficos gerais (não tem "módulo" nem
   // "aprovação para entrevista" no mesmo sentido dos quizzes) — tem o
@@ -2775,6 +2821,7 @@
     recusarUsuario: el => window.recusar(el.dataset.uid, el.dataset.nome),
     alterarPerfil: el => window.alterarPerfil(el.dataset.uid, el.dataset.perfil),
     acoesUsuario: el => window.abrirAcoesUsuario(el.dataset.uid, el.dataset.nome, el.dataset.perfil),
+    irParaView: el => window.switchView(el.dataset.view),
     desativarCodigo: el => window.desativarCodigo(el.dataset.codigo),
     excluirCodigo: el => window.excluirCodigo(el.dataset.codigo)
   };
@@ -3299,6 +3346,7 @@
       renderChartModulosAprovados(lista);
       renderChartEntrevistas(lista);
       renderModuloBars(lista);
+      renderPendencias();
       renderDigitacaoDashboard();
       renderViolacoes();
       renderBancoAprovados();
