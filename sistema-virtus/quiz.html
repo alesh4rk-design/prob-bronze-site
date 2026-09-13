@@ -974,6 +974,17 @@
 
   let globalConsentGiven = false;
   let globalLgpdAccepted = false;
+  let globalCodigoAcesso = '';
+
+  // Mesma detecção usada em digitacao.html (toque + ponteiro grosso) — usada
+  // aqui só pra decidir se, ao terminar o quiz, o candidato vai automático
+  // pro Teste de Digitação (celular, autoatendimento) ou se precisa chamar
+  // o avaliador (computador, com supervisão).
+  function ehDispositivoMovel() {
+    const temToque = ('ontouchstart' in window) || (navigator.maxTouchPoints || 0) > 0;
+    const ponteiroGrosso = window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
+    return temToque && ponteiroGrosso;
+  }
 
   const S = {
     nome: '', dataPref: '', tema: '',
@@ -1075,6 +1086,7 @@
       const r = await verificarCodigoAcesso(codigo);
       if (r.ok) {
         globalCodigoValidado = true;
+        globalCodigoAcesso = codigo;
         hideCodigoModal();
         playOk();
         if (!globalConsentGiven || !globalLgpdAccepted) showConsentModal();
@@ -1675,6 +1687,35 @@
     const CARGOS_DIGITACAO = ['porteiro', 'vigia', 'vigilante', 'recepcionista', 'fiscal', 'supervisor'];
     const cargoDigitado = ((S.candidato && S.candidato.cargo_pretendido) || '').toLowerCase();
     const precisaDigitacao = CARGOS_DIGITACAO.some(c => cargoDigitado.includes(c));
+
+    // No celular, o candidato faz tudo sozinho (autoatendimento): em vez de
+    // pedir pra chamar o avaliador, já manda ele direto pro Teste de
+    // Digitação (também no celular), levando nome/CPF/código de acesso já
+    // validados — não precisa digitar tudo de novo numa segunda página.
+    // SÓ DEPOIS de terminar essa digitação no celular é que aparece o aviso
+    // pedindo o avaliador — porque aí sim falta uma segunda digitação, num
+    // computador de verdade, com supervisão (ver digitacao.html).
+    if (precisaDigitacao && ehDispositivoMovel()) {
+      try {
+        sessionStorage.setItem('virtus_para_digitacao', JSON.stringify({
+          nome: S.nome,
+          cpf: (S.candidato && S.candidato.cpf) || '',
+          codigoAcesso: globalCodigoAcesso,
+          origem: 'quiz_mobile'
+        }));
+      } catch (e) { /* sessionStorage indisponível (modo privado etc.) — segue pro aviso normal */ }
+      if (sessionStorage.getItem('virtus_para_digitacao')) {
+        const aviso = document.getElementById('nextStepNotice');
+        if (aviso) {
+          aviso.style.display = 'flex';
+          aviso.querySelector('.next-step-title').textContent = 'Quase lá!';
+          aviso.querySelector('.next-step-text').innerHTML = 'Redirecionando você para o <strong>Teste de Digitação</strong>...';
+        }
+        setTimeout(() => { window.location.href = './digitacao.html'; }, 1800);
+        return;
+      }
+    }
+
     const aviso = document.getElementById('nextStepNotice');
     if (aviso) aviso.style.display = precisaDigitacao ? 'flex' : 'none';
 

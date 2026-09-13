@@ -356,7 +356,7 @@ textarea::placeholder { color:#4A6078; }
       <div class="text-progress" id="textProgress"></div>
     </div>
     <div class="type-display" id="displayText"></div>
-    <textarea id="typeArea" rows="4" placeholder="Clique aqui e comece a digitar..."></textarea>
+    <textarea id="typeArea" rows="4" placeholder="Clique aqui e comece a digitar..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"></textarea>
     <div class="btn-row">
       <button class="btn" id="finishBtn">⏹ FINALIZAR</button>
       <button class="btn btn-ghost" id="cancelBtn">← Cancelar</button>
@@ -407,6 +407,11 @@ textarea::placeholder { color:#4A6078; }
     </div>
     <div id="delWarning"></div>
     <div class="sync-status" id="syncStatus"></div>
+
+    <div id="nextStepComputador" style="display:none;background:#241A0D;border:1px solid rgba(232,160,0,0.4);border-radius:3px;padding:14px 16px;margin:14px 0;text-align:center;">
+      <div style="font-family:'Rajdhani',sans-serif;font-size:15px;font-weight:700;color:#E8A000;letter-spacing:1px;">⌨️ Falta uma etapa!</div>
+      <div style="font-family:'Share Tech Mono',monospace;font-size:11px;color:#7A90A8;margin-top:6px;">Procure o avaliador para fazer o <strong>Teste de Digitação no computador</strong> e concluir sua avaliação.</div>
+    </div>
 
     <div id="whatsappNotice" style="display:none;background:#0D1220;border:1px solid rgba(37,211,102,0.35);border-radius:3px;padding:14px 16px;margin:14px 0;text-align:center;">
       <div style="font-family:'Rajdhani',sans-serif;font-size:15px;font-weight:700;color:#25D366;letter-spacing:1px;">✅ Avaliação concluída!</div>
@@ -577,9 +582,19 @@ function ehDispositivoMovel(){
   return temToque && ponteiroGrosso;
 }
 
-const TEST_DURATION_DESKTOP=90, TEST_DURATION_MOBILE=60;
+// Celular tem tempo mais curto que computador por dois motivos: digitar com
+// os polegares é naturalmente mais lento (ver FAIXAS_DIGITACAO em
+// dashboard-format.js, que já tem uma régua de nota separada por
+// dispositivo), e o teclado do celular tem autocorreção/previsão de texto
+// que pode inflar artificialmente a velocidade — reduzir o tempo compensa
+// parte dessa vantagem.
+const TEST_DURATION_DESKTOP=90, TEST_DURATION_MOBILE=45;
 let TEST_DURATION=TEST_DURATION_DESKTOP;
 let dispositivoAtual='desktop';
+// true quando o candidato chegou aqui direto do quiz (celular, autoatendimento)
+// — nesse caso, ao terminar, mostra o aviso pra procurar o avaliador e fazer
+// a SEGUNDA digitação, agora no computador, em vez do aviso de WhatsApp.
+let veioDoQuizMobile = false;
 let active=false,timerInterval=null,timeLeft=TEST_DURATION,startTime=null;
 let originalText='',textoCategoria='';
 let candidate={nome:''};
@@ -784,7 +799,15 @@ function finishTest(){
   document.getElementById('resultScreen').style.display='block';
   document.getElementById('syncStatus').innerHTML='';
   enviarAoServidor(lastResult);
-  montarBotaoWhatsapp(candidate.nome);
+
+  // Quem veio do quiz no celular ainda precisa da SEGUNDA digitação, no
+  // computador, com o avaliador — mostra esse aviso em vez do de WhatsApp
+  // (que é só pra quem já concluiu tudo).
+  if (veioDoQuizMobile) {
+    document.getElementById('nextStepComputador').style.display = 'block';
+  } else {
+    montarBotaoWhatsapp(candidate.nome);
+  }
 }
 
 function renderHistory(){
@@ -934,6 +957,35 @@ window.setToday = setToday;
 window.validateForm = validateForm;
 
 validateForm();
+
+// ── Chegada automática vinda do quiz (celular) ─────────────────────────
+// Pré-preenche nome/CPF/data e reaproveita o código de acesso já validado
+// na página anterior (mesma sessão, poucos segundos atrás) — evita pedir
+// pro candidato digitar tudo de novo numa segunda tela.
+(async function receberDoQuizMobile() {
+  let dados = null;
+  try {
+    const bruto = sessionStorage.getItem('virtus_para_digitacao');
+    if (bruto) { dados = JSON.parse(bruto); sessionStorage.removeItem('virtus_para_digitacao'); }
+  } catch (e) { /* sessionStorage indisponível — segue fluxo manual normal */ }
+  if (!dados || dados.origem !== 'quiz_mobile') return;
+
+  veioDoQuizMobile = true;
+  document.getElementById('nome').value = dados.nome || '';
+  document.getElementById('inCpf').value = maskCPF(dados.cpf || '');
+  setToday();
+  validateForm();
+
+  // Revalida o código no servidor (não confia cegamente no que veio da
+  // outra página) — se passar, pula direto pro teste sem mostrar o modal;
+  // se falhar (ex: expirou nesse meio-tempo), cai no fluxo manual normal.
+  if (dados.codigoAcesso) {
+    try {
+      const r = await verificarCodigoAcesso(dados.codigoAcesso);
+      if (r.ok) codigoValidado = true;
+    } catch (e) { /* mantém codigoValidado = false, pede o código na hora de iniciar */ }
+  }
+})();
 
 // ── Status: "online" = conseguimos consultar o Firestore ──────────────
 async function checkStatus() {
