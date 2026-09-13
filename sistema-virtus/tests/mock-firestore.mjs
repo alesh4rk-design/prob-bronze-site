@@ -25,7 +25,8 @@ export function buildMocks({
   violacoes = [],
   whatsappNumero = null,
   usuarios = [],
-  pesosScore = null
+  pesosScore = null,
+  vagas = []
 } = {}) {
   const APP = `export function initializeApp(){ return { name: 'mock' }; }`;
 
@@ -69,6 +70,7 @@ export async function getDoc(ref){
 
 window.__writes = [];
 window.__PIPE = ${JSON.stringify(pipeline)};
+window.__VAGAS = ${JSON.stringify(Object.fromEntries((vagas || []).map(v => [v.id, v])))};
 
 // Aplica um valor num objeto por um caminho com ponto (ex: "porCargo.ASG"),
 // criando os níveis que faltarem — o suficiente pra simular o updateDoc()
@@ -114,8 +116,20 @@ export async function updateDoc(ref, data){
     window.__PESOS = window.__PESOS || {};
     for (const [caminho, v] of Object.entries(data)) aplicarCaminho(window.__PESOS, caminho, v);
   }
+  if (ref.__doc && ref.__doc.startsWith('vagas/')) {
+    const id = ref.__doc.split('/')[1];
+    window.__VAGAS[id] = { ...(window.__VAGAS[id] || {}), ...data };
+    if (window.__notifyVagas) window.__notifyVagas();
+  }
 }
-export async function deleteDoc(ref){ window.__writes.push({ path: ref.__doc, op: 'delete' }); }
+export async function deleteDoc(ref){
+  window.__writes.push({ path: ref.__doc, op: 'delete' });
+  if (ref.__doc && ref.__doc.startsWith('vagas/')) {
+    const id = ref.__doc.split('/')[1];
+    delete window.__VAGAS[id];
+    if (window.__notifyVagas) window.__notifyVagas();
+  }
+}
 
 // Subcoleções (ex: pipeline/{id}/historico) — guardadas à parte de
 // window.__PIPE porque não são um documento único, e sim uma lista que só
@@ -126,12 +140,24 @@ window.__SUBCOLECOES = {};
 let __proximoId = 1;
 export async function addDoc(ref, data){
   window.__writes.push({ path: ref.__name, data, op: 'add' });
-  const lista = window.__SUBCOLECOES[ref.__name] || (window.__SUBCOLECOES[ref.__name] = []);
   const id = 'mock' + (__proximoId++);
+  if (ref.__name === 'vagas') {
+    window.__VAGAS[id] = data;
+    if (window.__notifyVagas) window.__notifyVagas();
+    return { id };
+  }
+  const lista = window.__SUBCOLECOES[ref.__name] || (window.__SUBCOLECOES[ref.__name] = []);
   lista.push({ id, data });
   return { id };
 }
 export async function getDocs(ref){
+  if (ref.__name === 'vagas') {
+    // A única query real usada (listarVagasAbertas) filtra por status
+    // 'aberta' — where()/query() são no-ops no mock, então o filtro é
+    // aplicado aqui mesmo, direto.
+    const abertas = Object.entries(window.__VAGAS).filter(([, v]) => v.status === 'aberta');
+    return { forEach(f) { abertas.forEach(([id, v]) => f({ id, data: () => v })); } };
+  }
   const lista = [...(window.__SUBCOLECOES[ref.__name] || [])].reverse();
   return { forEach(f) { lista.forEach(d => f({ id: d.id, data: () => d.data })); } };
 }
@@ -162,6 +188,13 @@ export function onSnapshot(ref, cb) {
   }
   if (ref.__name === 'usuarios') {
     cb({ forEach(f) { US.forEach(d => f({ id: d.uid, data: () => d })); } });
+    return () => {};
+  }
+  if (ref.__name === 'vagas') {
+    window.__notifyVagas = () => cb({
+      forEach(f) { Object.keys(window.__VAGAS).forEach(id => f({ id, data: () => window.__VAGAS[id] })); }
+    });
+    window.__notifyVagas();
     return () => {};
   }
   cb({ forEach(){}, exists: () => false, data: () => ({}) });

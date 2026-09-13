@@ -30,8 +30,24 @@
 
 import { db } from "./firebase-config.js";
 import {
-  collection, addDoc, doc, getDoc, serverTimestamp
+  collection, addDoc, doc, getDoc, getDocs, query, where, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+
+// Vagas abertas — mostradas na ficha do candidato no lugar da lista fixa de
+// cargos (ver CARGO_PRETENDIDO_OPCOES acima). Leitura pública (o candidato
+// nunca tem login), gerenciada pelo dashboard em "vagas/{id}": { cargo,
+// local, numero_vagas, status: 'aberta'|'encerrada' }.
+export async function listarVagasAbertas() {
+  try {
+    const q = query(collection(db, "vagas"), where("status", "==", "aberta"));
+    const snap = await getDocs(q);
+    const vagas = [];
+    snap.forEach((d) => vagas.push({ id: d.id, ...d.data() }));
+    return vagas;
+  } catch (e) {
+    return [];
+  }
+}
 
 // Número de WhatsApp do RH (configurado no dashboard, coleção `config`),
 // usado pra montar o link "avisar que terminei" no fim da avaliação.

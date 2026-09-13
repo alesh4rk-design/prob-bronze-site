@@ -16,6 +16,7 @@
 // Rode com: node tests/run.mjs (a partir de sistema-virtus/)
 
 import { assert, assertEqual, abrirDashboard } from './helpers.mjs';
+import { buildMocks } from './mock-firestore.mjs';
 
 function hoje() { return new Date().toISOString(); }
 function diasAtras(n) { return new Date(Date.now() - n * 86400000).toISOString(); }
@@ -1287,6 +1288,134 @@ export const tests = [
 
       assertEqual(erros.length, 0, 'erros de JS: ' + erros.join(' | '));
       await page.close();
+    }
+  },
+
+  {
+    name: 'Vagas: criar, encerrar e reabrir uma vaga funciona, e ela some do menu do candidato quando encerrada',
+    async run({ browser, baseUrl }) {
+      const { page, erros } = await abrirDashboard(browser, baseUrl, { perfil: 'admin' });
+
+      await page.evaluate(() => switchView('vagas'));
+      await page.waitForTimeout(300);
+
+      await page.evaluate(() => {
+        document.getElementById('vagaCargoSelect').value = 'ASG';
+        document.getElementById('vagaLocalInput').value = 'Barra';
+        document.getElementById('vagaQtdInput').value = '3';
+      });
+      await page.evaluate(() => document.getElementById('btnCriarVaga').click());
+      await page.waitForTimeout(300);
+
+      let vagas = await page.evaluate(() => Object.values(window.__VAGAS));
+      assertEqual(vagas.length, 1, 'deveria ter criado 1 vaga');
+      assertEqual(vagas[0].cargo, 'ASG', 'cargo da vaga deveria ser ASG');
+      assertEqual(vagas[0].local, 'Barra', 'local deveria ser Barra');
+      assertEqual(vagas[0].numero_vagas, 3, 'número de vagas deveria ser 3');
+      assertEqual(vagas[0].status, 'aberta', 'vaga deveria nascer aberta');
+
+      const linha = await page.evaluate(() => document.getElementById('vagasTableBody').textContent);
+      assert(linha.includes('Barra'), `tabela deveria mostrar a vaga criada. Conteúdo: ${linha}`);
+
+      // Encerra a vaga.
+      await page.evaluate(() => document.querySelector('[data-acao="encerrarVagaAcao"]').click());
+      await page.waitForTimeout(300);
+      vagas = await page.evaluate(() => Object.values(window.__VAGAS));
+      assertEqual(vagas[0].status, 'encerrada', 'vaga deveria estar encerrada');
+
+      // Reabre.
+      await page.evaluate(() => document.querySelector('[data-acao="reabrirVagaAcao"]').click());
+      await page.waitForTimeout(300);
+      vagas = await page.evaluate(() => Object.values(window.__VAGAS));
+      assertEqual(vagas[0].status, 'aberta', 'vaga deveria voltar a estar aberta');
+
+      assertEqual(erros.length, 0, 'erros de JS: ' + erros.join(' | '));
+      await page.close();
+    }
+  },
+
+  {
+    name: 'Vagas: excluir só é permitido sem candidatos, e as estatísticas por vaga batem certo',
+    async run({ browser, baseUrl }) {
+      const resultados = [
+        { id: '1', tipo: 'quiz', nome: 'Candidato Vaga A', candidato: { cpf: '70707070707', cargo_pretendido: 'ASG', vaga_id: 'v1' }, modulo: 'ASG', pct: 85, acertos: 8, total: 10, data_conclusao: hoje() },
+        { id: '2', tipo: 'quiz', nome: 'Candidato Vaga B', candidato: { cpf: '80808080808', cargo_pretendido: 'Jardineiro', vaga_id: 'v2' }, modulo: 'Jardineiro', pct: 40, acertos: 4, total: 10, data_conclusao: hoje() }
+      ];
+      const pipeline = {
+        'cpf:70707070707': { entrevista: { decisao: 'aprovado' }, decisao_final: 'contratado' }
+      };
+      const vagas = [
+        { id: 'v1', cargo: 'ASG', local: 'Barra', numero_vagas: 2, status: 'aberta' },
+        { id: 'v2', cargo: 'Jardineiro', local: 'Centro', numero_vagas: 1, status: 'aberta' }
+      ];
+      const { page, erros } = await abrirDashboard(browser, baseUrl, { perfil: 'admin', resultados, pipeline, vagas });
+
+      await page.evaluate(() => switchView('vagas'));
+      await page.waitForTimeout(300);
+
+      const texto = await page.evaluate(() => document.getElementById('vagasTableBody').textContent);
+      assert(texto.includes('Barra') && texto.includes('Centro'), `deveria listar as duas vagas. Conteúdo: ${texto}`);
+
+      // A vaga v1 (Candidato Vaga A: aprovado 85%, entrevistado, contratado) não pode ser excluída (tem 1 participante).
+      const botoesV1 = await page.evaluate(() => {
+        const linha = [...document.querySelectorAll('#vagasTableBody tr')].find(tr => tr.textContent.includes('Barra'));
+        return [...linha.querySelectorAll('button')].map(b => b.textContent.trim());
+      });
+      assert(!botoesV1.some(t => t.includes('Excluir')), `vaga com candidato não deveria ter botão Excluir. Botões: ${botoesV1}`);
+
+      const numerosV1 = await page.evaluate(() => {
+        const linha = [...document.querySelectorAll('#vagasTableBody tr')].find(tr => tr.textContent.includes('Barra'));
+        return [...linha.querySelectorAll('td')].map(td => td.textContent.trim());
+      });
+      // Colunas: Cargo, Local, Vagas, Status, Participaram, Aprovados, Entrevistados, Contratados, Banco reserva, Ações
+      assertEqual(numerosV1[4], '1', `Participaram da vaga A deveria ser 1. Linha: ${numerosV1}`);
+      assertEqual(numerosV1[5], '1', `Aprovados da vaga A deveria ser 1 (85% >= 70%). Linha: ${numerosV1}`);
+      assertEqual(numerosV1[6], '1', `Entrevistados da vaga A deveria ser 1. Linha: ${numerosV1}`);
+      assertEqual(numerosV1[7], '1', `Contratados da vaga A deveria ser 1. Linha: ${numerosV1}`);
+
+      const numerosV2 = await page.evaluate(() => {
+        const linha = [...document.querySelectorAll('#vagasTableBody tr')].find(tr => tr.textContent.includes('Centro'));
+        return [...linha.querySelectorAll('td')].map(td => td.textContent.trim());
+      });
+      assertEqual(numerosV2[4], '1', `Participaram da vaga B deveria ser 1. Linha: ${numerosV2}`);
+      assertEqual(numerosV2[5], '0', `Aprovados da vaga B deveria ser 0 (40% < 70%). Linha: ${numerosV2}`);
+
+      // A vaga v2 não tem entrevista/contratação — deveria continuar excluível? Não, tem 1 participante também.
+      const botoesV2 = await page.evaluate(() => {
+        const linha = [...document.querySelectorAll('#vagasTableBody tr')].find(tr => tr.textContent.includes('Centro'));
+        return [...linha.querySelectorAll('button')].map(b => b.textContent.trim());
+      });
+      assert(!botoesV2.some(t => t.includes('Excluir')), `vaga com candidato não deveria ter botão Excluir. Botões: ${botoesV2}`);
+
+      assertEqual(erros.length, 0, 'erros de JS: ' + erros.join(' | '));
+      await page.close();
+    }
+  },
+
+  {
+    name: 'Vagas: quiz.html lista as vagas abertas na ficha e bloqueia o início quando não há nenhuma',
+    async run({ browser, baseUrl }) {
+      const page2 = await browser.newPage();
+      const { APP, AUTH, FS } = buildMocks({ vagas: [{ id: 'v1', cargo: 'ASG', local: 'Barra', numero_vagas: 2, status: 'aberta' }] });
+      const map = { 'firebase-app.js': APP, 'firebase-auth.js': AUTH, 'firebase-firestore.js': FS };
+      await page2.route('**/firebasejs/**', route => {
+        const url = route.request().url();
+        const chave = Object.keys(map).find(k => url.endsWith(k));
+        if (chave) return route.fulfill({ status: 200, contentType: 'application/javascript', body: map[chave] });
+        return route.abort();
+      });
+      await page2.route('**/cloudflareinsights.com/**', r => r.fulfill({ status: 200, contentType: 'application/javascript', body: '' }));
+      await page2.route('**/fonts.googleapis.com/**', r => r.fulfill({ status: 200, contentType: 'text/css', body: '' }));
+      const erros2 = [];
+      page2.on('pageerror', e => erros2.push(e.message));
+      await page2.goto(`${baseUrl}/quiz.html`, { waitUntil: 'load' });
+      await page2.waitForTimeout(1200);
+
+      const opcoes = await page2.evaluate(() => [...document.getElementById('inCargo').options].map(o => o.textContent));
+      assert(opcoes.some(o => o.includes('ASG') && o.includes('Barra')), `deveria listar a vaga aberta. Opções: ${opcoes.join(' | ')}`);
+
+      assertEqual(erros2.length, 0, 'erros de JS: ' + erros2.join(' | '));
+      await page2.close();
     }
   }
 

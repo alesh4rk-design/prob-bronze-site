@@ -941,6 +941,7 @@
   <div class="sidebar-nav">
     <div class="sidebar-section-lbl">Resultados</div>
     <div class="sidebar-item" data-view="dashboard" id="sidebarItemDashboard" onclick="switchView('dashboard')"><span class="si-icon">📊</span> Dashboard</div>
+    <div class="sidebar-item" data-view="vagas" id="sidebarItemVagas" onclick="switchView('vagas')"><span class="si-icon">📌</span> Vagas</div>
     <div class="sidebar-item" data-view="pendencias" id="sidebarItemPendencias" onclick="switchView('pendencias')"><span class="si-icon">🔔</span> Pendências</div>
     <div class="sidebar-item active" data-view="pipeline" id="sidebarItemPipeline" onclick="switchView('pipeline')"><span class="si-icon">👥</span> Candidatos</div>
     <div class="sidebar-item" data-view="ranking" id="sidebarItemRanking" onclick="switchView('ranking')"><span class="si-icon">🏅</span> Ranking</div>
@@ -1191,6 +1192,62 @@
   </div>
 
 
+</section>
+
+<!-- ══════════ VIEW: VAGAS ══════════ -->
+<section class="app-view" id="view-vagas">
+  <div class="page-title-area">
+    <div>
+      <div class="page-title">📌 <em>Vagas</em></div>
+      <div class="page-subtitle">Vagas abertas aparecem na ficha do candidato — ele escolhe uma delas pra se candidatar</div>
+    </div>
+  </div>
+
+  <div class="panel" style="margin-bottom:16px;">
+    <div class="panel-head"><div class="panel-title-sm">➕ Nova vaga</div></div>
+    <div class="panel-body" style="padding:16px 20px;">
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:14px;align-items:end;">
+        <div class="field-group">
+          <span class="field-label">Cargo</span>
+          <select class="field-input" id="vagaCargoSelect"></select>
+        </div>
+        <div class="field-group">
+          <span class="field-label">Local <span style="color:var(--text4);">(opcional)</span></span>
+          <input class="field-input" type="text" id="vagaLocalInput" placeholder="Ex: Barra, Centro...">
+        </div>
+        <div class="field-group">
+          <span class="field-label">Nº de vagas</span>
+          <input class="field-input" type="number" id="vagaQtdInput" min="1" value="1">
+        </div>
+        <button class="btn-act btn-approve-admin" id="btnCriarVaga" style="height:44px;">➕ Criar vaga</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-head"><div class="panel-title-sm">📋 Vagas cadastradas <span class="badge" id="vagasBadge">0</span></div></div>
+    <div class="results-table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Cargo</th>
+            <th>Local</th>
+            <th style="width:70px;">Vagas</th>
+            <th>Status</th>
+            <th>Participaram</th>
+            <th>Aprovados</th>
+            <th>Entrevistados</th>
+            <th>Contratados</th>
+            <th>Banco reserva</th>
+            <th>Ações</th>
+          </tr>
+        </thead>
+        <tbody id="vagasTableBody">
+          <tr><td colspan="10"><div class="empty-state"><div class="empty-icon">📌</div>Nenhuma vaga cadastrada ainda.</div></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
 </section>
 
 <!-- ══════════ VIEW: PENDÊNCIAS ══════════ -->
@@ -1732,12 +1789,13 @@
     definirNumeroWhatsapp, assinarNumeroWhatsapp,
     assinarPipeline, definirObservacaoPipeline, definirAprovacaoManual, definirBancoReserva,
     registrarDecisaoFinal, buscarHistorico, registrarEntrevista,
+    assinarVagas, criarVaga, encerrarVaga, reabrirVaga, excluirVaga,
     obterPesosScore, salvarPesosPadrao, salvarPesosCargo, removerPesosCargo
   } from "./js/dashboard.js";
   import { db } from "./js/firebase-config.js";
   import { doc, setDoc } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
   import { PERGUNTAS_SEED } from "./js/perguntas-seed-data.js";
-  import { moduloDoCargoPretendido } from "./js/quiz.js";
+  import { moduloDoCargoPretendido, CARGO_PRETENDIDO_OPCOES } from "./js/quiz.js";
   import {
     normNome, chaveDe, fichaDe, fmtNasc, fmtData, fmtDataHora, corNota, pctClass,
     classificarModulo, classificarDigitacao, melhorDigitacao, dataLocalYMD, escapeHtml,
@@ -1750,6 +1808,7 @@
   let ALL_VIOLACOES = [];
   let PIPELINE_MAP = {};
   let PESOS_SCORE = {};
+  let ALL_VAGAS = [];
 
   const CARGOS_ESPECIFICOS = [
     'Controle de Acesso', 'CFTV', 'Vigilante Patrimonial', 'Manutenção', 'ASG',
@@ -1867,6 +1926,7 @@
     document.getElementById('sidebarItemBanco').style.display = 'none';
     document.getElementById('sidebarItemContratados').style.display = 'none';
     document.getElementById('sidebarItemRanking').style.display = 'none';
+    document.getElementById('sidebarItemVagas').style.display = 'none';
     // Banco de Reserva fica visível pro view — só não pode marcar/desmarcar
     // candidatos (ver renderBancoReserva/PODE_GERENCIAR_CANDIDATOS).
   }
@@ -1888,6 +1948,7 @@
   // ══════════ NAVEGAÇÃO LATERAL (SIDEBAR) — SPA sem reload ══════════
   const VIEW_TITULOS = {
     dashboard: 'Dashboard',
+    vagas: 'Vagas',
     pendencias: 'Central de Pendências',
     pipeline: 'Candidatos',
     ranking: 'Ranking por Score Virtus',
@@ -1931,7 +1992,7 @@
     if ((view === 'perguntas' || view === 'usuarios' || view === 'pesos') && !ehGerenciaSV) view = 'dashboard';
     // Viewer só tem a aba Candidatos (vê os testes realizados de todo
     // mundo, sem poder selecionar ninguém pra entrevista).
-    if ((view === 'banco' || view === 'contratados' || view === 'dashboard' || view === 'pendencias' || view === 'ranking') && me && me.perfil === 'viewer') view = 'pipeline';
+    if ((view === 'banco' || view === 'contratados' || view === 'dashboard' || view === 'pendencias' || view === 'ranking' || view === 'vagas') && me && me.perfil === 'viewer') view = 'pipeline';
     const VIEWS_BLOQUEADAS_COORDENADOR = [...VIEWS_OPERACIONAIS, 'dashboard', 'pendencias', 'violacoes'];
     if (VIEWS_BLOQUEADAS_COORDENADOR.includes(view) && me && me.perfil === 'coordenador') view = 'pipeline';
     document.querySelectorAll('.app-view').forEach(v => v.classList.toggle('active', v.id === 'view-' + view));
@@ -1947,6 +2008,7 @@
     if (view === 'pendencias') renderPendencias();
     if (view === 'pesos') renderPesosView();
     if (view === 'ranking') renderRanking();
+    if (view === 'vagas') renderVagas();
   };
 
 
@@ -3371,7 +3433,10 @@
     excluirCandidato: el => window.excluirCandidatoDireto(el.dataset.chave, el.dataset.nome),
     filtrarPendencia: el => window.filtrarPendencia(el.dataset.filtro),
     desativarCodigo: el => window.desativarCodigo(el.dataset.codigo),
-    excluirCodigo: el => window.excluirCodigo(el.dataset.codigo)
+    excluirCodigo: el => window.excluirCodigo(el.dataset.codigo),
+    encerrarVagaAcao: el => window.encerrarVagaAcao(el.dataset.id, el.dataset.nome),
+    reabrirVagaAcao: el => window.reabrirVagaAcao(el.dataset.id, el.dataset.nome),
+    excluirVagaAcao: el => window.excluirVagaAcao(el.dataset.id, el.dataset.nome)
   };
 
   function ligarAcoesDelegadas(id) {
@@ -4538,6 +4603,101 @@
     el.style.color = soma === 100 ? 'var(--green)' : 'var(--amber)';
   }
 
+  // ══════════ VAGAS ══════════
+  // Estatísticas de uma vaga: candidatos cuja ficha (fichaDe) tem
+  // vaga_id === vaga.id, cruzado com o pipeline. "Aprovado" aqui é o mesmo
+  // critério usado no resto do sistema (>=70% no módulo escolhido), não a
+  // aprovação manual pra entrevista.
+  function estatisticasDaVaga(vagaId) {
+    const stats = { participaram: 0, aprovados: 0, entrevistados: 0, contratados: 0, bancoReserva: 0 };
+    for (const c of candidatosAgrupados()) {
+      const f = fichaDe(tentativasDe(c.chave));
+      if (!f || f.vaga_id !== vagaId) continue;
+      stats.participaram++;
+      if (c.media >= 70) stats.aprovados++;
+      const p = PIPELINE_MAP[c.chave.replace(/[/]/g, '_')] || {};
+      if (p.entrevista) stats.entrevistados++;
+      if (p.decisao_final === 'contratado') stats.contratados++;
+      if (p.banco_reserva === true) stats.bancoReserva++;
+    }
+    return stats;
+  }
+
+  window.renderVagas = function renderVagas() {
+    const tbody = document.getElementById('vagasTableBody');
+    if (!tbody || !me) return;
+    ligarAcoesDelegadas('vagasTableBody');
+
+    const sel = document.getElementById('vagaCargoSelect');
+    if (sel && !sel.dataset.preenchido) {
+      sel.innerHTML = CARGO_PRETENDIDO_OPCOES.map(o => `<option value="${escapeHtml(o.label)}">${escapeHtml(o.label)}</option>`).join('');
+      sel.dataset.preenchido = '1';
+    }
+
+    const badge = document.getElementById('vagasBadge');
+    if (badge) badge.textContent = ALL_VAGAS.length;
+
+    if (!ALL_VAGAS.length) {
+      tbody.innerHTML = '<tr><td colspan="10"><div class="empty-state"><div class="empty-icon">📌</div>Nenhuma vaga cadastrada ainda.</div></td></tr>';
+      return;
+    }
+
+    const ordenadas = [...ALL_VAGAS].sort((a, b) => (a.status === b.status ? 0 : a.status === 'aberta' ? -1 : 1));
+    tbody.innerHTML = ordenadas.map(v => {
+      const stats = estatisticasDaVaga(v.id);
+      const aberta = v.status === 'aberta';
+      const dadosVaga = `data-id="${escapeHtml(v.id)}" data-nome="${escapeHtml(v.cargo)}"`;
+      return `
+      <tr>
+        <td class="td-nome">${escapeHtml(v.cargo)}</td>
+        <td>${v.local ? escapeHtml(v.local) : '<span style="color:var(--text4);">—</span>'}</td>
+        <td style="text-align:center;">${v.numero_vagas ?? '—'}</td>
+        <td><span style="font-weight:700;color:${aberta ? 'var(--green)' : 'var(--text3)'};">${aberta ? '🟢 Aberta' : '🔴 Encerrada'}</span></td>
+        <td style="text-align:center;">${stats.participaram}</td>
+        <td style="text-align:center;">${stats.aprovados}</td>
+        <td style="text-align:center;">${stats.entrevistados}</td>
+        <td style="text-align:center;color:var(--green);font-weight:700;">${stats.contratados}</td>
+        <td style="text-align:center;">${stats.bancoReserva}</td>
+        <td>
+          <div style="display:flex;gap:5px;flex-wrap:wrap;">
+            ${aberta
+              ? `<button class="btn-act-mini" data-acao="encerrarVagaAcao" ${dadosVaga}>🔴 Encerrar</button>`
+              : `<button class="btn-act-mini" data-acao="reabrirVagaAcao" ${dadosVaga}>🟢 Reabrir</button>`}
+            ${stats.participaram === 0 ? `<button class="btn-act-mini" data-acao="excluirVagaAcao" ${dadosVaga}>🗑 Excluir</button>` : ''}
+          </div>
+        </td>
+      </tr>`;
+    }).join('');
+  };
+
+  document.getElementById('btnCriarVaga').onclick = async () => {
+    const cargo = document.getElementById('vagaCargoSelect').value;
+    const local = document.getElementById('vagaLocalInput').value.trim();
+    const qtd = Number(document.getElementById('vagaQtdInput').value) || 1;
+    if (!cargo) { toast('❌ Selecione o cargo', 'err'); return; }
+    try {
+      await criarVaga(cargo, local, qtd, me.usuario);
+      document.getElementById('vagaLocalInput').value = '';
+      document.getElementById('vagaQtdInput').value = '1';
+      toast(`✅ Vaga de "${cargo}" criada`, 'ok');
+    } catch (e) { console.error(e); toast('❌ Falha ao criar vaga: ' + e.message, 'err'); }
+  };
+
+  window.encerrarVagaAcao = async (id, nome) => {
+    try { await encerrarVaga(id, me.usuario); toast(`✅ Vaga de "${nome}" encerrada`, 'ok'); }
+    catch (e) { console.error(e); toast('❌ Falha: ' + e.message, 'err'); }
+  };
+  window.reabrirVagaAcao = async (id, nome) => {
+    try { await reabrirVaga(id, me.usuario); toast(`✅ Vaga de "${nome}" reaberta`, 'ok'); }
+    catch (e) { console.error(e); toast('❌ Falha: ' + e.message, 'err'); }
+  };
+  window.excluirVagaAcao = async (id, nome) => {
+    const ok = await abrirConfirmacao(`Excluir a vaga de "${nome}"? Essa ação não pode ser desfeita.`, { titulo: 'Excluir vaga', textoConfirmar: '🗑 Excluir', corConfirmar: 'btn-danger', icone: '🗑' });
+    if (!ok) return;
+    try { await excluirVaga(id); toast('✅ Vaga excluída', 'ok'); }
+    catch (e) { console.error(e); toast('❌ Falha: ' + e.message, 'err'); }
+  };
+
   function renderPesosView() {
     const padrao = pesosDoCargo(null, PESOS_SCORE);
     montarGridPesos('pesosPadraoGrid', padrao);
@@ -4917,6 +5077,12 @@
       // Pesos do Score Virtus: sem onSnapshot (não muda com frequência) —
       // carrega uma vez na conexão e de novo sempre que a aba Pesos é salva.
       obterPesosScore().then(pesos => { PESOS_SCORE = pesos || {}; renderAll(); }).catch(() => {});
+      // Vagas: quem não gerencia candidatos (viewer) nem lê isso — só usa a
+      // leitura pública que o próprio candidato usa na ficha, não precisa
+      // assinar aqui.
+      if (me.perfil !== 'viewer') {
+        unsubs.push(assinarVagas(lista => { ALL_VAGAS = lista; renderVagas(); }, () => statusDot(false, 'Reconectando...')));
+      }
     } catch (e) {
       console.error(e);
       statusDot(false, 'Falha ao conectar ao servidor');

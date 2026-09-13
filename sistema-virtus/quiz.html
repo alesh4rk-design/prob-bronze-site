@@ -700,6 +700,10 @@
       <div class="dot-green"></div>
       <span id="launcherQCount">perguntas carregadas</span>
     </div>
+    <div class="server-status-bar offline" id="semVagasAviso" style="display:none;margin-top:10px;">
+      <div class="dot"></div>
+      <span>Nenhuma vaga aberta no momento — procure o RH/avaliador para mais informações.</span>
+    </div>
   </div>
 </div>
 
@@ -765,7 +769,7 @@
       <div class="form-sec">▸ Perfil profissional</div>
 
       <div class="field-group">
-        <span class="field-label">Cargo pretendido *</span>
+        <span class="field-label">Vaga pretendida *</span>
         <select class="field-input" id="inCargo">
           <option value="">— Selecionar —</option>
         </select>
@@ -835,9 +839,9 @@
 
       <div class="form-grid-2">
         <div class="field-group">
-          <span class="field-label">Módulo do teste *</span>
-          <select class="field-input" id="inTema">
-            <option value="">— Selecionar módulo —</option>
+          <span class="field-label">Módulo do teste <span style="color:var(--text4);">(definido pela vaga escolhida)</span></span>
+          <select class="field-input" id="inTema" disabled>
+            <option value="">— Selecione a vaga acima —</option>
           </select>
         </div>
         <div class="field-group">
@@ -970,7 +974,7 @@
 </div>
 
 <script type="module">
-  import { listarModulos, carregarPerguntasDoModulo, salvarResultadoQuiz, registrarViolacao, tempoLimiteParaModulo, montarTrilha, verificarCodigoAcesso, obterNumeroWhatsappRH, CARGO_PRETENDIDO_OPCOES, enviarCurriculo } from "./js/quiz.js";
+  import { listarModulos, carregarPerguntasDoModulo, salvarResultadoQuiz, registrarViolacao, tempoLimiteParaModulo, montarTrilha, verificarCodigoAcesso, obterNumeroWhatsappRH, enviarCurriculo, listarVagasAbertas, moduloDoCargoPretendido } from "./js/quiz.js";
 
   let globalConsentGiven = false;
   let globalLgpdAccepted = false;
@@ -1015,7 +1019,8 @@
       }
       document.getElementById('launcherQCount').textContent =
         `${data.total_perguntas} perguntas · ${data.modulos.length} módulos`;
-      document.getElementById('btnIniciar').disabled = data.modulos.length === 0;
+      MODULOS_CARREGADOS = data.modulos.length;
+      atualizarDisponibilidadeIniciar();
       document.getElementById('serverStatusBar').className = 'server-status-bar online';
       document.getElementById('serverStatusText').textContent = 'Conectado — avaliação liberada';
       show('s-launcher');
@@ -1361,8 +1366,10 @@
     const bairro = document.getElementById('inCidade').value.trim();
     if (bairro.length < 3) return falha('Informe o bairro/região onde mora', 'inCidade');
 
-    const cargo = document.getElementById('inCargo').value;
-    if (!cargo) return falha('Selecione o cargo pretendido', 'inCargo');
+    const vagaId = document.getElementById('inCargo').value;
+    if (!vagaId) return falha('Selecione a vaga pretendida', 'inCargo');
+    const vagaEscolhida = VAGAS_ABERTAS.find(v => v.id === vagaId);
+    if (!vagaEscolhida) return falha('Vaga selecionada não está mais disponível — escolha outra', 'inCargo');
 
     const pillSel = document.querySelector('#inExp .pill.sel');
     if (!pillSel) return falha('Informe se possui experiência na área', 'inExp');
@@ -1387,7 +1394,8 @@
       telefone,
       altura: alturaNum,
       bairro,
-      cargo_pretendido: cargo,
+      cargo_pretendido: vagaEscolhida.cargo,
+      vaga_id: vagaEscolhida.id,
       experiencia: pillSel.dataset.val === 'sim',
       experiencia_texto: experienciaTexto || null,
       turno,
@@ -1919,18 +1927,47 @@
   }
   initTheme();
 
-  // Cargo pretendido: lista fixa (não depende do Firestore), preenchida
-  // já de cara — ver CARGO_PRETENDIDO_OPCOES em js/quiz.js.
-  function preencherCargoPretendido() {
+  // Vaga pretendida: lista as vagas ABERTAS de verdade (cadastradas no
+  // dashboard, coleção `vagas`) — substitui a antiga lista fixa de cargos.
+  // Sem nenhuma vaga aberta, o candidato não consegue nem começar (ver
+  // atualizarDisponibilidadeIniciar) — evita gente se candidatando pra
+  // função nenhuma vaga aberta.
+  let VAGAS_ABERTAS = [];
+  let MODULOS_CARREGADOS = 0;
+
+  function atualizarDisponibilidadeIniciar() {
+    const aviso = document.getElementById('semVagasAviso');
+    const semVagas = VAGAS_ABERTAS.length === 0;
+    if (aviso) aviso.style.display = semVagas ? 'flex' : 'none';
+    document.getElementById('btnIniciar').disabled = semVagas || MODULOS_CARREGADOS === 0;
+  }
+
+  async function preencherVagas() {
+    VAGAS_ABERTAS = await listarVagasAbertas();
     const sel = document.getElementById('inCargo');
-    for (const opt of CARGO_PRETENDIDO_OPCOES) {
+    sel.innerHTML = '<option value="">— Selecionar —</option>';
+    for (const vaga of VAGAS_ABERTAS) {
       const el = document.createElement('option');
-      el.value = opt.label;
-      el.textContent = opt.label;
+      el.value = vaga.id;
+      const qtd = vaga.numero_vagas ? ` (${vaga.numero_vagas} vaga${vaga.numero_vagas > 1 ? 's' : ''})` : '';
+      el.textContent = `${vaga.cargo}${vaga.local ? ' — ' + vaga.local : ''}${qtd}`;
       sel.appendChild(el);
     }
+    atualizarDisponibilidadeIniciar();
   }
-  preencherCargoPretendido();
+
+  // Ao escolher a vaga, trava o módulo do teste automaticamente no que
+  // corresponde àquele cargo (ver moduloDoCargoPretendido em js/quiz.js) —
+  // o candidato não escolhe mais isso separado, pra nunca fazer o teste de
+  // um cargo diferente do que está se candidatando.
+  document.getElementById('inCargo').addEventListener('change', () => {
+    const vagaId = document.getElementById('inCargo').value;
+    const vaga = VAGAS_ABERTAS.find(v => v.id === vagaId);
+    const inTema = document.getElementById('inTema');
+    inTema.value = vaga ? moduloDoCargoPretendido(vaga.cargo) : '';
+  });
+
+  preencherVagas();
 
   document.getElementById('inData').value = new Date().toISOString().slice(0, 10);
   loadModules();

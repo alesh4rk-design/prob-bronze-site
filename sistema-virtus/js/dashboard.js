@@ -108,6 +108,48 @@ export async function definirModuloAtivo(modulo, ativo) {
   await updateDoc(doc(db, "perguntas", modulo), { ativo });
 }
 
+// ── Vagas (vagas/{id}) ──────────────────────────────────────────────────
+// Cada doc: { cargo, local, numero_vagas, status: 'aberta'|'encerrada',
+// criado_por, criado_em }. `cargo` usa os mesmos rótulos fixos de
+// CARGO_PRETENDIDO_OPCOES (js/quiz.js) — é o que a ficha do candidato mostra
+// pra escolher (só as vagas com status 'aberta'), e o que alimenta o
+// casamento de módulo/Score Virtus já existente (não muda nada nessa parte).
+
+// Assina todas as vagas em tempo real (abertas e encerradas — a tela de
+// Vagas mostra as duas, com o status visível).
+export function assinarVagas(callback, onError) {
+  return onSnapshot(collection(db, "vagas"), (snap) => {
+    const lista = [];
+    snap.forEach((d) => lista.push({ id: d.id, ...d.data() }));
+    callback(lista);
+  }, (err) => { console.error("assinarVagas:", err); if (onError) onError(err); });
+}
+
+export async function criarVaga(cargo, local, numeroVagas, quem) {
+  await addDoc(collection(db, "vagas"), {
+    cargo,
+    local: local || null,
+    numero_vagas: numeroVagas,
+    status: "aberta",
+    criado_por: quem || null,
+    criado_em: serverTimestamp()
+  });
+}
+
+// Fechar não apaga nada — só tira a vaga da lista que o candidato vê na
+// ficha. Quem já se candidatou continua contando nas estatísticas dela.
+export async function encerrarVaga(id, quem) {
+  await updateDoc(doc(db, "vagas", id), { status: "encerrada", encerrado_por: quem || null, encerrado_em: serverTimestamp() });
+}
+
+export async function reabrirVaga(id, quem) {
+  await updateDoc(doc(db, "vagas", id), { status: "aberta", reaberto_por: quem || null, reaberto_em: serverTimestamp() });
+}
+
+export async function excluirVaga(id) {
+  await deleteDoc(doc(db, "vagas", id));
+}
+
 // ── Código de acesso presencial (codigos_acesso/{codigo}) ──────────────────
 // Impede o candidato de fazer o teste em casa: admin OU viewer gera UM
 // código compartilhado, que serve para TODOS os candidatos da entrevista
