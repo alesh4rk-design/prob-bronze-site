@@ -1379,12 +1379,17 @@
       <div class="panel-title-sm">🏅 Ranking <span class="badge" id="rankingBadge">0 candidatos</span></div>
     </div>
     <div class="panel-body" style="padding:16px 20px 6px;">
-      <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;">
+      <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;justify-content:space-between;">
         <div class="field-group" style="max-width:280px;">
           <span class="field-label">Cargo pretendido</span>
           <select class="field-input" id="rankingCargoSelect" onchange="renderRanking()">
             <option value="">Todos os cargos</option>
           </select>
+        </div>
+        <div id="rankingCompareBar" style="display:none;align-items:center;gap:10px;background:var(--cyandim);border:1px solid var(--cyanmid);border-radius:6px;padding:8px 14px;">
+          <span id="rankingCompareCount" style="font-family:'Share Tech Mono',monospace;font-size:12px;color:var(--cyan);"></span>
+          <button class="btn-act btn-approve-admin" id="btnCompararSelecionados" style="padding:6px 14px;font-size:12px;" onclick="abrirComparacao()">🆚 Comparar</button>
+          <button class="btn-act btn-neutral" id="btnLimparComparacao" style="padding:6px 14px;font-size:12px;" onclick="limparComparacao()">Limpar</button>
         </div>
       </div>
     </div>
@@ -1392,6 +1397,7 @@
       <table>
         <thead>
           <tr>
+            <th style="width:36px;text-align:center;" title="Selecionar para comparar">☑</th>
             <th style="width:44px;text-align:center;">#</th>
             <th>Candidato</th>
             <th>Cargo pretendido</th>
@@ -1400,12 +1406,32 @@
           </tr>
         </thead>
         <tbody id="rankingTableBody">
-          <tr><td colspan="5"><div class="empty-state"><div class="empty-icon">🏅</div>Nenhum candidato com Score Virtus calculável ainda.</div></td></tr>
+          <tr><td colspan="6"><div class="empty-state"><div class="empty-icon">🏅</div>Nenhum candidato com Score Virtus calculável ainda.</div></td></tr>
         </tbody>
       </table>
     </div>
   </div>
 </section>
+
+<!-- ══════════ MODAL: COMPARAÇÃO DE CANDIDATOS ══════════ -->
+<div class="modal-back" id="compareModal" onclick="if(event.target===this)fecharComparacao()">
+  <div class="modal-card" style="max-width:900px;">
+    <div class="modal-top">
+      <div class="modal-avatar">🆚</div>
+      <div>
+        <div class="modal-cand-nome">Comparação de candidatos</div>
+        <div class="modal-cand-sub">Lado a lado, pra decidir sem precisar abrir ficha por ficha</div>
+      </div>
+      <button class="modal-close" onclick="fecharComparacao()" title="Fechar">✕</button>
+    </div>
+    <div class="modal-scroll">
+      <div id="compareConteudo"></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-act btn-neutral" style="padding:12px 20px;border-radius:6px;" onclick="fecharComparacao()">Fechar</button>
+    </div>
+  </div>
+</div>
 
 <!-- ══════════ VIEW: APROVADOS (decisão manual da equipe) ══════════ -->
 <!-- ══════════ VIEW: QR CODES (de admin.html / sec-qrcodes) ══════════ -->
@@ -3187,6 +3213,7 @@
     acoesUsuario: el => window.abrirAcoesUsuario(el.dataset.uid, el.dataset.nome, el.dataset.perfil),
     toggleAprovado: el => window.alternarAprovadoParaEntrevista(el.dataset.chave, el.dataset.nome, el.dataset.valor === 'true'),
     toggleBanco: el => window.alternarBancoReserva(el.dataset.chave, el.dataset.nome, el.dataset.valor === 'true'),
+    toggleComparar: el => window.alternarComparacao(el.dataset.chave, el.checked),
     editarObservacao: el => window.editarObservacaoPipeline(el.dataset.chave, el.dataset.nome),
     excluirCandidato: el => window.excluirCandidatoDireto(el.dataset.chave, el.dataset.nome),
     filtrarPendencia: el => window.filtrarPendencia(el.dataset.filtro),
@@ -3278,6 +3305,41 @@
   // usa a nota/módulo de lá — o Score Virtus é outra conta, ver
   // scoreVirtusDeCandidato). ligarAcoesDelegadas dá o clique-pra-abrir-ficha
   // de graça, igual a aba Candidatos.
+  // Seleção para comparação — vive fora do renderRanking pra sobreviver a um
+  // re-render (ex: PIPELINE_MAP mudando por causa de outra pessoa). Máximo 3
+  // pra caber legível lado a lado; nomes (não chave) porque a Ficha 360°
+  // também identifica pelo nome em telas antigas.
+  const COMPARE_MAX = 3;
+  let COMPARE_SET = new Set();
+
+  function atualizarBarraComparacao() {
+    const bar = document.getElementById('rankingCompareBar');
+    if (!bar) return;
+    const n = COMPARE_SET.size;
+    bar.style.display = n > 0 ? 'flex' : 'none';
+    document.getElementById('rankingCompareCount').textContent = `${n}/${COMPARE_MAX} selecionado${n === 1 ? '' : 's'}`;
+    document.getElementById('btnCompararSelecionados').disabled = n < 2;
+  }
+
+  window.alternarComparacao = function (chave, marcado) {
+    if (marcado) {
+      if (COMPARE_SET.size >= COMPARE_MAX) {
+        toast(`❌ Máximo de ${COMPARE_MAX} candidatos por comparação`, 'err');
+        renderRanking();
+        return;
+      }
+      COMPARE_SET.add(chave);
+    } else {
+      COMPARE_SET.delete(chave);
+    }
+    atualizarBarraComparacao();
+  };
+
+  window.limparComparacao = function () {
+    COMPARE_SET.clear();
+    renderRanking();
+  };
+
   window.renderRanking = function renderRanking() {
     const tbody = document.getElementById('rankingTableBody');
     if (!tbody || !me) return;
@@ -3287,6 +3349,11 @@
       const { score, cargoPretendido } = scoreVirtusDeCandidato(c.chave);
       return { chave: c.chave, nome: c.nome, score, cargoPretendido };
     });
+
+    // Não deixa "selecionado fantasma" sobreviver se o candidato sumiu da
+    // lista (ex: foi excluído) entre uma renderização e outra.
+    const chavesAtuais = new Set(base.map(c => c.chave));
+    for (const chave of [...COMPARE_SET]) if (!chavesAtuais.has(chave)) COMPARE_SET.delete(chave);
 
     // Opções do filtro de cargo: só os valores que existem de verdade entre
     // os candidatos carregados agora (cargo_pretendido é texto livre da
@@ -3305,9 +3372,10 @@
     candidatos.sort((a, b) => b.score - a.score);
 
     document.getElementById('rankingBadge').textContent = candidatos.length + ' candidato' + (candidatos.length === 1 ? '' : 's');
+    atualizarBarraComparacao();
 
     if (!candidatos.length) {
-      tbody.innerHTML = `<tr><td colspan="5"><div class="empty-state"><div class="empty-icon">🏅</div>Nenhum candidato com Score Virtus calculável ${cargoFiltro ? 'para esse cargo' : 'ainda'}.</div></td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="6"><div class="empty-state"><div class="empty-icon">🏅</div>Nenhum candidato com Score Virtus calculável ${cargoFiltro ? 'para esse cargo' : 'ainda'}.</div></td></tr>`;
       return;
     }
     tbody.innerHTML = candidatos.map((c, i) => {
@@ -3315,8 +3383,12 @@
       const etapaCand = etapaDoPipeline(PIPELINE_MAP[chaveId] || {});
       const dadosCand = `data-chave="${escapeHtml(c.chave)}" data-nome="${escapeHtml(c.nome)}"`;
       const medalha = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : (i + 1);
+      const marcado = COMPARE_SET.has(c.chave);
       return `
       <tr class="clickable" data-acao="abrirCandidato" ${dadosCand} title="Ver Ficha 360°">
+        <td style="text-align:center;" data-acao="ignorar">
+          <input type="checkbox" data-acao="toggleComparar" ${dadosCand} ${marcado ? 'checked' : ''} title="Selecionar para comparar">
+        </td>
         <td style="text-align:center;font-weight:700;">${medalha}</td>
         <td class="td-nome">${escapeHtml(c.nome)} <span class="row-hint">▸ detalhes</span></td>
         <td>${c.cargoPretendido ? escapeHtml(c.cargoPretendido) : '<span style="color:var(--text4);">—</span>'}</td>
@@ -3324,6 +3396,91 @@
         <td><span style="font-size:12px;font-weight:700;color:${etapaCand.cor};white-space:nowrap;">${etapaCand.icone} ${etapaCand.txt}</span></td>
       </tr>`;
     }).join('');
+  };
+
+  // ══════════ COMPARAÇÃO DE CANDIDATOS (lado a lado) ══════════
+  window.abrirComparacao = function () {
+    if (COMPARE_SET.size < 2) { toast('❌ Selecione pelo menos 2 candidatos', 'err'); return; }
+    const chaves = [...COMPARE_SET];
+
+    const dados = chaves.map(chave => {
+      const tents = tentativasDe(chave);
+      const quizzes = tents.filter(t => t.tipo !== 'typing');
+      const typings = tents.filter(t => t.tipo === 'typing');
+      const f = fichaDe(tents);
+      const mods = consolidarModulos(quizzes);
+      const melhorTyping = melhorDigitacao(typings);
+      const dig = melhorTyping ? classificarDigitacao(melhorTyping.wpm, melhorTyping.dispositivo) : null;
+      const { score } = scoreVirtusDeCandidato(chave);
+      const buscarPct = (nomeModulo) => { const m = mods.find(x => x.modulo === nomeModulo); return m ? m.pct : null; };
+      const chaveId = chave.replace(/[/]/g, '_');
+      const etapaCand = etapaDoPipeline(PIPELINE_MAP[chaveId] || {});
+      const nome = tents[tents.length - 1] ? (tents[tents.length - 1].nome || '—') : '—';
+      return {
+        nome, cargoPretendido: f && f.cargo_pretendido, etapaCand, score,
+        cargo: f && f.cargo_pretendido ? buscarPct(f.cargo_pretendido) : null,
+        atendimento: buscarPct('Atendimento ao Cliente'),
+        linguagem: buscarPct('Linguagem Positiva'),
+        informatica: buscarPct('Informática'),
+        digitacaoTxt: melhorTyping ? `${melhorTyping.wpm} PPM${dig ? ` — ${dig.txt}` : ''}` : null
+      };
+    });
+
+    // Destaca em verde o maior valor de cada linha (empate: todos marcados).
+    const maiorDe = (campo) => Math.max(...dados.map(d => d[campo]).filter(v => v != null), -Infinity);
+    const linha = (rotulo, campo, sufixo = '%') => {
+      const maior = maiorDe(campo);
+      return `
+        <tr>
+          <td class="ficha-lbl" style="white-space:nowrap;">${rotulo}</td>
+          ${dados.map(d => {
+            const v = d[campo];
+            const destaque = v != null && v === maior && maior > -Infinity;
+            return `<td style="text-align:center;font-weight:${destaque ? 800 : 400};color:${v == null ? 'var(--text4)' : destaque ? 'var(--green)' : 'var(--text)'};">${v == null ? '—' : v + sufixo}</td>`;
+          }).join('')}
+        </tr>`;
+    };
+
+    const html = `
+      <div class="results-table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Candidato</th>
+              ${dados.map(d => `<th style="text-align:center;">${escapeHtml(d.nome)}</th>`).join('')}
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="ficha-lbl">Cargo pretendido</td>
+              ${dados.map(d => `<td style="text-align:center;">${d.cargoPretendido ? escapeHtml(d.cargoPretendido) : '—'}</td>`).join('')}
+            </tr>
+            <tr>
+              <td class="ficha-lbl">Status</td>
+              ${dados.map(d => `<td style="text-align:center;font-weight:700;color:${d.etapaCand.cor};white-space:nowrap;">${d.etapaCand.icone} ${d.etapaCand.txt}</td>`).join('')}
+            </tr>
+            <tr style="background:var(--amberdim);">
+              <td class="ficha-lbl" style="font-weight:700;">⚖️ Score Virtus</td>
+              ${(() => { const maior = maiorDe('score'); return dados.map(d => `<td style="text-align:center;font-size:18px;font-weight:800;color:${d.score == null ? 'var(--text4)' : corNota(d.score)};">${d.score == null ? '—' : d.score}${d.score != null && d.score === maior ? ' 🏆' : ''}</td>`).join(''); })()}
+            </tr>
+            ${linha('Cargo específico', 'cargo')}
+            ${linha('Atendimento', 'atendimento')}
+            ${linha('Linguagem Positiva', 'linguagem')}
+            ${linha('Informática', 'informatica')}
+            <tr>
+              <td class="ficha-lbl">Digitação</td>
+              ${dados.map(d => `<td style="text-align:center;">${d.digitacaoTxt ? escapeHtml(d.digitacaoTxt) : '<span style="color:var(--text4);">—</span>'}</td>`).join('')}
+            </tr>
+          </tbody>
+        </table>
+      </div>`;
+
+    document.getElementById('compareConteudo').innerHTML = html;
+    document.getElementById('compareModal').classList.add('show');
+  };
+
+  window.fecharComparacao = function () {
+    document.getElementById('compareModal').classList.remove('show');
   };
 
   // ══════════ MENU DE AÇÕES DO CANDIDATO (aba Candidatos) ══════════

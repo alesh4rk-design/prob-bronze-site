@@ -1017,6 +1017,72 @@ export const tests = [
         await page.close();
       }
     }
+  },
+
+  {
+    name: 'Comparação: seleciona 2 candidatos no Ranking e mostra os dois lado a lado, com o maior Score destacado',
+    async run({ browser, baseUrl }) {
+      const resultados = [
+        { id: '1', tipo: 'quiz', nome: 'Comp Alto', candidato: { cpf: '55555555555', cargo_pretendido: 'ASG' }, modulo: 'ASG', pct: 90, acertos: 9, total: 10, data_conclusao: hoje() },
+        { id: '2', tipo: 'quiz', nome: 'Comp Baixo', candidato: { cpf: '66666666666', cargo_pretendido: 'ASG' }, modulo: 'ASG', pct: 50, acertos: 5, total: 10, data_conclusao: hoje() }
+      ];
+      const pesosScore = { default: { cargo: 100, atendimento: 0, linguagem_positiva: 0, informatica: 0, digitacao: 0 } };
+      const { page, erros } = await abrirDashboard(browser, baseUrl, { perfil: 'admin', resultados, pesosScore });
+
+      await page.evaluate(() => switchView('ranking'));
+      await page.waitForTimeout(300);
+
+      // Marca as duas checkboxes.
+      await page.evaluate(() => document.querySelectorAll('#rankingTableBody input[type="checkbox"]').forEach(cb => cb.click()));
+      await page.waitForTimeout(150);
+      const contagem = await page.evaluate(() => document.getElementById('rankingCompareCount').textContent);
+      assert(contagem.includes('2/3'), `barra de comparação deveria mostrar 2/3. Veio: ${contagem}`);
+
+      await page.evaluate(() => document.getElementById('btnCompararSelecionados').click());
+      await page.waitForTimeout(300);
+      const modalAberto = await page.evaluate(() => document.getElementById('compareModal').classList.contains('show'));
+      assert(modalAberto, 'modal de comparação deveria abrir');
+
+      const texto = await page.evaluate(() => document.getElementById('compareConteudo').innerText);
+      assert(/comp alto/i.test(texto) && /comp baixo/i.test(texto), `deveria mostrar os dois nomes. Conteúdo: ${texto}`);
+      assert(/🏆/.test(texto), 'deveria destacar com troféu quem tem o maior Score Virtus');
+
+      assertEqual(erros.length, 0, 'erros de JS: ' + erros.join(' | '));
+      await page.close();
+    }
+  },
+
+  {
+    name: 'Comparação: limite de 3 candidatos, e "Limpar" desmarca tudo e fecha a barra',
+    async run({ browser, baseUrl }) {
+      const resultados = [1, 2, 3, 4].map(n => ({
+        id: String(n), tipo: 'quiz', nome: `Cand ${n}`, candidato: { cpf: String(n).repeat(11), cargo_pretendido: 'ASG' },
+        modulo: 'ASG', pct: 50 + n, acertos: 5, total: 10, data_conclusao: hoje()
+      }));
+      const { page, erros } = await abrirDashboard(browser, baseUrl, { perfil: 'admin', resultados });
+
+      await page.evaluate(() => switchView('ranking'));
+      await page.waitForTimeout(300);
+
+      await page.evaluate(() => document.querySelectorAll('#rankingTableBody input[type="checkbox"]').forEach(cb => cb.click()));
+      await page.waitForTimeout(200);
+      const contagem = await page.evaluate(() => document.getElementById('rankingCompareCount').textContent);
+      assert(contagem.includes('3/3'), `deveria travar em 3/3 mesmo com 4 candidatos marcados. Veio: ${contagem}`);
+
+      await page.evaluate(() => document.getElementById('btnCompararSelecionados').click());
+      await page.waitForTimeout(150);
+      await page.evaluate(() => window.fecharComparacao());
+
+      await page.evaluate(() => document.getElementById('btnLimparComparacao').click());
+      await page.waitForTimeout(200);
+      const barraVisivel = await page.evaluate(() => getComputedStyle(document.getElementById('rankingCompareBar')).display !== 'none');
+      assert(!barraVisivel, 'barra de comparação deveria sumir depois de Limpar');
+      const algumMarcado = await page.evaluate(() => [...document.querySelectorAll('#rankingTableBody input[type="checkbox"]')].some(cb => cb.checked));
+      assert(!algumMarcado, 'nenhuma checkbox deveria continuar marcada depois de Limpar');
+
+      assertEqual(erros.length, 0, 'erros de JS: ' + erros.join(' | '));
+      await page.close();
+    }
   }
 
 ];
