@@ -1083,6 +1083,26 @@
   </div>
 </div>
 
+<!-- ══════════ MODAL: QUEM USOU ESTE CÓDIGO DE ACESSO ══════════ -->
+<div class="modal-back" id="codigoUsosModal" onclick="if(event.target===this)fecharUsosCodigo()">
+  <div class="modal-card" style="max-width:480px;">
+    <div class="modal-top">
+      <div class="modal-avatar">🔑</div>
+      <div>
+        <div class="modal-cand-nome">Quem usou este código</div>
+        <div class="modal-cand-sub" id="codigoUsosSub">—</div>
+      </div>
+      <button class="modal-close" onclick="fecharUsosCodigo()" title="Fechar">✕</button>
+    </div>
+    <div class="modal-scroll" style="padding:16px 20px;">
+      <div style="font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--text3);margin-bottom:12px;">
+        Se aparecer alguém que não deveria, ou muito mais gente do que o esperado, desative o código na hora.
+      </div>
+      <div id="codigoUsosLista"></div>
+    </div>
+  </div>
+</div>
+
 <!-- ══════════ MODAL: OBSERVAÇÃO DO CANDIDATO ══════════ -->
 <div class="modal-back" id="obsModal" onclick="if(event.target===this)fecharObservacao()">
   <div class="modal-card" style="max-width:480px;">
@@ -3669,6 +3689,7 @@
     filtrarPendencia: el => window.filtrarPendencia(el.dataset.filtro),
     desativarCodigo: el => window.desativarCodigo(el.dataset.codigo),
     excluirCodigo: el => window.excluirCodigo(el.dataset.codigo),
+    verUsosCodigo: el => window.verUsosCodigo(el.dataset.codigo),
     encerrarVagaAcao: el => window.encerrarVagaAcao(el.dataset.id, el.dataset.nome),
     reabrirVagaAcao: el => window.reabrirVagaAcao(el.dataset.id, el.dataset.nome),
     excluirVagaAcao: el => window.excluirVagaAcao(el.dataset.id, el.dataset.nome)
@@ -5093,7 +5114,7 @@
       return `<tr>
         <td style="font-family:'Share Tech Mono',monospace;font-weight:700;letter-spacing:2px;">${escapeHtml(c.codigo)}</td>
         <td style="color:${st.cor};font-weight:700;">${st.txt}</td>
-        <td>${c.usos ?? 0}</td>
+        <td><button class="btn-act btn-neutral" data-acao="verUsosCodigo" data-codigo="${escapeHtml(c.codigo)}" title="Ver quem usou este código">${c.usos ?? 0} 👁</button></td>
         <td>${escapeHtml(c.criado_por || '—')}</td>
         <td>${fmtDataHora(expiraEmDe(c))}</td>
         <td style="white-space:nowrap;">${acao}</td>
@@ -5114,6 +5135,33 @@
     try { await excluirCodigoAcesso(codigo); toast('Código excluído', 'ok'); }
     catch (e) { console.error(e); toast('❌ Falha: ' + e.message, 'err'); }
   };
+
+  // "usos" no doc conta chamadas ao Worker (pode incluir reenvios do mesmo
+  // candidato); aqui agrupamos por candidato de verdade (chaveDe) pra mostrar
+  // quem de fato usou o código — o jeito de perceber um vazamento é ver um
+  // nome que não deveria estar ali, ou muita gente a mais do que a turma real.
+  window.verUsosCodigo = function (codigo) {
+    const porCandidato = new Map();
+    for (const r of ALL_RESULTADOS) {
+      if (r.codigoAcesso !== codigo) continue;
+      const chave = chaveDe(r);
+      const atual = porCandidato.get(chave);
+      if (!atual || (r.data_conclusao || '') < (atual.data_conclusao || '')) {
+        porCandidato.set(chave, r);
+      }
+    }
+    const lista = [...porCandidato.values()].sort((a, b) => (a.data_conclusao || '').localeCompare(b.data_conclusao || ''));
+    document.getElementById('codigoUsosSub').textContent = `Código ${codigo} · ${lista.length} candidato(s)`;
+    const el = document.getElementById('codigoUsosLista');
+    el.innerHTML = lista.length
+      ? lista.map(r => `<div style="display:flex;justify-content:space-between;gap:12px;padding:9px 0;border-bottom:1px solid var(--border);">
+          <span style="font-weight:600;">${escapeHtml(r.nome || '—')}</span>
+          <span style="color:var(--text3);font-family:'Share Tech Mono',monospace;font-size:12px;">${fmtDataHora(r.data_conclusao)}</span>
+        </div>`).join('')
+      : '<div class="empty-state"><div class="empty-icon">🔑</div>Ninguém usou este código ainda</div>';
+    document.getElementById('codigoUsosModal').style.display = 'flex';
+  };
+  window.fecharUsosCodigo = function () { document.getElementById('codigoUsosModal').style.display = 'none'; };
 
   // ── QR Codes para imprimir (admin e viewer) ─────────────────────────────
   // Em vez de carregar uma biblioteca JS de terceiros (jsDelivr/unpkg

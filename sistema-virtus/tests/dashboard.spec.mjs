@@ -1526,6 +1526,42 @@ export const tests = [
       assertEqual(erros.length, 0, 'erros de JS: ' + erros.join(' | '));
       await page.close();
     }
+  },
+
+  {
+    name: 'Código de acesso: "usos" mostra quem de fato usou o código, agrupado por candidato',
+    async run({ browser, baseUrl }) {
+      const agora = hoje();
+      const codigosAcesso = [
+        { codigo: '384720', ativo: true, usos: 3, criado_por: 'Avaliador Teste', criado_em: agora }
+      ];
+      const resultados = [
+        { id: '1', tipo: 'quiz', nome: 'Ana Usou Código', candidato: { cpf: '40404040401', cargo_pretendido: 'ASG' }, modulo: 'ASG', pct: 80, acertos: 8, total: 10, data_conclusao: agora, codigoAcesso: '384720' },
+        { id: '2', tipo: 'quiz', nome: 'Beto Usou Código', candidato: { cpf: '40404040402', cargo_pretendido: 'ASG' }, modulo: 'ASG', pct: 70, acertos: 7, total: 10, data_conclusao: agora, codigoAcesso: '384720' },
+        { id: '3', tipo: 'quiz', nome: 'Cida Sem Código', candidato: { cpf: '40404040403', cargo_pretendido: 'ASG' }, modulo: 'ASG', pct: 60, acertos: 6, total: 10, data_conclusao: agora, codigoAcesso: '999999' }
+      ];
+      const { page, erros } = await abrirDashboard(browser, baseUrl, { perfil: 'admin', resultados, codigosAcesso });
+
+      await page.evaluate(() => switchView('codigos'));
+      await page.waitForTimeout(300);
+
+      const linkUsos = await page.evaluate(() => document.querySelector('#codigosTableBody [data-acao="verUsosCodigo"]').textContent);
+      assert(linkUsos.includes('3'), `deveria mostrar a contagem de usos (3). Veio: ${linkUsos}`);
+
+      await page.evaluate(() => document.querySelector('#codigosTableBody [data-acao="verUsosCodigo"]').click());
+      await page.waitForTimeout(200);
+
+      const modalVisivel = await page.evaluate(() => document.getElementById('codigoUsosModal').style.display === 'flex');
+      assert(modalVisivel, 'modal "quem usou este código" deveria abrir');
+
+      const listaTexto = await page.evaluate(() => document.getElementById('codigoUsosLista').textContent);
+      assert(listaTexto.includes('Ana Usou Código'), `deveria listar quem usou o código 384720. Conteúdo: ${listaTexto}`);
+      assert(listaTexto.includes('Beto Usou Código'), `deveria listar quem usou o código 384720. Conteúdo: ${listaTexto}`);
+      assert(!listaTexto.includes('Cida Sem Código'), `NÃO deveria listar quem usou outro código. Conteúdo: ${listaTexto}`);
+
+      assertEqual(erros.length, 0, 'erros de JS: ' + erros.join(' | '));
+      await page.close();
+    }
   }
 
 ];
