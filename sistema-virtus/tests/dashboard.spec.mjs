@@ -1443,6 +1443,43 @@ export const tests = [
       assertEqual(erros.length, 0, 'erros de JS: ' + erros.join(' | '));
       await page.close();
     }
+  },
+
+  {
+    name: 'Funil de Recrutamento: cada etapa é subconjunto da anterior e a Taxa de Contratação conta por candidato',
+    async run({ browser, baseUrl }) {
+      const resultados = [
+        { id: '1', tipo: 'quiz', nome: 'Funil Contratado', candidato: { cpf: '20202020201', cargo_pretendido: 'ASG' }, modulo: 'ASG', pct: 90, acertos: 9, total: 10, data_conclusao: hoje() },
+        { id: '1b', tipo: 'quiz', nome: 'Funil Contratado', candidato: { cpf: '20202020201', cargo_pretendido: 'ASG' }, modulo: 'Informática', pct: 85, acertos: 8, total: 10, data_conclusao: hoje() },
+        { id: '2', tipo: 'quiz', nome: 'Funil Marcado', candidato: { cpf: '20202020202', cargo_pretendido: 'ASG' }, modulo: 'ASG', pct: 80, acertos: 8, total: 10, data_conclusao: hoje() },
+        { id: '3', tipo: 'quiz', nome: 'Funil Reprovado', candidato: { cpf: '20202020203', cargo_pretendido: 'ASG' }, modulo: 'ASG', pct: 40, acertos: 4, total: 10, data_conclusao: hoje() }
+      ];
+      const pipeline = {
+        'cpf:20202020201': { aprovado: true, entrevista: { decisao: 'aprovado' }, decisao_final: 'contratado' },
+        'cpf:20202020202': { aprovado: true }
+      };
+      const { page, erros } = await abrirDashboard(browser, baseUrl, { perfil: 'admin', resultados, pipeline });
+
+      await page.evaluate(() => switchView('dashboard'));
+      await page.waitForTimeout(300);
+
+      const texto = await page.evaluate(() => document.getElementById('funilRecrutamento').textContent);
+      // 3 candidatos -> 2 aprovados (90% e 80%; 40% fica de fora) -> 2 marcados -> 1 entrevista realizada -> 1 contratado.
+      assert(/Candidatos[\s\S]*?3\b/.test(texto), `funil deveria mostrar 3 candidatos no topo. Conteúdo: ${texto}`);
+      const numeros = await page.evaluate(() => [...document.querySelectorAll('#funilRecrutamento .funil-etapa-val')].map(el => el.textContent.trim()));
+      assert(numeros[0].startsWith('3'), `Candidatos deveria ser 3. Veio: ${numeros[0]}`);
+      assert(numeros[1].startsWith('2'), `Aprovados deveria ser 2. Veio: ${numeros[1]}`);
+      assert(numeros[2].startsWith('2'), `Marcados para entrevista deveria ser 2. Veio: ${numeros[2]}`);
+      assert(numeros[3].startsWith('1'), `Entrevista realizada deveria ser 1. Veio: ${numeros[3]}`);
+      assert(numeros[4].startsWith('1'), `Contratados deveria ser 1. Veio: ${numeros[4]}`);
+
+      // Taxa de contratação: 1 contratado em 3 candidatos = 33%.
+      const taxaContratacao = await page.evaluate(() => document.getElementById('kpiTaxaContratacao').textContent);
+      assertEqual(taxaContratacao, '33%', `taxa de contratação deveria ser 33%. Veio: ${taxaContratacao}`);
+
+      assertEqual(erros.length, 0, 'erros de JS: ' + erros.join(' | '));
+      await page.close();
+    }
   }
 
 ];

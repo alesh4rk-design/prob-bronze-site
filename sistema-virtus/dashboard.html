@@ -152,7 +152,7 @@
   .page-subtitle { font-family:'Share Tech Mono',monospace; font-size:11px; letter-spacing:2px; color:var(--text2); text-transform:uppercase; margin-top:4px; font-weight:600; }
   .page-actions { display:flex; gap:8px; flex-wrap:wrap; }
 
-  .kpi-bar-5 { display:grid; grid-template-columns:repeat(5,1fr); gap:12px; margin-bottom:24px; }
+  .kpi-bar-5 { display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:12px; margin-bottom:24px; }
   @media(max-width:1100px){.kpi-bar-5{grid-template-columns:repeat(3,1fr);}}
   @media(max-width:600px){.kpi-bar-5{grid-template-columns:1fr 1fr;}}
   .kpi-card { background:var(--ink2); border:1px solid var(--line2); border-radius:2px; padding:18px 20px; position:relative; overflow:hidden; }
@@ -235,6 +235,9 @@
   .mod-bar-stats { font-family:'Share Tech Mono',monospace; font-size:11px; color:var(--text2); font-weight:600; }
   .mod-bar-track { height:7px; background:var(--ink4); border-radius:2px; overflow:hidden; }
   .mod-bar-fill  { height:100%; border-radius:2px; background:linear-gradient(90deg,var(--amber),var(--amber3)); transition:width 0.8s cubic-bezier(.4,0,.2,1); }
+  .funil-wrap { display:flex; flex-direction:column; gap:16px; }
+  .funil-etapa-head { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:5px; font-size:13px; color:var(--text); font-weight:600; }
+  .funil-etapa-val { font-family:'Share Tech Mono',monospace; font-size:13px; color:var(--cyan); font-weight:700; }
   .hist-wrap { display:flex; align-items:flex-end; gap:4px; height:80px; }
   .hist-col { flex:1; display:flex; flex-direction:column; align-items:center; gap:4px; height:100%; justify-content:flex-end; }
   .hist-bar { width:100%; border-radius:2px 2px 0 0; min-height:2px; background:var(--amber); opacity:0.7; transition:height 0.6s, opacity 0.2s; }
@@ -1155,10 +1158,15 @@
     <div class="kpi-card cyan"><div class="kpi-icon">📈</div><div class="kpi-val" id="kpiMedia">—</div><div class="kpi-lbl">Média Geral</div></div>
     <div class="kpi-card red"><div class="kpi-icon">⚠️</div><div class="kpi-val" id="kpiReprov">0</div><div class="kpi-lbl">Reprovados (&lt;70%)</div></div>
     <div class="kpi-card purple"><div class="kpi-icon">🏆</div><div class="kpi-val" id="kpiTaxa">—</div><div class="kpi-lbl">Taxa de Aprovação</div></div>
+    <div class="kpi-card green"><div class="kpi-icon">🎉</div><div class="kpi-val" id="kpiTaxaContratacao">—</div><div class="kpi-lbl">Taxa de Contratação</div></div>
   </div>
 
 
   <div class="charts-grid" id="chartsGrid">
+    <div class="panel" style="grid-column:1 / -1;">
+      <div class="panel-head"><div class="panel-title-sm">🔻 Funil de Recrutamento</div></div>
+      <div class="chart-wrap"><div id="funilRecrutamento" class="funil-wrap"></div></div>
+    </div>
     <div class="panel">
       <div class="panel-head"><div class="panel-title-sm">✅ Taxa de Aprovação</div></div>
       <div class="chart-wrap" style="display:flex;align-items:center;justify-content:center;min-height:200px;">
@@ -3052,6 +3060,15 @@
     document.getElementById('kpiReprov').textContent = reprov;
     document.getElementById('kpiMedia').textContent = media === null ? '—' : media + '%';
     document.getElementById('kpiTaxa').textContent = total ? Math.round((aprov / total) * 100) + '%' : '—';
+
+    // Taxa de contratação é por CANDIDATO (não por tentativa) — alguém que
+    // fez 3 testes só conta 1 vez aqui.
+    const kpiTaxaContratacao = document.getElementById('kpiTaxaContratacao');
+    if (kpiTaxaContratacao) {
+      const chaves = new Set(lista.map(r => chaveDe(r)));
+      const contratados = [...chaves].filter(chave => (PIPELINE_MAP[chave.replace(/[/]/g, '_')] || {}).decisao_final === 'contratado').length;
+      kpiTaxaContratacao.textContent = chaves.size ? Math.round((contratados / chaves.size) * 100) + '%' : '—';
+    }
   }
 
   // "Aqui está o que você precisa fazer", não só "aqui estão os dados" —
@@ -3216,6 +3233,60 @@
         <div class="mod-bar-header"><span class="mod-bar-name">${escapeHtml(mod)}</span><span class="mod-bar-stats">${media}% · ${pcts.length} testes</span></div>
         <div class="mod-bar-track"><div class="mod-bar-fill" style="width:${media}%"></div></div>
       </div>`;
+    }).join('');
+  }
+
+  // Funil de Recrutamento (item 14 do roteiro) — mostra onde os candidatos
+  // "somem" no processo: quantos passam do teste pra ser marcados, do
+  // marcado pra entrevista de verdade, e da entrevista pra contratação.
+  // Cada etapa é um subconjunto da anterior, por isso os números só
+  // diminuem (ou empatam) de cima pra baixo.
+  function renderFunil(lista) {
+    const el = document.getElementById('funilRecrutamento');
+    if (!el) return;
+    const porCandidato = {};
+    for (const r of lista) {
+      const chave = chaveDe(r);
+      if (!porCandidato[chave]) porCandidato[chave] = [];
+      porCandidato[chave].push(r);
+    }
+    const chaves = Object.keys(porCandidato);
+    if (!chaves.length) { el.innerHTML = '<div class="empty-state"><div class="empty-icon">🔻</div>Sem dados ainda</div>'; return; }
+
+    let aprovados = 0, marcadosEntrevista = 0, entrevistaRealizada = 0, contratados = 0;
+    for (const chave of chaves) {
+      const media = Math.max(...porCandidato[chave].map(r => r.pct || 0));
+      if (media >= 70) aprovados++;
+      const chaveId = chave.replace(/[/]/g, '_');
+      const p = PIPELINE_MAP[chaveId] || {};
+      // "Marcado pra entrevista" conta quem está aprovado agora OU já
+      // passou por essa etapa antes (decisão final ou entrevista já
+      // registrada) — senão um candidato contratado "sumiria" do funil só
+      // porque o campo `aprovado` foi limpo ao virar decisão final.
+      if (p.aprovado === true || p.decisao_final || p.entrevista) marcadosEntrevista++;
+      if (p.entrevista) entrevistaRealizada++;
+      if (p.decisao_final === 'contratado') contratados++;
+    }
+
+    const etapas = [
+      { lbl: 'Candidatos', valor: chaves.length, icone: '👥' },
+      { lbl: 'Aprovados no teste (≥70%)', valor: aprovados, icone: '✅' },
+      { lbl: 'Marcados para entrevista', valor: marcadosEntrevista, icone: '🎯' },
+      { lbl: 'Entrevista realizada', valor: entrevistaRealizada, icone: '🎤' },
+      { lbl: 'Contratados', valor: contratados, icone: '🏆' }
+    ];
+    const max = etapas[0].valor || 1;
+    el.innerHTML = etapas.map((e, i) => {
+      const pct = Math.round((e.valor / max) * 100);
+      const pctAnterior = i > 0 && etapas[i - 1].valor ? Math.round((e.valor / etapas[i - 1].valor) * 100) : null;
+      return `
+        <div>
+          <div class="funil-etapa-head">
+            <span>${e.icone} ${e.lbl}</span>
+            <span class="funil-etapa-val">${e.valor}${pctAnterior != null ? ` <span style="color:var(--text3);font-weight:400;">(${pctAnterior}% da etapa anterior)</span>` : ''}</span>
+          </div>
+          <div class="mod-bar-track"><div class="mod-bar-fill" style="width:${pct}%"></div></div>
+        </div>`;
     }).join('');
   }
 
@@ -4293,6 +4364,7 @@
       renderChartModulosAprovados(lista);
       renderChartEntrevistas(lista);
       renderModuloBars(lista);
+      renderFunil(lista);
       renderOrigemBars(lista);
       renderPendencias();
       renderDigitacaoDashboard();
