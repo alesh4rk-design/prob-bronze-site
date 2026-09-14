@@ -742,11 +742,17 @@ export const tests = [
       assert(badgeEntrevista.visivel, 'emblema de aptos pra entrevista deveria estar visível');
       assertEqual(badgeEntrevista.texto, '1', 'deveria contar 1 apto pra entrevista');
 
-      // Clicar no sino leva pra aba Pendências.
+      // Clicar no sino abre o painel de notificações (não navega mais direto).
       await page.click('#sinoPendencias');
       await page.waitForTimeout(300);
+      const painelAberto = await page.evaluate(() => document.getElementById('notifPanel').style.display !== 'none');
+      assert(painelAberto, 'clicar no sino deveria abrir o painel de notificações');
+
+      // "Ver tudo" dentro do painel é que leva pra aba Pendências.
+      await page.click('#notifPanel button');
+      await page.waitForTimeout(300);
       const naAba = await page.evaluate(() => document.getElementById('view-pendencias').classList.contains('active'));
-      assert(naAba, 'clicar no sino deveria levar pra aba Pendências');
+      assert(naAba, '"Ver tudo" deveria levar pra aba Pendências');
 
       // Resolvendo a pendência de entrevista (decide contratado), a conta
       // cai de verdade — não é um "dispensar" manual, é a conta real.
@@ -1476,6 +1482,46 @@ export const tests = [
       // Taxa de contratação: 1 contratado em 3 candidatos = 33%.
       const taxaContratacao = await page.evaluate(() => document.getElementById('kpiTaxaContratacao').textContent);
       assertEqual(taxaContratacao, '33%', `taxa de contratação deveria ser 33%. Veio: ${taxaContratacao}`);
+
+      assertEqual(erros.length, 0, 'erros de JS: ' + erros.join(' | '));
+      await page.close();
+    }
+  },
+
+  {
+    name: 'Notificações: lista candidato por candidato (concluiu teste, aprovado, entrevista sem decisão há 24h) e clicar abre a ficha',
+    async run({ browser, baseUrl }) {
+      const agora = hoje();
+      const ha2dias = diasAtras(2);
+      const resultados = [
+        { id: '1', tipo: 'quiz', nome: 'Notif Concluiu', candidato: { cpf: '30303030301', cargo_pretendido: 'ASG' }, modulo: 'ASG', pct: 80, acertos: 8, total: 10, data_conclusao: agora },
+        { id: '2', tipo: 'quiz', nome: 'Notif Aprovado', candidato: { cpf: '30303030302', cargo_pretendido: 'ASG' }, modulo: 'ASG', pct: 80, acertos: 8, total: 10, data_conclusao: agora },
+        { id: '3', tipo: 'quiz', nome: 'Notif Entrevista Antiga', candidato: { cpf: '30303030303', cargo_pretendido: 'ASG' }, modulo: 'ASG', pct: 80, acertos: 8, total: 10, data_conclusao: agora }
+      ];
+      const pipeline = {
+        'cpf:30303030302': { aprovado: true, aprovado_em: agora, etapa: 'aguardando_entrevista' },
+        'cpf:30303030303': { aprovado: true, etapa: 'aguardando_entrevista', entrevista: { decisao: 'aprovado', em: ha2dias } }
+      };
+      const { page, erros } = await abrirDashboard(browser, baseUrl, { perfil: 'admin', resultados, pipeline });
+
+      await page.evaluate(() => toggleNotificacoes());
+      await page.waitForTimeout(300);
+
+      const texto = await page.evaluate(() => document.getElementById('notifPanelBody').textContent);
+      assert(/notif concluiu[\s\S]*concluiu os testes/i.test(texto), `deveria notificar teste concluído. Conteúdo: ${texto}`);
+      assert(/notif aprovado[\s\S]*aprovado para entrevista/i.test(texto), `deveria notificar aprovação para entrevista. Conteúdo: ${texto}`);
+      assert(/notif entrevista antiga[\s\S]*24h sem decis[ãa]o/i.test(texto), `deveria alertar sobre entrevista sem decisão há 24h. Conteúdo: ${texto}`);
+
+      const urgentes = await page.evaluate(() => document.querySelectorAll('#notifPanelBody .notif-item.urgente').length);
+      assertEqual(urgentes, 1, 'deveria ter exatamente 1 notificação urgente (entrevista antiga sem decisão)');
+
+      // Clicar na notificação abre a Ficha 360° do candidato certo e fecha o painel.
+      await page.evaluate(() => document.querySelector('#notifPanelBody .notif-item.urgente').click());
+      await page.waitForTimeout(300);
+      const nomeAberto = await page.evaluate(() => document.getElementById('cmNome').textContent);
+      assert(nomeAberto.includes('Notif Entrevista Antiga'), `deveria abrir a ficha do candidato certo. Veio: ${nomeAberto}`);
+      const painelFechado = await page.evaluate(() => document.getElementById('notifPanel').style.display === 'none');
+      assert(painelFechado, 'painel de notificações deveria fechar ao clicar numa notificação');
 
       assertEqual(erros.length, 0, 'erros de JS: ' + erros.join(' | '));
       await page.close();

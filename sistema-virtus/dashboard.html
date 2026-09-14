@@ -130,6 +130,27 @@
   .theme-toggle { background:var(--ink3); border:1px solid var(--line2); border-radius:30px; width:36px; height:36px; display:flex; align-items:center; justify-content:center; cursor:pointer; transition:all 0.2s; color:var(--text2); font-size:16px; }
   .bell-toggle { position:relative; background:var(--ink3); border:1px solid var(--line2); border-radius:30px; width:36px; height:36px; display:flex; align-items:center; justify-content:center; cursor:pointer; transition:all 0.2s; color:var(--text2); font-size:16px; }
   .bell-toggle:hover { border-color:var(--amber); color:var(--amber); }
+  .notif-panel {
+    position:absolute; top:44px; right:0; width:340px; max-width:90vw;
+    background:var(--ink2); border:1px solid var(--line2); border-radius:6px;
+    box-shadow:0 8px 24px rgba(0,0,0,0.35); z-index:200; overflow:hidden;
+  }
+  .notif-panel-head {
+    display:flex; align-items:center; justify-content:space-between;
+    padding:12px 14px; border-bottom:1px solid var(--line2);
+    font-family:'Rajdhani',sans-serif; font-weight:700; font-size:14px; color:var(--text);
+  }
+  .notif-panel-body { max-height:360px; overflow-y:auto; }
+  .notif-item {
+    display:flex; gap:10px; padding:12px 14px; border-bottom:1px solid var(--line);
+    cursor:pointer; transition:background .15s;
+  }
+  .notif-item:hover { background:var(--ink3); }
+  .notif-item:last-child { border-bottom:none; }
+  .notif-item.urgente { background:var(--reddim); }
+  .notif-icon { font-size:16px; line-height:1.4; }
+  .notif-texto { font-size:12.5px; color:var(--text); line-height:1.4; }
+  .notif-tempo { font-family:'Share Tech Mono',monospace; font-size:10px; color:var(--text3); margin-top:2px; }
   .bell-badge {
     position:absolute; top:-4px; right:-4px; min-width:16px; height:16px; padding:0 4px; border-radius:9px;
     background:var(--red); color:#fff; font-family:'Share Tech Mono',monospace; font-size:9.5px; font-weight:700;
@@ -924,9 +945,18 @@
   </div>
   <div class="hud-right">
     <span class="hud-time" id="hudClock">--:--:--</span>
-    <div class="bell-toggle" id="sinoPendencias" onclick="switchView('pendencias')" title="Ver pendências">
-      🔔
-      <span class="bell-badge" id="sinoPendenciasBadge" style="display:none;">0</span>
+    <div style="position:relative;">
+      <div class="bell-toggle" id="sinoPendencias" onclick="toggleNotificacoes(event)" title="Notificações">
+        🔔
+        <span class="bell-badge" id="sinoPendenciasBadge" style="display:none;">0</span>
+      </div>
+      <div class="notif-panel" id="notifPanel" style="display:none;">
+        <div class="notif-panel-head">
+          <span>🔔 Notificações</span>
+          <button class="btn-act btn-neutral" style="padding:4px 10px;font-size:10px;" onclick="switchView('pendencias');fecharNotificacoes();">Ver tudo</button>
+        </div>
+        <div class="notif-panel-body" id="notifPanelBody"></div>
+      </div>
     </div>
     <div class="theme-toggle" id="themeToggle" onclick="toggleTheme()" title="Alternar tema">🌙</div>
     <span id="authUserBadge" style="display:inline-flex;align-items:center;gap:6px;height:32px;padding:0 12px;border-radius:4px;border:1px solid rgba(232,160,0,0.4);background:rgba(232,160,0,0.08);color:#E8A000;font-size:11px;font-family:'Share Tech Mono',monospace;letter-spacing:1px;">👤 <span id="authUserName">...</span></span>
@@ -3127,7 +3157,97 @@
     const aptos = grupos.aguardando_entrevista.length;
     const badgeEntrevista = document.getElementById('badgeAptosEntrevista');
     if (badgeEntrevista) { badgeEntrevista.textContent = aptos > 99 ? '99+' : String(aptos); badgeEntrevista.style.display = aptos > 0 ? 'flex' : 'none'; }
+
+    // Se o painel de notificações já estiver aberto, atualiza a lista junto
+    // (ex: outra pessoa decidiu um candidato enquanto o painel estava aberto).
+    const painel = document.getElementById('notifPanel');
+    if (painel && painel.style.display !== 'none') renderNotificacoes();
   }
+
+  // ══════════ NOTIFICAÇÕES (item 16 do roteiro) ══════════
+  // Diferente da Central de Pendências (que agrupa/conta), aqui cada
+  // candidato vira uma linha individual e específica — "quem" e "o quê",
+  // não só "quantos". Tudo calculado na hora a partir do que já existe
+  // (resultados + pipeline), sem precisar de uma coleção própria de eventos.
+  function paraDataMs(ts) {
+    if (!ts) return 0;
+    const d = ts.toDate ? ts.toDate() : new Date(ts);
+    return isNaN(d) ? 0 : d.getTime();
+  }
+
+  function gerarNotificacoes() {
+    const notifs = [];
+    const agora = Date.now();
+    const HORAS_24 = 24 * 60 * 60 * 1000;
+
+    for (const c of candidatosAgrupados()) {
+      const chaveId = c.chave.replace(/[/]/g, '_');
+      const p = PIPELINE_MAP[chaveId] || {};
+      const etapa = etapaDoPipeline(p).chave;
+
+      if (etapa === 'testes_concluidos') {
+        notifs.push({ icone: '🔵', texto: `${c.nome} concluiu os testes`, chave: c.chave, nome: c.nome, ts: paraDataMs(c.ultima) });
+      }
+      if (p.aprovado === true && p.aprovado_em) {
+        notifs.push({ icone: '🟢', texto: `${c.nome} foi aprovado para entrevista`, chave: c.chave, nome: c.nome, ts: paraDataMs(p.aprovado_em) });
+      }
+      if (p.entrevista) {
+        const tsEntrevista = paraDataMs(p.entrevista.em);
+        if (p.entrevista.decisao === 'complementar') {
+          notifs.push({ icone: '🟡', texto: `Avaliação complementar pendente: ${c.nome}`, chave: c.chave, nome: c.nome, ts: tsEntrevista });
+        }
+        if (!p.decisao_final && tsEntrevista && (agora - tsEntrevista) >= HORAS_24) {
+          notifs.push({ icone: '⚠️', texto: `Entrevista de ${c.nome} há mais de 24h sem decisão`, chave: c.chave, nome: c.nome, ts: tsEntrevista, urgente: true });
+        }
+      }
+    }
+    notifs.sort((a, b) => b.ts - a.ts);
+    return notifs.slice(0, 30);
+  }
+
+  function renderNotificacoes() {
+    const body = document.getElementById('notifPanelBody');
+    if (!body) return;
+    const notifs = gerarNotificacoes();
+    if (!notifs.length) {
+      body.innerHTML = '<div class="empty-state" style="padding:24px;"><div class="empty-icon">✅</div>Nada novo por aqui.</div>';
+      return;
+    }
+    body.innerHTML = notifs.map(n => `
+      <div class="notif-item ${n.urgente ? 'urgente' : ''}" data-acao="abrirCandidatoNotif" data-chave="${escapeHtml(n.chave)}" data-nome="${escapeHtml(n.nome)}">
+        <span class="notif-icon">${n.icone}</span>
+        <div>
+          <div class="notif-texto">${escapeHtml(n.texto)}</div>
+          <div class="notif-tempo">${n.ts ? fmtDataHora(new Date(n.ts)) : ''}</div>
+        </div>
+      </div>`).join('');
+    ligarAcoesDelegadas('notifPanelBody');
+  }
+
+  function fecharNotifAoClicarFora(ev) {
+    const painel = document.getElementById('notifPanel');
+    const sino = document.getElementById('sinoPendencias');
+    if (painel && !painel.contains(ev.target) && sino && !sino.contains(ev.target)) fecharNotificacoes();
+  }
+
+  window.toggleNotificacoes = function (ev) {
+    if (ev) ev.stopPropagation();
+    const painel = document.getElementById('notifPanel');
+    const abrir = painel.style.display === 'none';
+    if (abrir) {
+      renderNotificacoes();
+      painel.style.display = 'block';
+      setTimeout(() => document.addEventListener('click', fecharNotifAoClicarFora), 0);
+    } else {
+      fecharNotificacoes();
+    }
+  };
+
+  window.fecharNotificacoes = function () {
+    const painel = document.getElementById('notifPanel');
+    if (painel) painel.style.display = 'none';
+    document.removeEventListener('click', fecharNotifAoClicarFora);
+  };
 
   function renderPendencias() {
     const grupos = agruparPendencias();
@@ -3531,6 +3651,7 @@
   const ACOES_TABELA = {
     ignorar: () => {},
     abrirCandidato: el => window.abrirCandidato(el.dataset.chave),
+    abrirCandidatoNotif: el => { window.abrirCandidato(el.dataset.chave); window.fecharNotificacoes(); },
     acoesCandidato: el => window.abrirAcoesCandidato(el.dataset.chave, el.dataset.nome),
     whatsappCandidato: el => window.abrirWhatsappCandidato(el.dataset.chave, el.dataset.nome),
     removerBancoReserva: el => window.alternarBancoReserva(el.dataset.chave, el.dataset.nome, false),
