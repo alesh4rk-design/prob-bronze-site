@@ -762,8 +762,14 @@
       </div>
 
       <div class="field-group">
+        <span class="field-label">CEP</span>
+        <input class="field-input" type="tel" id="inCep" placeholder="00000-000" inputmode="numeric" maxlength="9">
+        <span class="field-msg" id="msgCep"></span>
+      </div>
+
+      <div class="field-group">
         <span class="field-label">Bairro / Região onde mora *</span>
-        <input class="field-input" type="text" id="inCidade" placeholder="Ex: Savassi">
+        <input class="field-input" type="text" id="inCidade" placeholder="Ex: Savassi (ou informe o CEP acima)">
       </div>
 
       <div class="form-sec">▸ Perfil profissional</div>
@@ -1180,6 +1186,44 @@
     if (d.length <= 1) return d;
     return d[0] + ',' + d.slice(1);
   }
+  function maskCEP(v) {
+    const d = onlyDigits(v).slice(0, 8);
+    return d.replace(/(\d{5})(\d)/, '$1-$2');
+  }
+
+  // Busca o bairro automaticamente pelo CEP — ViaCEP é gratuito, sem chave
+  // de API e libera CORS direto do navegador, então não precisa passar pelo
+  // Worker. Só preenche o bairro (não sobrescreve se o candidato já tiver
+  // digitado algo ali) — o campo continua editável manualmente, porque nem
+  // todo CEP tem bairro cadastrado (cidades pequenas, CEP genérico etc.).
+  async function buscarCep(cepDigitado) {
+    const msg = document.getElementById('msgCep');
+    const cep = onlyDigits(cepDigitado);
+    if (cep.length !== 8) {
+      msg.textContent = cep.length ? 'CEP incompleto' : '';
+      msg.className = 'field-msg';
+      return;
+    }
+    msg.textContent = '🔎 Buscando...';
+    msg.className = 'field-msg';
+    try {
+      const resp = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
+      const data = await resp.json();
+      if (data.erro) {
+        msg.textContent = '✕ CEP não encontrado — informe o bairro manualmente';
+        msg.className = 'field-msg err';
+        return;
+      }
+      const bairroInput = document.getElementById('inCidade');
+      const partes = [data.bairro, data.localidade].filter(Boolean).join(' — ');
+      if (partes) bairroInput.value = partes;
+      msg.textContent = '✓ Endereço encontrado';
+      msg.className = 'field-msg ok';
+    } catch (e) {
+      msg.textContent = '✕ Falha ao buscar o CEP — informe o bairro manualmente';
+      msg.className = 'field-msg err';
+    }
+  }
 
   // Validação real de CPF (dígitos verificadores), não só contagem de dígitos.
   function cpfValido(cpf) {
@@ -1277,6 +1321,11 @@
 
     tel.addEventListener('input', () => { tel.value = maskTel(tel.value); });
     alt.addEventListener('input', () => { alt.value = maskAltura(alt.value); });
+
+    const cep = document.getElementById('inCep');
+    cep.addEventListener('input', () => { cep.value = maskCEP(cep.value); });
+    cep.addEventListener('blur', () => buscarCep(cep.value));
+    cep.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); buscarCep(cep.value); } });
 
     popularNascimento();
     const atualizarIdade = () => {
