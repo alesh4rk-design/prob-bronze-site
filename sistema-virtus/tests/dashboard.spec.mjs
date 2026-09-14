@@ -1417,6 +1417,32 @@ export const tests = [
       assertEqual(erros2.length, 0, 'erros de JS: ' + erros2.join(' | '));
       await page2.close();
     }
+  },
+
+  {
+    name: 'Origem dos candidatos: agrupa por candidato (não por tentativa) e calcula taxa de contratação por origem',
+    async run({ browser, baseUrl }) {
+      const resultados = [
+        { id: '1', tipo: 'quiz', nome: 'Origem WhatsApp 1', candidato: { cpf: '11111111101', cargo_pretendido: 'ASG', origem: 'WhatsApp' }, modulo: 'ASG', pct: 80, acertos: 8, total: 10, data_conclusao: hoje() },
+        { id: '2', tipo: 'quiz', nome: 'Origem WhatsApp 2', candidato: { cpf: '11111111102', cargo_pretendido: 'ASG', origem: 'WhatsApp' }, modulo: 'ASG', pct: 60, acertos: 6, total: 10, data_conclusao: hoje() },
+        { id: '3', tipo: 'quiz', nome: 'Origem QR Code', candidato: { cpf: '11111111103', cargo_pretendido: 'ASG', origem: 'QR Code' }, modulo: 'ASG', pct: 90, acertos: 9, total: 10, data_conclusao: hoje() }
+      ];
+      const pipeline = { 'cpf:11111111101': { decisao_final: 'contratado' } };
+      const { page, erros } = await abrirDashboard(browser, baseUrl, { perfil: 'admin', resultados, pipeline });
+
+      await page.evaluate(() => switchView('dashboard'));
+      await page.waitForTimeout(300);
+      const texto = await page.evaluate(() => document.getElementById('origemBars').textContent);
+
+      // 3 candidatos no total: WhatsApp = 2/3 (67%), QR Code = 1/3 (33%).
+      assert(/whatsapp/i.test(texto) && /67%/.test(texto), `deveria mostrar WhatsApp com 67%. Conteúdo: ${texto}`);
+      assert(/qr code/i.test(texto) && /33%/.test(texto), `deveria mostrar QR Code com 33%. Conteúdo: ${texto}`);
+      // WhatsApp: 1 de 2 contratado = 50% de taxa de contratação.
+      assert(/50% contrata/i.test(texto), `taxa de contratação do WhatsApp deveria ser 50%. Conteúdo: ${texto}`);
+
+      assertEqual(erros.length, 0, 'erros de JS: ' + erros.join(' | '));
+      await page.close();
+    }
   }
 
 ];

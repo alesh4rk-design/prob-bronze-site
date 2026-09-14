@@ -1189,6 +1189,10 @@
         <div id="digitacaoDeviceStats" class="digit-device-grid"></div>
       </div>
     </div>
+    <div class="panel" style="grid-column:1 / -1;">
+      <div class="panel-head"><div class="panel-title-sm">📣 Origem dos Candidatos</div></div>
+      <div class="chart-wrap"><div class="mod-bar-list" id="origemBars"><div class="empty-state"><div class="empty-icon">📣</div>Sem dados ainda</div></div></div>
+    </div>
   </div>
 
 
@@ -2185,7 +2189,8 @@
         ['Experiência na área', f.experiencia ? '✓ Sim' : '✕ Não'],
         ['Turno disponível', f.turno],
         ['Disponibilidade total', f.disponibilidade_total == null ? '—' : (f.disponibilidade_total ? '✓ Sim' : '✕ Não')],
-        ['Pendência judicial', f.pendencia_judicial == null ? '—' : (f.pendencia_judicial ? '⚠️ Sim' : '✓ Não'), f.pendencia_judicial ? 'var(--red)' : null]
+        ['Pendência judicial', f.pendencia_judicial == null ? '—' : (f.pendencia_judicial ? '⚠️ Sim' : '✓ Não'), f.pendencia_judicial ? 'var(--red)' : null],
+        ['Como conheceu a vaga', f.origem]
       ];
       html += `
         <div class="tent-card" style="border-color:var(--ambermid);">
@@ -2605,7 +2610,8 @@
         ['Experiência na área', f.experiencia ? 'Sim' : 'Não'],
         ['Disponibilidade de turno', f.turno],
         ['Disponibilidade total', f.disponibilidade_total == null ? '—' : (f.disponibilidade_total ? 'Sim' : 'Não')],
-        ['Pendência judicial', f.pendencia_judicial == null ? '—' : (f.pendencia_judicial ? 'Sim' : 'Não'), f.pendencia_judicial ? '#B32218' : null]
+        ['Pendência judicial', f.pendencia_judicial == null ? '—' : (f.pendencia_judicial ? 'Sim' : 'Não'), f.pendencia_judicial ? '#B32218' : null],
+        ['Como conheceu a vaga', f.origem]
       ];
       h += `
         <div class="pr-sec-title">Ficha do candidato</div>
@@ -3209,6 +3215,43 @@
       return `<div>
         <div class="mod-bar-header"><span class="mod-bar-name">${escapeHtml(mod)}</span><span class="mod-bar-stats">${media}% · ${pcts.length} testes</span></div>
         <div class="mod-bar-track"><div class="mod-bar-fill" style="width:${media}%"></div></div>
+      </div>`;
+    }).join('');
+  }
+
+  // Origem dos candidatos (item 13 do roteiro) — de onde vieram (QR Code,
+  // WhatsApp, indicação...) e a taxa de contratação de cada origem, pra
+  // saber quais canais de divulgação realmente convertem em contratação
+  // (não só em candidatos). Agrupa por candidato (não por tentativa) porque
+  // "origem" é um dado da ficha, preenchido uma vez só.
+  function renderOrigemBars(lista) {
+    const el = document.getElementById('origemBars');
+    if (!el) return;
+    const porCandidato = {};
+    for (const r of lista) {
+      const chave = chaveDe(r);
+      if (!porCandidato[chave]) porCandidato[chave] = [];
+      porCandidato[chave].push(r);
+    }
+    const chaves = Object.keys(porCandidato);
+    if (!chaves.length) { el.innerHTML = '<div class="empty-state"><div class="empty-icon">📣</div>Sem dados ainda</div>'; return; }
+
+    const porOrigem = {};
+    for (const chave of chaves) {
+      const f = fichaDe(porCandidato[chave]);
+      const origem = (f && f.origem) || 'Não informado';
+      if (!porOrigem[origem]) porOrigem[origem] = { total: 0, contratados: 0 };
+      porOrigem[origem].total++;
+      const chaveId = chave.replace(/[/]/g, '_');
+      if ((PIPELINE_MAP[chaveId] || {}).decisao_final === 'contratado') porOrigem[origem].contratados++;
+    }
+    const totalGeral = chaves.length;
+    el.innerHTML = Object.entries(porOrigem).sort((a, b) => b[1].total - a[1].total).map(([origem, dados]) => {
+      const pct = Math.round((dados.total / totalGeral) * 100);
+      const taxaContratacao = dados.total ? Math.round((dados.contratados / dados.total) * 100) : 0;
+      return `<div>
+        <div class="mod-bar-header"><span class="mod-bar-name">${escapeHtml(origem)}</span><span class="mod-bar-stats">${pct}% · ${dados.total} candidato(s) · ${taxaContratacao}% contratação</span></div>
+        <div class="mod-bar-track"><div class="mod-bar-fill" style="width:${pct}%"></div></div>
       </div>`;
     }).join('');
   }
@@ -4250,6 +4293,7 @@
       renderChartModulosAprovados(lista);
       renderChartEntrevistas(lista);
       renderModuloBars(lista);
+      renderOrigemBars(lista);
       renderPendencias();
       renderDigitacaoDashboard();
       renderViolacoes();

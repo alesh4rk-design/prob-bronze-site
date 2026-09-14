@@ -835,6 +835,20 @@
         </div>
       </div>
 
+      <div class="field-group">
+        <span class="field-label">Como você ficou sabendo dessa vaga? *</span>
+        <select class="field-input" id="inOrigem">
+          <option value="">— Selecionar —</option>
+          <option value="QR Code">QR Code</option>
+          <option value="WhatsApp">WhatsApp</option>
+          <option value="Indicação">Indicação de alguém</option>
+          <option value="Site">Site</option>
+          <option value="Instagram">Instagram</option>
+          <option value="Recrutador">Recrutador/RH entrou em contato</option>
+          <option value="Outro">Outro</option>
+        </select>
+      </div>
+
       <div class="form-sec">▸ Avaliação</div>
 
       <div class="form-grid-2">
@@ -1383,6 +1397,9 @@
     const pillPendenciaJudicial = document.querySelector('#inPendenciaJudicial .pill.sel');
     if (!pillPendenciaJudicial) return falha('Informe se possui pendência ou processo em andamento na Justiça', 'inPendenciaJudicial');
 
+    const origem = document.getElementById('inOrigem').value;
+    if (!origem) return falha('Informe como você ficou sabendo dessa vaga', 'inOrigem');
+
     const certificacoes = [...document.querySelectorAll('#inCerts input:checked')].map(c => c.value);
     const experienciaTexto = document.getElementById('inExperienciaTexto').value.trim();
 
@@ -1401,6 +1418,7 @@
       turno,
       disponibilidade_total: pillDispTotal.dataset.val === 'sim',
       pendencia_judicial: pillPendenciaJudicial.dataset.val === 'sim',
+      origem,
       certificacoes
     };
   }
