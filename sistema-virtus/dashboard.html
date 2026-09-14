@@ -5171,7 +5171,11 @@
   window.verUsosCodigo = function (codigo) {
     const porCandidato = new Map();
     for (const r of ALL_RESULTADOS) {
-      if (r.codigoAcesso !== codigo) continue;
+      // codigoAcesso vem de dentro da ficha (r.candidato), não de um campo
+      // solto no resultado — é o mesmo objeto salvo em cada tentativa de
+      // quiz do candidato (ver coletarFicha em quiz.html). Testes de
+      // digitação não carregam ficha própria, por isso não têm esse campo.
+      if (!r.candidato || r.candidato.codigoAcesso !== codigo) continue;
       const chave = chaveDe(r);
       const atual = porCandidato.get(chave);
       if (!atual || (r.data_conclusao || '') < (atual.data_conclusao || '')) {

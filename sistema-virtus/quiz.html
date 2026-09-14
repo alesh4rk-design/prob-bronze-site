@@ -1419,7 +1419,13 @@
       disponibilidade_total: pillDispTotal.dataset.val === 'sim',
       pendencia_judicial: pillPendenciaJudicial.dataset.val === 'sim',
       origem,
-      certificacoes
+      certificacoes,
+      // Guardado na própria ficha (não só numa variável solta) pra sobreviver
+      // junto do candidato em `resultados.candidato` — é o que permite ao
+      // Dashboard mostrar "quem usou este código" (ver dashboard.html,
+      // verUsosCodigo). Sem isso, o código de acesso nunca chegava a ser
+      // salvo em lugar nenhum além da própria coleção codigos_acesso.
+      codigoAcesso: globalCodigoAcesso || null
     };
   }
 

@@ -1551,9 +1551,9 @@ export const tests = [
         { codigo: '384720', ativo: true, usos: 3, criado_por: 'Avaliador Teste', criado_em: agora }
       ];
       const resultados = [
-        { id: '1', tipo: 'quiz', nome: 'Ana Usou Código', candidato: { cpf: '40404040401', cargo_pretendido: 'ASG' }, modulo: 'ASG', pct: 80, acertos: 8, total: 10, data_conclusao: agora, codigoAcesso: '384720' },
-        { id: '2', tipo: 'quiz', nome: 'Beto Usou Código', candidato: { cpf: '40404040402', cargo_pretendido: 'ASG' }, modulo: 'ASG', pct: 70, acertos: 7, total: 10, data_conclusao: agora, codigoAcesso: '384720' },
-        { id: '3', tipo: 'quiz', nome: 'Cida Sem Código', candidato: { cpf: '40404040403', cargo_pretendido: 'ASG' }, modulo: 'ASG', pct: 60, acertos: 6, total: 10, data_conclusao: agora, codigoAcesso: '999999' }
+        { id: '1', tipo: 'quiz', nome: 'Ana Usou Código', candidato: { cpf: '40404040401', cargo_pretendido: 'ASG', codigoAcesso: '384720' }, modulo: 'ASG', pct: 80, acertos: 8, total: 10, data_conclusao: agora },
+        { id: '2', tipo: 'quiz', nome: 'Beto Usou Código', candidato: { cpf: '40404040402', cargo_pretendido: 'ASG', codigoAcesso: '384720' }, modulo: 'ASG', pct: 70, acertos: 7, total: 10, data_conclusao: agora },
+        { id: '3', tipo: 'quiz', nome: 'Cida Sem Código', candidato: { cpf: '40404040403', cargo_pretendido: 'ASG', codigoAcesso: '999999' }, modulo: 'ASG', pct: 60, acertos: 6, total: 10, data_conclusao: agora }
       ];
       const { page, erros } = await abrirDashboard(browser, baseUrl, { perfil: 'admin', resultados, codigosAcesso });
 
