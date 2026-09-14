@@ -807,6 +807,21 @@ export const tests = [
       assert(/pontos fortes[\s\S]*atendimento/i.test(texto), `Atendimento deveria estar em pontos fortes. Conteúdo: ${texto}`);
       assert(/a desenvolver[\s\S]*informática/i.test(texto), `Informática deveria estar em "a desenvolver". Conteúdo: ${texto}`);
 
+      // Perfil de Competências: mesmos números, em barra — inclui digitação
+      // (45 PPM em desktop, escala de teto 50 => 90%).
+      assert(texto.includes('Perfil de Competências'), `deveria ter a seção Perfil de Competências. Conteúdo: ${texto}`);
+      const barras = await page.evaluate(() => {
+        const card = [...document.querySelectorAll('#cmConteudo .tent-card')]
+          .find(c => c.textContent.includes('Perfil de Competências'));
+        return [...card.querySelectorAll('.mod-bar-track')].map(track => ({
+          label: track.previousElementSibling.textContent,
+          width: track.querySelector('.mod-bar-fill').style.width
+        }));
+      });
+      assert(barras.some(b => /atendimento/i.test(b.label) && b.width === '90%'), `deveria ter barra Atendimento 90%. Barras: ${JSON.stringify(barras)}`);
+      assert(barras.some(b => /informática/i.test(b.label) && b.width === '60%'), `deveria ter barra Informática 60%. Barras: ${JSON.stringify(barras)}`);
+      assert(barras.some(b => /digitação/i.test(b.label) && b.width === '90%'), `deveria ter barra Digitação 90% (45 PPM/50). Barras: ${JSON.stringify(barras)}`);
+
       // Decisão: botões de ação aparecem direto na ficha (sem precisar abrir
       // outro menu), pro perfil admin.
       assert(texto.includes('Decisão'), `deveria ter a seção Decisão. Conteúdo: ${texto}`);
