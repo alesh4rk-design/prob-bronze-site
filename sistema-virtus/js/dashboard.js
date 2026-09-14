@@ -335,7 +335,13 @@ export async function definirAprovacaoManual(chave, aprovado, nome, avaliador, p
 // agora, guardado pra quando surgir uma vaga futura. Exclusiva com
 // aprovação/decisão final — entrar no banco tira o candidato do funil
 // ativo (Aprovados/Contratados), e aprovar/decidir de novo tira do banco.
-export async function definirBancoReserva(chave, valor, nome, avaliador, perfilAvaliador) {
+// `avaliacaoBanco` (opcional, só quando valor === true): { criterios, media,
+// motivo, observacoes } — registrado pela janela de avaliação que abre ao
+// colocar alguém no banco (ver dashboard.html, confirmarAvaliacaoBanco). Não
+// se aplica a resultados vindos do teste (isso já é o Score Virtus) — é a
+// impressão da equipe sobre o candidato, pra decidir rápido quando surgir
+// uma vaga compatível.
+export async function definirBancoReserva(chave, valor, nome, avaliador, perfilAvaliador, avaliacaoBanco) {
   const id = chave.replace(/[/]/g, "_");
   const etapa = valor ? "banco_reserva" : "testes_concluidos";
   const dados = {
@@ -355,6 +361,17 @@ export async function definirBancoReserva(chave, valor, nome, avaliador, perfilA
     dados.decisao_final_por = deleteField();
     dados.decisao_final_por_perfil = deleteField();
     dados.decisao_final_em = deleteField();
+    if (avaliacaoBanco) {
+      dados.banco_reserva_avaliacao = avaliacaoBanco.criterios || null;
+      dados.banco_reserva_avaliacao_media = avaliacaoBanco.media ?? null;
+      dados.banco_reserva_motivo = avaliacaoBanco.motivo || null;
+      dados.banco_reserva_observacoes = avaliacaoBanco.observacoes || null;
+    }
+  } else {
+    dados.banco_reserva_avaliacao = deleteField();
+    dados.banco_reserva_avaliacao_media = deleteField();
+    dados.banco_reserva_motivo = deleteField();
+    dados.banco_reserva_observacoes = deleteField();
   }
   await setDoc(doc(db, "pipeline", id), dados, { merge: true });
   await registrarHistorico(chave, { etapa, nome, por: avaliador, por_perfil: perfilAvaliador });
@@ -406,7 +423,8 @@ export async function registrarEntrevista(chave, dados, nome, quem, perfilQuem) 
       decisao: dados.decisao,
       disponibilidade_escala: dados.disponibilidadeEscala,
       experiencia_anterior: dados.experienciaAnterior,
-      avaliacao_estrelas: dados.avaliacaoEstrelas,
+      avaliacao: dados.avaliacao || null,
+      avaliacao_media: dados.avaliacaoMedia ?? null,
       observacoes: dados.observacoes || null,
       por: quem || null,
       por_perfil: perfilQuem || null,

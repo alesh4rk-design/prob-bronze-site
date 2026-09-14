@@ -1150,12 +1150,8 @@
           <div class="pill" data-val="nao">✕ Não</div>
         </div>
       </div>
-      <div class="field-group">
-        <span class="field-label">Avaliação comportamental</span>
-        <div id="entrevistaEstrelas" style="font-size:26px;letter-spacing:4px;cursor:pointer;">
-          <span data-estrela="1">☆</span><span data-estrela="2">☆</span><span data-estrela="3">☆</span><span data-estrela="4">☆</span><span data-estrela="5">☆</span>
-        </div>
-      </div>
+      <div class="form-sec">▸ Avaliação da entrevista</div>
+      <div id="entrevistaCriterios"></div>
       <div class="field-group">
         <span class="field-label">Observações</span>
         <textarea class="field-input" id="entrevistaObservacoes" rows="4" style="width:100%;resize:vertical;font-family:inherit;line-height:1.5;" placeholder="Impressões da entrevista, pontos discutidos, ressalvas..."></textarea>
@@ -1166,6 +1162,45 @@
       <button class="btn-act btn-neutral" style="padding:12px 16px;border-radius:6px;background:var(--amberdim);color:var(--amber);border-color:var(--ambermid);" onclick="concluirEntrevista('complementar')">🟡 Avaliação complementar</button>
       <button class="btn-act btn-danger" style="padding:12px 16px;border-radius:6px;" onclick="concluirEntrevista('reprovado')">🔴 Reprovar</button>
       <button class="btn-act btn-approve-admin" style="padding:12px 16px;border-radius:6px;" onclick="concluirEntrevista('aprovado')">🟢 Aprovar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ MODAL: AVALIAÇÃO PARA BANCO DE RESERVA ══════════ -->
+<div class="modal-back" id="avaliacaoBancoModal" onclick="if(event.target===this)fecharAvaliacaoBanco()">
+  <div class="modal-card" style="max-width:520px;">
+    <div class="modal-top">
+      <div class="modal-avatar">🏦</div>
+      <div>
+        <div class="modal-cand-nome">Avaliação — Banco de Reserva</div>
+        <div class="modal-cand-sub" id="bancoAvalNomeCandidato">—</div>
+      </div>
+      <button class="modal-close" onclick="fecharAvaliacaoBanco()" title="Fechar">✕</button>
+    </div>
+    <div class="modal-scroll" style="padding:20px;">
+      <div style="font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--text3);margin-bottom:14px;">
+        Registre por que este candidato vai pro banco em vez de aprovado/reprovado direto — ajuda a decidir rápido quando surgir uma vaga compatível.
+      </div>
+      <div class="field-group">
+        <span class="field-label">Motivo</span>
+        <select class="field-input" id="bancoAvalMotivo">
+          <option value="">— Selecionar —</option>
+          <option value="sem_vaga">Sem vaga disponível no momento</option>
+          <option value="sem_disponibilidade">Sem disponibilidade imediata</option>
+          <option value="perfil_proximo">Bom perfil, mas não ideal pra vaga atual</option>
+          <option value="outro">Outro</option>
+        </select>
+      </div>
+      <div class="form-sec">▸ Avaliação do candidato</div>
+      <div id="bancoAvalCriterios"></div>
+      <div class="field-group">
+        <span class="field-label">Observações</span>
+        <textarea class="field-input" id="bancoAvalObservacoes" rows="3" style="width:100%;resize:vertical;font-family:inherit;line-height:1.5;" placeholder="Detalhes adicionais..."></textarea>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-act btn-neutral" style="padding:12px 16px;border-radius:6px;" onclick="fecharAvaliacaoBanco()">Cancelar</button>
+      <button class="btn-act btn-neutral" style="padding:12px 16px;border-radius:6px;background:#7C5CFF22;color:#8B7CFF;border-color:#7C5CFF66;" onclick="confirmarAvaliacaoBanco()">🏦 Confirmar Banco de Reserva</button>
     </div>
   </div>
 </div>
@@ -2181,6 +2216,8 @@
     if (document.getElementById('confirmModal').classList.contains('show')) responderConfirmacao(false);
     if (document.getElementById('whatsappCandModal').classList.contains('show')) fecharWhatsappCandidato();
     if (document.getElementById('acoesCandModal').classList.contains('show')) fecharAcoesModal();
+    if (document.getElementById('entrevistaModal').classList.contains('show')) fecharEntrevista();
+    if (document.getElementById('avaliacaoBancoModal').classList.contains('show')) fecharAvaliacaoBanco();
   });
 
   function renderModalCandidato() {
@@ -2526,13 +2563,53 @@
             <div class="ficha-grid">
               <div class="ficha-item"><div class="ficha-lbl">Disponibilidade 12x36</div><div class="ficha-val">${ent.disponibilidade_escala ? '✓ Sim' : '✕ Não'}</div></div>
               <div class="ficha-item"><div class="ficha-lbl">Experiência anterior</div><div class="ficha-val">${ent.experiencia_anterior ? '✓ Sim' : '✕ Não'}</div></div>
-              <div class="ficha-item"><div class="ficha-lbl">Avaliação comportamental</div><div class="ficha-val">${ent.avaliacao_estrelas ? '★'.repeat(ent.avaliacao_estrelas) + '☆'.repeat(5 - ent.avaliacao_estrelas) : '—'}</div></div>
+              ${ent.avaliacao_media != null ? `<div class="ficha-item"><div class="ficha-lbl">Média da avaliação</div><div class="ficha-val" style="color:${corNota(ent.avaliacao_media * 20)};font-weight:700;">${ent.avaliacao_media} / 5</div></div>` : ''}
               <div class="ficha-item"><div class="ficha-lbl">Entrevistador</div><div class="ficha-val">${escapeHtml(ent.por || '—')}</div></div>
             </div>
+            ${ent.avaliacao ? `
+            <div style="display:flex;flex-direction:column;gap:4px;margin-top:12px;">
+              ${CRITERIOS_AVALIACAO.map(c => ent.avaliacao[c.id] ? `
+                <div style="display:flex;justify-content:space-between;font-size:12px;">
+                  <span style="color:var(--text3);">${c.label}</span>
+                  <span style="color:var(--amber);">${'★'.repeat(ent.avaliacao[c.id])}${'☆'.repeat(5 - ent.avaliacao[c.id])}</span>
+                </div>` : '').join('')}
+            </div>` : ''}
             ${ent.observacoes ? `
             <div class="ficha-item" style="margin-top:10px;">
               <div class="ficha-lbl">Observações</div>
               <div class="ficha-val" style="margin-top:5px;white-space:pre-wrap;">${escapeHtml(ent.observacoes)}</div>
+            </div>` : ''}
+          </div>
+        </div>`;
+    }
+
+    // ── Banco de Reserva — mesma lógica do card de Entrevista: mostra a
+    // avaliação registrada na hora de colocar o candidato lá (ver
+    // confirmarAvaliacaoBanco), não só o fato de estar no banco.
+    if (pInfo.banco_reserva === true && pInfo.banco_reserva_avaliacao) {
+      const motivoLbl = { sem_vaga: 'Sem vaga disponível no momento', sem_disponibilidade: 'Sem disponibilidade imediata', perfil_proximo: 'Bom perfil, mas não ideal pra vaga atual', outro: 'Outro' }[pInfo.banco_reserva_motivo] || pInfo.banco_reserva_motivo || '—';
+      html += `
+        <div class="tent-card" style="border-color:#7C5CFF66;">
+          <div class="tent-head" style="background:#7C5CFF1a;">
+            <div class="tent-mod" style="color:#8B7CFF;">🏦 Banco de Reserva</div>
+          </div>
+          <div class="tent-body">
+            <div class="ficha-grid">
+              <div class="ficha-item"><div class="ficha-lbl">Motivo</div><div class="ficha-val">${escapeHtml(motivoLbl)}</div></div>
+              ${pInfo.banco_reserva_avaliacao_media != null ? `<div class="ficha-item"><div class="ficha-lbl">Média da avaliação</div><div class="ficha-val" style="color:${corNota(pInfo.banco_reserva_avaliacao_media * 20)};font-weight:700;">${pInfo.banco_reserva_avaliacao_media} / 5</div></div>` : ''}
+              <div class="ficha-item"><div class="ficha-lbl">Registrado por</div><div class="ficha-val">${escapeHtml(pInfo.banco_reserva_por || '—')}</div></div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:4px;margin-top:12px;">
+              ${CRITERIOS_AVALIACAO.map(c => pInfo.banco_reserva_avaliacao[c.id] ? `
+                <div style="display:flex;justify-content:space-between;font-size:12px;">
+                  <span style="color:var(--text3);">${c.label}</span>
+                  <span style="color:var(--amber);">${'★'.repeat(pInfo.banco_reserva_avaliacao[c.id])}${'☆'.repeat(5 - pInfo.banco_reserva_avaliacao[c.id])}</span>
+                </div>` : '').join('')}
+            </div>
+            ${pInfo.banco_reserva_observacoes ? `
+            <div class="ficha-item" style="margin-top:10px;">
+              <div class="ficha-lbl">Observações</div>
+              <div class="ficha-val" style="margin-top:5px;white-space:pre-wrap;">${escapeHtml(pInfo.banco_reserva_observacoes)}</div>
             </div>` : ''}
           </div>
         </div>`;
@@ -4119,20 +4196,62 @@
     }
   };
 
+  // ══════════ CRITÉRIOS DE AVALIAÇÃO (entrevista + banco de reserva) ══════════
+  // Compartilhados pelas duas janelas: em vez de uma nota única "comportamental",
+  // cada critério tem sua própria estrela, e a média entra automaticamente
+  // como referência pra comparar candidatos depois (junto do Score Virtus,
+  // que é a nota dos TESTES — isso aqui é a nota da ENTREVISTA/impressão
+  // pessoal, uma coisa não substitui a outra).
+  const CRITERIOS_AVALIACAO = [
+    { id: 'postura', label: '🧍 Postura e apresentação' },
+    { id: 'comunicacao', label: '💬 Comunicação' },
+    { id: 'confianca', label: '💪 Confiança / segurança nas respostas' },
+    { id: 'conhecimento', label: '🧠 Conhecimento técnico / experiência' },
+    { id: 'proatividade', label: '⚡ Proatividade / atitude' }
+  ];
+  function criteriosAvaliacaoHTML() {
+    return CRITERIOS_AVALIACAO.map(c => `
+      <div class="field-group">
+        <span class="field-label">${c.label}</span>
+        <div class="crit-estrelas" data-criterio="${c.id}" style="font-size:24px;letter-spacing:4px;cursor:pointer;">
+          <span data-estrela="1">☆</span><span data-estrela="2">☆</span><span data-estrela="3">☆</span><span data-estrela="4">☆</span><span data-estrela="5">☆</span>
+        </div>
+      </div>`).join('');
+  }
+  function renderEstrelasBloco(bloco, qtd) {
+    bloco.querySelectorAll('span').forEach(el => {
+      const v = Number(el.dataset.estrela);
+      el.textContent = v <= qtd ? '★' : '☆';
+      el.style.color = v <= qtd ? 'var(--amber)' : 'var(--text4)';
+    });
+  }
+  function ligarEstrelasCriterios(containerId, store) {
+    document.querySelectorAll(`#${containerId} .crit-estrelas`).forEach(bloco => {
+      const crit = bloco.dataset.criterio;
+      bloco.querySelectorAll('span').forEach(el => {
+        el.onclick = () => { store[crit] = Number(el.dataset.estrela); renderEstrelasBloco(bloco, store[crit]); };
+      });
+    });
+  }
+  function resetEstrelasCriterios(containerId, store) {
+    Object.keys(store).forEach(k => delete store[k]);
+    document.querySelectorAll(`#${containerId} .crit-estrelas`).forEach(bloco => renderEstrelasBloco(bloco, 0));
+  }
+  function mediaNotas(store) {
+    const vals = Object.values(store).filter(v => v > 0);
+    return vals.length ? Math.round((vals.reduce((a, b) => a + b, 0) / vals.length) * 10) / 10 : null;
+  }
+  function faltaAvaliarCriterio(store) {
+    return CRITERIOS_AVALIACAO.some(c => !store[c.id]);
+  }
+
   // ══════════ ENTREVISTA (registro estruturado) ══════════
   let ENTREVISTA_CHAVE_ATUAL = null;
   let ENTREVISTA_NOME_ATUAL = null;
-  let ENTREVISTA_ESTRELAS_ATUAL = 0;
+  const ENTREVISTA_NOTAS = {};
 
-  function renderEstrelas(qtd) {
-    document.querySelectorAll('#entrevistaEstrelas span').forEach(el => {
-      el.textContent = Number(el.dataset.estrela) <= qtd ? '★' : '☆';
-      el.style.color = Number(el.dataset.estrela) <= qtd ? 'var(--amber)' : 'var(--text4)';
-    });
-  }
-  document.querySelectorAll('#entrevistaEstrelas span').forEach(el => {
-    el.onclick = () => { ENTREVISTA_ESTRELAS_ATUAL = Number(el.dataset.estrela); renderEstrelas(ENTREVISTA_ESTRELAS_ATUAL); };
-  });
+  document.getElementById('entrevistaCriterios').innerHTML = criteriosAvaliacaoHTML();
+  ligarEstrelasCriterios('entrevistaCriterios', ENTREVISTA_NOTAS);
   document.querySelectorAll('#entrevistaDisponibilidade .pill, #entrevistaExperiencia .pill').forEach(p => {
     p.onclick = () => {
       p.parentElement.querySelectorAll('.pill').forEach(x => x.classList.remove('sel'));
@@ -4143,11 +4262,10 @@
   window.abrirEntrevista = function (chave, nome) {
     ENTREVISTA_CHAVE_ATUAL = chave;
     ENTREVISTA_NOME_ATUAL = nome;
-    ENTREVISTA_ESTRELAS_ATUAL = 0;
     document.getElementById('entrevistaNomeCandidato').textContent = nome;
     document.querySelectorAll('#entrevistaDisponibilidade .pill, #entrevistaExperiencia .pill').forEach(p => p.classList.remove('sel'));
     document.getElementById('entrevistaObservacoes').value = '';
-    renderEstrelas(0);
+    resetEstrelasCriterios('entrevistaCriterios', ENTREVISTA_NOTAS);
     document.getElementById('entrevistaModal').classList.add('show');
   };
 
@@ -4161,12 +4279,14 @@
     const pillDisp = document.querySelector('#entrevistaDisponibilidade .pill.sel');
     const pillExp = document.querySelector('#entrevistaExperiencia .pill.sel');
     if (!pillDisp || !pillExp) { toast('❌ Responda as duas perguntas de sim/não antes de concluir', 'err'); return; }
+    if (faltaAvaliarCriterio(ENTREVISTA_NOTAS)) { toast('❌ Avalie todos os critérios antes de concluir', 'err'); return; }
 
     const dados = {
       decisao,
       disponibilidadeEscala: pillDisp.dataset.val === 'sim',
       experienciaAnterior: pillExp.dataset.val === 'sim',
-      avaliacaoEstrelas: ENTREVISTA_ESTRELAS_ATUAL || null,
+      avaliacao: { ...ENTREVISTA_NOTAS },
+      avaliacaoMedia: mediaNotas(ENTREVISTA_NOTAS),
       observacoes: document.getElementById('entrevistaObservacoes').value.trim()
     };
     try {
@@ -4204,6 +4324,9 @@
     }
   };
 
+  // Colocar no banco de reserva abre uma avaliação antes de confirmar (ver
+  // avaliacaoBancoModal) — remover do banco continua sendo direto, sem
+  // avaliação, porque nesse caso não há nada novo pra registrar.
   window.alternarBancoReserva = async function (chave, nome, valor) {
     const chaveId = chave.replace(/[/]/g, '_');
     const pipelineInfo = PIPELINE_MAP[chaveId] || {};
@@ -4216,9 +4339,54 @@
       );
       if (!ok) return;
     }
+    if (valor) { window.abrirAvaliacaoBanco(chave, nome); return; }
     try {
-      await definirBancoReserva(chave, valor, nome, me.usuario, me.perfil);
-      toast(valor ? '🏦 Adicionado ao banco de reserva' : '↩ Removido do banco de reserva', 'ok');
+      await definirBancoReserva(chave, false, nome, me.usuario, me.perfil);
+      toast('↩ Removido do banco de reserva', 'ok');
+    } catch (e) {
+      console.error(e);
+      toast('❌ Falha: ' + e.message, 'err');
+    }
+  };
+
+  // ══════════ AVALIAÇÃO — BANCO DE RESERVA ══════════
+  let BANCO_AVAL_CHAVE_ATUAL = null;
+  let BANCO_AVAL_NOME_ATUAL = null;
+  const BANCO_AVAL_NOTAS = {};
+
+  document.getElementById('bancoAvalCriterios').innerHTML = criteriosAvaliacaoHTML();
+  ligarEstrelasCriterios('bancoAvalCriterios', BANCO_AVAL_NOTAS);
+
+  window.abrirAvaliacaoBanco = function (chave, nome) {
+    BANCO_AVAL_CHAVE_ATUAL = chave;
+    BANCO_AVAL_NOME_ATUAL = nome;
+    document.getElementById('bancoAvalNomeCandidato').textContent = nome;
+    document.getElementById('bancoAvalMotivo').value = '';
+    document.getElementById('bancoAvalObservacoes').value = '';
+    resetEstrelasCriterios('bancoAvalCriterios', BANCO_AVAL_NOTAS);
+    document.getElementById('avaliacaoBancoModal').classList.add('show');
+  };
+
+  window.fecharAvaliacaoBanco = function () {
+    document.getElementById('avaliacaoBancoModal').classList.remove('show');
+    BANCO_AVAL_CHAVE_ATUAL = null;
+    BANCO_AVAL_NOME_ATUAL = null;
+  };
+
+  window.confirmarAvaliacaoBanco = async function () {
+    const motivo = document.getElementById('bancoAvalMotivo').value;
+    if (!motivo) { toast('❌ Selecione o motivo antes de confirmar', 'err'); return; }
+    if (faltaAvaliarCriterio(BANCO_AVAL_NOTAS)) { toast('❌ Avalie todos os critérios antes de confirmar', 'err'); return; }
+
+    try {
+      await definirBancoReserva(BANCO_AVAL_CHAVE_ATUAL, true, BANCO_AVAL_NOME_ATUAL, me.usuario, me.perfil, {
+        criterios: { ...BANCO_AVAL_NOTAS },
+        media: mediaNotas(BANCO_AVAL_NOTAS),
+        motivo,
+        observacoes: document.getElementById('bancoAvalObservacoes').value.trim()
+      });
+      toast('🏦 Adicionado ao banco de reserva', 'ok');
+      fecharAvaliacaoBanco();
     } catch (e) {
       console.error(e);
       toast('❌ Falha: ' + e.message, 'err');

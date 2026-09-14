@@ -584,8 +584,16 @@ export const tests = [
       let aprovados = await page.evaluate(() => document.getElementById('bancoTableBody').innerText);
       assert(aprovados.includes('Etapa Unica'), `deveria estar em Aprovados depois de marcado. Conteúdo: ${aprovados}`);
 
-      // Agora coloca no banco de reserva — deve SAIR de Aprovados.
+      // Agora coloca no banco de reserva — abre a janela de avaliação, que
+      // precisa ser preenchida (motivo + critérios) antes de confirmar.
       await page.evaluate(() => window.alternarBancoReserva('nome:etapa unica', 'Etapa Unica', true));
+      await page.waitForTimeout(200);
+      await page.evaluate(() => {
+        document.getElementById('bancoAvalMotivo').value = 'sem_vaga';
+        document.querySelectorAll('#bancoAvalCriterios .crit-estrelas').forEach(bloco =>
+          bloco.querySelector('span[data-estrela="3"]').click());
+      });
+      await page.evaluate(() => confirmarAvaliacaoBanco());
       await page.waitForTimeout(300);
       aprovados = await page.evaluate(() => document.getElementById('bancoTableBody').innerText);
       assert(!aprovados.includes('Etapa Unica'), `deveria ter saído de Aprovados ao entrar no banco de reserva. Conteúdo: ${aprovados}`);
@@ -1226,7 +1234,8 @@ export const tests = [
       await page.evaluate(() => {
         document.querySelector('#entrevistaDisponibilidade .pill[data-val="sim"]').click();
         document.querySelector('#entrevistaExperiencia .pill[data-val="nao"]').click();
-        document.querySelector('#entrevistaEstrelas span[data-estrela="4"]').click();
+        document.querySelectorAll('#entrevistaCriterios .crit-estrelas').forEach(bloco =>
+          bloco.querySelector('span[data-estrela="4"]').click());
         document.getElementById('entrevistaObservacoes').value = 'Boa comunicação, um pouco tímido.';
       });
       await page.evaluate(() => concluirEntrevista('aprovado'));
@@ -1236,7 +1245,8 @@ export const tests = [
       assertEqual(gravado.decisao, 'aprovado', 'decisão da entrevista deveria ser "aprovado"');
       assertEqual(gravado.disponibilidade_escala, true, 'disponibilidade deveria ser true');
       assertEqual(gravado.experiencia_anterior, false, 'experiência anterior deveria ser false');
-      assertEqual(gravado.avaliacao_estrelas, 4, 'avaliação deveria ser 4 estrelas');
+      assertEqual(gravado.avaliacao_media, 4, 'média da avaliação deveria ser 4 (todos os critérios com 4 estrelas)');
+      assertEqual(gravado.avaliacao.postura, 4, 'critério "postura" deveria ter sido gravado com 4 estrelas');
 
       const decisaoFinalAinda = await page.evaluate(() => window.__PIPE['cpf:40404040404'].decisao_final);
       assert(!decisaoFinalAinda, 'aprovar na entrevista não deveria decidir Contratado/Recusado sozinho');
@@ -1264,6 +1274,8 @@ export const tests = [
       await page.evaluate(() => {
         document.querySelector('#entrevistaDisponibilidade .pill[data-val="nao"]').click();
         document.querySelector('#entrevistaExperiencia .pill[data-val="nao"]').click();
+        document.querySelectorAll('#entrevistaCriterios .crit-estrelas').forEach(bloco =>
+          bloco.querySelector('span[data-estrela="2"]').click());
       });
       await page.evaluate(() => concluirEntrevista('reprovado'));
       await page.waitForTimeout(300);
@@ -1291,6 +1303,8 @@ export const tests = [
       await page.evaluate(() => {
         document.querySelector('#entrevistaDisponibilidade .pill[data-val="sim"]').click();
         document.querySelector('#entrevistaExperiencia .pill[data-val="sim"]').click();
+        document.querySelectorAll('#entrevistaCriterios .crit-estrelas').forEach(bloco =>
+          bloco.querySelector('span[data-estrela="3"]').click());
       });
       await page.evaluate(() => concluirEntrevista('complementar'));
       await page.waitForTimeout(300);
@@ -1306,6 +1320,51 @@ export const tests = [
       await page.waitForTimeout(200);
       const lista = await page.evaluate(() => document.getElementById('pendenciasLista').textContent);
       assert(lista.includes('Entrevista Complementar'), `candidato deveria aparecer no filtro de avaliação complementar. Lista: ${lista}`);
+
+      assertEqual(erros.length, 0, 'erros de JS: ' + erros.join(' | '));
+      await page.close();
+    }
+  },
+
+  {
+    name: 'Banco de Reserva: colocar candidato exige avaliação (motivo + critérios), registrada na Ficha 360°',
+    async run({ browser, baseUrl }) {
+      const resultados = [{ id: '1', tipo: 'quiz', nome: 'Vai Pro Banco', candidato: { cpf: '70707070707', cargo_pretendido: 'ASG' }, modulo: 'ASG', pct: 75, acertos: 7, total: 10, data_conclusao: hoje() }];
+      const { page, erros } = await abrirDashboard(browser, baseUrl, { perfil: 'admin', resultados });
+
+      await page.evaluate(() => abrirCandidato('cpf:70707070707'));
+      await page.waitForTimeout(300);
+      await page.click('[data-acao="toggleBanco"]');
+      await page.waitForTimeout(200);
+
+      const modalAberto = await page.evaluate(() => document.getElementById('avaliacaoBancoModal').classList.contains('show'));
+      assert(modalAberto, 'colocar no banco deveria abrir a janela de avaliação');
+
+      // Sem motivo nem critérios avaliados, não deixa confirmar.
+      await page.evaluate(() => confirmarAvaliacaoBanco());
+      await page.waitForTimeout(200);
+      let aindaAberto = await page.evaluate(() => document.getElementById('avaliacaoBancoModal').classList.contains('show'));
+      assert(aindaAberto, 'não deveria confirmar sem motivo e sem avaliar os critérios');
+
+      await page.evaluate(() => {
+        document.getElementById('bancoAvalMotivo').value = 'sem_disponibilidade';
+        document.getElementById('bancoAvalObservacoes').value = 'Bom candidato, mas sem disponibilidade agora.';
+        document.querySelectorAll('#bancoAvalCriterios .crit-estrelas').forEach(bloco =>
+          bloco.querySelector('span[data-estrela="5"]').click());
+      });
+      await page.evaluate(() => confirmarAvaliacaoBanco());
+      await page.waitForTimeout(300);
+
+      const p = await page.evaluate(() => window.__PIPE['cpf:70707070707']);
+      assertEqual(p.banco_reserva, true, 'candidato deveria estar no banco de reserva');
+      assertEqual(p.banco_reserva_motivo, 'sem_disponibilidade', 'motivo deveria ter sido gravado');
+      assertEqual(p.banco_reserva_avaliacao_media, 5, 'média da avaliação deveria ser 5');
+      assertEqual(p.banco_reserva_avaliacao.comunicacao, 5, 'critério "comunicação" deveria ter sido gravado com 5 estrelas');
+
+      const texto = await page.evaluate(() => document.getElementById('cmConteudo').innerText);
+      assert(texto.includes('Banco de Reserva'), `Ficha 360° deveria mostrar o card de Banco de Reserva. Conteúdo: ${texto}`);
+      assert(/sem disponibilidade imediata/i.test(texto), `motivo deveria aparecer na ficha. Conteúdo: ${texto}`);
+      assert(/bom candidato, mas sem disponibilidade agora/i.test(texto), `observação deveria aparecer na ficha. Conteúdo: ${texto}`);
 
       assertEqual(erros.length, 0, 'erros de JS: ' + erros.join(' | '));
       await page.close();
