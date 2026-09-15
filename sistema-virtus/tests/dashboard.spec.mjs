@@ -556,17 +556,18 @@ export const tests = [
       await page.click('#usersTableBody [data-acao="acoesUsuario"]');
       await page.waitForTimeout(200);
       const opcoes = await page.evaluate(() => document.getElementById('acoesCandLista').innerText);
-      // avaliador -> pode virar gerencia, viewer ou coordenador; NÃO admin
-      // (promoção pra admin é deliberadamente bloqueada na lista) nem
-      // "avaliador" de novo (é o perfil atual).
-      assert(opcoes.includes('gerencia'), `deveria oferecer promover a gerencia. Opções: ${opcoes}`);
-      assert(opcoes.includes('viewer'), `deveria oferecer promover a viewer. Opções: ${opcoes}`);
-      assert(opcoes.includes('coordenador'), `deveria oferecer promover a coordenador. Opções: ${opcoes}`);
-      assert(!opcoes.includes('Promover a admin'), `não deveria oferecer promover a admin. Opções: ${opcoes}`);
-      assert(!/Promover a avaliador\b/.test(opcoes), `não devia oferecer "virar" o próprio perfil atual. Opções: ${opcoes}`);
+      // avaliador -> pode virar gerência, Operador (rótulo do perfil
+      // "viewer") ou coordenador; NÃO admin (promoção pra admin é
+      // deliberadamente bloqueada na lista) nem "avaliador" de novo (é o
+      // perfil atual).
+      assert(opcoes.includes('Gerência'), `deveria oferecer promover a Gerência. Opções: ${opcoes}`);
+      assert(opcoes.includes('Operador'), `deveria oferecer promover a Operador (perfil "viewer"). Opções: ${opcoes}`);
+      assert(opcoes.includes('Coordenador'), `deveria oferecer promover a Coordenador. Opções: ${opcoes}`);
+      assert(!opcoes.includes('Promover a Admin'), `não deveria oferecer promover a admin. Opções: ${opcoes}`);
+      assert(!/Promover a Avaliador\b/.test(opcoes), `não devia oferecer "virar" o próprio perfil atual. Opções: ${opcoes}`);
       assert(opcoes.includes('Remover acesso'), `deveria ter a opção de remover acesso. Opções: ${opcoes}`);
 
-      await page.click('#acoesCandLista .acao-item:has-text("gerencia")');
+      await page.click('#acoesCandLista .acao-item:has-text("Gerência")');
       await page.waitForTimeout(200);
       const escreveu = await page.evaluate(() => window.__writes.some(w => w.path === 'usuarios/u9' && w.data && w.data.perfil === 'gerencia'));
       assert(escreveu, 'clicar em "Promover a gerencia" deveria gravar perfil=gerencia no doc do usuário');

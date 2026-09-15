@@ -1705,7 +1705,7 @@
           </div>
         </div>
         <div class="warn-note" style="margin-top:14px;">
-          Um único código serve para <strong>todos os candidatos da entrevista</strong> — todos digitam o mesmo. Ele expira sozinho <strong>4 horas</strong> depois de gerado, e você também pode desativá-lo antes disso a qualquer momento. Admin e viewer podem gerar.
+          Um único código serve para <strong>todos os candidatos da entrevista</strong> — todos digitam o mesmo. Ele expira sozinho <strong>4 horas</strong> depois de gerado, e você também pode desativá-lo antes disso a qualquer momento. Admin e Operador podem gerar.
         </div>
         <div class="results-table-wrap" style="margin-top:12px;">
           <table>
@@ -4920,7 +4920,7 @@
           <div style="display:flex;gap:6px;flex-wrap:wrap;">
             <button class="btn-act btn-approve-admin" data-acao="aprovarUsuario" data-perfil="gerencia" ${dadosUser}>Gerência</button>
             <button class="btn-act btn-approve-viewer" data-acao="aprovarUsuario" data-perfil="avaliador" ${dadosUser}>Avaliador</button>
-            <button class="btn-act btn-neutral" data-acao="aprovarUsuario" data-perfil="viewer" ${dadosUser}>Viewer</button>
+            <button class="btn-act btn-neutral" data-acao="aprovarUsuario" data-perfil="viewer" ${dadosUser}>Operador</button>
             <button class="btn-act btn-neutral" data-acao="aprovarUsuario" data-perfil="coordenador" ${dadosUser}>Coordenador</button>
           </div>
         </td>
@@ -4928,6 +4928,13 @@
       </tr>`;
     }).join('');
   }
+
+  // Rótulo exibido pra cada perfil — o valor gravado no Firestore (usado em
+  // firestore.rules, filtros etc.) continua "viewer" pra não quebrar contas
+  // já aprovadas; só o texto mostrado na tela virou "Operador" (esse perfil
+  // opera o dia da prova — código de acesso, QR Code, violações — "viewer"
+  // soava passivo demais pra isso).
+  const LABEL_PERFIL = { admin: 'Admin', gerencia: 'Gerência', avaliador: 'Avaliador', viewer: 'Operador', coordenador: 'Coordenador' };
 
   // ── Avaliadores já com acesso ─────────────────────────────────────────
   function renderUsuarios(todos) {
@@ -4949,7 +4956,7 @@
         <tr>
           <td class="td-nome">${escapeHtml(u.nome || '—')}${souEu ? ' <span style="color:var(--text3);font-size:11px;">(você)</span>' : ''}</td>
           <td><span class="email-hover" data-email="${escapeHtml(u.email || '—')}">•••••</span></td>
-          <td><span class="perfil-chip perfil-${u.perfil}">${u.perfil}</span></td>
+          <td><span class="perfil-chip perfil-${u.perfil}">${LABEL_PERFIL[u.perfil] || u.perfil}</span></td>
           <td>
             ${souEu
               ? '<span style="color:var(--text4);font-size:11px;font-family:\'Share Tech Mono\',monospace;">—</span>'
@@ -4960,11 +4967,11 @@
   }
 
   window.aprovar = async function (uid, perfil) {
-    try { await aprovarUsuario(uid, perfil); toast(`✅ Aprovado como ${perfil}`, 'ok'); }
+    try { await aprovarUsuario(uid, perfil); toast(`✅ Aprovado como ${LABEL_PERFIL[perfil] || perfil}`, 'ok'); }
     catch (e) { console.error(e); toast('❌ Falha: ' + e.message, 'err'); }
   };
   window.alterarPerfil = async function (uid, perfil) {
-    try { await aprovarUsuario(uid, perfil); toast(`✅ Perfil alterado para ${perfil}`, 'ok'); }
+    try { await aprovarUsuario(uid, perfil); toast(`✅ Perfil alterado para ${LABEL_PERFIL[perfil] || perfil}`, 'ok'); }
     catch (e) { console.error(e); toast('❌ Falha: ' + e.message, 'err'); }
   };
   window.recusar = async function (uid, nome) {
@@ -4984,9 +4991,9 @@
     const PERFIS = ['admin', 'gerencia', 'avaliador', 'viewer', 'coordenador'];
     const outrosPerfis = PERFIS.filter(p => p !== perfilAtual && p !== 'admin');
 
-    document.getElementById('acoesCandNome').textContent = `${nome} — atualmente ${perfilAtual}`;
+    document.getElementById('acoesCandNome').textContent = `${nome} — atualmente ${LABEL_PERFIL[perfilAtual] || perfilAtual}`;
     const itens = outrosPerfis.map(p => ({
-      label: `→ Promover a ${p}`,
+      label: `→ Promover a ${LABEL_PERFIL[p] || p}`,
       fn: () => { window.fecharAcoesModal(); window.alterarPerfil(uid, p); }
     }));
     itens.push({
