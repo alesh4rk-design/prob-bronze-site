@@ -1006,6 +1006,7 @@
         <div class="modal-cand-nome" id="cmNome">—</div>
         <div class="modal-cand-sub" id="cmSub">—</div>
       </div>
+      <a id="cmCurriculoBtn" href="#" target="_blank" rel="noopener" class="btn-act btn-neutral" style="display:none;white-space:nowrap;margin-left:auto;" title="Abrir currículo em nova aba">📎 Currículo</a>
       <button class="modal-close" onclick="fecharCandidato()" title="Fechar">✕</button>
     </div>
     <div class="modal-scroll">
@@ -2241,6 +2242,18 @@
       `${tents.length} teste(s) · ${quizzes.length} quiz · ${typings.length} digitação` +
       (viols.length ? ` · ⚠ ${viols.length} violação(ões)` : '');
 
+    // Botão de currículo no topo do modal — antes só aparecia rolando até o
+    // fim da seção "Perfil profissional", exigia scroll toda vez que alguém
+    // só queria abrir o currículo rapidinho.
+    const fichaTopo = fichaDe(tents);
+    const btnCurriculo = document.getElementById('cmCurriculoBtn');
+    if (fichaTopo && fichaTopo.curriculo_url) {
+      btnCurriculo.href = fichaTopo.curriculo_url;
+      btnCurriculo.style.display = 'inline-flex';
+    } else {
+      btnCurriculo.style.display = 'none';
+    }
+
     // Status central: a partir da etapa única gravada no pipeline (ver
     // dashboard.js) — nunca mais uma combinação ambígua de flags.
     const chaveIdEtapa = CAND_ATUAL.replace(/[/]/g, '_');
@@ -2256,7 +2269,7 @@
       </div>`;
 
     // Ficha preenchida pelo candidato antes do teste
-    const f = fichaDe(tents);
+    const f = fichaTopo;
     if (f) {
       // Pendência judicial: autodeclaração do candidato na ficha (não é uma
       // consulta de verdade nos tribunais) — quando "sim", chama atenção

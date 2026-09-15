@@ -503,6 +503,15 @@ export const tests = [
       assert(html.includes('curriculo-joao.pdf'), `deveria mostrar o nome do arquivo do currículo. HTML: ${html}`);
       assert(html.includes('https://firebasestorage.googleapis.com/curriculo-teste.pdf'), `deveria linkar pro arquivo real. HTML: ${html}`);
 
+      // Botão de currículo no TOPO do modal (não só lá embaixo, na seção de
+      // perfil profissional) — pra abrir sem precisar rolar a ficha inteira.
+      const btnTopo = await page.evaluate(() => ({
+        visivel: document.getElementById('cmCurriculoBtn').style.display !== 'none',
+        href: document.getElementById('cmCurriculoBtn').href
+      }));
+      assert(btnTopo.visivel, 'botão de currículo no topo deveria aparecer quando há currículo');
+      assert(btnTopo.href.includes('curriculo-teste.pdf'), `botão do topo deveria linkar pro currículo. href: ${btnTopo.href}`);
+
       // Candidato sem nenhum dos dois não pode mostrar link/texto vazio nem quebrar.
       await page.evaluate(() => fecharCandidato());
 
@@ -797,6 +806,11 @@ export const tests = [
       await page.evaluate(() => abrirCandidato('nome:ficha completa'));
       await page.waitForTimeout(300);
       const texto = await page.evaluate(() => document.getElementById('cmConteudo').innerText);
+
+      // Sem ficha (candidato antigo, só nome registrado), o botão de
+      // currículo no topo do modal não deveria aparecer.
+      const btnTopoOculto = await page.evaluate(() => document.getElementById('cmCurriculoBtn').style.display === 'none');
+      assert(btnTopoOculto, 'botão de currículo no topo não deveria aparecer sem ficha/currículo');
 
       // Desempenho: os dois módulos e a digitação aparecem resumidos.
       assert(texto.includes('Desempenho'), `deveria ter a seção Desempenho. Conteúdo: ${texto}`);
