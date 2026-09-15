@@ -987,8 +987,6 @@
         </div>
       </div>
 
-      <div class="sep"></div>
-      <button class="btn btn-ghost" onclick="resetAndGoHome()">← Nova Avaliação</button>
     </div>
   </div>
 </div>
@@ -1809,12 +1807,6 @@
       c.style.strokeDashoffset = offset;
     }, 100);
   }
-
-  window.resetAndGoHome = function() {
-    S.perguntas = []; S.respostas = []; S.testActive = false;
-    S.trilha = null; S.trilhaIdx = 0; S.resultadosTrilha = [];
-    show('s-launcher');
-  };
 
   // ========== VIOLAÇÕES ==========
   async function reportViolation(tipo, detalhe = '') {

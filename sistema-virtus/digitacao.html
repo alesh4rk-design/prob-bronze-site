@@ -16,9 +16,17 @@
 body {
   background: #05080F; color: #D8E2F0;
   font-family: 'Exo 2', sans-serif;
-  min-height: 100vh; display: flex; align-items: center;
+  /* align-items:flex-start (não center) de propósito: com o layout
+     centralizado verticalmente, abrir o teclado no celular recalcula o
+     100vh de um jeito inconsistente entre navegadores e empurra o texto
+     de referência pra cima da área visível, escondido atrás do teclado.
+     Ancorado no topo, o teclado só reduz o espaço embaixo. */
+  min-height: 100vh; display: flex; align-items: flex-start;
   justify-content: center; padding: 2rem;
   position: relative; overflow-x: hidden;
+}
+@media (max-width: 600px) {
+  body { padding: 1rem 0.85rem; }
 }
 body::before {
   content:''; position:fixed; inset:0;
@@ -951,6 +959,15 @@ document.getElementById('newTestBtn').onclick=()=>{
 document.getElementById('closeBtn').onclick=()=>window.location.href='./index.html';
 document.getElementById('typeArea').addEventListener('input',updateStats);
 document.getElementById('typeArea').addEventListener('paste',e=>{e.preventDefault();toast('Cola não permitida no teste','err');});
+// No celular, o teclado some com boa parte da tela — rola o texto de
+// referência pra cima do teclado assim que o candidato toca no campo,
+// em vez de deixar ele escondido/cortado pela área ocupada pelo teclado.
+document.getElementById('typeArea').addEventListener('focus', () => {
+  setTimeout(() => {
+    const ref = document.querySelector('.type-display');
+    if (ref) ref.scrollIntoView({ block: 'start', behavior: 'smooth' });
+  }, 350);
+});
 
 // Expor funções usadas em atributos inline (onclick="setToday()" etc.)
 window.setToday = setToday;
