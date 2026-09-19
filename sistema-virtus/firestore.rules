@@ -6,16 +6,17 @@ rules_version = '2';
 //
 // Hierarquia de perfis:
 //   - admin / gerência: acesso total. São os únicos que cadastram/aprovam
-//     coordenadores, avaliadores e views (gerenciam a coleção `usuarios`) e
-//     os únicos que mexem no banco de perguntas.
-//   - avaliador: "chefe" dos views — tudo que o view tem, mais Dashboard
-//     completo, Banco de Aprovados e Processo Seletivo (envia candidatos
-//     pro coordenador/RH e acompanha o funil de contratação).
-//   - viewer (o "view" do sistema): acesso restrito a QR Codes, Código de
-//     Acesso, Violações e a lista de participantes (resultados dos testes).
-//     Não mexe em Perguntas, Usuários nem no Processo Seletivo.
-//   - coordenador: só-leitura, vê a lista de candidatos (Processo Seletivo)
-//     pra acompanhar o processo, sem mexer em nada.
+//     os demais perfis (gerenciam a coleção `usuarios`) e os únicos que
+//     mexem no banco de perguntas e nos pesos do Score Virtus.
+//   - avaliador / coordenador: mesmo nível de acesso ao processo seletivo —
+//     Dashboard completo, decidem sobre candidatos (aprovar, entrevistar,
+//     banco de reserva, contratar/recusar, excluir). Não mexem em Usuários,
+//     Perguntas nem Pesos (isso é só admin/gerência).
+//   - viewer (exibido como "Operador" na tela): só-leitura de verdade —
+//     acompanha candidatos, violações e participantes, mas não decide nada
+//     sobre eles. A única escrita que continua liberada pra ele é código de
+//     acesso/QR Code — é quem opera fisicamente o dia da prova, gerando o
+//     código pros candidatos, não uma exceção ao "só visualiza".
 
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -63,18 +64,19 @@ service cloud.firestore {
       allow create: if request.resource.data.tipo == 'typing';
       allow read: if request.auth != null && isLeitor();
       allow update: if request.auth != null && isGerencia();
-      // Excluir candidato: liberado pra equipe operacional (admin/gerência/
-      // avaliador/viewer) — coordenador NÃO pode excluir, só acompanha.
-      allow delete: if request.auth != null && isEquipe();
+      // Excluir candidato: liberado pra quem gerencia o processo seletivo
+      // (admin/gerência/avaliador/coordenador) — Operador (viewer) NÃO
+      // exclui mais: ele só acompanha, não decide nem apaga nada.
+      allow delete: if request.auth != null && isGerenciaCandidatos();
     }
 
     // codigos_acesso/{codigo}: código COMPARTILHADO que impede o candidato de
-    // fazer o teste em casa. Qualquer um da equipe (admin/gerência/avaliador/
-    // viewer) gera um código único por entrevista/dia — o MESMO código serve
-    // para todos os candidatos (não é de uso único), pensado para dias com
-    // muita gente (20+ candidatos). Expira sozinho 4h depois de gerado
-    // (campo `expira_em`), validado aqui no SERVIDOR via request.time — por
-    // isso um candidato não consegue continuar usando um código vencido nem
+    // fazer o teste em casa. Qualquer um da equipe operacional gera um
+    // código único por entrevista/dia — o MESMO código serve para todos os
+    // candidatos (não é de uso único), pensado para dias com muita gente
+    // (20+ candidatos). Expira sozinho 4h depois de gerado (campo
+    // `expira_em`), validado aqui no SERVIDOR via request.time — por isso um
+    // candidato não consegue continuar usando um código vencido nem
     // adiantando/atrasando o relógio do próprio celular.
     // - O ID do documento é o próprio código (ex: "384720"), gerado no client.
     // - A checagem do código pelo candidato NÃO passa mais direto pelo
@@ -83,8 +85,10 @@ service cloud.firestore {
     //   (que ignora estas regras). Antes, `get`/`update` eram públicos e
     //   davam pra tentar adivinhar o código por força bruta direto na API
     //   do Firestore, sem passar pelo Worker nem pelo site.
+    // Operador (viewer) continua podendo gerar/desativar — é literalmente o
+    // trabalho dele no dia da prova, não uma decisão sobre candidato.
     match /codigos_acesso/{codigo} {
-      allow get, list, create, update, delete: if request.auth != null && isEquipe();
+      allow get, list, create, update, delete: if request.auth != null && isOperacional();
     }
 
     // config/{doc}: configurações gerais do sistema (ex: número de WhatsApp
@@ -93,7 +97,7 @@ service cloud.firestore {
     // ler o número pra montar o link do WhatsApp. Escrita pela equipe.
     match /config/{doc} {
       allow read: if true;
-      allow write: if request.auth != null && isEquipe();
+      allow write: if request.auth != null && isOperacional();
     }
 
     // config_pesos/pesos: pesos do Score Virtus (por cargo + um padrão pra
@@ -169,22 +173,32 @@ service cloud.firestore {
       }
     }
 
-    // Acesso total (admin ou gerência) — únicos que mexem em usuários e
-    // perguntas.
+    // Acesso total (admin ou gerência) — únicos que mexem em usuários,
+    // perguntas e pesos do Score Virtus.
     function isGerencia() {
       return exists(/databases/$(database)/documents/usuarios/$(request.auth.uid)) &&
              get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.perfil in ['admin', 'gerencia'];
     }
 
-    // Equipe operacional (admin, gerência, avaliador, viewer) — QR Codes,
-    // Código de Acesso, exclusão de resultados etc.
-    function isEquipe() {
+    // Quem gerencia o processo seletivo de verdade (decide sobre
+    // candidatos) — admin, gerência, avaliador e coordenador têm todos o
+    // MESMO nível de acesso aqui, de propósito: só o Operador (viewer) fica
+    // de fora, porque ele só acompanha, não decide.
+    function isGerenciaCandidatos() {
       return exists(/databases/$(database)/documents/usuarios/$(request.auth.uid)) &&
-             get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.perfil in ['admin', 'gerencia', 'avaliador', 'viewer'];
+             get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.perfil in ['admin', 'gerencia', 'avaliador', 'coordenador'];
     }
 
-    // Qualquer perfil aprovado (inclusive coordenador) — leitura de
-    // resultados/violações, que view e coordenador também precisam ver.
+    // Equipe operacional (todo mundo aprovado, inclusive Operador) — usada
+    // só pra tarefas que não são "decisão sobre candidato": código de
+    // acesso, config geral.
+    function isOperacional() {
+      return exists(/databases/$(database)/documents/usuarios/$(request.auth.uid)) &&
+             get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.perfil in ['admin', 'gerencia', 'avaliador', 'viewer', 'coordenador'];
+    }
+
+    // Qualquer perfil aprovado — leitura de resultados/violações/pipeline,
+    // que todo mundo (inclusive Operador) precisa ver.
     function isLeitor() {
       return exists(/databases/$(database)/documents/usuarios/$(request.auth.uid)) &&
              get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.perfil in ['admin', 'gerencia', 'avaliador', 'viewer', 'coordenador'];

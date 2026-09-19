@@ -62,20 +62,31 @@ export const tests = [
   },
 
   {
-    name: 'Menu de Ações: Excluir some pro coordenador, aparece pro admin',
+    name: 'Menu de Ações: Excluir some pro viewer (Operador), aparece pro coordenador e admin',
     async run({ browser, baseUrl }) {
+      // Coordenador tem o MESMO nível de acesso que avaliador/admin/gerência
+      // sobre candidatos — só o viewer (Operador) é só-leitura de verdade.
       const resultados = [{ id: '1', tipo: 'quiz', nome: 'Maria Teste', modulo: 'Atendimento', pct: 80, acertos: 8, total: 10, data_conclusao: hoje() }];
 
-      for (const [perfil, deveTerExcluir] of [['admin', true], ['coordenador', false]]) {
+      for (const perfil of ['admin', 'coordenador']) {
         const { page } = await abrirDashboard(browser, baseUrl, { perfil, resultados });
         await page.evaluate(() => switchView('pipeline'));
         await page.waitForTimeout(300);
         await page.click('button:has-text("Ações")');
         await page.waitForTimeout(200);
         const temExcluir = await page.evaluate(() => document.getElementById('acoesCandLista').innerText.includes('Excluir'));
-        assertEqual(temExcluir, deveTerExcluir, `perfil ${perfil}: botão Excluir no menu de ações`);
+        assert(temExcluir, `perfil ${perfil} deveria ter o botão Excluir no menu de ações`);
         await page.close();
       }
+
+      // Viewer (Operador) é só-leitura de verdade — a coluna "Ações" inteira
+      // nem aparece na tabela de candidatos pra ele.
+      const { page: pageViewer } = await abrirDashboard(browser, baseUrl, { perfil: 'viewer', resultados });
+      await pageViewer.evaluate(() => switchView('pipeline'));
+      await pageViewer.waitForTimeout(300);
+      const existeBotao = await pageViewer.evaluate(() => [...document.querySelectorAll('button')].some(b => b.textContent.includes('Ações')));
+      assert(!existeBotao, 'viewer (Operador) não deveria ter nenhum botão "Ações" na tabela de candidatos');
+      await pageViewer.close();
     }
   },
 

@@ -1995,17 +1995,18 @@
 
   // ── Hierarquia de perfis ────────────────────────────────────────────
   // admin/gerência: acesso total, únicos que cadastram gente (Usuários) e
-  //   mexem em Perguntas.
-  // avaliador: chefe dos views — tudo que o view tem, mais Dashboard
-  //   completo, Banco de Aprovados e Processo Seletivo.
-  // viewer (view): só QR Codes, Código de Acesso, Violações e a lista de
-  //   participantes (Dashboard sem KPIs/gráficos, sem Banco de Aprovados,
-  //   sem Processo Seletivo, sem Usuários/Perguntas).
-  // coordenador: só-leitura do Processo Seletivo, mais nada.
+  //   mexem em Perguntas/Pesos.
+  // avaliador e coordenador: MESMO nível de acesso ao processo seletivo —
+  //   Dashboard completo, decidem sobre candidatos (aprovar, entrevistar,
+  //   banco de reserva, contratar/recusar, excluir). Só não mexem em
+  //   Usuários/Perguntas/Pesos.
+  // viewer (exibido como "Operador"): só-leitura de verdade — vê QR Codes,
+  //   Código de Acesso, Violações e a lista de participantes, mas não
+  //   decide nada sobre eles (Dashboard sem KPIs/gráficos, sem Banco de
+  //   Aprovados, sem Processo Seletivo, sem Usuários/Perguntas/Pesos).
   const ehGerencia = me && (me.perfil === 'admin' || me.perfil === 'gerencia');
   const ehAvaliadorChefe = me && me.perfil === 'avaliador';
   const ehView = me && me.perfil === 'viewer';
-  const ehCoordenador = me && me.perfil === 'coordenador';
 
   if (ehGerencia) {
     document.getElementById('sidebarAdminLbl').style.display = 'block';
@@ -2029,19 +2030,10 @@
     // candidatos (ver renderBancoReserva/PODE_GERENCIAR_CANDIDATOS).
   }
 
-  // Coordenador só precisa da lista corrida de candidatos (Processo
-  // Seletivo) — não do Dashboard com KPIs/gráficos/filtros nem das
-  // ferramentas operacionais.
-  if (ehCoordenador) {
-    document.getElementById('sidebarItemDashboard').style.display = 'none';
-    document.getElementById('sidebarItemPendencias').style.display = 'none';
-    document.getElementById('sidebarItemViolacoes').style.display = 'none';
-    document.getElementById('sidebarFerramentasLbl').style.display = 'none';
-    document.getElementById('sidebarItemTestes').style.display = 'none';
-    document.getElementById('sidebarItemQrcodes').style.display = 'none';
-    document.getElementById('sidebarItemCodigos').style.display = 'none';
-    document.getElementById('btnExcluirCandidato').style.display = 'none';
-  }
+  // Coordenador tem o MESMO acesso que avaliador ao processo seletivo —
+  // por isso não existe mais nenhum bloco de restrição aqui. A única
+  // diferença de admin/gerência é não ver Usuários/Perguntas/Pesos, já
+  // coberto pelo "if (ehGerencia)" acima (que só libera pra quem é).
 
   // ══════════ NAVEGAÇÃO LATERAL (SIDEBAR) — SPA sem reload ══════════
   const VIEW_TITULOS = {
@@ -2091,8 +2083,6 @@
     // Viewer só tem a aba Candidatos (vê os testes realizados de todo
     // mundo, sem poder selecionar ninguém pra entrevista).
     if ((view === 'banco' || view === 'contratados' || view === 'dashboard' || view === 'pendencias' || view === 'ranking' || view === 'vagas') && me && me.perfil === 'viewer') view = 'pipeline';
-    const VIEWS_BLOQUEADAS_COORDENADOR = [...VIEWS_OPERACIONAIS, 'dashboard', 'pendencias', 'violacoes'];
-    if (VIEWS_BLOQUEADAS_COORDENADOR.includes(view) && me && me.perfil === 'coordenador') view = 'pipeline';
     document.querySelectorAll('.app-view').forEach(v => v.classList.toggle('active', v.id === 'view-' + view));
     document.querySelectorAll('.sidebar-item').forEach(i => i.classList.toggle('active', i.dataset.view === view));
     const sub = document.getElementById('hudSubTitle');
@@ -2628,8 +2618,8 @@
         </div>`;
     }
 
-    // ── Decisão — só quem gerencia processo seletivo vê os botões; view e
-    // coordenador enxergam tudo acima (é só leitura pra eles).
+    // ── Decisão — admin/gerência/avaliador/coordenador veem os botões;
+    // viewer (Operador) só enxerga tudo acima, é só leitura pra ele.
     const podeGerenciarModal = me && PODE_GERENCIAR_CANDIDATOS.includes(me.perfil);
     if (podeGerenciarModal) {
       const aprovadoAtual = pInfo.aprovado === true;
@@ -3725,10 +3715,10 @@
   // viewer (só leitura). Selecionar para entrevista e escrever observação
   // é exclusivo de avaliador/coordenador/gerência/admin — ver renderPipeline.
   const PODE_GERENCIAR_CANDIDATOS = ['admin', 'gerencia', 'avaliador', 'coordenador'];
-  // Excluir candidato apaga resultados de teste de verdade — mais restrito
-  // que gerenciar (coordenador não exclui, só acompanha; ver firestore.rules
-  // isEquipe()).
-  const PODE_EXCLUIR_CANDIDATOS = ['admin', 'gerencia', 'avaliador'];
+  // Excluir candidato apaga resultados de teste de verdade — mesmo grupo de
+  // quem gerencia (viewer/Operador fica de fora; ver firestore.rules
+  // isGerenciaCandidatos()).
+  const PODE_EXCLUIR_CANDIDATOS = ['admin', 'gerencia', 'avaliador', 'coordenador'];
 
   function candidatosAgrupados(lista) {
     const quizzes = (lista || ALL_RESULTADOS).filter(r => r.tipo !== 'typing');
@@ -5555,21 +5545,21 @@
         unsubs.push(assinarUsuarios(renderUsuarios, () => statusDot(false, 'Reconectando...')));
         unsubs.push(assinarModulos(lista => { renderModulos(lista); }, () => statusDot(false, 'Reconectando...')));
       }
-      // Códigos de acesso: equipe operacional (admin/gerência/avaliador/
-      // viewer) — coordenador não mexe em nada operacional.
-      if (me.perfil !== 'coordenador') {
-        unsubs.push(assinarCodigosAcesso(
-          lista => { renderCodigos(lista); },
-          () => statusDot(false, 'Reconectando...')
-        ));
-        unsubs.push(assinarNumeroWhatsapp(
-          numero => { document.getElementById('inWhatsappRH').value = numero || ''; },
-          () => statusDot(false, 'Reconectando...')
-        ));
-      }
-      // Processo Seletivo: admin/gerência/avaliador/coordenador gerenciam;
-      // viewer só lê (precisa disso pra ver quem está no Banco de Reserva —
-      // as regras do Firestore liberam leitura pra qualquer perfil aprovado).
+      // Códigos de acesso: agora todo mundo que enxerga a aba (todos menos
+      // quem nunca vê a aba Código de Acesso) assina — coordenador tem o
+      // mesmo acesso que avaliador, então também precisa desses dados.
+      unsubs.push(assinarCodigosAcesso(
+        lista => { renderCodigos(lista); },
+        () => statusDot(false, 'Reconectando...')
+      ));
+      unsubs.push(assinarNumeroWhatsapp(
+        numero => { document.getElementById('inWhatsappRH').value = numero || ''; },
+        () => statusDot(false, 'Reconectando...')
+      ));
+      // Processo Seletivo: admin/gerência/avaliador/coordenador gerenciam
+      // igual; viewer só lê (precisa disso pra ver quem está no Banco de
+      // Reserva — as regras do Firestore liberam leitura pra qualquer
+      // perfil aprovado).
       // PIPELINE_MAP também alimenta Aprovados para Entrevista, Contratados
       // e o gráfico "Status de Entrevistas" do Dashboard — por isso o
       // callback chama renderAll() inteiro (não só renderPipeline()), senão
