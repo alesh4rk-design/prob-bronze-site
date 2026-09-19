@@ -1834,12 +1834,12 @@
   </div>
 <div class="panel" style="margin-bottom:16px;">
       <div class="panel-head">
-        <div class="panel-title-sm">🔑 Solicitações de Acesso Pendentes
+        <div class="panel-title-sm"><span id="pendPanelTituloTxt">🔑 Solicitações de Acesso Pendentes</span>
           <span class="badge" id="pendBadge" style="background:var(--amberdim);border-color:var(--ambermid);color:var(--amber);">0</span>
         </div>
       </div>
       <div class="panel-body" style="padding:16px 20px;">
-        <div class="warn-note">
+        <div class="warn-note" id="pendPanelAviso">
           Quem se cadastra em <strong>cadastro.html</strong> entra nesta fila sem nenhum acesso.
           <strong>Gerência</strong>: acesso total. <strong>Avaliador</strong>: chefe dos views, com Dashboard/Banco/Processo Seletivo.
           <strong>Viewer</strong>: só QR Codes, Código de Acesso, Violações e lista de participantes.
@@ -4890,28 +4890,43 @@
 
 
   // ── Solicitações pendentes ────────────────────────────────────────────
+  // Fila dividida por perfil de quem aprova: Admin só vê/aprova pedidos
+  // marcados como "quero ser Gerente" (solicita_gerente, marcado pela
+  // própria pessoa no cadastro.html) — só ele pode criar um novo Gerente.
+  // Gerência vê/aprova todo o resto (Avaliador/Operador/Coordenador), sem
+  // nunca poder promover ninguém a Gerente.
   function renderPendentes(lista) {
-    document.getElementById('pendBadge').textContent = lista.length;
+    const souAdmin = me && me.perfil === 'admin';
+    const filtrada = lista.filter(p => souAdmin ? p.solicita_gerente === true : !p.solicita_gerente);
+
+    document.getElementById('pendBadge').textContent = filtrada.length;
+    document.getElementById('pendPanelTituloTxt').textContent = souAdmin
+      ? '🎖️ Solicitações de Gerente'
+      : '🔑 Solicitações de Acesso Pendentes';
+    document.getElementById('pendPanelAviso').innerHTML = souAdmin
+      ? `Só aparecem aqui os cadastros que marcaram <strong>"quero ser Gerente"</strong> — os demais (Avaliador/Operador/Coordenador) vão direto pra fila da Gerência aprovar.`
+      : `Quem se cadastra em <strong>cadastro.html</strong> entra nesta fila sem nenhum acesso. <strong>Avaliador</strong>: Dashboard completo e decide sobre candidatos. <strong>Operador</strong>: só QR Codes, Código de Acesso, Violações e lista de participantes. <strong>Coordenador</strong>: mesmo acesso do Avaliador. Pedidos de <strong>Gerente</strong> vão direto pro Admin aprovar, não aparecem aqui.`;
+
     const tbody = document.getElementById('pendTableBody');
     ligarAcoesDelegadas('pendTableBody');
-    if (!lista.length) {
-      tbody.innerHTML = '<tr><td colspan="4"><div class="empty-state"><div class="empty-icon">🔑</div>Nenhuma solicitação pendente</div></td></tr>';
+    if (!filtrada.length) {
+      tbody.innerHTML = `<tr><td colspan="4"><div class="empty-state"><div class="empty-icon">🔑</div>${souAdmin ? 'Nenhuma solicitação de Gerente pendente' : 'Nenhuma solicitação pendente'}</div></td></tr>`;
       return;
     }
-    // Aba Usuários é exclusiva de admin/gerência — todos os perfis ficam
-    // disponíveis pra aprovar (são os únicos que cadastram gente).
-    tbody.innerHTML = lista.map(p => {
+    tbody.innerHTML = filtrada.map(p => {
       const dadosUser = `data-uid="${escapeHtml(p.uid)}" data-nome="${escapeHtml(p.nome || p.email || '')}"`;
+      const botoesPerfil = souAdmin
+        ? `<button class="btn-act btn-approve-admin" data-acao="aprovarUsuario" data-perfil="gerencia" ${dadosUser}>Gerência</button>`
+        : `<button class="btn-act btn-approve-viewer" data-acao="aprovarUsuario" data-perfil="avaliador" ${dadosUser}>Avaliador</button>
+           <button class="btn-act btn-neutral" data-acao="aprovarUsuario" data-perfil="viewer" ${dadosUser}>Operador</button>
+           <button class="btn-act btn-neutral" data-acao="aprovarUsuario" data-perfil="coordenador" ${dadosUser}>Coordenador</button>`;
       return `
       <tr>
         <td class="td-nome">${escapeHtml(p.nome || '—')}</td>
         <td><span class="email-hover" data-email="${escapeHtml(p.email || '—')}">•••••</span></td>
         <td>
           <div style="display:flex;gap:6px;flex-wrap:wrap;">
-            <button class="btn-act btn-approve-admin" data-acao="aprovarUsuario" data-perfil="gerencia" ${dadosUser}>Gerência</button>
-            <button class="btn-act btn-approve-viewer" data-acao="aprovarUsuario" data-perfil="avaliador" ${dadosUser}>Avaliador</button>
-            <button class="btn-act btn-neutral" data-acao="aprovarUsuario" data-perfil="viewer" ${dadosUser}>Operador</button>
-            <button class="btn-act btn-neutral" data-acao="aprovarUsuario" data-perfil="coordenador" ${dadosUser}>Coordenador</button>
+            ${botoesPerfil}
           </div>
         </td>
         <td><button class="btn-act btn-danger" data-acao="recusarUsuario" ${dadosUser}>✕</button></td>
@@ -4974,12 +4989,13 @@
   // Botão único de Ações na aba Usuários — reaproveita o mesmo modal de
   // Candidatos (é só uma lista de opções, não tem nada de específico de
   // candidato nele). A aba Usuários já é exclusiva de admin/gerência (ver
-  // switchView e firestore.rules isGerencia()), então quem chega aqui já
-  // pode promover — não tem uma checagem extra de permissão dentro da
-  // função, só o botão "Ações" mesmo não aparecendo pra mais ninguém.
+  // switchView e firestore.rules), então quem chega aqui já pode promover
+  // — mas só Admin pode promover alguém a Gerência (ver renderPendentes: o
+  // pedido pra virar Gerente segue uma fila separada, só do Admin).
   window.abrirAcoesUsuario = function (uid, nome, perfilAtual) {
     const PERFIS = ['admin', 'gerencia', 'avaliador', 'viewer', 'coordenador'];
-    const outrosPerfis = PERFIS.filter(p => p !== perfilAtual && p !== 'admin');
+    const souAdmin = me && me.perfil === 'admin';
+    const outrosPerfis = PERFIS.filter(p => p !== perfilAtual && p !== 'admin' && (souAdmin || p !== 'gerencia'));
 
     document.getElementById('acoesCandNome').textContent = `${nome} — atualmente ${LABEL_PERFIL[perfilAtual] || perfilAtual}`;
     const itens = outrosPerfis.map(p => ({

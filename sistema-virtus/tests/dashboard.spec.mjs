@@ -345,7 +345,9 @@ export const tests = [
       // fecha a string JS e injeta código executável no clique do botão.
       const nomeMalicioso = "x');window.__pwned=true;//";
       const usuarios = [
-        { uid: 'p1', nome: nomeMalicioso, email: 'p1@x.com', perfil: 'pendente' },
+        // solicita_gerente: true pra aparecer na fila do admin (ver
+        // renderPendentes — admin só vê pedidos marcados como Gerente).
+        { uid: 'p1', nome: nomeMalicioso, email: 'p1@x.com', perfil: 'pendente', solicita_gerente: true },
         { uid: 'u2', nome: nomeMalicioso, email: 'u2@x.com', perfil: 'viewer' }
       ];
       const { page, erros } = await abrirDashboard(browser, baseUrl, { perfil: 'admin', usuarios });
@@ -586,8 +588,48 @@ export const tests = [
       assertEqual(erros.length, 0, 'erros de JS: ' + erros.join(' | '));
       await page.close();
     }
-  }
-,
+  },
+
+  {
+    name: 'Fila de pendentes dividida: Admin só vê pedido de Gerente, Gerência só vê o resto — e gerência não promove ninguém a Gerência',
+    async run({ browser, baseUrl }) {
+      const usuarios = [
+        { uid: 'p1', nome: 'Quer Ser Gerente', email: 'g@x.com', perfil: 'pendente', solicita_gerente: true },
+        { uid: 'p2', nome: 'Quer Ser Avaliador', email: 'a@x.com', perfil: 'pendente' },
+        { uid: 'u3', nome: 'Avaliador Ativo', email: 'av@x.com', perfil: 'avaliador' }
+      ];
+
+      // Admin: só vê "Quer Ser Gerente" na fila, com um único botão (Gerência).
+      const { page: pageAdmin } = await abrirDashboard(browser, baseUrl, { perfil: 'admin', usuarios });
+      await pageAdmin.evaluate(() => switchView('usuarios'));
+      await pageAdmin.waitForTimeout(300);
+      const textoFilaAdmin = await pageAdmin.evaluate(() => document.getElementById('pendTableBody').innerText);
+      assert(textoFilaAdmin.includes('Quer Ser Gerente'), `Admin deveria ver o pedido de Gerente. Fila: ${textoFilaAdmin}`);
+      assert(!textoFilaAdmin.includes('Quer Ser Avaliador'), `Admin NÃO deveria ver pedido comum na sua fila. Fila: ${textoFilaAdmin}`);
+      const botoesFilaAdmin = await pageAdmin.evaluate(() => [...document.querySelectorAll('#pendTableBody [data-acao="aprovarUsuario"]')].map(b => b.textContent.trim()));
+      assertEqual(botoesFilaAdmin.length, 1, `Admin deveria ter só o botão "Gerência" na fila. Botões: ${botoesFilaAdmin}`);
+      assert(botoesFilaAdmin[0] === 'Gerência', `único botão deveria ser "Gerência". Veio: ${botoesFilaAdmin[0]}`);
+      await pageAdmin.close();
+
+      // Gerência: só vê "Quer Ser Avaliador" na fila, sem opção de promover a Gerência.
+      const { page: pageGerencia } = await abrirDashboard(browser, baseUrl, { perfil: 'gerencia', usuarios });
+      await pageGerencia.evaluate(() => switchView('usuarios'));
+      await pageGerencia.waitForTimeout(300);
+      const textoFilaGerencia = await pageGerencia.evaluate(() => document.getElementById('pendTableBody').innerText);
+      assert(textoFilaGerencia.includes('Quer Ser Avaliador'), `Gerência deveria ver o pedido comum. Fila: ${textoFilaGerencia}`);
+      assert(!textoFilaGerencia.includes('Quer Ser Gerente'), `Gerência NÃO deveria ver pedido de Gerente. Fila: ${textoFilaGerencia}`);
+      const botoesFilaGerencia = await pageGerencia.evaluate(() => [...document.querySelectorAll('#pendTableBody [data-acao="aprovarUsuario"]')].map(b => b.textContent.trim()));
+      assert(!botoesFilaGerencia.includes('Gerência'), `Gerência não deveria ter botão "Gerência" na fila. Botões: ${botoesFilaGerencia}`);
+
+      // Menu "Ações" de um usuário já ativo: gerência não pode promover a Gerência.
+      await pageGerencia.click('#usersTableBody [data-acao="acoesUsuario"]');
+      await pageGerencia.waitForTimeout(200);
+      const opcoesGerencia = await pageGerencia.evaluate(() => document.getElementById('acoesCandLista').innerText);
+      assert(!opcoesGerencia.includes('Gerência'), `Gerência não deveria poder promover ninguém a Gerência. Opções: ${opcoesGerencia}`);
+      await pageGerencia.close();
+    }
+  },
+
   {
     name: 'Etapa central: Banco de Reserva e Aprovado para Entrevista agora são exclusivos',
     async run({ browser, baseUrl }) {

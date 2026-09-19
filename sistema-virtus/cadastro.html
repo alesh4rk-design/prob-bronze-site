@@ -179,7 +179,12 @@
     <div class="field">
       <label for="inp_pass2">Confirmar senha</label>
       <input type="password" id="inp_pass2" placeholder="repita a senha" autocomplete="new-password" minlength="6" required>
-      <p class="hint">Depois de criar a conta, um administrador precisa aprovar seu acesso antes que você consiga entrar no dashboard.</p>
+      <p class="hint">Depois de criar a conta, alguém precisa aprovar seu acesso antes que você consiga entrar no dashboard.</p>
+    </div>
+
+    <div class="field" style="display:flex;align-items:flex-start;gap:8px;">
+      <input type="checkbox" id="inp_solicita_gerente" style="width:auto;margin-top:3px;">
+      <label for="inp_solicita_gerente" style="margin:0;font-weight:400;">Este cadastro é para uma conta <strong>Gerente</strong>? (vai direto pra fila do Admin aprovar)</label>
     </div>
 
     <button class="btn-login" id="btn_cadastrar" type="submit">
@@ -241,7 +246,7 @@
     spin.style.display = 'inline-block';
 
     try {
-      await virtusCadastrar(nome, email, senha);
+      await virtusCadastrar(nome, email, senha, $('inp_solicita_gerente').checked);
       okEl.textContent = '✅ Conta criada! Aguarde um administrador aprovar seu acesso.';
       okEl.className = 'alert success show';
       $('formCadastro').reset();

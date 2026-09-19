@@ -68,12 +68,18 @@ export async function virtusLogout() {
 // de Solicitações Pendentes). Reforçado em firestore.rules: o próprio client
 // só pode criar seu doc `usuarios/{uid}` com perfil == "pendente"; só admin
 // pode mudar isso depois.
-export async function virtusCadastrar(nome, email, senha) {
+// `solicitaGerente`: marcado pela própria pessoa em cadastro.html quando o
+// cadastro é pra uma conta Gerente — separa a fila de aprovação em duas (ver
+// dashboard.html, renderPendentes): só o Admin vê/aprova pedidos marcados
+// assim, porque só ele pode criar um Gerente novo. Os demais (avaliador,
+// operador, coordenador) caem na fila normal, que a própria Gerência aprova.
+export async function virtusCadastrar(nome, email, senha, solicitaGerente = false) {
   const cred = await createUserWithEmailAndPassword(auth, email.trim().toLowerCase(), senha);
   await setDoc(doc(db, "usuarios", cred.user.uid), {
     nome: nome.trim(),
     email: email.trim().toLowerCase(),
     perfil: "pendente",
+    solicita_gerente: !!solicitaGerente,
     criado_em: serverTimestamp()
   });
   await signOut(auth); // não deixa a pessoa "logada" num estado pendente

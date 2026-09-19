@@ -32,7 +32,15 @@ service cloud.firestore {
       allow read: if request.auth != null && (request.auth.uid == uid || isGerencia());
       allow create: if request.auth != null && request.auth.uid == uid &&
                        request.resource.data.perfil == 'pendente';
-      allow update, delete: if request.auth != null && isGerencia();
+      // Só Admin pode conceder o perfil "gerencia" (ou "admin") — Gerência
+      // aprova/promove todo o resto (avaliador, viewer, coordenador), mas
+      // nunca cria outro Gerente. Ver dashboard.html (renderPendentes):
+      // pedidos marcados "solicita_gerente" só aparecem pro Admin.
+      allow update: if request.auth != null && (
+        isAdmin() ||
+        (isGerencia() && !(request.resource.data.perfil in ['admin', 'gerencia']))
+      );
+      allow delete: if request.auth != null && isGerencia();
     }
 
     // perguntas/{modulo}: banco de questões por módulo, COM o gabarito
@@ -171,6 +179,13 @@ service cloud.firestore {
                          get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.perfil in ['admin', 'gerencia', 'avaliador', 'coordenador'];
         allow update, delete: if false;
       }
+    }
+
+    // Só admin — o único que pode conceder o perfil "gerencia" a alguém
+    // (ver regra de update de usuarios/{uid} acima).
+    function isAdmin() {
+      return exists(/databases/$(database)/documents/usuarios/$(request.auth.uid)) &&
+             get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.perfil == 'admin';
     }
 
     // Acesso total (admin ou gerência) — únicos que mexem em usuários,
