@@ -1104,23 +1104,24 @@
   </div>
 </div>
 
-<!-- ══════════ MODAL: OBSERVAÇÃO DO CANDIDATO ══════════ -->
+<!-- ══════════ MODAL: COMENTÁRIOS DO CANDIDATO ══════════ -->
 <div class="modal-back" id="obsModal" onclick="if(event.target===this)fecharObservacao()">
   <div class="modal-card" style="max-width:480px;">
     <div class="modal-top">
-      <div class="modal-avatar">📝</div>
+      <div class="modal-avatar">💬</div>
       <div>
-        <div class="modal-cand-nome">Observação</div>
+        <div class="modal-cand-nome">Comentários</div>
         <div class="modal-cand-sub" id="obsNomeCandidato">—</div>
       </div>
       <button class="modal-close" onclick="fecharObservacao()" title="Fechar">✕</button>
     </div>
     <div class="modal-scroll" style="padding:20px;">
-      <textarea class="field-input" id="obsTextarea" rows="6" style="width:100%;resize:vertical;font-family:inherit;line-height:1.5;" placeholder="Escreva aqui sua observação sobre o candidato. Ela vai aparecer na aba &quot;Aprovados para Entrevista&quot; se ele for selecionado."></textarea>
+      <div id="obsListaComentarios" style="display:flex;flex-direction:column;gap:10px;margin-bottom:16px;"></div>
+      <textarea class="field-input" id="obsTextarea" rows="4" style="width:100%;resize:vertical;font-family:inherit;line-height:1.5;" placeholder="Escreva um comentário sobre o candidato..."></textarea>
     </div>
     <div class="modal-actions">
-      <button class="btn-act btn-neutral" style="padding:12px 20px;border-radius:6px;" onclick="fecharObservacao()">Cancelar</button>
-      <button class="btn-act btn-approve-admin" style="padding:12px 20px;border-radius:6px;margin-left:auto;" onclick="salvarObservacao()">💾 Salvar observação</button>
+      <button class="btn-act btn-neutral" style="padding:12px 20px;border-radius:6px;" onclick="fecharObservacao()">Fechar</button>
+      <button class="btn-act btn-approve-admin" style="padding:12px 20px;border-radius:6px;margin-left:auto;" onclick="salvarObservacao()">💬 Adicionar comentário</button>
     </div>
   </div>
 </div>
@@ -1396,7 +1397,7 @@
             <th style="width:40px;text-align:center;">#</th>
             <th>Candidato</th>
             <th style="width:70px;">Nota</th>
-            <th>Observação</th>
+            <th style="width:70px;text-align:center;">💬</th>
             <th>Status</th>
             <th>Ações</th>
           </tr>
@@ -1438,7 +1439,7 @@
             <th style="width:40px;text-align:center;">#</th>
             <th>Candidato</th>
             <th style="width:70px;">Nota</th>
-            <th>Observação</th>
+            <th style="width:70px;text-align:center;">💬</th>
             <th>Status</th>
             <th>Decidido por</th>
             <th>Data</th>
@@ -1483,7 +1484,7 @@
             <th>Candidato</th>
             <th>Cargo pretendido</th>
             <th style="width:70px;">Score</th>
-            <th>Observação</th>
+            <th style="width:70px;text-align:center;">💬</th>
             <th>Adicionado por</th>
             <th>Data</th>
             <th>Ações</th>
@@ -1885,7 +1886,7 @@
     assinarModulos, definirModuloAtivo,
     gerarCodigoAcesso, assinarCodigosAcesso, cancelarCodigoAcesso, excluirCodigoAcesso, VALIDADE_CODIGO_MS,
     definirNumeroWhatsapp, assinarNumeroWhatsapp,
-    assinarPipeline, definirObservacaoPipeline, definirAprovacaoManual, definirBancoReserva,
+    assinarPipeline, registrarComentario, buscarComentarios, definirAprovacaoManual, definirBancoReserva,
     registrarDecisaoFinal, buscarHistorico, registrarEntrevista,
     assinarVagas, criarVaga, encerrarVaga, reabrirVaga, excluirVaga,
     obterPesosScore, salvarPesosPadrao, salvarPesosCargo, removerPesosCargo
@@ -2639,7 +2640,7 @@
               <button class="btn-act ${noBancoAtual ? 'btn-approve-admin' : 'btn-neutral'}" data-acao="toggleBanco" data-valor="${!noBancoAtual}" ${dadosDecisao}>
                 ${noBancoAtual ? '✅ No Banco de Reserva' : '🏦 Banco de Reserva'}
               </button>
-              <button class="btn-act btn-neutral" data-acao="editarObservacao" ${dadosDecisao}>📝 Observação</button>
+              <button class="btn-act btn-neutral" data-acao="editarObservacao" ${dadosDecisao}>💬 Comentários${pInfo.comentarios_count ? ` (${pInfo.comentarios_count})` : ''}</button>
               ${aprovadoAtual ? `<button class="btn-act btn-neutral" style="background:var(--cyandim);color:var(--cyan);border-color:var(--cyanmid);" data-acao="abrirEntrevista" ${dadosDecisao}>🎤 ${pInfo.entrevista ? 'Refazer entrevista' : 'Realizar entrevista'}</button>` : ''}
               ${aprovadoAtual && !pInfo.decisao_final ? `
                 <button class="btn-act btn-approve-admin" data-acao="decidirEntrevista" data-decisao="contratado" ${dadosDecisao}>🎉 Contratado</button>
@@ -2693,9 +2694,12 @@
   }
 
   // ── Geração do relatório em PDF (via impressão do navegador) ───────────
-  window.gerarPDF = function () {
+  window.gerarPDF = async function () {
     const tents = tentativasDe(CAND_ATUAL);
     if (!tents.length) return;
+    // Busca os comentários antes de montar o relatório — precisam aparecer
+    // com autor e data, não só o texto (ver registrarComentario).
+    const comentariosPDF = await buscarComentarios(CAND_ATUAL).catch(() => []);
 
     const quizzes = tents.filter(t => t.tipo !== 'typing');
     const typings = tents.filter(t => t.tipo === 'typing');
@@ -2805,17 +2809,17 @@
         </div>`;
     }
 
-    // Observação do avaliador (Processo Seletivo), se houver.
-    {
-      const chaveIdObs = CAND_ATUAL.replace(/[/]/g, '_');
-      const obs = PIPELINE_MAP[chaveIdObs] && PIPELINE_MAP[chaveIdObs].observacao;
-      if (obs) {
-        h += `
-          <div class="pr-sec-title">Observação do avaliador</div>
-          <div class="pr-cand" style="display:block;border-left:4px solid #0088B0;">
-            <div style="font-size:12px;color:#12141c;white-space:pre-wrap;">${escapeHtml(obs)}</div>
-          </div>`;
-      }
+    // Comentários da equipe sobre o candidato — cada um com autor e data
+    // (ver registrarComentario/buscarComentarios em js/dashboard.js).
+    if (comentariosPDF.length) {
+      h += `<div class="pr-sec-title">Comentários da equipe</div>` +
+        comentariosPDF.map((c, i) => `
+          <div class="pr-cand" style="display:block;border-left:4px solid #0088B0;${i > 0 ? 'margin-top:6px;' : ''}">
+            <div style="font-size:12px;color:#12141c;white-space:pre-wrap;">${escapeHtml(c.texto)}</div>
+            <div style="font-family:'Share Tech Mono',monospace;font-size:9px;color:#5A6880;margin-top:4px;">
+              ${escapeHtml(c.por || '—')}${c.por_perfil ? ` · ${escapeHtml(LABEL_PERFIL[c.por_perfil] || c.por_perfil)}` : ''} · ${fmtDataHora(c.em)}
+            </div>
+          </div>`).join('');
     }
 
     if (quizzes.length) {
@@ -2913,9 +2917,10 @@
 
   // Consolida o melhor resultado por módulo (se refez o teste, vale o maior).
 
-  window.gerarResumoSkills = function () {
+  window.gerarResumoSkills = async function () {
     const tents = tentativasDe(CAND_ATUAL);
     if (!tents.length) return;
+    const comentariosResumo = await buscarComentarios(CAND_ATUAL).catch(() => []);
 
     const quizzes = tents.filter(t => t.tipo !== 'typing');
     const typings = tents.filter(t => t.tipo === 'typing');
@@ -3039,17 +3044,16 @@
         </div>` : ''}`;
     }
 
-    // Observação do avaliador (Processo Seletivo), se houver.
-    {
-      const chaveIdObs = CAND_ATUAL.replace(/[/]/g, '_');
-      const obs = PIPELINE_MAP[chaveIdObs] && PIPELINE_MAP[chaveIdObs].observacao;
-      if (obs) {
-        h += `
-          <div class="pr-sec-title">Observação do avaliador</div>
-          <div class="sk-perfil" style="display:block;">
-            <div style="font-size:12px;color:#12141c;white-space:pre-wrap;">${escapeHtml(obs)}</div>
-          </div>`;
-      }
+    // Comentários da equipe sobre o candidato, com autor e data.
+    if (comentariosResumo.length) {
+      h += `<div class="pr-sec-title">Comentários da equipe</div>` +
+        comentariosResumo.map((c, i) => `
+          <div class="sk-perfil" style="display:block;${i > 0 ? 'margin-top:6px;' : ''}">
+            <div style="font-size:12px;color:#12141c;white-space:pre-wrap;">${escapeHtml(c.texto)}</div>
+            <div style="font-family:'Share Tech Mono',monospace;font-size:9px;color:#5A6880;margin-top:4px;">
+              ${escapeHtml(c.por || '—')}${c.por_perfil ? ` · ${escapeHtml(LABEL_PERFIL[c.por_perfil] || c.por_perfil)}` : ''} · ${fmtDataHora(c.em)}
+            </div>
+          </div>`).join('');
     }
 
     // Competências por módulo
@@ -4090,7 +4094,7 @@
         fn: () => { window.fecharAcoesModal(); window.alternarBancoReserva(chave, nome, !noBanco); }
       },
       {
-        label: '📝 ' + (p.observacao ? 'Ver/editar observação' : 'Escrever observação'),
+        label: '💬 ' + (p.comentarios_count ? `Ver comentários (${p.comentarios_count})` : 'Comentar'),
         fn: () => { window.fecharAcoesModal(); window.editarObservacaoPipeline(chave, nome); }
       },
       {
@@ -4168,16 +4172,49 @@
     fecharWhatsappCandidato();
   };
 
+  // Botão com o ícone de comentário + quantidade, usado nas tabelas de
+  // Aprovados/Contratados/Banco de Reserva — clicável, abre a mesma janela
+  // de comentários da Ficha 360°. `count` vem de `pipeline.comentarios_count`
+  // (contador desnormalizado, ver registrarComentario em js/dashboard.js).
+  function badgeComentarios(count, dadosCand) {
+    const n = count || 0;
+    return `<button class="btn-act-mini" data-acao="editarObservacao" ${dadosCand} title="Ver/adicionar comentários" style="white-space:nowrap;">💬 ${n}</button>`;
+  }
+
+  function renderListaComentarios(lista) {
+    const el = document.getElementById('obsListaComentarios');
+    if (!lista.length) {
+      el.innerHTML = '<div class="ficha-val" style="color:var(--text4);">Nenhum comentário ainda</div>';
+      return;
+    }
+    el.innerHTML = lista.map(c => `
+      <div style="border-bottom:1px solid var(--line);padding-bottom:8px;">
+        <div style="font-size:13px;color:var(--text);white-space:pre-wrap;">${escapeHtml(c.texto)}</div>
+        <div style="font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--text3);margin-top:4px;">
+          ${escapeHtml(c.por || '—')}${c.por_perfil ? ` · ${escapeHtml(LABEL_PERFIL[c.por_perfil] || c.por_perfil)}` : ''} · ${fmtDataHora(c.em)}
+        </div>
+      </div>`).join('');
+  }
+
   let OBS_CHAVE_ATUAL = null;
   let OBS_NOME_ATUAL = null;
 
-  window.editarObservacaoPipeline = function (chave, nome) {
-    const chaveId = chave.replace(/[/]/g, '_');
+  window.editarObservacaoPipeline = async function (chave, nome) {
     OBS_CHAVE_ATUAL = chave;
     OBS_NOME_ATUAL = nome;
     document.getElementById('obsNomeCandidato').textContent = nome;
-    document.getElementById('obsTextarea').value = (PIPELINE_MAP[chaveId] && PIPELINE_MAP[chaveId].observacao) || '';
+    document.getElementById('obsTextarea').value = '';
+    document.getElementById('obsListaComentarios').innerHTML = '<div style="font-family:\'Share Tech Mono\',monospace;font-size:11px;color:var(--text3);">Carregando…</div>';
     document.getElementById('obsModal').classList.add('show');
+    try {
+      const lista = await buscarComentarios(chave);
+      // Não perde o comentário se a pessoa já tiver fechado o modal
+      // (ou aberto outro candidato) enquanto a busca ainda estava no ar.
+      if (OBS_CHAVE_ATUAL === chave) renderListaComentarios(lista);
+    } catch (e) {
+      console.error(e);
+      if (OBS_CHAVE_ATUAL === chave) document.getElementById('obsListaComentarios').innerHTML = '<div class="ficha-val" style="color:var(--red);">Falha ao carregar comentários</div>';
+    }
     document.getElementById('obsTextarea').focus();
   };
 
@@ -4188,14 +4225,17 @@
   };
 
   window.salvarObservacao = async function () {
-    const nova = document.getElementById('obsTextarea').value.trim();
+    const texto = document.getElementById('obsTextarea').value.trim();
+    if (!texto) { toast('▸ Escreva algo antes de adicionar', 'err'); return; }
     try {
-      await definirObservacaoPipeline(OBS_CHAVE_ATUAL, nova, OBS_NOME_ATUAL, me.usuario);
-      toast('✅ Observação salva', 'ok');
-      fecharObservacao();
+      await registrarComentario(OBS_CHAVE_ATUAL, texto, OBS_NOME_ATUAL, me.usuario, me.perfil);
+      document.getElementById('obsTextarea').value = '';
+      toast('✅ Comentário adicionado', 'ok');
+      const lista = await buscarComentarios(OBS_CHAVE_ATUAL);
+      renderListaComentarios(lista);
     } catch (e) {
       console.error(e);
-      toast('❌ Falha ao salvar observação: ' + e.message, 'err');
+      toast('❌ Falha ao adicionar comentário: ' + e.message, 'err');
     }
   };
 
@@ -4481,7 +4521,6 @@
     tbody.innerHTML = noBanco.map((c, i) => {
       const chaveId = c.chave.replace(/[/]/g, '_');
       const p = PIPELINE_MAP[chaveId] || {};
-      const observacao = p.observacao || '';
       const dadosCand = `data-chave="${escapeHtml(c.chave)}" data-nome="${escapeHtml(c.nome)}"`;
       const acao = `
         <div style="display:flex;gap:5px;flex-wrap:wrap;justify-content:flex-end;">
@@ -4495,7 +4534,7 @@
         <td class="td-nome">${escapeHtml(c.nome)} <span class="row-hint">▸ detalhes</span></td>
         <td>${c.cargoPretendido ? escapeHtml(c.cargoPretendido) : '<span style="color:var(--text4);">—</span>'}</td>
         <td>${c.score != null ? `<span class="td-pct" style="color:${corNota(c.score)};font-weight:800;">${c.score}</span>` : '<span style="color:var(--text4);">—</span>'}</td>
-        <td style="max-width:200px;white-space:normal;font-size:12px;color:var(--text2);">${observacao ? escapeHtml(observacao) : '<span style="color:var(--text4);">—</span>'}</td>
+        <td style="text-align:center;" data-acao="ignorar">${badgeComentarios(p.comentarios_count, dadosCand)}</td>
         <td>${escapeHtml(p.banco_reserva_por || '—')}</td>
         <td class="td-time">${p.banco_reserva_em ? fmtDataHora(p.banco_reserva_em) : '—'}</td>
         <td onclick="event.stopPropagation()">${acao}</td>
@@ -4614,8 +4653,6 @@
       const chaveId = c.chave.replace(/[/]/g, '_');
       const pipelineData = PIPELINE_MAP[chaveId] || {};
       const decisaoFinal = pipelineData.decisao_final || null;
-      const observacao = pipelineData.observacao || '';
-
       let statusTxt = '⏳ Pendente';
       let corStatus = 'var(--text3)';
       if (decisaoFinal === 'contratado') { statusTxt = '🎉 Contratado'; corStatus = 'var(--green)'; }
@@ -4646,7 +4683,7 @@
             </div>
           </div>
         </td>
-        <td style="max-width:200px;white-space:normal;font-size:12px;color:var(--text2);">${observacao ? escapeHtml(observacao) : '<span style="color:var(--text4);">—</span>'}</td>
+        <td style="text-align:center;" data-acao="ignorar">${badgeComentarios(pipelineData.comentarios_count, dadosCand)}</td>
         <td style="font-size:12px;color:${corStatus};font-weight:700;">${statusTxt}</td>
         <td data-acao="ignorar" style="font-size:11px;">
           <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;">
@@ -4747,14 +4784,14 @@
     tbody.innerHTML = decididos.map((c, i) => {
       const chaveId = c.chave.replace(/[/]/g, '_');
       const p = PIPELINE_MAP[chaveId] || {};
-      const observacao = p.observacao || '';
+      const dadosCand = `data-chave="${escapeHtml(c.chave)}" data-nome="${escapeHtml(c.nome)}"`;
       const contratado = p.decisao_final === 'contratado';
       return `
-      <tr class="clickable" data-acao="abrirCandidato" data-chave="${escapeHtml(c.chave)}" title="Ver detalhamento e exportar PDF">
+      <tr class="clickable" data-acao="abrirCandidato" ${dadosCand} title="Ver detalhamento e exportar PDF">
         <td style="text-align:center;color:var(--text3);">${i + 1}</td>
         <td class="td-nome">${escapeHtml(c.nome)} <span class="row-hint">▸ detalhes</span></td>
         <td><span class="td-pct" style="color:${c.media >= 70 ? 'var(--green)' : 'var(--red)'}">${c.media}%</span></td>
-        <td style="max-width:200px;white-space:normal;font-size:12px;color:var(--text2);">${observacao ? escapeHtml(observacao) : '<span style="color:var(--text4);">—</span>'}</td>
+        <td style="text-align:center;" data-acao="ignorar">${badgeComentarios(p.comentarios_count, dadosCand)}</td>
         <td style="font-weight:700;color:${contratado ? 'var(--green)' : 'var(--red)'};">${contratado ? '🎉 Contratado' : '❌ Recusado'}</td>
         <td>${escapeHtml(p.decisao_final_por || '—')}</td>
         <td class="td-time">${p.decisao_final_em ? fmtDataHora(p.decisao_final_em) : '—'}</td>

@@ -531,8 +531,53 @@ export const tests = [
       assertEqual(erros.length, 0, 'erros de JS: ' + erros.join(' | '));
       await page.close();
     }
-  }
-,
+  },
+
+  {
+    name: 'Comentários: registra autor/perfil de cada um, mostra ícone com contagem e aparece no PDF',
+    async run({ browser, baseUrl }) {
+      const resultados = [{ id: '1', tipo: 'quiz', nome: 'Recebe Comentario', modulo: 'Atendimento', pct: 80, acertos: 8, total: 10, data_conclusao: hoje() }];
+      const pipeline = { 'nome:recebe comentario': { aprovado: true, aprovado_em: hoje() } };
+      const { page, erros } = await abrirDashboard(browser, baseUrl, { perfil: 'avaliador', usuario: 'Bruna Avaliadora', resultados, pipeline });
+
+      await page.evaluate(() => abrirCandidato('nome:recebe comentario'));
+      await page.waitForTimeout(300);
+
+      // Sem comentário ainda: botão mostra "Comentários" sem contagem.
+      let txtBotao = await page.evaluate(() => document.querySelector('[data-acao="editarObservacao"]').textContent);
+      assert(!/\(\d+\)/.test(txtBotao), `sem comentário ainda não deveria ter contagem no botão. Veio: ${txtBotao}`);
+
+      await page.click('[data-acao="editarObservacao"]');
+      await page.waitForTimeout(200);
+      await page.evaluate(() => { document.getElementById('obsTextarea').value = 'Muito bem na entrevista informal.'; });
+      await page.click('button:has-text("Adicionar comentário")');
+      await page.waitForTimeout(300);
+
+      // O comentário aparece na lista do próprio modal, com autor e perfil.
+      const listaModal = await page.evaluate(() => document.getElementById('obsListaComentarios').textContent);
+      assert(listaModal.includes('Muito bem na entrevista informal'), `comentário deveria aparecer na lista. Conteúdo: ${listaModal}`);
+      assert(listaModal.includes('Bruna Avaliadora'), `autor deveria aparecer no comentário. Conteúdo: ${listaModal}`);
+      assert(listaModal.includes('Avaliador'), `perfil do autor deveria aparecer no comentário. Conteúdo: ${listaModal}`);
+
+      await page.evaluate(() => fecharObservacao());
+      await page.waitForTimeout(200);
+
+      // O botão na Ficha 360° passa a mostrar a contagem.
+      txtBotao = await page.evaluate(() => document.querySelector('[data-acao="editarObservacao"]').textContent);
+      assert(txtBotao.includes('(1)'), `botão deveria mostrar a contagem "(1)" depois do comentário. Veio: ${txtBotao}`);
+
+      // O PDF do candidato mostra o comentário, com autor e perfil.
+      await page.evaluate(() => gerarPDF());
+      await page.waitForTimeout(200);
+      const htmlPdf = await page.evaluate(() => document.getElementById('printReport').innerHTML);
+      assert(htmlPdf.includes('Muito bem na entrevista informal'), `PDF deveria mostrar o comentário. HTML: ${htmlPdf}`);
+      assert(htmlPdf.includes('Bruna Avaliadora'), `PDF deveria mostrar o autor do comentário. HTML: ${htmlPdf}`);
+
+      assertEqual(erros.length, 0, 'erros de JS: ' + erros.join(' | '));
+      await page.close();
+    }
+  },
+
   {
     name: 'Ficha do candidato mostra experiência relatada e link do currículo, quando enviados',
     async run({ browser, baseUrl }) {

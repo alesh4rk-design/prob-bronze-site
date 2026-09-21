@@ -174,9 +174,18 @@ service cloud.firestore {
       // importante "desaparecer" quando alguém muda de ideia depois.
       match /historico/{id} {
         allow read: if request.auth != null && isLeitor();
-        allow create: if request.auth != null &&
-                         exists(/databases/$(database)/documents/usuarios/$(request.auth.uid)) &&
-                         get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.perfil in ['admin', 'gerencia', 'avaliador', 'coordenador'];
+        allow create: if request.auth != null && isGerenciaCandidatos();
+        allow update, delete: if false;
+      }
+
+      // pipeline/{chave}/comentarios/{id}: comentários da equipe sobre o
+      // candidato — mesmo espírito do histórico (um doc novo por
+      // comentário, nunca editado/apagado), pra sempre dar pra ver quem
+      // escreveu o quê e quando, em vez de um campo único reescrito por
+      // cima a cada edição.
+      match /comentarios/{id} {
+        allow read: if request.auth != null && isLeitor();
+        allow create: if request.auth != null && isGerenciaCandidatos();
         allow update, delete: if false;
       }
     }

@@ -49,6 +49,7 @@ export function limit(){ return {}; }
 export function doc(db, ...parts){ return { __doc: parts.join('/') }; }
 export function serverTimestamp(){ return new Date(); }
 export function deleteField(){ return { __deleteField: true }; }
+export function increment(n){ return { __increment: n }; }
 
 window.__PESOS = ${JSON.stringify(pesosScore)};
 
@@ -95,6 +96,7 @@ export async function setDoc(ref, data){
     const atual = { ...(window.__PIPE[id] || {}) };
     for (const [k, v] of Object.entries(data)) {
       if (v && typeof v === 'object' && v.__deleteField) delete atual[k];
+      else if (v && typeof v === 'object' && '__increment' in v) atual[k] = (atual[k] || 0) + v.__increment;
       else atual[k] = v;
     }
     window.__PIPE[id] = atual;
@@ -159,7 +161,12 @@ export async function getDocs(ref){
     const abertas = Object.entries(window.__VAGAS).filter(([, v]) => v.status === 'aberta');
     return { forEach(f) { abertas.forEach(([id, v]) => f({ id, data: () => v })); } };
   }
-  const lista = [...(window.__SUBCOLECOES[ref.__name] || [])].reverse();
+  // Comentários pedem ordem CRESCENTE (mais antigo primeiro, leitura de
+  // conversa) — histórico pede decrescente (mais recente primeiro, linha do
+  // tempo). Sem where()/orderBy() de verdade no mock, a ordem é decidida
+  // aqui pelo nome da subcoleção.
+  const bruta = window.__SUBCOLECOES[ref.__name] || [];
+  const lista = ref.__name.endsWith('/comentarios') ? [...bruta] : [...bruta].reverse();
   return { forEach(f) { lista.forEach(d => f({ id: d.id, data: () => d.data })); } };
 }
 

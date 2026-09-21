@@ -12,7 +12,7 @@
 
 import { db } from "./firebase-config.js";
 import {
-  collection, query, where, orderBy, limit, onSnapshot, getDoc, getDocs, doc, addDoc, setDoc, updateDoc, deleteDoc, serverTimestamp, deleteField
+  collection, query, where, orderBy, limit, onSnapshot, getDoc, getDocs, doc, addDoc, setDoc, updateDoc, deleteDoc, serverTimestamp, deleteField, increment
 } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
 
 // Assina a coleção `resultados` em tempo real (substitui o polling de 10s do
@@ -251,16 +251,39 @@ export async function definirEtapaPipeline(chave, etapa, nome, avaliador) {
   }, { merge: true });
 }
 
-// Observação do avaliador (admin/viewer) para o coordenador/gerente de RH
-// ler — texto livre, não interfere em nota nem em nenhum resultado de prova.
-export async function definirObservacaoPipeline(chave, observacao, nome, avaliador) {
+// Comentários sobre o candidato — subcoleção (igual historico): cada
+// comentário é um documento NOVO, nunca sobrescreve o anterior. Antes disso
+// existia só um campo `observacao` (texto único, reescrito por cima toda
+// vez), sem registrar QUEM escreveu — só "atualizado_por", que também era
+// sobrescrito por QUALQUER outra mudança no pipeline (mudar etapa, aprovar
+// etc.), então não dava pra confiar que refletia o autor do comentário.
+// `pipeline.comentarios_count` é um contador desnormalizado (mantido aqui,
+// nunca lido/escrito calculando "na unha") — existe só pra mostrar o ícone
+// com a quantidade de comentários nas tabelas de candidatos, sem precisar
+// abrir a ficha de cada um e buscar a subcoleção pra saber se tem comentário.
+export async function registrarComentario(chave, texto, nome, por, por_perfil) {
   const id = chave.replace(/[/]/g, "_");
+  await addDoc(collection(db, "pipeline", id, "comentarios"), {
+    texto,
+    por: por || null,
+    por_perfil: por_perfil || null,
+    em: serverTimestamp()
+  });
   await setDoc(doc(db, "pipeline", id), {
-    observacao: observacao || "",
     nome: nome || null,
-    atualizado_por: avaliador || null,
-    atualizado_em: serverTimestamp()
+    comentarios_count: increment(1)
   }, { merge: true });
+}
+
+// Lê os comentários de um candidato, do mais antigo pro mais novo (leitura
+// de conversa) — buscado sob demanda ao abrir a ficha/modal, igual histórico.
+export async function buscarComentarios(chave) {
+  const id = chave.replace(/[/]/g, "_");
+  const q = query(collection(db, "pipeline", id, "comentarios"), orderBy("em", "asc"));
+  const snap = await getDocs(q);
+  const lista = [];
+  snap.forEach((d) => lista.push({ id: d.id, ...d.data() }));
+  return lista;
 }
 
 // Trilha de auditoria: uma entrada NOVA por mudança de etapa (nunca
