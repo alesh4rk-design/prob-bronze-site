@@ -500,8 +500,34 @@ export const tests = [
       assertEqual(erros.length, 0, 'erros de JS: ' + erros.join(' | '));
       await page.close();
     }
-  }
-,
+  },
+
+  {
+    name: 'Candidatos: a nota de digitação mostra o ícone do dispositivo, pra não confundir celular com computador',
+    async run({ browser, baseUrl }) {
+      // A régua de WPM é diferente por dispositivo (celular tem teto mais
+      // baixo) — mostrar só "70%" sem dizer se foi celular ou computador dá
+      // a entender que dois candidatos tiveram o mesmo desempenho quando na
+      // verdade vieram de réguas diferentes.
+      const resultados = [
+        { id: '1', tipo: 'quiz', nome: 'Fez No Celular', modulo: 'Atendimento', pct: 80, acertos: 8, total: 10, data_conclusao: hoje() },
+        { id: '2', tipo: 'typing', nome: 'Fez No Celular', dispositivo: 'mobile', wpm: 30, pct: 88, data_conclusao: hoje() },
+        { id: '3', tipo: 'quiz', nome: 'Fez No Pc', modulo: 'Atendimento', pct: 80, acertos: 8, total: 10, data_conclusao: hoje() },
+        { id: '4', tipo: 'typing', nome: 'Fez No Pc', dispositivo: 'desktop', wpm: 45, pct: 88, data_conclusao: hoje() }
+      ];
+      const { page, erros } = await abrirDashboard(browser, baseUrl, { perfil: 'admin', resultados });
+
+      await page.evaluate(() => switchView('pipeline'));
+      await page.waitForTimeout(300);
+      const html = await page.evaluate(() => document.getElementById('pipelineTableBody').innerHTML);
+
+      assert(/Fez No Celular[\s\S]*?📱 Digitação/.test(html), `celular deveria mostrar 📱 junto da digitação. HTML: ${html}`);
+      assert(/Fez No Pc[\s\S]*?💻 Digitação/.test(html), `computador deveria mostrar 💻 junto da digitação. HTML: ${html}`);
+
+      assertEqual(erros.length, 0, 'erros de JS: ' + erros.join(' | '));
+      await page.close();
+    }
+  },
   {
     name: 'PDF do candidato mostra a MELHOR tentativa de digitação, com dispositivo e régua certa',
     async run({ browser, baseUrl }) {

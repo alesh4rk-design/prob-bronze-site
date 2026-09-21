@@ -2385,7 +2385,7 @@
         : null;
       const barrasPerfil = [
         ...mods.map(m => ({ nome: m.modulo, pct: m.pct })),
-        ...(digitacaoPctPerfil !== null ? [{ nome: '⌨️ Digitação', pct: digitacaoPctPerfil }] : [])
+        ...(digitacaoPctPerfil !== null ? [{ nome: `${melhorTypingModal.dispositivo === 'mobile' ? '📱' : '💻'} Digitação`, pct: digitacaoPctPerfil }] : [])
       ];
       html += `
         <div class="tent-card">
@@ -3747,13 +3747,20 @@
         if (!porModulo[m] || pct > porModulo[m]) porModulo[m] = pct;
       }
       const modulos = Object.entries(porModulo).map(([modulo, pct]) => ({ modulo, pct }));
-      // Teste de digitação (se já fez) — nota mais alta obtida.
+      // Teste de digitação (se já fez) — nota mais alta obtida. Guarda
+      // também de QUAL dispositivo veio essa nota: celular e computador têm
+      // régua de WPM diferente (ver FAIXAS_DIGITACAO/classificarDigitacao),
+      // então mostrar só o "%" sem dizer o dispositivo pode dar a entender
+      // que dois candidatos com o mesmo % tiveram o mesmo desempenho, quando
+      // um fez no celular (régua mais generosa) e o outro no computador.
       const typings = ALL_RESULTADOS.filter(t => t.tipo === 'typing' && chaveDe(t) === chave);
-      const digitacao = typings.length ? Math.max(...typings.map(t => t.pct || 0)) : null;
+      const melhorTypingC = typings.length ? typings.reduce((a, t) => (t.pct || 0) >= (a.pct || 0) ? t : a, typings[0]) : null;
+      const digitacao = melhorTypingC ? (melhorTypingC.pct || 0) : null;
+      const digitacaoDispositivo = melhorTypingC ? (melhorTypingC.dispositivo || 'desktop') : null;
       const ultima = tents.reduce((a, t) => (t.data_conclusao || '') > (a || '') ? t.data_conclusao : a, tents[0].data_conclusao);
       const nome = tents[tents.length - 1].nome || '—';
       return {
-        chave, nome, media, moduloEscolhido, modulos, digitacao, ultima,
+        chave, nome, media, moduloEscolhido, modulos, digitacao, digitacaoDispositivo, ultima,
         acertosEscolhido: melhorEscolhido.acertos,
         totalEscolhido: melhorEscolhido.total
       };
@@ -3876,7 +3883,7 @@
         <td style="max-width:280px;white-space:normal;">
           <div style="display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--text2);white-space:nowrap;">
             ${c.modulos.map(m => `<div title="${m.modulo === c.moduloEscolhido ? 'Módulo escolhido pelo candidato' : 'Módulo automático da trilha'}">${m.modulo === c.moduloEscolhido ? '★ ' : ''}${escapeHtml(m.modulo)}: <b style="color:${m.pct >= 70 ? 'var(--green)' : m.pct >= 50 ? 'var(--amber)' : 'var(--red)'}">${m.pct}%</b></div>`).join('')}
-            ${c.digitacao != null ? `<div title="Teste de digitação">⌨️ Digitação: <b style="color:${c.digitacao >= 70 ? 'var(--green)' : c.digitacao >= 50 ? 'var(--amber)' : 'var(--red)'}">${c.digitacao}%</b></div>` : ''}
+            ${c.digitacao != null ? `<div title="Teste de digitação feito ${c.digitacaoDispositivo === 'mobile' ? 'pelo CELULAR' : 'no COMPUTADOR'}">${c.digitacaoDispositivo === 'mobile' ? '📱' : '💻'} Digitação: <b style="color:${c.digitacao >= 70 ? 'var(--green)' : c.digitacao >= 50 ? 'var(--amber)' : 'var(--red)'}">${c.digitacao}%</b></div>` : ''}
           </div>
         </td>
         <td><span class="td-pct" style="color:${c.media >= 70 ? 'var(--green)' : c.media >= 50 ? 'var(--amber)' : 'var(--red)'}">${c.media >= 70 ? '✅' : '❌'} ${c.media}%</span></td>
