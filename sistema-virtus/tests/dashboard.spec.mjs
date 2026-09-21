@@ -114,6 +114,46 @@ export const tests = [
   },
 
   {
+    name: 'Aprovados/Contratados: sem ninguém HOJE, cai automaticamente pro dia mais recente com gente (não fica vazio)',
+    async run({ browser, baseUrl }) {
+      // Cenário do usuário: sexta-feira aprovou candidatos, mas o RH fecha
+      // sábado/domingo — quem checar depois não pode ver a aba vazia só
+      // porque não teve NADA hoje. Também confere que "Resetar" continua
+      // mostrando tudo (não fica preso no auto-ajuste).
+      const resultados = [
+        { id: '1', tipo: 'quiz', nome: 'Aprovado Sexta', modulo: 'Atendimento', pct: 80, acertos: 8, total: 10, data_conclusao: diasAtras(2) },
+        { id: '2', tipo: 'quiz', nome: 'Contratado Sexta', modulo: 'Atendimento', pct: 85, acertos: 8, total: 10, data_conclusao: diasAtras(3) }
+      ];
+      const pipeline = {
+        'nome:aprovado sexta': { aprovado: true, aprovado_em: diasAtras(2) },
+        'nome:contratado sexta': { decisao_final: 'contratado', decisao_final_em: diasAtras(2) }
+      };
+      const { page, erros } = await abrirDashboard(browser, baseUrl, { perfil: 'admin', resultados, pipeline });
+
+      await page.evaluate(() => switchView('banco'));
+      await page.waitForTimeout(300);
+      const dataIniBanco = await page.evaluate(() => document.getElementById('bancoDataIni').value);
+      assert(dataIniBanco !== new Date().toISOString().slice(0, 10), 'campo De deveria ter avançado pro dia do candidato, não continuar em hoje (vazio)');
+      const linhasBanco = await page.evaluate(() => document.getElementById('bancoTableBody').innerText);
+      assert(linhasBanco.includes('Aprovado Sexta'), `deveria mostrar o candidato do dia mais recente com gente. Conteúdo: ${linhasBanco}`);
+
+      await page.evaluate(() => switchView('contratados'));
+      await page.waitForTimeout(300);
+      const linhasContratados = await page.evaluate(() => document.getElementById('contratadosTableBody').innerText);
+      assert(linhasContratados.includes('Contratado Sexta'), `deveria mostrar o contratado do dia mais recente com gente. Conteúdo: ${linhasContratados}`);
+
+      // "Resetar" continua mostrando TUDO — não fica preso no auto-ajuste.
+      await page.evaluate(() => limparFiltrosContratados());
+      await page.waitForTimeout(200);
+      const dataIniContratadosAposReset = await page.evaluate(() => document.getElementById('contratadosDataIni').value);
+      assertEqual(dataIniContratadosAposReset, '', 'Resetar deveria limpar o campo De, mostrando todos os dias');
+
+      assertEqual(erros.length, 0, 'erros de JS: ' + erros.join(' | '));
+      await page.close();
+    }
+  },
+
+  {
     name: 'Decidir Contratado/Recusado remove de Aprovados e aparece em Contratados na hora',
     async run({ browser, baseUrl }) {
       const resultados = [{ id: '1', tipo: 'quiz', nome: 'Joana Decisao', modulo: 'Atendimento', pct: 85, acertos: 8, total: 10, data_conclusao: hoje() }];

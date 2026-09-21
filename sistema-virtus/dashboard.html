@@ -4520,10 +4520,31 @@
   // automático da trilha mesmo tendo tirado 20% no módulo que realmente
   // importa para a vaga.
   window.limparFiltrosBanco = function limparFiltrosBanco() {
+    BANCO_FILTRO_MANUAL = true; // "Resetar" mostra TODOS os dias — não é o auto-ajuste
     document.getElementById('bancoDataIni').value = '';
     document.getElementById('bancoDataFim').value = '';
     renderBancoAprovados();
   };
+
+  // Acha, entre os itens da lista, a data (YMD) mais recente que não seja no
+  // futuro — usado pro auto-ajuste "sem ninguém hoje, mostra o dia mais
+  // recente que tem gente" (ver renderBancoAprovados/renderContratados).
+  function dataMaisRecenteComDados(lista, pegarDataYMD, hojeYMD) {
+    let melhor = null;
+    for (const item of lista) {
+      const d = pegarDataYMD(item);
+      if (!d || d > hojeYMD) continue;
+      if (!melhor || d > melhor) melhor = d;
+    }
+    return melhor;
+  }
+
+  // true assim que a pessoa mexe manualmente no filtro de data (ver
+  // listeners lá embaixo, perto de "conectar()") — a partir daí o
+  // auto-ajuste pra "dia mais recente com gente" para de acontecer, porque
+  // a pessoa já escolheu um período de propósito (mesmo que vazio).
+  let BANCO_FILTRO_MANUAL = false;
+  let CONTRATADOS_FILTRO_MANUAL = false;
 
   window.renderBancoAprovados = function renderBancoAprovados() {
     const tbody = document.getElementById('bancoTableBody');
@@ -4531,8 +4552,8 @@
     ligarAcoesDelegadas('bancoTableBody');
     const todos = candidatosAgrupados();
 
-    const dataIni = document.getElementById('bancoDataIni').value;
-    const dataFim = document.getElementById('bancoDataFim').value;
+    let dataIni = document.getElementById('bancoDataIni').value;
+    let dataFim = document.getElementById('bancoDataFim').value;
 
     // Filtra apenas candidatos marcados para entrevista (aprovado = true no
     // pipeline) que AINDA NÃO tiveram decisão final. Assim que alguém marca
@@ -4548,17 +4569,39 @@
     // O filtro de data usa QUANDO A PESSOA FOI MARCADA para entrevista
     // (aprovado_em), não quando ela fez o teste — um candidato que fez o
     // teste semana passada e foi marcado hoje precisa aparecer hoje.
-    const aprovadosFiltrados = marcadosParaEntrevista.filter(c => {
+    const dataAprovacaoYMD = (c) => {
       const aprovadoEm = aprovadoEmDe(c);
       // Sem aprovado_em ainda resolvido (serverTimestamp() chega como null
       // no primeiro instante local, ou o registro é antigo o bastante pra
       // nem ter esse campo) — trata como "agora" em vez de esconder o
       // candidato da aba logo depois de marcado.
-      const dataC = aprovadoEm ? dataLocalYMD(aprovadoEm) : dataLocalYMD(new Date());
-      if (dataIni && dataC < dataIni) return false;
-      if (dataFim && dataC > dataFim) return false;
+      return aprovadoEm ? dataLocalYMD(aprovadoEm) : dataLocalYMD(new Date());
+    };
+    const filtrarPeriodo = (ini, fim) => marcadosParaEntrevista.filter(c => {
+      const dataC = dataAprovacaoYMD(c);
+      if (ini && dataC < ini) return false;
+      if (fim && dataC > fim) return false;
       return true;
-    }).sort((a, b) => b.media - a.media);
+    });
+
+    let aprovadosFiltrados = filtrarPeriodo(dataIni, dataFim);
+
+    // Sem ninguém aprovado HOJE (ex: sexta à tarde, sábado e domingo sem
+    // movimento) e o filtro ainda está no automático (hoje-hoje, ninguém
+    // mexeu) — em vez de mostrar a aba vazia, cai pro dia mais recente que
+    // TEM gente aprovada, pra não parecer que sumiu tudo.
+    const hojeYMD = dataLocalYMD(new Date());
+    if (!aprovadosFiltrados.length && !BANCO_FILTRO_MANUAL && dataIni === hojeYMD && dataFim === hojeYMD) {
+      const maisRecente = dataMaisRecenteComDados(marcadosParaEntrevista, dataAprovacaoYMD, hojeYMD);
+      if (maisRecente && maisRecente !== dataIni) {
+        dataIni = maisRecente; dataFim = maisRecente;
+        document.getElementById('bancoDataIni').value = dataIni;
+        document.getElementById('bancoDataFim').value = dataFim;
+        aprovadosFiltrados = filtrarPeriodo(dataIni, dataFim);
+      }
+    }
+
+    aprovadosFiltrados.sort((a, b) => b.media - a.media);
 
     const badge = document.getElementById('bancoCountBadge');
     if (badge) badge.textContent = aprovadosFiltrados.length + ' registro' + (aprovadosFiltrados.length !== 1 ? 's' : '');
@@ -4637,6 +4680,7 @@
 
   // ══════════ CONTRATADOS (histórico de decisões) ══════════
   window.limparFiltrosContratados = function limparFiltrosContratados() {
+    CONTRATADOS_FILTRO_MANUAL = true; // "Resetar" mostra TODOS os dias — não é o auto-ajuste
     document.getElementById('contratadosDataIni').value = '';
     document.getElementById('contratadosDataFim').value = '';
     renderContratados();
@@ -4653,21 +4697,42 @@
     const tbody = document.getElementById('contratadosTableBody');
     if (!tbody) return;
     ligarAcoesDelegadas('contratadosTableBody');
-    const dataIni = document.getElementById('contratadosDataIni').value;
-    const dataFim = document.getElementById('contratadosDataFim').value;
-    const decididos = candidatosAgrupados().filter(c => {
-      const id = c.chave.replace(/[/]/g, '_');
-      return PIPELINE_MAP[id] && PIPELINE_MAP[id].decisao_final;
-    }).filter(c => {
-      if (!dataIni && !dataFim) return true;
+    let dataIni = document.getElementById('contratadosDataIni').value;
+    let dataFim = document.getElementById('contratadosDataFim').value;
+    const decisaoFinalYMD = (c) => {
       const d = decisaoFinalEmDe(c);
       // Mesmo raciocínio de Aprovados: sem decisao_final_em ainda resolvido,
       // trata como "agora" em vez de esconder o candidato.
-      const dataC = d ? dataLocalYMD(d) : dataLocalYMD(new Date());
-      if (dataIni && dataC < dataIni) return false;
-      if (dataFim && dataC > dataFim) return false;
+      return d ? dataLocalYMD(d) : dataLocalYMD(new Date());
+    };
+    const decididosTodos = candidatosAgrupados().filter(c => {
+      const id = c.chave.replace(/[/]/g, '_');
+      return PIPELINE_MAP[id] && PIPELINE_MAP[id].decisao_final;
+    });
+    const filtrarPeriodo = (ini, fim) => decididosTodos.filter(c => {
+      if (!ini && !fim) return true;
+      const dataC = decisaoFinalYMD(c);
+      if (ini && dataC < ini) return false;
+      if (fim && dataC > fim) return false;
       return true;
-    }).sort((a, b) => {
+    });
+
+    let decididos = filtrarPeriodo(dataIni, dataFim);
+
+    // Mesmo auto-ajuste de Aprovados: ninguém decidido hoje e o filtro
+    // ainda está no automático — cai pro dia mais recente que tem decisão.
+    const hojeYMD = dataLocalYMD(new Date());
+    if (!decididos.length && !CONTRATADOS_FILTRO_MANUAL && dataIni === hojeYMD && dataFim === hojeYMD) {
+      const maisRecente = dataMaisRecenteComDados(decididosTodos, decisaoFinalYMD, hojeYMD);
+      if (maisRecente && maisRecente !== dataIni) {
+        dataIni = maisRecente; dataFim = maisRecente;
+        document.getElementById('contratadosDataIni').value = dataIni;
+        document.getElementById('contratadosDataFim').value = dataFim;
+        decididos = filtrarPeriodo(dataIni, dataFim);
+      }
+    }
+
+    decididos = decididos.sort((a, b) => {
       const ta = (PIPELINE_MAP[a.chave.replace(/[/]/g, '_')] || {}).decisao_final_em;
       const tb = (PIPELINE_MAP[b.chave.replace(/[/]/g, '_')] || {}).decisao_final_em;
       return String(tb || '').localeCompare(String(ta || ''));
@@ -5612,6 +5677,12 @@
   const bancoDataFimEl = document.getElementById('bancoDataFim');
   if (bancoDataIniEl) bancoDataIniEl.value = dataLocalYMD(new Date());
   if (bancoDataFimEl) bancoDataFimEl.value = dataLocalYMD(new Date());
+  // Mexeu direto no campo de data = escolha deliberada — desliga o
+  // auto-ajuste "sem gente hoje, mostra o dia mais recente" (ver
+  // renderBancoAprovados/renderContratados), mesmo que o resultado fique
+  // vazio de propósito.
+  if (bancoDataIniEl) bancoDataIniEl.addEventListener('change', () => { BANCO_FILTRO_MANUAL = true; });
+  if (bancoDataFimEl) bancoDataFimEl.addEventListener('change', () => { BANCO_FILTRO_MANUAL = true; });
   // Candidatos abre mostrando TODOS os dias por padrão (mais recentes no
   // topo) — diferente de Aprovados/Contratados/Violações, que priorizam
   // hoje. O campo de data continua disponível pra quem quiser filtrar.
@@ -5620,6 +5691,8 @@
   const contratadosDataFimEl = document.getElementById('contratadosDataFim');
   if (contratadosDataIniEl) contratadosDataIniEl.value = dataLocalYMD(new Date());
   if (contratadosDataFimEl) contratadosDataFimEl.value = dataLocalYMD(new Date());
+  if (contratadosDataIniEl) contratadosDataIniEl.addEventListener('change', () => { CONTRATADOS_FILTRO_MANUAL = true; });
+  if (contratadosDataFimEl) contratadosDataFimEl.addEventListener('change', () => { CONTRATADOS_FILTRO_MANUAL = true; });
 
   conectar();
 
