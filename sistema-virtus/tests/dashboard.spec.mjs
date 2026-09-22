@@ -1724,6 +1724,74 @@ export const tests = [
   },
 
   {
+    name: 'Digitação no computador: confere o CPF no quiz, usa o nome de lá e avisa quando o CPF não foi encontrado',
+    async run({ browser, baseUrl }) {
+      // Nome e CPF são digitados de novo na digitação do computador — um CPF
+      // errado fazia a digitação virar "candidato separado" no painel.
+      async function abrirDigitacao() {
+        const p = await browser.newPage();
+        const { APP, AUTH, FS } = buildMocks({});
+        const map = { 'firebase-app.js': APP, 'firebase-auth.js': AUTH, 'firebase-firestore.js': FS };
+        await p.route('**/firebasejs/**', route => {
+          const chave = Object.keys(map).find(k => route.request().url().endsWith(k));
+          return chave ? route.fulfill({ status: 200, contentType: 'application/javascript', body: map[chave] }) : route.abort();
+        });
+        await p.route('**/fonts.googleapis.com/**', r => r.fulfill({ status: 200, contentType: 'text/css', body: '' }));
+        await p.route('**/virtus-api.ale-sh4rk.workers.dev/**', route => {
+          const url = route.request().url();
+          const body = JSON.parse(route.request().postData() || '{}');
+          let resp = { ok: false };
+          if (url.endsWith('/verificar-codigo')) resp = { ok: body.codigo === '123456' };
+          if (url.endsWith('/buscar-candidato')) {
+            resp = body.cpf.replace(/\D/g, '') === '52998224725'
+              ? { ok: true, encontrado: true, nome: 'Nome Usado No Quiz' }
+              : { ok: true, encontrado: false };
+          }
+          return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(resp) });
+        });
+        const erros = [];
+        p.on('pageerror', e => erros.push(e.message));
+        await p.goto(`${baseUrl}/digitacao.html`, { waitUntil: 'load' });
+        await p.waitForTimeout(500);
+        return { p, erros };
+      }
+      async function preencherEIniciar(p, nome, cpf) {
+        await p.fill('#nome', nome);
+        await p.fill('#inCpf', cpf);
+        await p.evaluate(() => { setToday(); validateForm(); });
+        await p.click('#startBtn');
+        await p.waitForTimeout(200);
+        await p.fill('#inCodigoAcesso', '123456');
+        await p.click('#codigoConfirmBtn');
+        await p.waitForTimeout(500);
+      }
+
+      // CPF que fez o quiz: usa o nome de lá (mesmo digitado diferente).
+      let { p, erros } = await abrirDigitacao();
+      await preencherEIniciar(p, 'fulano digitado diferente', '529.982.247-25');
+      const pronto = await p.evaluate(() => ({
+        aberto: document.getElementById('readyOverlay').classList.contains('show'),
+        nome: document.getElementById('readyName').textContent
+      }));
+      assert(pronto.aberto, 'teste deveria começar quando o CPF é encontrado');
+      assertEqual(pronto.nome, 'Nome Usado No Quiz', 'deveria usar o nome do quiz, não o digitado');
+      assertEqual(erros.length, 0, 'erros de JS: ' + erros.join(' | '));
+      await p.close();
+
+      // CPF que não fez o quiz: avisa; se cancelar, não começa.
+      ({ p, erros } = await abrirDigitacao());
+      let avisou = '';
+      p.on('dialog', d => { avisou = d.message(); d.dismiss(); });
+      await preencherEIniciar(p, 'Outra Pessoa', '111.444.777-35');
+      assert(/não encontramos/i.test(avisou), `deveria avisar que o CPF não foi encontrado. Veio: "${avisou}"`);
+      const naoComecou = await p.evaluate(() => !document.getElementById('readyOverlay').classList.contains('show'));
+      assert(naoComecou, 'cancelando o aviso, o teste não deveria começar (pra corrigir o CPF)');
+      assertEqual(erros.length, 0, 'erros de JS: ' + erros.join(' | '));
+      await p.close();
+    }
+  },
+
+  {
     name: 'Origem dos candidatos: agrupa por candidato (não por tentativa) e calcula taxa de contratação por origem',
     async run({ browser, baseUrl }) {
       const resultados = [

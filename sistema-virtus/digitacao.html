@@ -475,7 +475,7 @@ textarea::placeholder { color:#4A6078; }
 // Original usava POST /api/digitacao e GET /api/ping (server.pyw, contrato
 // inferido). Agora grava direto na coleção `resultados` via js/digitacao.js
 // e "status online" reflete apenas se a config do Firebase está OK.
-import { salvarResultadoDigitacao, obterNumeroWhatsappRH } from "./js/digitacao.js";
+import { salvarResultadoDigitacao, obterNumeroWhatsappRH, buscarCandidatoPorCpf } from "./js/digitacao.js";
 
 // Monta o link wa.me com uma mensagem pronta, se o RH tiver configurado um
 // número de WhatsApp no dashboard. O candidato ainda precisa apertar
@@ -879,7 +879,7 @@ async function validarCodigoEIniciar(){
       codigoValidado = true;
       codigoAcessoAtual = codigo;
       codigoModal.classList.remove('show');
-      iniciarTesteReal();
+      conferirCandidatoEIniciar();
     } else {
       const msgs = { nao_encontrado:'✕ Código não encontrado. Confira com o avaliador.', expirado:'✕ Código expirado. Peça o código atual ao avaliador.', desativado:'✕ Código desativado. Peça o código atual ao avaliador.' };
       msgCodigoAcesso.textContent = msgs[r.motivo] || '✕ Código inválido';
@@ -907,6 +907,39 @@ function startTest(){
     codigoModal.classList.add('show');
     setTimeout(()=>inCodigoAcesso.focus(),100);
     return;
+  }
+  conferirCandidatoEIniciar();
+}
+
+// Digitação no computador: nome e CPF são digitados de novo aqui. Antes de
+// começar, confere no servidor se esse CPF fez o quiz — se achar, usa o
+// MESMO nome de lá (a digitação cai na ficha certa do candidato); se não
+// achar, avisa que o CPF pode estar errado (senão a digitação vira um
+// "candidato separado" no dashboard). Quem veio direto do quiz no celular
+// já trouxe nome/CPF de lá, não precisa conferir.
+async function conferirCandidatoEIniciar(){
+  if (veioDoQuizMobile) { iniciarTesteReal(); return; }
+  const btn = document.getElementById('startBtn');
+  btn.disabled = true;
+  try {
+    const r = await buscarCandidatoPorCpf(candidate.cpf, codigoAcessoAtual);
+    if (r.encontrado) {
+      candidate.nome = r.nome;
+      document.getElementById('nome').value = r.nome;
+      toast('✓ Candidato encontrado: ' + r.nome, 'ok');
+    } else {
+      const seguir = window.confirm(
+        'Não encontramos nenhum teste feito com o CPF ' + candidate.cpf + '.\n\n' +
+        'Confira se o CPF está certo — se estiver errado, a digitação vai aparecer como outro candidato no painel.\n\n' +
+        'Clique em OK para continuar mesmo assim, ou Cancelar para corrigir o CPF.'
+      );
+      if (!seguir) { document.getElementById('inCpf').focus(); return; }
+    }
+  } catch (e) {
+    // Falha de rede/servidor: não trava o teste por causa da conferência.
+    console.error('Falha ao conferir candidato:', e);
+  } finally {
+    btn.disabled = false;
   }
   iniciarTesteReal();
 }

@@ -30,6 +30,20 @@ export async function obterNumeroWhatsappRH() {
 // Mesma URL do Worker usada em js/quiz.js.
 const API_BASE = "https://virtus-api.ale-sh4rk.workers.dev";
 
+// Confere no servidor se esse CPF já fez o quiz e devolve o nome usado lá
+// — { ok, encontrado, nome }. Usado na digitação do computador, onde nome e
+// CPF são digitados de novo (um CPF errado virava "candidato separado").
+export async function buscarCandidatoPorCpf(cpf, codigoAcesso) {
+  const resp = await fetch(`${API_BASE}/buscar-candidato`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ cpf, codigoAcesso: codigoAcesso || "" })
+  });
+  const data = await resp.json().catch(() => ({}));
+  if (!resp.ok || !data.ok) throw new Error(data.erro || "Falha ao buscar candidato.");
+  return data;
+}
+
 // Passa pelo Worker (não grava mais direto no Firestore): antes a regra
 // deixava qualquer pessoa criar uma nota de digitação inventada. O Worker
 // exige o código de acesso válido (`resultado.codigoAcesso`) e grava só os

@@ -27,6 +27,11 @@
 //     Antes o navegador gravava direto no Firestore (regra aberta a
 //     qualquer um). Agora passam por aqui e também exigem código válido.
 //
+//   POST /buscar-candidato  { cpf, codigoAcesso }
+//     -> { ok: true, encontrado, nome }
+//     Usado na digitação do computador: confere se o CPF já fez o quiz e
+//     devolve o nome usado lá (evita "candidato duplicado" por CPF errado).
+//
 //   POST /enviar-curriculo  (multipart/form-data: campos "arquivo" e "cpf")
 //     -> { ok: true, url, nomeArquivo } ou { ok: false, erro }
 //     Antes o navegador do candidato subia o currículo direto pro Firebase
@@ -532,6 +537,53 @@ async function handleSubmeterDigitacao(request, env, cors) {
   return json({ ok: true, id: created.name.split("/").pop() }, cors);
 }
 
+// Consulta simples no Firestore (REST runQuery): documentos de `colecao`
+// onde `campo` é um dos `valores`. Devolve [{ name, fields }].
+async function firestoreBuscarIn(env, token, colecao, campo, valores, limite) {
+  const resp = await fetch(`${FIRESTORE_BASE(env.FIREBASE_PROJECT_ID)}:runQuery`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+    body: JSON.stringify({
+      structuredQuery: {
+        from: [{ collectionId: colecao }],
+        where: { fieldFilter: { field: { fieldPath: campo }, op: "IN", value: { arrayValue: { values: valores.map(toFirestoreValue) } } } },
+        limit: limite,
+      },
+    }),
+  });
+  if (!resp.ok) throw new Error(`Firestore runQuery falhou (${resp.status}): ${await resp.text()}`);
+  const linhas = await resp.json();
+  return linhas.filter((l) => l.document).map((l) => ({ name: l.document.name, fields: fromFirestoreFields(l.document.fields) }));
+}
+
+// Digitação feita no computador: o nome e o CPF são digitados de novo, e um
+// CPF errado fazia a digitação virar um "candidato separado" no dashboard
+// (o agrupamento é por CPF). Esta rota confere se aquele CPF já fez o quiz
+// e devolve o NOME usado lá, pra digitação sair com o mesmo nome/CPF.
+// Protegida pelo código de acesso (só quem está no local da prova usa) e
+// devolve só o nome — nenhum outro dado da ficha.
+async function handleBuscarCandidato(request, env, cors) {
+  const ip = request.headers.get("CF-Connecting-IP") || "desconhecido";
+  if (await passouDoLimite(env, `busca:${ip}`, 200)) return json({ ok: false, erro: "muitas_tentativas" }, cors, 429);
+
+  const { cpf, codigoAcesso } = await request.json();
+  const token = await getAccessToken(env);
+  const conf = await conferirCodigo(env, token, codigoAcesso, TOLERANCIA_ENVIO_MS);
+  if (!conf.ok) return json({ ok: false, erro: "codigo_invalido", motivo: conf.motivo }, cors, 403);
+
+  const digitos = String(cpf || "").replace(/\D/g, "");
+  if (digitos.length !== 11) return json({ ok: false, erro: "cpf_invalido" }, cors, 400);
+  // Registros antigos guardavam o CPF com máscara (000.000.000-00); os novos
+  // só com números — procura pelos dois formatos.
+  const comMascara = digitos.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4");
+  const docs = await firestoreBuscarIn(env, token, "resultados", "cpf", [digitos, comMascara], 20);
+  const quizzes = docs
+    .filter((d) => d.fields.tipo === "quiz" && d.fields.nome)
+    .sort((a, b) => String(b.fields.data_conclusao || "").localeCompare(String(a.fields.data_conclusao || "")));
+  if (!quizzes.length) return json({ ok: true, encontrado: false }, cors);
+  return json({ ok: true, encontrado: true, nome: quizzes[0].fields.nome }, cors);
+}
+
 // Violação durante o teste (perda de foco, tentativa de cópia etc.). Antes
 // qualquer pessoa, sem login, podia gravar uma violação no nome de
 // qualquer candidato (só o tamanho dos campos era checado) — dava pra
@@ -702,6 +754,9 @@ export default {
       }
       if (url.pathname === "/registrar-violacao" && request.method === "POST") {
         return await handleRegistrarViolacao(request, env, cors);
+      }
+      if (url.pathname === "/buscar-candidato" && request.method === "POST") {
+        return await handleBuscarCandidato(request, env, cors);
       }
       if (url.pathname === "/listar-modulos" && request.method === "POST") {
         return await handleListarModulos(env, cors);
