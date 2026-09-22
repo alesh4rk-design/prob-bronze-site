@@ -1900,7 +1900,7 @@
     classificarModulo, classificarDigitacao, melhorDigitacao, dataLocalYMD, escapeHtml,
     VIOLACAO_LABELS, tipoViolacaoLabel, descricaoViolacao,
     consolidarModulos, criadoEmDe, expiraEmDe as _expiraEmDe, statusCodigo as _statusCodigo,
-    etapaDoPipeline, PESOS_PADRAO, calcularScore, pesosDoCargo
+    etapaDoPipeline, PESOS_PADRAO, calcularScore, pesosDoCargo, urlCurriculoSegura
   } from "./js/dashboard-format.js";
 
   let ALL_RESULTADOS = [];
@@ -2238,8 +2238,9 @@
     // só queria abrir o currículo rapidinho.
     const fichaTopo = fichaDe(tents);
     const btnCurriculo = document.getElementById('cmCurriculoBtn');
-    if (fichaTopo && fichaTopo.curriculo_url) {
-      btnCurriculo.href = fichaTopo.curriculo_url;
+    const urlCurriculoTopo = fichaTopo && urlCurriculoSegura(fichaTopo.curriculo_url);
+    if (urlCurriculoTopo) {
+      btnCurriculo.href = urlCurriculoTopo;
       btnCurriculo.style.display = 'inline-flex';
     } else {
       btnCurriculo.style.display = 'none';
@@ -2320,8 +2321,8 @@
             <div class="ficha-item" style="margin-top:10px;">
               <div class="ficha-lbl">Currículo</div>
               <div style="margin-top:5px;">
-                ${f.curriculo_url
-                  ? `<a href="${escapeHtml(f.curriculo_url)}" target="_blank" rel="noopener" class="btn-act btn-neutral" style="display:inline-flex;">📎 ${escapeHtml(f.curriculo_nome || 'Ver currículo')}</a>`
+                ${urlCurriculoSegura(f.curriculo_url)
+                  ? `<a href="${escapeHtml(urlCurriculoSegura(f.curriculo_url))}" target="_blank" rel="noopener" class="btn-act btn-neutral" style="display:inline-flex;">📎 ${escapeHtml(f.curriculo_nome || 'Ver currículo')}</a>`
                   : '<span class="ficha-val" style="color:var(--text4);">Não enviado</span>'}
               </div>
             </div>
@@ -3148,7 +3149,7 @@
     msg += tipo === 'resumo' ? `_Resumo de Competências_\n\n` : `_Relatório Completo_\n\n`;
     msg += `*Candidato:* ${nome}\n`;
     if (f && f.cargo_pretendido) msg += `*Cargo pretendido:* ${f.cargo_pretendido}\n`;
-    if (f && f.curriculo_url) msg += `*Currículo:* ${f.curriculo_url}\n`;
+    if (f && urlCurriculoSegura(f.curriculo_url)) msg += `*Currículo:* ${urlCurriculoSegura(f.curriculo_url)}\n`;
 
     if (tipo === 'resumo') {
       const mods = consolidarModulos(quizzes);
@@ -5063,8 +5064,12 @@
     }
     // Aba exclusiva de admin/gerência — quem acessa já pode mexer em
     // qualquer conta, inclusive outras contas admin/gerência.
+    // Gerência não mexe em conta de admin nem de outro gerente (reforçado
+    // no firestore.rules) — o botão nem aparece nesses casos.
+    const souAdminUsuarios = me && me.perfil === 'admin';
     tbody.innerHTML = ativos.map(u => {
       const souEu = u.uid === me.uid;
+      const semAcoes = souEu || (!souAdminUsuarios && ['admin', 'gerencia'].includes(u.perfil));
       const dadosUser = `data-uid="${escapeHtml(u.uid)}" data-nome="${escapeHtml(u.nome || u.email || '')}" data-perfil="${escapeHtml(u.perfil)}"`;
       return `
         <tr>
@@ -5072,7 +5077,7 @@
           <td><span class="email-hover" data-email="${escapeHtml(u.email || '—')}">•••••</span></td>
           <td><span class="perfil-chip perfil-${u.perfil}">${LABEL_PERFIL[u.perfil] || u.perfil}</span></td>
           <td>
-            ${souEu
+            ${semAcoes
               ? '<span style="color:var(--text4);font-size:11px;font-family:\'Share Tech Mono\',monospace;">—</span>'
               : `<button class="btn-act btn-neutral" data-acao="acoesUsuario" ${dadosUser}>⚙️ Ações</button>`}
           </td>

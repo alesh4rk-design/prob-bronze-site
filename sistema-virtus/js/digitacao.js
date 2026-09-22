@@ -13,7 +13,7 @@
 // usado pelo resultados.json original para os testes de digitação.
 
 import { db } from "./firebase-config.js";
-import { collection, addDoc, doc, getDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
 
 // Número de WhatsApp do RH (configurado no dashboard, coleção `config`),
 // usado pra montar o link "avisar que terminei" no fim do teste de digitação.
@@ -27,34 +27,35 @@ export async function obterNumeroWhatsappRH() {
   }
 }
 
+// Mesma URL do Worker usada em js/quiz.js.
+const API_BASE = "https://virtus-api.ale-sh4rk.workers.dev";
+
+// Passa pelo Worker (não grava mais direto no Firestore): antes a regra
+// deixava qualquer pessoa criar uma nota de digitação inventada. O Worker
+// exige o código de acesso válido (`resultado.codigoAcesso`) e grava só os
+// campos esperados — incluindo `dispositivo` ('mobile'/'desktop'), que o
+// dashboard usa pra aplicar a régua de WPM certa.
 export async function salvarResultadoDigitacao(resultado) {
-  const agora = new Date();
-  const docRef = await addDoc(collection(db, "resultados"), {
-    nome: resultado.nome,
-    // Mesmo shape usado por quiz.js: `candidato.cpf`/`cpf` no topo, para o
-    // dashboard agrupar corretamente as tentativas da mesma pessoa (quiz +
-    // digitação) mesmo que o nome tenha sido digitado de forma diferente.
-    candidato: resultado.cpf ? { cpf: resultado.cpf } : null,
-    cpf: resultado.cpf || null,
-    modulo: "Digitação",
-    tipo: "typing",
-    data_preferencia: "",
-    dataPref: "",
-    acertos: resultado.acertos,
-    total: resultado.total,
-    pct: resultado.pct,
-    percentual: resultado.pct,
-    wpm: resultado.wpm,
-    cpm: resultado.cpm,
-    categoria: resultado.categoria,
-    // 'mobile' ou 'desktop' — o dashboard usa isso pra aplicar a régua de
-    // WPM certa (digitar com o polegar é mais lento, não é o mesmo teste).
-    dispositivo: resultado.dispositivo || 'desktop',
-    deleteCount: resultado.deleteCount,
-    elapsedSec: resultado.elapsedSec,
-    data_conclusao: agora.toISOString(),
-    hora_recebimento: agora.toTimeString().slice(0, 8),
-    criado_em: serverTimestamp()
+  const resp = await fetch(`${API_BASE}/submeter-digitacao`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      nome: resultado.nome,
+      cpf: resultado.cpf || "",
+      acertos: resultado.acertos,
+      total: resultado.total,
+      pct: resultado.pct,
+      wpm: resultado.wpm,
+      cpm: resultado.cpm,
+      categoria: resultado.categoria,
+      dispositivo: resultado.dispositivo || "desktop",
+      deleteCount: resultado.deleteCount,
+      elapsedSec: resultado.elapsedSec,
+      codigoAcesso: resultado.codigoAcesso || "",
+      horaLocal: new Date().toTimeString().slice(0, 8)
+    })
   });
-  return docRef.id;
+  const data = await resp.json().catch(() => ({}));
+  if (!resp.ok || !data.ok) throw new Error(data.erro || "Falha ao salvar o resultado.");
+  return data.id;
 }

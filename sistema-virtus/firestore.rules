@@ -36,11 +36,19 @@ service cloud.firestore {
       // aprova/promove todo o resto (avaliador, viewer, coordenador), mas
       // nunca cria outro Gerente. Ver dashboard.html (renderPendentes):
       // pedidos marcados "solicita_gerente" só aparecem pro Admin.
+      // Gerência também não pode MEXER em conta que já é admin ou gerente
+      // (rebaixar ou apagar) — senão um gerente conseguia trancar o Admin
+      // fora do sistema. Só mexe em pendente/avaliador/coordenador/operador.
       allow update: if request.auth != null && (
         isAdmin() ||
-        (isGerencia() && !(request.resource.data.perfil in ['admin', 'gerencia']))
+        (isGerencia() &&
+         resource.data.perfil in ['pendente', 'avaliador', 'coordenador', 'viewer'] &&
+         !(request.resource.data.perfil in ['admin', 'gerencia']))
       );
-      allow delete: if request.auth != null && isGerencia();
+      allow delete: if request.auth != null && (
+        isAdmin() ||
+        (isGerencia() && resource.data.perfil in ['pendente', 'avaliador', 'coordenador', 'viewer'])
+      );
     }
 
     // perguntas/{modulo}: banco de questões por módulo, COM o gabarito
@@ -58,18 +66,15 @@ service cloud.firestore {
 
     // resultados/{id}: um documento por tentativa de quiz ou teste de
     // digitação.
-    // Testes de digitação (`tipo == 'typing'`) continuam sendo gravados
-    // direto pelo navegador do candidato (sem login) — não têm gabarito
-    // secreto, o risco de fabricar um resultado é baixo.
-    // Resultados de quiz (`tipo == 'quiz'`) NÃO podem mais ser criados
-    // direto pelo navegador do candidato: a correção acontece no Worker
-    // (Cloudflare), que grava o resultado usando uma conta de serviço que
-    // ignora estas regras. Isso impede alguém de gravar uma nota fabricada
-    // direto no Firestore sem nunca ter feito o teste de verdade.
+    // NENHUM resultado é criado direto pelo navegador: quiz e digitação
+    // passam pelo Worker (Cloudflare), que confere o código de acesso e
+    // grava com uma conta de serviço (que ignora estas regras). Antes a
+    // digitação gravava direto — dava pra criar nota inventada sem nem
+    // abrir o site.
     // Leitura: qualquer perfil aprovado (inclusive view, que usa isso pra
     // ver a lista de participantes, e coordenador, que acompanha o funil).
     match /resultados/{id} {
-      allow create: if request.resource.data.tipo == 'typing';
+      allow create: if false;
       allow read: if request.auth != null && isLeitor();
       allow update: if request.auth != null && isGerencia();
       // Excluir candidato: liberado pra quem gerencia o processo seletivo
@@ -132,22 +137,14 @@ service cloud.firestore {
                      get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.perfil in ['admin', 'gerencia', 'avaliador', 'coordenador'];
     }
 
-    // violacoes/{id}: escrita liberada sem login (evento de anti-fraude
-    // reportado durante o teste do candidato, que não tem conta no sistema),
-    // mas com validação básica de formato/tamanho pra impedir spam de
-    // documentos falsos ou payloads gigantes inflando a conta do Firestore.
+    // violacoes/{id}: evento de anti-fraude reportado durante o teste. Não é
+    // mais criado direto pelo navegador — passa pelo Worker, que exige o
+    // código de acesso válido. Antes qualquer pessoa podia registrar uma
+    // violação no nome de qualquer candidato.
     // Leitura: view precisa ver (faz parte do escopo dele), então qualquer
     // perfil aprovado lê.
     match /violacoes/{id} {
-      allow create: if request.resource.data.nome is string &&
-                       request.resource.data.nome.size() < 120 &&
-                       request.resource.data.modulo is string &&
-                       request.resource.data.modulo.size() < 80 &&
-                       request.resource.data.tipo is string &&
-                       request.resource.data.tipo.size() < 60 &&
-                       (!('detalhe' in request.resource.data) ||
-                        (request.resource.data.detalhe is string &&
-                         request.resource.data.detalhe.size() < 300));
+      allow create: if false;
       allow update, delete: if request.auth != null && isGerencia();
       allow read: if request.auth != null && isLeitor();
     }

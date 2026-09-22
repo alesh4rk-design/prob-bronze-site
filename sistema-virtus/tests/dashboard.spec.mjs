@@ -607,25 +607,31 @@ export const tests = [
   {
     name: 'Ficha do candidato mostra experiência relatada e link do currículo, quando enviados',
     async run({ browser, baseUrl }) {
-      const resultados = [{
-        id: '1', tipo: 'quiz', nome: 'Com Curriculo', modulo: 'Atendimento', pct: 80, acertos: 8, total: 10,
-        data_conclusao: hoje(),
-        candidato: {
-          cpf: '33333333333', cargo_pretendido: 'Vigilante', experiencia: true,
-          experiencia_texto: '3 anos como vigilante patrimonial na empresa Acme.',
-          curriculo_url: 'https://firebasestorage.googleapis.com/curriculo-teste.pdf',
-          curriculo_nome: 'curriculo-joao.pdf'
-        }
-      }];
+      const URL_CV = 'https://virtus-api.ale-sh4rk.workers.dev/curriculo/curriculos/33333333333-1-abc.pdf';
+      const resultados = [
+        {
+          id: '1', tipo: 'quiz', nome: 'Com Curriculo', modulo: 'Atendimento', pct: 80, acertos: 8, total: 10,
+          data_conclusao: diasAtras(1),
+          candidato: {
+            cpf: '33333333333', cargo_pretendido: 'Vigilante', experiencia: true, telefone: '21999990000',
+            experiencia_texto: '3 anos como vigilante patrimonial na empresa Acme.',
+            curriculo_url: URL_CV,
+            curriculo_nome: 'curriculo-joao.pdf'
+          }
+        },
+        // Digitação feita DEPOIS do quiz (o fluxo normal) só carrega o CPF —
+        // a Ficha 360° não pode trocar a ficha completa por essa.
+        { id: '2', tipo: 'typing', nome: 'Com Curriculo', cpf: '33333333333', candidato: { cpf: '33333333333' }, dispositivo: 'desktop', wpm: 40, pct: 90, data_conclusao: hoje() }
+      ];
       const { page, erros } = await abrirDashboard(browser, baseUrl, { perfil: 'admin', resultados });
 
       await page.evaluate(() => abrirCandidato('cpf:33333333333'));
       await page.waitForTimeout(300);
       const html = await page.evaluate(() => document.getElementById('cmConteudo').innerHTML);
 
-      assert(html.includes('3 anos como vigilante patrimonial'), `deveria mostrar o texto de experiência. HTML: ${html}`);
+      assert(html.includes('3 anos como vigilante patrimonial'), `deveria mostrar o texto de experiência (mesmo com a digitação feita depois). HTML: ${html}`);
       assert(html.includes('curriculo-joao.pdf'), `deveria mostrar o nome do arquivo do currículo. HTML: ${html}`);
-      assert(html.includes('https://firebasestorage.googleapis.com/curriculo-teste.pdf'), `deveria linkar pro arquivo real. HTML: ${html}`);
+      assert(html.includes(URL_CV), `deveria linkar pro arquivo real. HTML: ${html}`);
 
       // Botão de currículo no TOPO do modal (não só lá embaixo, na seção de
       // perfil profissional) — pra abrir sem precisar rolar a ficha inteira.
@@ -634,10 +640,38 @@ export const tests = [
         href: document.getElementById('cmCurriculoBtn').href
       }));
       assert(btnTopo.visivel, 'botão de currículo no topo deveria aparecer quando há currículo');
-      assert(btnTopo.href.includes('curriculo-teste.pdf'), `botão do topo deveria linkar pro currículo. href: ${btnTopo.href}`);
+      assertEqual(btnTopo.href, URL_CV, 'botão do topo deveria linkar pro currículo');
 
-      // Candidato sem nenhum dos dois não pode mostrar link/texto vazio nem quebrar.
       await page.evaluate(() => fecharCandidato());
+
+      assertEqual(erros.length, 0, 'erros de JS: ' + erros.join(' | '));
+      await page.close();
+    }
+  },
+
+  {
+    name: 'Link de currículo que não veio do Worker (ex: "javascript:" ou site falso) nunca vira link',
+    async run({ browser, baseUrl }) {
+      // O link vem da ficha que o candidato envia — escapeHtml não impede um
+      // "javascript:" no href, então só link do nosso Worker é aceito.
+      const resultados = [
+        { id: '1', tipo: 'quiz', nome: 'Link Malicioso', modulo: 'Atendimento', pct: 80, acertos: 8, total: 10, data_conclusao: hoje(),
+          candidato: { cpf: '55555555555', curriculo_url: 'javascript:window.__pwned=true', curriculo_nome: 'cv.pdf' } },
+        { id: '2', tipo: 'quiz', nome: 'Site Falso', modulo: 'Atendimento', pct: 80, acertos: 8, total: 10, data_conclusao: hoje(),
+          candidato: { cpf: '66666666666', curriculo_url: 'https://site-falso.com/virtus-api.ale-sh4rk.workers.dev/curriculo/x.pdf', curriculo_nome: 'cv.pdf' } }
+      ];
+      const { page, erros } = await abrirDashboard(browser, baseUrl, { perfil: 'admin', resultados });
+
+      for (const chave of ['cpf:55555555555', 'cpf:66666666666']) {
+        await page.evaluate((c) => abrirCandidato(c), chave);
+        await page.waitForTimeout(300);
+        const html = await page.evaluate(() => document.getElementById('cmConteudo').innerHTML);
+        assert(!html.includes('javascript:') && !html.includes('site-falso.com'), `link malicioso não deveria aparecer (${chave}). HTML: ${html}`);
+        assert(html.includes('Não enviado'), `sem link válido deveria mostrar "Não enviado" (${chave}). HTML: ${html}`);
+        const topoOculto = await page.evaluate(() => document.getElementById('cmCurriculoBtn').style.display === 'none');
+        assert(topoOculto, `botão do topo não deveria aparecer com link inválido (${chave})`);
+        await page.evaluate(() => fecharCandidato());
+      }
 
       assertEqual(erros.length, 0, 'erros de JS: ' + erros.join(' | '));
       await page.close();
@@ -707,7 +741,9 @@ export const tests = [
       const usuarios = [
         { uid: 'p1', nome: 'Quer Ser Gerente', email: 'g@x.com', perfil: 'pendente', solicita_gerente: true },
         { uid: 'p2', nome: 'Quer Ser Avaliador', email: 'a@x.com', perfil: 'pendente' },
-        { uid: 'u3', nome: 'Avaliador Ativo', email: 'av@x.com', perfil: 'avaliador' }
+        { uid: 'u3', nome: 'Avaliador Ativo', email: 'av@x.com', perfil: 'avaliador' },
+        { uid: 'u4', nome: 'Dono Admin', email: 'adm@x.com', perfil: 'admin' },
+        { uid: 'u5', nome: 'Outro Gerente', email: 'ger@x.com', perfil: 'gerencia' }
       ];
 
       // Admin: só vê "Quer Ser Gerente" na fila, com um único botão (Gerência).
@@ -731,6 +767,15 @@ export const tests = [
       assert(!textoFilaGerencia.includes('Quer Ser Gerente'), `Gerência NÃO deveria ver pedido de Gerente. Fila: ${textoFilaGerencia}`);
       const botoesFilaGerencia = await pageGerencia.evaluate(() => [...document.querySelectorAll('#pendTableBody [data-acao="aprovarUsuario"]')].map(b => b.textContent.trim()));
       assert(!botoesFilaGerencia.includes('Gerência'), `Gerência não deveria ter botão "Gerência" na fila. Botões: ${botoesFilaGerencia}`);
+
+      // Gerência não tem botão "Ações" nas contas de admin nem de outro
+      // gerente — não pode rebaixar nem apagar quem está acima/ao lado dela.
+      const linhasSemAcao = await pageGerencia.evaluate(() =>
+        [...document.querySelectorAll('#usersTableBody tr')]
+          .filter(tr => /Dono Admin|Outro Gerente/.test(tr.textContent))
+          .map(tr => !!tr.querySelector('[data-acao="acoesUsuario"]')));
+      assertEqual(linhasSemAcao.length, 2, 'deveria listar as contas de admin e gerente');
+      assert(linhasSemAcao.every(tem => !tem), 'Gerência não deveria ter "Ações" em conta de admin/gerente');
 
       // Menu "Ações" de um usuário já ativo: gerência não pode promover a Gerência.
       await pageGerencia.click('#usersTableBody [data-acao="acoesUsuario"]');

@@ -753,7 +753,7 @@ async function enviarAoServidor(resultado){
   document.getElementById('sendingOverlay').classList.add('show');
   const syncEl=document.getElementById('syncStatus');
   try{
-    await salvarResultadoDigitacao(resultado);
+    await salvarResultadoDigitacao({ ...resultado, codigoAcesso: codigoAcessoAtual });
     syncEl.innerHTML='✅ <span style="color:#00E880;">Resultado sincronizado com o servidor</span>';
     toast('Resultado salvo!','ok');
   }catch(e){
@@ -854,6 +854,9 @@ function beginTiming(){
 
 // ── Código de acesso presencial ─────────────────────────────────────────
 let codigoValidado = false;
+// Guardado pra ir junto do resultado — o Worker confere o código de novo no
+// envio (não basta ter passado pela tela de código).
+let codigoAcessoAtual = '';
 const codigoModal = document.getElementById('codigoModal');
 const inCodigoAcesso = document.getElementById('inCodigoAcesso');
 const msgCodigoAcesso = document.getElementById('msgCodigoAcesso');
@@ -874,6 +877,7 @@ async function validarCodigoEIniciar(){
     const r = await verificarCodigoAcesso(codigo);
     if (r.ok) {
       codigoValidado = true;
+      codigoAcessoAtual = codigo;
       codigoModal.classList.remove('show');
       iniciarTesteReal();
     } else {
@@ -999,7 +1003,7 @@ validateForm();
   if (dados.codigoAcesso) {
     try {
       const r = await verificarCodigoAcesso(dados.codigoAcesso);
-      if (r.ok) codigoValidado = true;
+      if (r.ok) { codigoValidado = true; codigoAcessoAtual = dados.codigoAcesso; }
     } catch (e) { /* mantém codigoValidado = false, pede o código na hora de iniciar */ }
   }
 })();

@@ -19,7 +19,12 @@ export function chaveDe(r) {
 
 // Ficha mais recente entre as tentativas (o candidato pode ter refeito o
 // cadastro com dados atualizados).
+// Pula as tentativas de digitação: elas só carregam o CPF (e o código de
+// acesso), não a ficha inteira — como a digitação costuma ser a ÚLTIMA
+// etapa, pegar "a mais recente" sem esse filtro devolvia uma ficha sem
+// telefone, vaga, currículo etc.
 export function fichaDe(tents) {
+  for (let i = tents.length - 1; i >= 0; i--) if (tents[i].candidato && tents[i].tipo !== 'typing') return tents[i].candidato;
   for (let i = tents.length - 1; i >= 0; i--) if (tents[i].candidato) return tents[i].candidato;
   return null;
 }
@@ -144,6 +149,16 @@ export function dataLocalYMD(d) {
   const mes = String(dt.getMonth() + 1).padStart(2, '0');
   const dia = String(dt.getDate()).padStart(2, '0');
   return `${ano}-${mes}-${dia}`;
+}
+
+// Só devolve o link do currículo se ele foi gerado pelo nosso Worker — o
+// link vem da ficha que o próprio candidato envia, e escapeHtml não impede
+// um "javascript:..." ou um site falso no href. Registros antigos (antes do
+// Worker limpar a ficha) passam por aqui também.
+export const PREFIXO_CURRICULO = 'https://virtus-api.ale-sh4rk.workers.dev/curriculo/';
+export function urlCurriculoSegura(u) {
+  const s = String(u || '');
+  return s.startsWith(PREFIXO_CURRICULO) && !/[\s"'<>]/.test(s) ? s : null;
 }
 
 export function escapeHtml(s) { return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }

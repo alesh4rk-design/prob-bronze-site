@@ -1814,7 +1814,7 @@
     S.violationCount++;
     playViolation();
     try {
-      await registrarViolacao({ nome: S.nome, modulo: S.tema, tipo, detalhe, contagem: S.violationCount });
+      await registrarViolacao({ nome: S.nome, modulo: S.tema, tipo, detalhe, contagem: S.violationCount, codigoAcesso: globalCodigoAcesso });
     } catch (e) { console.warn('Falha ao reportar violação:', e); }
 
     if (S.violationCount <= MAX_VIOLATIONS) {

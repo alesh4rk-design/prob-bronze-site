@@ -16,10 +16,16 @@
 //     Com limite de 10 tentativas a cada 10 minutos por IP (KV), pra
 //     impedir um script de tentar adivinhar o código por força bruta.
 //
-//   POST /submeter-quiz  { modulo, perguntaTextos, respostas, nome, candidato, dataPreferencia }
+//   POST /submeter-quiz  { modulo, perguntaTextos, respostas, nome, candidato, dataPreferencia, codigoAcesso }
 //     -> { ok: true, acertos, total, pct, id }
 //     Busca o módulo em `perguntas/{modulo}`, corrige aqui dentro (o
 //     candidato nunca recebe o campo `resposta`) e grava o resultado.
+//     Exige código de acesso válido e grava só os campos esperados da ficha.
+//
+//   POST /submeter-digitacao  { nome, cpf, pct, wpm, ..., codigoAcesso }
+//   POST /registrar-violacao  { nome, modulo, tipo, detalhe, contagem, codigoAcesso }
+//     Antes o navegador gravava direto no Firestore (regra aberta a
+//     qualquer um). Agora passam por aqui e também exigem código válido.
 //
 //   POST /enviar-curriculo  (multipart/form-data: campos "arquivo" e "cpf")
 //     -> { ok: true, url, nomeArquivo } ou { ok: false, erro }
@@ -252,6 +258,101 @@ async function firestoreListAll(env, token, collectionPath) {
 // ficar igual nos dois lugares.
 const VALIDADE_CODIGO_MS = 4 * 60 * 60 * 1000; // 4 horas
 
+// Confere um código de acesso no servidor. Usado tanto na tela de entrada
+// (/verificar-codigo) quanto em TODO envio do candidato (quiz, digitação,
+// violação) — antes o código só era checado na tela de entrada, e dava pra
+// pular direto pro envio chamando a API sem código nenhum.
+// Devolve { ok: true, doc } ou { ok: false, motivo }.
+// `toleranciaMs`: usado nos ENVIOS (quiz/digitação/violação) — quem entrou
+// com o código aos 3h55 e termina a prova depois das 4h não pode perder o
+// resultado. A tela de entrada continua usando a validade exata (sem folga).
+const TOLERANCIA_ENVIO_MS = 2 * 60 * 60 * 1000; // 2 horas
+async function conferirCodigo(env, token, codigo, toleranciaMs = 0) {
+  const cod = String(codigo || "").trim();
+  if (!cod || !/^\d{1,12}$/.test(cod)) return { ok: false, motivo: cod ? "nao_encontrado" : "vazio" };
+  const doc = await firestoreGet(env, token, `codigos_acesso/${encodeURIComponent(cod)}`);
+  if (!doc) return { ok: false, motivo: "nao_encontrado" };
+  if (doc.ativo === false) return { ok: false, motivo: "desativado" };
+  // A validade sempre parte de `criado_em` (preenchido pelo relógio do
+  // SERVIDOR do Firestore, no momento da criação) mais a duração fixa —
+  // nunca de um horário absoluto calculado no celular/computador de quem
+  // gerou o código. Isso evita que um relógio de dispositivo errado (comum
+  // em celular Android) faça o código nascer já expirado. O relógio usado
+  // aqui (Date.now()) é o do próprio Worker, sempre correto.
+  const criadoEm = doc.criado_em ? new Date(doc.criado_em).getTime() : null;
+  if (criadoEm && (Date.now() - criadoEm) >= VALIDADE_CODIGO_MS + toleranciaMs) return { ok: false, motivo: "expirado" };
+  return { ok: true, doc, codigo: cod };
+}
+
+// Limite de envios por IP numa janela de 10 min. Generoso de propósito:
+// num dia de prova, 20+ candidatos saem pelo MESMO IP (Wi-Fi do local), e
+// cada um envia vários módulos — o que protege de verdade é o código de
+// acesso; isto só segura um script enchendo o banco.
+// Se o KV falhar (ex: estourou a cota grátis de 1.000 gravações/dia), deixa
+// passar em vez de derrubar o envio do teste — o candidato perder a prova
+// inteira por causa de um contador seria pior que o risco que ele cobre.
+async function passouDoLimite(env, chave, maximo) {
+  try {
+    const raw = await env.RATE_LIMIT_KV.get(chave);
+    const n = raw ? parseInt(raw, 10) : 0;
+    if (n >= maximo) return true;
+    await env.RATE_LIMIT_KV.put(chave, String(n + 1), { expirationTtl: 600 });
+  } catch (e) {
+    console.error("rate limit indisponível:", e);
+  }
+  return false;
+}
+
+// Texto vindo do candidato: corta no tamanho máximo e descarta o que não
+// for texto — nada de objeto gigante ou campo inesperado indo pro banco.
+function texto(v, max) {
+  if (v === null || v === undefined) return null;
+  return String(v).slice(0, max);
+}
+function numero(v, min, max) {
+  const n = Number(v);
+  if (!Number.isFinite(n)) return null;
+  return Math.min(max, Math.max(min, n));
+}
+
+// Só aceita link de currículo que foi gerado por ESTE Worker
+// (/enviar-curriculo) — senão o candidato podia trocar o link por um site
+// falso ou um "javascript:" que abriria no clique do avaliador.
+function urlCurriculoValida(url, origemWorker) {
+  const u = String(url || "");
+  return u.startsWith(`${origemWorker}/curriculo/curriculos/`) && !/[\s"'<>]/.test(u) ? u : null;
+}
+
+// A ficha do candidato era gravada exatamente como chegava do navegador
+// (qualquer campo, qualquer tamanho). Agora só os campos que a ficha de
+// verdade tem, com limite de tamanho — e o código de acesso vem do que o
+// SERVIDOR conferiu, não do que o candidato disse que usou.
+function limparFicha(c, codigoConferido, origemWorker) {
+  if (!c || typeof c !== "object") return null;
+  const certs = Array.isArray(c.certificacoes) ? c.certificacoes.slice(0, 20).map((x) => texto(x, 60)) : [];
+  return {
+    nome: texto(c.nome, 120),
+    cpf: texto(String(c.cpf || "").replace(/\D/g, ""), 11),
+    nascimento: texto(c.nascimento, 10),
+    idade: numero(c.idade, 0, 120),
+    telefone: texto(c.telefone, 20),
+    altura: numero(c.altura, 0, 3),
+    bairro: texto(c.bairro, 120),
+    cargo_pretendido: texto(c.cargo_pretendido, 80),
+    vaga_id: texto(c.vaga_id, 60),
+    experiencia: c.experiencia === true,
+    experiencia_texto: texto(c.experiencia_texto, 2000),
+    turno: texto(c.turno, 40),
+    disponibilidade_total: c.disponibilidade_total === true,
+    pendencia_judicial: c.pendencia_judicial === true,
+    origem: texto(c.origem, 40),
+    certificacoes: certs,
+    curriculo_url: urlCurriculoValida(c.curriculo_url, origemWorker),
+    curriculo_nome: urlCurriculoValida(c.curriculo_url, origemWorker) ? texto(c.curriculo_nome, 120) : null,
+    codigoAcesso: codigoConferido,
+  };
+}
+
 // ── Rotas ───────────────────────────────────────────────────────────────
 async function handleVerificarCodigo(request, env, cors) {
   const { codigo } = await request.json();
@@ -263,21 +364,11 @@ async function handleVerificarCodigo(request, env, cors) {
   if (tentativas >= 10) return json({ ok: false, motivo: "muitas_tentativas" }, cors);
   await env.RATE_LIMIT_KV.put(rlKey, String(tentativas + 1), { expirationTtl: 600 });
 
-  const cod = (codigo || "").trim();
-  if (!cod) return json({ ok: false, motivo: "vazio" }, cors);
-
   const token = await getAccessToken(env);
-  const doc = await firestoreGet(env, token, `codigos_acesso/${encodeURIComponent(cod)}`);
-  if (!doc) return json({ ok: false, motivo: "nao_encontrado" }, cors);
-  if (doc.ativo === false) return json({ ok: false, motivo: "desativado" }, cors);
-  // A validade sempre parte de `criado_em` (preenchido pelo relógio do
-  // SERVIDOR do Firestore, no momento da criação) mais a duração fixa —
-  // nunca de um horário absoluto calculado no celular/computador de quem
-  // gerou o código. Isso evita que um relógio de dispositivo errado (comum
-  // em celular Android) faça o código nascer já expirado. O relógio usado
-  // aqui (Date.now()) é o do próprio Worker, sempre correto.
-  const criadoEm = doc.criado_em ? new Date(doc.criado_em).getTime() : null;
-  if (criadoEm && (Date.now() - criadoEm) >= VALIDADE_CODIGO_MS) return json({ ok: false, motivo: "expirado" }, cors);
+  const conf = await conferirCodigo(env, token, codigo);
+  if (!conf.ok) return json({ ok: false, motivo: conf.motivo }, cors);
+  const cod = conf.codigo;
+  const doc = conf.doc;
 
   await firestorePatch(
     env,
@@ -347,13 +438,20 @@ async function handleCarregarPerguntas(request, env, cors) {
 }
 
 async function handleSubmeterQuiz(request, env, cors) {
+  const ip = request.headers.get("CF-Connecting-IP") || "desconhecido";
+  if (await passouDoLimite(env, `envio:${ip}`, 300)) return json({ ok: false, erro: "muitas_tentativas" }, cors, 429);
+
   const body = await request.json();
   const { modulo, respostas, perguntaTextos, nome, candidato, dataPreferencia } = body;
-  if (!modulo || !Array.isArray(respostas) || !Array.isArray(perguntaTextos)) {
+  if (typeof modulo !== "string" || modulo.length > 80 || !Array.isArray(respostas) || !Array.isArray(perguntaTextos) ||
+      respostas.length > 100 || perguntaTextos.length > 100) {
     return json({ ok: false, erro: "dados_invalidos" }, cors, 400);
   }
 
   const token = await getAccessToken(env);
+  const conf = await conferirCodigo(env, token, body.codigoAcesso || (candidato && candidato.codigoAcesso), TOLERANCIA_ENVIO_MS);
+  if (!conf.ok) return json({ ok: false, erro: "codigo_invalido", motivo: conf.motivo }, cors, 403);
+
   const doc = await firestoreGet(env, token, `perguntas/${encodeURIComponent(modulo)}`);
   if (!doc || !doc.questoes) return json({ ok: false, erro: "modulo_nao_encontrado" }, cors, 404);
 
@@ -362,7 +460,7 @@ async function handleSubmeterQuiz(request, env, cors) {
 
   let acertos = 0;
   const respostas_detalhadas = perguntas.map((q, i) => {
-    const dada = respostas[i] || null;
+    const dada = respostas[i] ? String(respostas[i]).slice(0, 500) : null;
     const ok = dada === q.resposta;
     if (ok) acertos++;
     return { pergunta: q.q, resposta_dada: dada, resposta_correta: q.resposta, acertou: ok };
@@ -370,13 +468,14 @@ async function handleSubmeterQuiz(request, env, cors) {
   const total = perguntas.length;
   const pct = total > 0 ? Math.round((acertos / total) * 100) : 0;
 
+  const ficha = limparFicha(candidato, conf.codigo, new URL(request.url).origin);
   const resultadoDoc = {
-    nome: nome || "",
-    candidato: candidato || null,
-    cpf: candidato ? candidato.cpf || null : null,
+    nome: texto(nome, 120) || "",
+    candidato: ficha,
+    cpf: ficha ? ficha.cpf || null : null,
     modulo,
     tipo: "quiz",
-    data_preferencia: dataPreferencia || "",
+    data_preferencia: texto(dataPreferencia, 20) || "",
     acertos,
     total,
     pct,
@@ -387,6 +486,81 @@ async function handleSubmeterQuiz(request, env, cors) {
   const created = await firestoreCreate(env, token, "resultados", resultadoDoc);
   const id = created.name.split("/").pop();
   return json({ ok: true, acertos, total, pct, id }, cors);
+}
+
+// Resultado do teste de digitação. Antes ia direto do navegador pro
+// Firestore (regra aberta pra qualquer um criar), o que deixava gravar
+// nota de digitação inventada sem nem abrir o site. Agora passa por aqui,
+// exige código de acesso válido e só grava os campos esperados.
+async function handleSubmeterDigitacao(request, env, cors) {
+  const ip = request.headers.get("CF-Connecting-IP") || "desconhecido";
+  if (await passouDoLimite(env, `envio:${ip}`, 300)) return json({ ok: false, erro: "muitas_tentativas" }, cors, 429);
+
+  const r = await request.json();
+  const token = await getAccessToken(env);
+  const conf = await conferirCodigo(env, token, r.codigoAcesso, TOLERANCIA_ENVIO_MS);
+  if (!conf.ok) return json({ ok: false, erro: "codigo_invalido", motivo: conf.motivo }, cors, 403);
+
+  const nome = texto(r.nome, 120);
+  const cpf = texto(String(r.cpf || "").replace(/\D/g, ""), 11) || null;
+  if (!nome) return json({ ok: false, erro: "dados_invalidos" }, cors, 400);
+
+  const agora = new Date();
+  const pct = numero(r.pct, 0, 100);
+  const resultadoDoc = {
+    nome,
+    candidato: cpf ? { cpf, codigoAcesso: conf.codigo } : { codigoAcesso: conf.codigo },
+    cpf,
+    modulo: "Digitação",
+    tipo: "typing",
+    data_preferencia: "",
+    dataPref: "",
+    acertos: numero(r.acertos, 0, 100000),
+    total: numero(r.total, 0, 100000),
+    pct,
+    percentual: pct,
+    wpm: numero(r.wpm, 0, 300),
+    cpm: numero(r.cpm, 0, 1500),
+    categoria: texto(r.categoria, 60),
+    dispositivo: r.dispositivo === "mobile" ? "mobile" : "desktop",
+    deleteCount: numero(r.deleteCount, 0, 100000),
+    elapsedSec: numero(r.elapsedSec, 0, 36000),
+    data_conclusao: agora.toISOString(),
+    hora_recebimento: texto(r.horaLocal, 8) || agora.toISOString().slice(11, 19),
+  };
+  const created = await firestoreCreate(env, token, "resultados", resultadoDoc);
+  return json({ ok: true, id: created.name.split("/").pop() }, cors);
+}
+
+// Violação durante o teste (perda de foco, tentativa de cópia etc.). Antes
+// qualquer pessoa, sem login, podia gravar uma violação no nome de
+// qualquer candidato (só o tamanho dos campos era checado) — dava pra
+// "sujar" a ficha de alguém. Agora exige código de acesso válido.
+async function handleRegistrarViolacao(request, env, cors) {
+  const v = await request.json();
+  const token = await getAccessToken(env);
+  const conf = await conferirCodigo(env, token, v.codigoAcesso, TOLERANCIA_ENVIO_MS);
+  if (!conf.ok) return json({ ok: false, erro: "codigo_invalido", motivo: conf.motivo }, cors, 403);
+
+  const nome = texto(v.nome, 120);
+  const tipo = texto(v.tipo, 60);
+  if (!nome || !tipo) return json({ ok: false, erro: "dados_invalidos" }, cors, 400);
+
+  const agora = new Date();
+  await firestoreCreate(env, token, "violacoes", {
+    nome,
+    modulo: texto(v.modulo, 80) || "",
+    tipo,
+    detalhe: texto(v.detalhe, 300) || "",
+    peso: 1.0,
+    contagem_ponderada: numero(v.contagem, 0, 1000),
+    // Data/hora LOCAL de quem fez o teste (o Worker roda em UTC — no
+    // Brasil, UTC-3, violações de fim de tarde cairiam no dia seguinte).
+    hora_recebimento: /^\d{2}:\d{2}:\d{2}$/.test(v.horaLocal || "") ? v.horaLocal : agora.toISOString().slice(11, 19),
+    data: /^\d{4}-\d{2}-\d{2}$/.test(v.dataLocal || "") ? v.dataLocal : agora.toISOString().slice(0, 10),
+    codigoAcesso: conf.codigo,
+  });
+  return json({ ok: true }, cors);
 }
 
 // ── Limpeza automática de dados antigos (retenção LGPD) ────────────────────
@@ -503,6 +677,7 @@ async function handleObterCurriculo(chave, env) {
     headers: {
       "Content-Type": (metadata && metadata.contentType) || "application/octet-stream",
       "Cache-Control": "private, max-age=3600",
+      "X-Content-Type-Options": "nosniff",
     },
   });
 }
@@ -521,6 +696,12 @@ export default {
       }
       if (url.pathname === "/submeter-quiz" && request.method === "POST") {
         return await handleSubmeterQuiz(request, env, cors);
+      }
+      if (url.pathname === "/submeter-digitacao" && request.method === "POST") {
+        return await handleSubmeterDigitacao(request, env, cors);
+      }
+      if (url.pathname === "/registrar-violacao" && request.method === "POST") {
+        return await handleRegistrarViolacao(request, env, cors);
       }
       if (url.pathname === "/listar-modulos" && request.method === "POST") {
         return await handleListarModulos(env, cors);

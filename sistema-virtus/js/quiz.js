@@ -30,7 +30,7 @@
 
 import { db } from "./firebase-config.js";
 import {
-  collection, addDoc, doc, getDoc, getDocs, query, where, serverTimestamp
+  collection, doc, getDoc, getDocs, query, where
 } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
 
 // Vagas abertas — mostradas na ficha do candidato no lugar da lista fixa de
@@ -238,7 +238,10 @@ export async function salvarResultadoQuiz({ nome, modulo, dataPreferencia, pergu
       respostas,
       nome,
       candidato: candidato || null,
-      dataPreferencia: dataPreferencia || ""
+      dataPreferencia: dataPreferencia || "",
+      // O Worker confere o código de novo no envio (não só na tela de
+      // entrada) — sem ele, o resultado é recusado.
+      codigoAcesso: (candidato && candidato.codigoAcesso) || ""
     })
   });
   const data = await resp.json();
@@ -247,21 +250,25 @@ export async function salvarResultadoQuiz({ nome, modulo, dataPreferencia, pergu
 }
 
 // Registra uma violação (perda_foco, tentativa_copia, devtools, etc.)
-export async function registrarViolacao({ nome, modulo, tipo, detalhe, contagem }) {
+// Passa pelo Worker (não grava mais direto no Firestore): antes a regra
+// deixava qualquer pessoa criar uma violação no nome de qualquer candidato.
+export async function registrarViolacao({ nome, modulo, tipo, detalhe, contagem, codigoAcesso }) {
   const agora = new Date();
   // Data LOCAL do navegador (não toISOString, que é UTC — no Brasil,
   // UTC-3, isso fazia violações de fim de tarde/noite gravarem com a data
   // de amanhã, e sumirem do filtro "Hoje" do dashboard).
   const dataLocal = `${agora.getFullYear()}-${String(agora.getMonth() + 1).padStart(2, '0')}-${String(agora.getDate()).padStart(2, '0')}`;
-  await addDoc(collection(db, "violacoes"), {
-    nome,
-    modulo,
-    tipo,
-    detalhe: detalhe || "",
-    peso: 1.0,
-    contagem_ponderada: contagem,
-    hora_recebimento: agora.toTimeString().slice(0, 8),
-    data: dataLocal,
-    criado_em: serverTimestamp()
+  const resp = await fetch(`${API_BASE}/registrar-violacao`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      nome, modulo, tipo,
+      detalhe: detalhe || "",
+      contagem,
+      codigoAcesso: codigoAcesso || "",
+      dataLocal,
+      horaLocal: agora.toTimeString().slice(0, 8)
+    })
   });
+  if (!resp.ok) throw new Error("Falha ao registrar violação");
 }
