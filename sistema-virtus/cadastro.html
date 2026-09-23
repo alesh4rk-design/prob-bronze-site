@@ -171,14 +171,14 @@
     <div class="field">
       <label for="inp_pass">Senha</label>
       <div class="pass-wrap">
-        <input type="password" id="inp_pass" placeholder="mínimo 6 caracteres" autocomplete="new-password" minlength="6" required>
+        <input type="password" id="inp_pass" placeholder="mínimo 10 caracteres, com letra e número" autocomplete="new-password" minlength="10" required>
         <button class="pass-toggle" id="btn_show" type="button" title="Mostrar/ocultar senha">👁</button>
       </div>
     </div>
 
     <div class="field">
       <label for="inp_pass2">Confirmar senha</label>
-      <input type="password" id="inp_pass2" placeholder="repita a senha" autocomplete="new-password" minlength="6" required>
+      <input type="password" id="inp_pass2" placeholder="repita a senha" autocomplete="new-password" minlength="10" required>
       <p class="hint">Depois de criar a conta, alguém precisa aprovar seu acesso antes que você consiga entrar no dashboard.</p>
     </div>
 
@@ -231,8 +231,11 @@
       errEl.className = 'alert error show';
       return;
     }
-    if (senha.length < 6) {
-      errEl.textContent = 'A senha precisa ter no mínimo 6 caracteres.';
+    // Senha de quem acessa dados de candidatos (CPF, telefone, currículo):
+    // login roubado é o jeito mais realista de vazar esses dados, então a
+    // senha precisa ser forte o bastante pra não cair num chute.
+    if (senha.length < 10 || !/[A-Za-zÀ-ÿ]/.test(senha) || !/\d/.test(senha)) {
+      errEl.textContent = 'A senha precisa ter no mínimo 10 caracteres, com pelo menos uma letra e um número.';
       errEl.className = 'alert error show';
       return;
     }
@@ -256,7 +259,7 @@
       let msg = 'Não foi possível criar a conta.';
       if (err.code === 'auth/email-already-in-use') msg = 'Esse e-mail já está cadastrado.';
       else if (err.code === 'auth/invalid-email') msg = 'E-mail inválido.';
-      else if (err.code === 'auth/weak-password') msg = 'Senha muito fraca (mínimo 6 caracteres).';
+      else if (err.code === 'auth/weak-password') msg = 'Senha muito fraca (mínimo 10 caracteres, com letra e número).';
       errEl.textContent = msg;
       errEl.className = 'alert error show';
     } finally {

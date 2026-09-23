@@ -1792,6 +1792,50 @@ export const tests = [
   },
 
   {
+    name: 'Cadastro exige senha forte: mínimo 10 caracteres, com letra e número',
+    async run({ browser, baseUrl }) {
+      const p = await browser.newPage();
+      const { APP, AUTH, FS } = buildMocks({});
+      const map = { 'firebase-app.js': APP, 'firebase-auth.js': AUTH, 'firebase-firestore.js': FS };
+      await p.route('**/firebasejs/**', route => {
+        const chave = Object.keys(map).find(k => route.request().url().endsWith(k));
+        return chave ? route.fulfill({ status: 200, contentType: 'application/javascript', body: map[chave] }) : route.abort();
+      });
+      await p.route('**/cloudflareinsights.com/**', r => r.fulfill({ status: 200, contentType: 'application/javascript', body: '' }));
+      await p.route('**/fonts.googleapis.com/**', r => r.fulfill({ status: 200, contentType: 'text/css', body: '' }));
+      const erros = [];
+      p.on('pageerror', e => erros.push(e.message));
+      await p.goto(`${baseUrl}/cadastro.html`, { waitUntil: 'load' });
+
+      async function tentar(senha) {
+        await p.fill('#inp_nome', 'Pessoa Teste');
+        await p.fill('#inp_email', 'pessoa@teste.com');
+        await p.fill('#inp_pass', senha);
+        await p.fill('#inp_pass2', senha);
+        // Dispara o submit direto (sem a validação nativa de minlength do
+        // navegador), pra testar a regra do próprio código.
+        await p.evaluate(() => document.getElementById('formCadastro').dispatchEvent(new Event('submit', { cancelable: true })));
+        await p.waitForTimeout(300);
+        return p.evaluate(() => ({
+          erro: document.getElementById('alertErr').textContent,
+          ok: document.getElementById('alertOk').textContent
+        }));
+      }
+
+      for (const fraca of ['abc12', 'abcdefghijk', '12345678901']) {
+        const r = await tentar(fraca);
+        assert(/mínimo 10 caracteres/.test(r.erro), `senha "${fraca}" deveria ser recusada. Erro: "${r.erro}"`);
+        assert(!r.ok, `senha "${fraca}" não deveria criar a conta`);
+      }
+      const forte = await tentar('senhaForte123');
+      assert(forte.ok.includes('Conta criada'), `senha forte deveria ser aceita. Veio: erro="${forte.erro}" ok="${forte.ok}"`);
+
+      assertEqual(erros.length, 0, 'erros de JS: ' + erros.join(' | '));
+      await p.close();
+    }
+  },
+
+  {
     name: 'Origem dos candidatos: agrupa por candidato (não por tentativa) e calcula taxa de contratação por origem',
     async run({ browser, baseUrl }) {
       const resultados = [
