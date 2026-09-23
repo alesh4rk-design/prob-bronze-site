@@ -1152,10 +1152,18 @@
           <div class="pill" data-val="nao">✕ Não</div>
         </div>
       </div>
-      <div class="form-sec">▸ Avaliação da entrevista</div>
+      <div class="form-sec">▸ Critérios gerais (0 a 10)</div>
       <div id="entrevistaCriterios"></div>
-      <div class="field-group">
-        <span class="field-label">Observações</span>
+      <div class="form-sec" id="entrevistaPerguntasTitulo">▸ Perguntas de situação</div>
+      <div id="entrevistaPerguntas"></div>
+      <div id="entrevistaMedia" style="margin:10px 0;font-weight:700;color:var(--gold,#e8a000);">Média: — / 10</div>
+      <div class="form-sec">▸ Destaques rápidos</div>
+      <div class="field-label" style="margin-top:4px;">👍 Pontos fortes</div>
+      <div class="opt-pills" id="entrevistaFortes" style="flex-wrap:wrap;"></div>
+      <div class="field-label" style="margin-top:8px;">⚠️ Pontos de atenção</div>
+      <div class="opt-pills" id="entrevistaAtencao" style="flex-wrap:wrap;"></div>
+      <div class="field-group" style="margin-top:12px;">
+        <span class="field-label">Observações do entrevistador</span>
         <textarea class="field-input" id="entrevistaObservacoes" rows="4" style="width:100%;resize:vertical;font-family:inherit;line-height:1.5;" placeholder="Impressões da entrevista, pontos discutidos, ressalvas..."></textarea>
       </div>
     </div>
@@ -1900,7 +1908,9 @@
     classificarModulo, classificarDigitacao, melhorDigitacao, dataLocalYMD, escapeHtml,
     VIOLACAO_LABELS, tipoViolacaoLabel, descricaoViolacao,
     consolidarModulos, criadoEmDe, expiraEmDe as _expiraEmDe, statusCodigo as _statusCodigo,
-    etapaDoPipeline, PESOS_PADRAO, calcularScore, pesosDoCargo, urlCurriculoSegura
+    etapaDoPipeline, PESOS_PADRAO, calcularScore, pesosDoCargo, urlCurriculoSegura,
+    CRITERIOS_ENTREVISTA, DESTAQUES_FORTES, DESTAQUES_ATENCAO, perguntasEntrevistaDoModulo,
+    mediaEntrevista, estrelasDe10, htmlEntrevistaRelatorio
   } from "./js/dashboard-format.js";
 
   let ALL_RESULTADOS = [];
@@ -2555,7 +2565,9 @@
 
     // ── Entrevista — resumo de quando já foi realizada (visível pra
     // qualquer um que veja a ficha, não só quem gerencia).
-    if (pInfo.entrevista) {
+    if (pInfo.entrevista && pInfo.entrevista.versao === 2) {
+      html += `<div class="ficha-entrevista-v2" style="background:#fff;color:#12141c;border-radius:10px;padding:12px 14px;margin:12px 0;">${htmlEntrevistaRelatorio(pInfo.entrevista, fmtDataHora).replace('class="pr-sec-title"', 'style="font-weight:700;font-size:13px;margin-bottom:8px;color:#12141c;"')}</div>`;
+    } else if (pInfo.entrevista) {
       const ent = pInfo.entrevista;
       const decLabel = { aprovado: { txt: '🟢 Aprovado', cor: 'var(--green)' }, reprovado: { txt: '🔴 Reprovado', cor: 'var(--red)' }, complementar: { txt: '🟡 Avaliação complementar', cor: 'var(--amber)' } }[ent.decisao] || { txt: ent.decisao, cor: 'var(--text2)' };
       html += `
@@ -2812,6 +2824,7 @@
 
     // Comentários da equipe sobre o candidato — cada um com autor e data
     // (ver registrarComentario/buscarComentarios em js/dashboard.js).
+    h += htmlEntrevistaRelatorio((PIPELINE_MAP[CAND_ATUAL.replace(/[/]/g, '_')] || {}).entrevista, fmtDataHora);
     if (comentariosPDF.length) {
       h += `<div class="pr-sec-title">Comentários da equipe</div>` +
         comentariosPDF.map((c, i) => `
@@ -3046,6 +3059,7 @@
     }
 
     // Comentários da equipe sobre o candidato, com autor e data.
+    h += htmlEntrevistaRelatorio((PIPELINE_MAP[CAND_ATUAL.replace(/[/]/g, '_')] || {}).entrevista, fmtDataHora);
     if (comentariosResumo.length) {
       h += `<div class="pr-sec-title">Comentários da equipe</div>` +
         comentariosResumo.map((c, i) => `
@@ -4299,10 +4313,50 @@
   // ══════════ ENTREVISTA (registro estruturado) ══════════
   let ENTREVISTA_CHAVE_ATUAL = null;
   let ENTREVISTA_NOME_ATUAL = null;
-  const ENTREVISTA_NOTAS = {};
+  let ENT_CRIT = {};        // { asseio: 0-10, ... }
+  let ENT_PERG = [];        // [{ pergunta, nota }]
+  let ENT_FORTES = new Set();
+  let ENT_ATENCAO = new Set();
 
-  document.getElementById('entrevistaCriterios').innerHTML = criteriosAvaliacaoHTML();
-  ligarEstrelasCriterios('entrevistaCriterios', ENTREVISTA_NOTAS);
+  // Linha de 0 a 10 botões; guarda a nota via callback.
+  function notas010HTML(grupo, idx) {
+    return `<div class="nota010" data-grupo="${grupo}" data-idx="${idx}" style="display:flex;flex-wrap:wrap;gap:3px;margin:4px 0 10px;">` +
+      Array.from({ length: 11 }, (_, n) => `<button type="button" class="pill" data-nota="${n}" style="min-width:30px;padding:4px 6px;">${n}</button>`).join('') + '</div>';
+  }
+  function atualizarMediaEntrevista() {
+    const m = mediaEntrevista(ENT_CRIT, ENT_PERG);
+    document.getElementById('entrevistaMedia').textContent = m == null ? 'Média: — / 10' : `Média: ${m} / 10  ${estrelasDe10(m)}`;
+  }
+  function montarEntrevista(modulo) {
+    ENT_CRIT = {}; ENT_FORTES = new Set(); ENT_ATENCAO = new Set();
+    ENT_PERG = perguntasEntrevistaDoModulo(modulo).map(pergunta => ({ pergunta, nota: null }));
+    document.getElementById('entrevistaCriterios').innerHTML = CRITERIOS_ENTREVISTA.map(c =>
+      `<div class="field-label">${c.label}</div>${notas010HTML('crit', c.id)}`).join('');
+    document.getElementById('entrevistaPerguntasTitulo').textContent = '▸ Perguntas de situação' + (modulo ? ' — ' + modulo : '') + ' (0 a 10)';
+    document.getElementById('entrevistaPerguntas').innerHTML = ENT_PERG.map((p, i) =>
+      `<div class="field-label" style="line-height:1.4;">${i + 1}. ${escapeHtml(p.pergunta)}</div>${notas010HTML('perg', i)}`).join('');
+    const chips = (lista, id, set) => {
+      const el = document.getElementById(id);
+      el.innerHTML = lista.map(t => `<div class="pill" data-val="${escapeHtml(t)}">${escapeHtml(t)}</div>`).join('');
+      el.querySelectorAll('.pill').forEach(p => p.onclick = () => {
+        const v = p.dataset.val;
+        if (set.has(v)) { set.delete(v); p.classList.remove('sel'); } else { set.add(v); p.classList.add('sel'); }
+      });
+    };
+    chips(DESTAQUES_FORTES, 'entrevistaFortes', ENT_FORTES);
+    chips(DESTAQUES_ATENCAO, 'entrevistaAtencao', ENT_ATENCAO);
+    document.querySelectorAll('#entrevistaModal .nota010 .pill').forEach(b => b.onclick = () => {
+      const linha = b.parentElement;
+      linha.querySelectorAll('.pill').forEach(x => x.classList.remove('sel'));
+      b.classList.add('sel');
+      const n = Number(b.dataset.nota);
+      if (linha.dataset.grupo === 'crit') ENT_CRIT[linha.dataset.idx] = n;
+      else ENT_PERG[Number(linha.dataset.idx)].nota = n;
+      atualizarMediaEntrevista();
+    });
+    atualizarMediaEntrevista();
+  }
+
   document.querySelectorAll('#entrevistaDisponibilidade .pill, #entrevistaExperiencia .pill').forEach(p => {
     p.onclick = () => {
       p.parentElement.querySelectorAll('.pill').forEach(x => x.classList.remove('sel'));
@@ -4316,7 +4370,12 @@
     document.getElementById('entrevistaNomeCandidato').textContent = nome;
     document.querySelectorAll('#entrevistaDisponibilidade .pill, #entrevistaExperiencia .pill').forEach(p => p.classList.remove('sel'));
     document.getElementById('entrevistaObservacoes').value = '';
-    resetEstrelasCriterios('entrevistaCriterios', ENTREVISTA_NOTAS);
+    let modulo = null;
+    try {
+      const f = fichaDe(tentativasDe(chave));
+      if (f && f.cargo_pretendido) modulo = moduloDoCargoPretendido(f.cargo_pretendido);
+    } catch (e) { /* sem ficha: usa perguntas gerais */ }
+    montarEntrevista(modulo);
     document.getElementById('entrevistaModal').classList.add('show');
   };
 
@@ -4330,14 +4389,19 @@
     const pillDisp = document.querySelector('#entrevistaDisponibilidade .pill.sel');
     const pillExp = document.querySelector('#entrevistaExperiencia .pill.sel');
     if (!pillDisp || !pillExp) { toast('❌ Responda as duas perguntas de sim/não antes de concluir', 'err'); return; }
-    if (faltaAvaliarCriterio(ENTREVISTA_NOTAS)) { toast('❌ Avalie todos os critérios antes de concluir', 'err'); return; }
+    if (CRITERIOS_ENTREVISTA.some(c => ENT_CRIT[c.id] == null)) { toast('❌ Dê nota (0 a 10) para todos os critérios gerais', 'err'); return; }
+    if (ENT_PERG.some(p => p.nota == null)) { toast('❌ Dê nota (0 a 10) para todas as perguntas de situação', 'err'); return; }
 
     const dados = {
+      versao: 2,
       decisao,
       disponibilidadeEscala: pillDisp.dataset.val === 'sim',
       experienciaAnterior: pillExp.dataset.val === 'sim',
-      avaliacao: { ...ENTREVISTA_NOTAS },
-      avaliacaoMedia: mediaNotas(ENTREVISTA_NOTAS),
+      criterios: { ...ENT_CRIT },
+      perguntas: ENT_PERG.map(p => ({ ...p })),
+      media: mediaEntrevista(ENT_CRIT, ENT_PERG),
+      destaquesFortes: [...ENT_FORTES],
+      destaquesAtencao: [...ENT_ATENCAO],
       observacoes: document.getElementById('entrevistaObservacoes').value.trim()
     };
     try {

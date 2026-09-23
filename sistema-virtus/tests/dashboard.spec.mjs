@@ -1458,8 +1458,7 @@ export const tests = [
       await page.evaluate(() => {
         document.querySelector('#entrevistaDisponibilidade .pill[data-val="sim"]').click();
         document.querySelector('#entrevistaExperiencia .pill[data-val="nao"]').click();
-        document.querySelectorAll('#entrevistaCriterios .crit-estrelas').forEach(bloco =>
-          bloco.querySelector('span[data-estrela="4"]').click());
+        document.querySelectorAll('#entrevistaModal .nota010').forEach(l => l.querySelector('[data-nota="8"]').click());
         document.getElementById('entrevistaObservacoes').value = 'Boa comunicação, um pouco tímido.';
       });
       await page.evaluate(() => concluirEntrevista('aprovado'));
@@ -1469,8 +1468,11 @@ export const tests = [
       assertEqual(gravado.decisao, 'aprovado', 'decisão da entrevista deveria ser "aprovado"');
       assertEqual(gravado.disponibilidade_escala, true, 'disponibilidade deveria ser true');
       assertEqual(gravado.experiencia_anterior, false, 'experiência anterior deveria ser false');
-      assertEqual(gravado.avaliacao_media, 4, 'média da avaliação deveria ser 4 (todos os critérios com 4 estrelas)');
-      assertEqual(gravado.avaliacao.postura, 4, 'critério "postura" deveria ter sido gravado com 4 estrelas');
+      assertEqual(gravado.versao, 2, 'entrevista deveria estar no formato novo');
+      assertEqual(gravado.media, 8, 'média deveria ser 8 (todas as notas 8)');
+      assertEqual(gravado.criterios.postura, 8, 'critério "postura" deveria ter nota 8');
+      assertEqual(gravado.perguntas.length, 5, 'deveria gravar 5 perguntas de situação');
+      assertEqual(gravado.observacoes, 'Boa comunicação, um pouco tímido.', 'observações gravadas');
 
       const decisaoFinalAinda = await page.evaluate(() => window.__PIPE['cpf:40404040404'].decisao_final);
       assert(!decisaoFinalAinda, 'aprovar na entrevista não deveria decidir Contratado/Recusado sozinho');
@@ -1498,8 +1500,7 @@ export const tests = [
       await page.evaluate(() => {
         document.querySelector('#entrevistaDisponibilidade .pill[data-val="nao"]').click();
         document.querySelector('#entrevistaExperiencia .pill[data-val="nao"]').click();
-        document.querySelectorAll('#entrevistaCriterios .crit-estrelas').forEach(bloco =>
-          bloco.querySelector('span[data-estrela="2"]').click());
+        document.querySelectorAll('#entrevistaModal .nota010').forEach(l => l.querySelector('[data-nota="4"]').click());
       });
       await page.evaluate(() => concluirEntrevista('reprovado'));
       await page.waitForTimeout(300);
@@ -1527,8 +1528,7 @@ export const tests = [
       await page.evaluate(() => {
         document.querySelector('#entrevistaDisponibilidade .pill[data-val="sim"]').click();
         document.querySelector('#entrevistaExperiencia .pill[data-val="sim"]').click();
-        document.querySelectorAll('#entrevistaCriterios .crit-estrelas').forEach(bloco =>
-          bloco.querySelector('span[data-estrela="3"]').click());
+        document.querySelectorAll('#entrevistaModal .nota010').forEach(l => l.querySelector('[data-nota="6"]').click());
       });
       await page.evaluate(() => concluirEntrevista('complementar'));
       await page.waitForTimeout(300);

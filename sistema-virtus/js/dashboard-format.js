@@ -220,3 +220,168 @@ export function statusCodigo(c, validadeMs, agora = Date.now()) {
   if (expirado) return { txt: '⏱ Expirado', cor: 'var(--text3)', ok: false };
   return { txt: '✓ Ativo', cor: 'var(--green)', ok: true };
 }
+
+// ── Avaliação da entrevista (modelo com notas de 0 a 10) ─────────────────
+// O conhecimento técnico o TESTE já mede — a entrevista avalia como a pessoa
+// pensa, se comporta e se expressa. Por isso as perguntas do cargo são de
+// SITUAÇÃO: a nota vai pra qualidade da resposta (bom senso, calma,
+// segurança, procedimento), não pra uma resposta "de livro".
+export const CRITERIOS_ENTREVISTA = [
+  { id: 'asseio', label: 'Asseio pessoal' },
+  { id: 'postura', label: 'Postura profissional' },
+  { id: 'comunicacao', label: 'Comunicação' },
+  { id: 'equipe', label: 'Trabalho em equipe' }
+];
+
+export const DESTAQUES_FORTES = ['Comunicação clara', 'Calmo sob pressão', 'Experiência comprovada', 'Proativo', 'Boa apresentação', 'Mora perto'];
+export const DESTAQUES_ATENCAO = ['Respostas vagas', 'Nervosismo excessivo', 'Pouca experiência', 'Disponibilidade limitada', 'Mora longe'];
+
+// Chave = módulo de teste do cargo (ver moduloDoCargoPretendido em
+// js/quiz.js) — cargos que fazem o mesmo teste compartilham as perguntas.
+export const PERGUNTAS_ENTREVISTA = {
+  'Controle de Acesso': [
+    'Alguém sem autorização insiste em entrar dizendo que é parente de um morador. O que você faz?',
+    'Um entregador quer deixar uma encomenda, mas o destinatário não atende. Como procede?',
+    'Você percebe um carro desconhecido parado na frente há muito tempo. Qual sua atitude?',
+    'Um morador pede pra você liberar a entrada de um amigo sem se identificar. Como age?',
+    'Você precisa sair do posto por uma emergência pessoal. O que faz antes?'
+  ],
+  'CFTV': [
+    'Você vê pela câmera uma pessoa tentando abrir um carro no estacionamento. O que faz primeiro?',
+    'Uma câmera importante para de funcionar no meio do turno. Como procede?',
+    'Você percebe uma movimentação suspeita, mas não tem certeza se é algo errado. O que faz?',
+    'Um colega pede pra você apagar um trecho de gravação. Como reage?',
+    'Várias ocorrências acontecem ao mesmo tempo em câmeras diferentes. Como prioriza?'
+  ],
+  'Vigilante Patrimonial': [
+    'Durante a ronda você encontra uma porta que deveria estar trancada aberta. O que faz?',
+    'Um funcionário sai carregando um equipamento da empresa sem autorização. Como age?',
+    'Como você reage a uma pessoa alterada tentando entrar à força?',
+    'Você encontra um objeto suspeito abandonado no local. Qual seu procedimento?',
+    'Seu colega de turno está dormindo no posto. O que você faz?'
+  ],
+  'VSPP': [
+    'Durante um trajeto você percebe que um carro está seguindo vocês. O que faz?',
+    'A pessoa que você protege quer ir a um local que você considera arriscado. Como lida?',
+    'Alguém se aproxima de forma agressiva da pessoa que você protege. Qual sua reação?',
+    'Você percebe que a rota combinada está bloqueada. Como decide o que fazer?',
+    'A pessoa protegida pede pra você fazer algo fora da sua função. Como responde?'
+  ],
+  'Recepcionista': [
+    'Um visitante chega irritado porque esperou muito. Como você lida?',
+    'O telefone toca enquanto você atende alguém no balcão. O que faz?',
+    'Alguém sem agendamento insiste em falar com um diretor. Como procede?',
+    'Você não sabe responder uma pergunta de um visitante. O que faz?',
+    'Chegam várias pessoas ao mesmo tempo no balcão. Como organiza o atendimento?'
+  ],
+  'Liderança de Equipe': [
+    'Um funcionário chega atrasado pela terceira vez na semana. Como você age?',
+    'Dois colaboradores da sua equipe estão em conflito. Como resolve?',
+    'Faltou um funcionário e o posto não pode ficar descoberto. O que faz?',
+    'Um cliente reclama de um colaborador da sua equipe. Como conduz a situação?',
+    'Você recebe uma ordem da gerência que a equipe não gostou. Como passa isso pra eles?'
+  ],
+  'Encarregado de Facilities': [
+    'Vários chamados urgentes chegam ao mesmo tempo. Como decide o que fazer primeiro?',
+    'Um fornecedor não entregou o material combinado. Como procede?',
+    'Um cliente reclama da limpeza de uma área. O que você faz?',
+    'Um funcionário da equipe não está cumprindo a escala. Como resolve?',
+    'O orçamento do mês está apertado e surgiu um conserto urgente. Como decide?'
+  ],
+  'Manutenção': [
+    'Você recebe um chamado de vazamento e outro de lâmpada queimada ao mesmo tempo. Qual atende primeiro e por quê?',
+    'Você não tem a peça certa pra terminar um conserto. O que faz?',
+    'Pedem um serviço que exige equipamento de segurança que você não tem no momento. Como age?',
+    'Você percebe que um conserto antigo, feito por outra pessoa, está com risco. O que faz?',
+    'Um morador pede um serviço fora da sua ordem de trabalho. Como responde?'
+  ],
+  'ASG': [
+    'Você termina sua área e vê outra suja que não é sua. O que faz?',
+    'Um produto de limpeza está sem rótulo. Você usa?',
+    'Alguém derrama algo no chão num horário de muito movimento. Como age?',
+    'Você encontra um objeto de valor esquecido enquanto limpa. O que faz?',
+    'Falta material de limpeza no meio do turno. Como procede?'
+  ],
+  'Bombeiro Civil': [
+    'Um alarme de incêndio toca e as pessoas não querem sair do prédio. Como age?',
+    'Alguém passa mal no local e você está sozinho. Quais são seus primeiros passos?',
+    'Você encontra um extintor vencido durante a inspeção. O que faz?',
+    'Uma saída de emergência está bloqueada por materiais. Como procede?',
+    'Durante uma emergência, alguém entra em pânico e atrapalha a evacuação. O que faz?'
+  ],
+  'Jardineiro': [
+    'Um morador pede pra você podar uma árvore de um jeito que você acha que vai prejudicá-la. O que faz?',
+    'Você percebe uma praga se espalhando nas plantas. Como procede?',
+    'Precisa usar um produto químico perto de onde crianças brincam. Como age?',
+    'Um equipamento (roçadeira, cortador) quebra no meio do serviço. O que faz?',
+    'Chove forte no dia de um serviço programado. Como reorganiza o trabalho?'
+  ]
+};
+// Pra cargo sem perguntas próprias (ou ficha antiga com cargo em texto livre).
+export const PERGUNTAS_ENTREVISTA_GERAL = [
+  'Conte uma situação difícil que você viveu no trabalho e como resolveu.',
+  'Um colega está fazendo algo errado no serviço. O que você faz?',
+  'Você recebe uma ordem que não entendeu direito. Como procede?',
+  'Como você lida com um cliente ou visitante mal-educado?',
+  'O que você faz quando termina suas tarefas antes do horário?'
+];
+
+export function perguntasEntrevistaDoModulo(modulo) {
+  return PERGUNTAS_ENTREVISTA[modulo] || PERGUNTAS_ENTREVISTA_GERAL;
+}
+
+// Média de todas as notas (critérios gerais + perguntas do cargo), 1 casa.
+export function mediaEntrevista(criterios, perguntas) {
+  const notas = [
+    ...Object.values(criterios || {}),
+    ...(perguntas || []).map(p => p.nota)
+  ].filter(n => typeof n === 'number');
+  return notas.length ? Math.round((notas.reduce((a, b) => a + b, 0) / notas.length) * 10) / 10 : null;
+}
+
+// Nota 0–10 -> 5 estrelas (★★★★☆), igual ao relatório de referência.
+export function estrelasDe10(media) {
+  const n = Math.max(0, Math.min(5, Math.round((media || 0) / 2)));
+  return '★'.repeat(n) + '☆'.repeat(5 - n);
+}
+
+// Seção "Avaliação da Entrevista" dos relatórios impressos (completo e
+// resumo) — estilos inline pra funcionar nos dois modelos de relatório.
+// Só pra entrevistas no formato novo (versao 2, notas de 0 a 10).
+export function htmlEntrevistaRelatorio(ent, fmtDataHoraFn) {
+  if (!ent || ent.versao !== 2) return '';
+  const dec = { aprovado: ['🟢 Aprovado', '#00713C'], reprovado: ['🔴 Reprovado', '#B32218'], complementar: ['🟡 Avaliação complementar', '#8A6100'] }[ent.decisao] || [ent.decisao || '—', '#12141c'];
+  const cor = n => n >= 7 ? '#00713C' : n >= 5 ? '#8A6100' : '#B32218';
+  const linha = (label, nota) => `
+    <tr>
+      <td style="padding:5px 8px;border-bottom:1px solid #E4E8EE;font-size:11px;color:#12141c;">${escapeHtml(label)}</td>
+      <td style="padding:5px 8px;border-bottom:1px solid #E4E8EE;width:34%;">
+        <div style="height:7px;background:#E4E8EE;border-radius:4px;overflow:hidden;"><div style="height:100%;width:${(nota || 0) * 10}%;background:${cor(nota)};"></div></div>
+      </td>
+      <td style="padding:5px 8px;border-bottom:1px solid #E4E8EE;font-weight:700;font-size:11px;color:${cor(nota)};text-align:right;width:40px;">${nota ?? '—'}</td>
+    </tr>`;
+  const chips = (lista, fundo, texto) => (lista || []).map(t =>
+    `<span style="display:inline-block;margin:0 4px 4px 0;padding:2px 8px;border-radius:10px;font-size:10px;background:${fundo};color:${texto};">${escapeHtml(t)}</span>`).join('');
+  const criterios = CRITERIOS_ENTREVISTA.map(c => linha(c.label, (ent.criterios || {})[c.id])).join('');
+  const perguntas = (ent.perguntas || []).map((p, i) => linha(`${i + 1}. ${p.pergunta}`, p.nota)).join('');
+  return `
+    <div class="pr-sec-title">🎤 Avaliação da Entrevista</div>
+    <div style="border:1px solid #E4E8EE;border-radius:6px;padding:10px 12px;margin-bottom:10px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:8px;">
+        <div style="font-size:11px;color:#5A6880;">Entrevistador: <b style="color:#12141c;">${escapeHtml(ent.por || '—')}</b>${ent.por_perfil ? ' · ' + escapeHtml(ent.por_perfil) : ''} · ${fmtDataHoraFn ? fmtDataHoraFn(ent.em) : ''}</div>
+        <div style="font-size:11px;font-weight:700;color:${dec[1]};">${dec[0]}</div>
+      </div>
+      <div style="font-size:10px;color:#5A6880;margin-bottom:8px;">Disponibilidade 12x36: <b>${ent.disponibilidade_escala ? 'Sim' : 'Não'}</b> · Experiência anterior: <b>${ent.experiencia_anterior ? 'Sim' : 'Não'}</b></div>
+      <table style="width:100%;border-collapse:collapse;">
+        <tr><td colspan="3" style="padding:4px 8px;font-size:10px;font-weight:700;color:#5A6880;text-transform:uppercase;letter-spacing:1px;">Critérios gerais</td></tr>
+        ${criterios}
+        <tr><td colspan="3" style="padding:8px 8px 4px;font-size:10px;font-weight:700;color:#5A6880;text-transform:uppercase;letter-spacing:1px;">Perguntas de situação do cargo</td></tr>
+        ${perguntas}
+      </table>
+      <div style="margin-top:10px;font-size:13px;font-weight:700;color:${cor(ent.media)};">Média geral: ${ent.media ?? '—'} / 10 <span style="color:#E8A000;letter-spacing:2px;">${estrelasDe10(ent.media)}</span></div>
+      ${(ent.destaques_fortes || []).length ? `<div style="margin-top:8px;font-size:10px;color:#5A6880;">👍 Pontos fortes:</div><div>${chips(ent.destaques_fortes, '#E3F6EA', '#00713C')}</div>` : ''}
+      ${(ent.destaques_atencao || []).length ? `<div style="margin-top:4px;font-size:10px;color:#5A6880;">⚠️ Pontos de atenção:</div><div>${chips(ent.destaques_atencao, '#FFF4DB', '#8A6100')}</div>` : ''}
+      <div style="margin-top:8px;font-size:10px;color:#5A6880;">💬 Observações do entrevistador:</div>
+      <div style="font-size:11px;color:#12141c;white-space:pre-wrap;">${ent.observacoes ? escapeHtml(ent.observacoes) : 'Nenhuma observação.'}</div>
+    </div>`;
+}
