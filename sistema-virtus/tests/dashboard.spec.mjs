@@ -1724,7 +1724,7 @@ export const tests = [
   },
 
   {
-    name: 'Digitação no computador: confere o CPF no quiz, usa o nome de lá e avisa quando o CPF não foi encontrado',
+    name: 'Digitação no computador: confere o CPF no quiz (sem expor nome) e avisa quando o CPF não foi encontrado',
     async run({ browser, baseUrl }) {
       // Nome e CPF são digitados de novo na digitação do computador — um CPF
       // errado fazia a digitação virar "candidato separado" no painel.
@@ -1744,7 +1744,7 @@ export const tests = [
           if (url.endsWith('/verificar-codigo')) resp = { ok: body.codigo === '123456' };
           if (url.endsWith('/buscar-candidato')) {
             resp = body.cpf.replace(/\D/g, '') === '52998224725'
-              ? { ok: true, encontrado: true, nome: 'Nome Usado No Quiz' }
+              ? { ok: true, encontrado: true }
               : { ok: true, encontrado: false };
           }
           return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(resp) });
@@ -1766,15 +1766,15 @@ export const tests = [
         await p.waitForTimeout(500);
       }
 
-      // CPF que fez o quiz: usa o nome de lá (mesmo digitado diferente).
+      // CPF que fez o quiz: começa direto, sem aviso.
       let { p, erros } = await abrirDigitacao();
-      await preencherEIniciar(p, 'fulano digitado diferente', '529.982.247-25');
+      await preencherEIniciar(p, 'Fulano De Tal', '529.982.247-25');
       const pronto = await p.evaluate(() => ({
         aberto: document.getElementById('readyOverlay').classList.contains('show'),
         nome: document.getElementById('readyName').textContent
       }));
       assert(pronto.aberto, 'teste deveria começar quando o CPF é encontrado');
-      assertEqual(pronto.nome, 'Nome Usado No Quiz', 'deveria usar o nome do quiz, não o digitado');
+      assertEqual(pronto.nome, 'Fulano De Tal', 'deveria manter o nome digitado (o servidor não devolve nome)');
       assertEqual(erros.length, 0, 'erros de JS: ' + erros.join(' | '));
       await p.close();
 

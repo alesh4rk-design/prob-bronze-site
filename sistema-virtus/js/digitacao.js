@@ -30,9 +30,9 @@ export async function obterNumeroWhatsappRH() {
 // Mesma URL do Worker usada em js/quiz.js.
 const API_BASE = "https://virtus-api.ale-sh4rk.workers.dev";
 
-// Confere no servidor se esse CPF já fez o quiz e devolve o nome usado lá
-// — { ok, encontrado, nome }. Usado na digitação do computador, onde nome e
-// CPF são digitados de novo (um CPF errado virava "candidato separado").
+// Confere no servidor se esse CPF já fez o quiz — { ok, encontrado } (sem
+// nome nem outro dado). Usado na digitação do computador, onde nome e CPF
+// são digitados de novo (um CPF errado virava "candidato separado").
 export async function buscarCandidatoPorCpf(cpf, codigoAcesso) {
   const resp = await fetch(`${API_BASE}/buscar-candidato`, {
     method: "POST",

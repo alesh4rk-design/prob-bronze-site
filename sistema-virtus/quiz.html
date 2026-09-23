@@ -1481,7 +1481,7 @@
   // navegador do candidato não escreve mais direto no Storage; ver
   // storage.rules e worker/virtus-api.js, rota /enviar-curriculo). Devolve
   // { url, nomeArquivo } ou null se não houver arquivo selecionado.
-  async function enviarCurriculoSeHouver(cpf) {
+  async function enviarCurriculoSeHouver() {
     const input = document.getElementById('inCurriculo');
     const file = input.files[0];
     if (!file) return null;
@@ -1490,7 +1490,7 @@
     const txtEl = document.getElementById('curriculoDropTxt');
     txtEl.textContent = '⏳ Enviando currículo...';
 
-    const r = await enviarCurriculo(file, cpf);
+    const r = await enviarCurriculo(file);
     if (!r.ok) {
       drop.className = 'file-drop err';
       txtEl.textContent = '✕ Falha ao enviar currículo';
@@ -1519,7 +1519,7 @@
     const btnIniciar = document.getElementById('btnIniciarAvaliacao');
     btnIniciar.disabled = true;
     try {
-      const curriculo = await enviarCurriculoSeHouver(ficha.cpf);
+      const curriculo = await enviarCurriculoSeHouver();
       if (curriculo) {
         ficha.curriculo_url = curriculo.url;
         ficha.curriculo_nome = curriculo.nomeArquivo;

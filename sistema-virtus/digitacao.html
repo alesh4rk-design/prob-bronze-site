@@ -912,11 +912,12 @@ function startTest(){
 }
 
 // Digitação no computador: nome e CPF são digitados de novo aqui. Antes de
-// começar, confere no servidor se esse CPF fez o quiz — se achar, usa o
-// MESMO nome de lá (a digitação cai na ficha certa do candidato); se não
-// achar, avisa que o CPF pode estar errado (senão a digitação vira um
-// "candidato separado" no dashboard). Quem veio direto do quiz no celular
-// já trouxe nome/CPF de lá, não precisa conferir.
+// começar, confere no servidor se esse CPF fez o quiz — se não achar, avisa
+// que o CPF pode estar errado (senão a digitação vira um "candidato
+// separado" no dashboard, que agrupa por CPF). O servidor só responde
+// "achou/não achou", nunca o nome — pra não virar um jeito de descobrir o
+// dono de um CPF. Quem veio direto do quiz no celular já trouxe nome/CPF
+// de lá, não precisa conferir.
 async function conferirCandidatoEIniciar(){
   if (veioDoQuizMobile) { iniciarTesteReal(); return; }
   const btn = document.getElementById('startBtn');
@@ -924,9 +925,7 @@ async function conferirCandidatoEIniciar(){
   try {
     const r = await buscarCandidatoPorCpf(candidate.cpf, codigoAcessoAtual);
     if (r.encontrado) {
-      candidate.nome = r.nome;
-      document.getElementById('nome').value = r.nome;
-      toast('✓ Candidato encontrado: ' + r.nome, 'ok');
+      toast('✓ CPF confere com o teste já feito', 'ok');
     } else {
       const seguir = window.confirm(
         'Não encontramos nenhum teste feito com o CPF ' + candidate.cpf + '.\n\n' +

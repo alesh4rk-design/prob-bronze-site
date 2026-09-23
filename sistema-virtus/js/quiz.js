@@ -94,10 +94,9 @@ export async function verificarCodigoAcesso(codigoDigitado) {
 // (client SDK); agora passa pelo Worker, que valida tipo/tamanho no
 // servidor e grava com uma conta de serviço (storage.rules fecha a escrita
 // pública). `arquivo` é o File escolhido no <input type="file">.
-export async function enviarCurriculo(arquivo, cpf) {
+export async function enviarCurriculo(arquivo) {
   const form = new FormData();
   form.append("arquivo", arquivo);
-  form.append("cpf", cpf);
   try {
     const resp = await fetch(`${API_BASE}/enviar-curriculo`, { method: "POST", body: form });
     return await resp.json();

@@ -28,11 +28,11 @@
 //     qualquer um). Agora passam por aqui e também exigem código válido.
 //
 //   POST /buscar-candidato  { cpf, codigoAcesso }
-//     -> { ok: true, encontrado, nome }
-//     Usado na digitação do computador: confere se o CPF já fez o quiz e
-//     devolve o nome usado lá (evita "candidato duplicado" por CPF errado).
+//     -> { ok: true, encontrado }
+//     Usado na digitação do computador: confere se o CPF já fez o quiz
+//     (evita "candidato duplicado" por CPF errado). Não devolve nome.
 //
-//   POST /enviar-curriculo  (multipart/form-data: campos "arquivo" e "cpf")
+//   POST /enviar-curriculo  (multipart/form-data: campo "arquivo")
 //     -> { ok: true, url, nomeArquivo } ou { ok: false, erro }
 //     Antes o navegador do candidato subia o currículo direto pro Firebase
 //     Storage (client SDK, que exige o plano pago Blaze). Agora passa por
@@ -558,10 +558,10 @@ async function firestoreBuscarIn(env, token, colecao, campo, valores, limite) {
 
 // Digitação feita no computador: o nome e o CPF são digitados de novo, e um
 // CPF errado fazia a digitação virar um "candidato separado" no dashboard
-// (o agrupamento é por CPF). Esta rota confere se aquele CPF já fez o quiz
-// e devolve o NOME usado lá, pra digitação sair com o mesmo nome/CPF.
-// Protegida pelo código de acesso (só quem está no local da prova usa) e
-// devolve só o nome — nenhum outro dado da ficha.
+// (o agrupamento é por CPF). Esta rota só diz SE aquele CPF já fez o quiz —
+// não devolve nome nem nenhum outro dado, pra quem tem o código do dia não
+// conseguir descobrir quem é o dono de um CPF. Protegida pelo código de
+// acesso e com limite de consultas por IP.
 async function handleBuscarCandidato(request, env, cors) {
   const ip = request.headers.get("CF-Connecting-IP") || "desconhecido";
   if (await passouDoLimite(env, `busca:${ip}`, 200)) return json({ ok: false, erro: "muitas_tentativas" }, cors, 429);
@@ -577,11 +577,8 @@ async function handleBuscarCandidato(request, env, cors) {
   // só com números — procura pelos dois formatos.
   const comMascara = digitos.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4");
   const docs = await firestoreBuscarIn(env, token, "resultados", "cpf", [digitos, comMascara], 20);
-  const quizzes = docs
-    .filter((d) => d.fields.tipo === "quiz" && d.fields.nome)
-    .sort((a, b) => String(b.fields.data_conclusao || "").localeCompare(String(a.fields.data_conclusao || "")));
-  if (!quizzes.length) return json({ ok: true, encontrado: false }, cors);
-  return json({ ok: true, encontrado: true, nome: quizzes[0].fields.nome }, cors);
+  const encontrado = docs.some((d) => d.fields.tipo === "quiz");
+  return json({ ok: true, encontrado }, cors);
 }
 
 // Violação durante o teste (perda de foco, tentativa de cópia etc.). Antes
@@ -697,9 +694,7 @@ async function handleEnviarCurriculo(request, env, cors) {
 
   const form = await request.formData();
   const arquivo = form.get("arquivo");
-  const cpf = (form.get("cpf") || "").toString().replace(/\D/g, "");
   if (!arquivo || typeof arquivo === "string") return json({ ok: false, erro: "arquivo_ausente" }, cors, 400);
-  if (!cpf) return json({ ok: false, erro: "cpf_ausente" }, cors, 400);
   if (arquivo.size > TAMANHO_MAX_CURRICULO) return json({ ok: false, erro: "arquivo_muito_grande" }, cors, 400);
   const contentType = arquivo.type || "application/octet-stream";
   if (!TIPOS_CURRICULO_PERMITIDOS.includes(contentType)) return json({ ok: false, erro: "tipo_nao_permitido" }, cors, 400);
@@ -709,8 +704,11 @@ async function handleEnviarCurriculo(request, env, cors) {
   // "listar tudo que tem no KV" pra quem só conhece a URL, então só quem tem
   // o link exato (com esse trecho) consegue baixar. Mesmo princípio do
   // "token" que o Firebase Storage usava.
+  // Sem o CPF no nome do arquivo: esse link vai pro WhatsApp e pros
+  // relatórios, e antes carregava o CPF do candidato dentro do endereço.
+  // Links antigos (com CPF) continuam funcionando até expirarem.
   const aleatorio = crypto.randomUUID().replace(/-/g, "");
-  const chave = `curriculos/${cpf}-${Date.now()}-${aleatorio}.${ext}`;
+  const chave = `curriculos/${aleatorio}.${ext}`;
   const nomeOriginal = arquivo.name || `curriculo.${ext}`;
 
   await env.CURRICULOS_KV.put(chave, await arquivo.arrayBuffer(), {
