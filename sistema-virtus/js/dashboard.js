@@ -404,6 +404,17 @@ export async function definirBancoReserva(chave, valor, nome, avaliador, perfilA
 // ou recusado. Qualquer um de avaliador/coordenador/gerência/admin pode
 // registrar. Alimenta a aba "Contratados" (histórico de quem decidiu o
 // quê e quando).
+// Foto do colaborador (depois de contratado). Vem já reduzida pelo painel
+// (JPEG ~240px, poucos KB), então cabe direto no documento do pipeline.
+export async function salvarFotoColaborador(chave, dataUrl, quem) {
+  const id = chave.replace(/[/]/g, "_");
+  await setDoc(doc(db, "pipeline", id), {
+    foto_colaborador: dataUrl || null,
+    foto_por: quem || null,
+    foto_em: serverTimestamp()
+  }, { merge: true });
+}
+
 export async function registrarDecisaoFinal(chave, decisao, nome, quem, perfilQuem) {
   const id = chave.replace(/[/]/g, "_");
   await setDoc(doc(db, "pipeline", id), {

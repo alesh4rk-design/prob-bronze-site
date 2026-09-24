@@ -326,6 +326,16 @@
     background:var(--amberdim); border:1px solid var(--ambermid);
     display:flex; align-items:center; justify-content:center; font-size:24px;
   }
+  .foto-slot { position:relative; overflow:visible; }
+  .foto-slot img { width:100%; height:100%; object-fit:cover; border-radius:4px; }
+  .foto-slot.editavel { cursor:pointer; }
+  .foto-slot.editavel::after { content:'📷'; position:absolute; right:-6px; bottom:-6px; font-size:13px; background:var(--ink2,#111); border:1px solid var(--ambermid); border-radius:50%; width:22px; height:22px; display:flex; align-items:center; justify-content:center; }
+  .sk-foto { width:92px; height:92px; border-radius:50%; flex-shrink:0; padding:3px; background:conic-gradient(#E8A000,#FFD27A,#E8A000,#B07800,#E8A000); box-shadow:0 0 0 3px rgba(232,160,0,.15),0 6px 18px rgba(0,0,0,.45); }
+  .sk-foto-in { width:100%; height:100%; border-radius:50%; overflow:hidden; background:#0d1420; display:flex; flex-direction:column; align-items:center; justify-content:center; border:2px solid #0d1420; }
+  .sk-foto-in img { width:100%; height:100%; object-fit:cover; }
+  .sk-foto-vazia { border:2px dashed rgba(232,160,0,.55); }
+  .sk-foto-vazia span { font-size:22px; line-height:1; }
+  .sk-foto-vazia small { font-family:'Share Tech Mono',monospace; font-size:7px; letter-spacing:1px; color:#E8A000; text-transform:uppercase; margin-top:4px; text-align:center; line-height:1.3; }
   .modal-cand-nome { font-family:'Rajdhani',sans-serif; font-size:24px; font-weight:700; letter-spacing:1.5px; color:var(--text); line-height:1.1; }
   .modal-cand-sub { font-family:'Share Tech Mono',monospace; font-size:10px; letter-spacing:1.5px; color:var(--text3); text-transform:uppercase; margin-top:4px; }
   .modal-close {
@@ -1003,7 +1013,8 @@
 <div class="modal-back" id="candModal" onclick="if(event.target===this)fecharCandidato()">
   <div class="modal-card">
     <div class="modal-top">
-      <div class="modal-avatar">👤</div>
+      <div class="modal-avatar foto-slot" id="cmAvatar" title="Foto do colaborador">👤</div>
+      <input type="file" id="cmFotoInput" accept="image/*" style="display:none;">
       <div>
         <div class="modal-cand-nome" id="cmNome">—</div>
         <div class="modal-cand-sub" id="cmSub">—</div>
@@ -1912,7 +1923,7 @@
     gerarCodigoAcesso, assinarCodigosAcesso, cancelarCodigoAcesso, excluirCodigoAcesso, VALIDADE_CODIGO_MS,
     definirNumeroWhatsapp, assinarNumeroWhatsapp,
     assinarPipeline, registrarComentario, buscarComentarios, definirAprovacaoManual, definirBancoReserva,
-    registrarDecisaoFinal, buscarHistorico, registrarEntrevista,
+    registrarDecisaoFinal, buscarHistorico, registrarEntrevista, salvarFotoColaborador,
     assinarVagas, criarVaga, encerrarVaga, reabrirVaga, excluirVaga,
     obterPesosScore, salvarPesosPadrao, salvarPesosCargo, removerPesosCargo
   } from "./js/dashboard.js";
@@ -2256,6 +2267,7 @@
     const viols = violacoesDe(nomeAtual);
 
     document.getElementById('cmNome').textContent = nomeAtual;
+    atualizarAvatarFicha();
     document.getElementById('cmSub').textContent =
       `${tents.length} teste(s) · ${quizzes.length} quiz · ${typings.length} digitação` +
       (viols.length ? ` · ⚠ ${viols.length} violação(ões)` : '');
@@ -3019,6 +3031,7 @@
       </div>
 
       <div class="sk-hero">
+        ${fotoColaboradorHTML()}
         <div>
           <div class="sk-hero-nome">${escapeHtml(nome)}</div>
           <div class="sk-hero-cargo">${escapeHtml((f && f.cargo_pretendido) || 'Cargo não informado')}</div>
@@ -4326,6 +4339,60 @@
   function faltaAvaliarCriterio(store) {
     return CRITERIOS_AVALIACAO.some(c => !store[c.id]);
   }
+
+  // ══════════ FOTO DO COLABORADOR ══════════
+  // Só depois de contratado. A imagem é reduzida no navegador (240px, JPEG)
+  // antes de salvar, pra ficar leve no banco e nos relatórios.
+  function pInfoAtual() {
+    return CAND_ATUAL ? (PIPELINE_MAP[CAND_ATUAL.replace(/[/]/g, '_')] || {}) : {};
+  }
+  function fotoColaboradorHTML() {
+    const p = pInfoAtual();
+    if (p.foto_colaborador) return `<div class="sk-foto"><div class="sk-foto-in"><img src="${p.foto_colaborador}" alt="Foto"></div></div>`;
+    const txt = p.decisao_final === 'contratado' ? 'Foto do<br>colaborador' : 'Foto após<br>contratação';
+    return `<div class="sk-foto"><div class="sk-foto-in sk-foto-vazia"><span>📷</span><small>${txt}</small></div></div>`;
+  }
+  function atualizarAvatarFicha() {
+    const el = document.getElementById('cmAvatar');
+    const p = pInfoAtual();
+    const pode = me && PODE_GERENCIAR_CANDIDATOS.includes(me.perfil) && p.decisao_final === 'contratado';
+    el.innerHTML = p.foto_colaborador ? `<img src="${p.foto_colaborador}" alt="Foto">` : '👤';
+    el.classList.toggle('editavel', !!pode);
+    el.title = pode ? (p.foto_colaborador ? 'Trocar foto do colaborador' : 'Adicionar foto do colaborador') : 'Foto do colaborador';
+    el.onclick = pode ? () => document.getElementById('cmFotoInput').click() : null;
+  }
+  function reduzirImagem(arquivo, lado = 240) {
+    return new Promise((ok, erro) => {
+      const img = new Image();
+      img.onload = () => {
+        const m = Math.min(img.width, img.height);
+        const c = document.createElement('canvas');
+        c.width = c.height = lado;
+        c.getContext('2d').drawImage(img, (img.width - m) / 2, (img.height - m) / 2, m, m, 0, 0, lado, lado);
+        URL.revokeObjectURL(img.src);
+        ok(c.toDataURL('image/jpeg', 0.82));
+      };
+      img.onerror = () => erro(new Error('Imagem inválida'));
+      img.src = URL.createObjectURL(arquivo);
+    });
+  }
+  document.getElementById('cmFotoInput').onchange = async (e) => {
+    const arq = e.target.files[0];
+    e.target.value = '';
+    if (!arq || !CAND_ATUAL) return;
+    if (!arq.type.startsWith('image/')) { toast('❌ Escolha um arquivo de imagem', 'err'); return; }
+    try {
+      const dataUrl = await reduzirImagem(arq);
+      await salvarFotoColaborador(CAND_ATUAL, dataUrl, me.usuario);
+      const id = CAND_ATUAL.replace(/[/]/g, '_');
+      PIPELINE_MAP[id] = { ...(PIPELINE_MAP[id] || {}), foto_colaborador: dataUrl };
+      atualizarAvatarFicha();
+      toast('✅ Foto do colaborador salva', 'ok');
+    } catch (err) {
+      console.error(err);
+      toast('❌ Falha ao salvar foto: ' + err.message, 'err');
+    }
+  };
 
   // ══════════ TUTORIAL DE CADA ABA ══════════
   // Link "Como usar esta aba" embaixo do título; abre um passo a passo.
