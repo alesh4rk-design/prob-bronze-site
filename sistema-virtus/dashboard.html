@@ -170,6 +170,8 @@
   .page-title-area { margin-bottom:28px; display:flex; align-items:flex-end; justify-content:space-between; flex-wrap:wrap; gap:12px; }
   .page-title { font-family:'Rajdhani',sans-serif; font-size:32px; font-weight:700; letter-spacing:6px; color:var(--text); text-transform:uppercase; line-height:1; }
   .page-title em { color:var(--amber2); font-style:normal; }
+  .tutorial-link { display:inline-block; margin-left:8px; color:var(--amber); cursor:pointer; text-decoration:underline; text-transform:none; letter-spacing:0; font-family:'Inter',sans-serif; }
+  .tutorial-corpo ol, .tutorial-corpo ul { padding-left:20px; margin:6px 0 12px; }
   .page-subtitle { font-family:'Share Tech Mono',monospace; font-size:11px; letter-spacing:2px; color:var(--text2); text-transform:uppercase; margin-top:4px; font-weight:600; }
   .page-actions { display:flex; gap:8px; flex-wrap:wrap; }
 
@@ -1123,6 +1125,21 @@
       <button class="btn-act btn-neutral" style="padding:12px 20px;border-radius:6px;" onclick="fecharObservacao()">Fechar</button>
       <button class="btn-act btn-approve-admin" style="padding:12px 20px;border-radius:6px;margin-left:auto;" onclick="salvarObservacao()">💬 Adicionar comentário</button>
     </div>
+  </div>
+</div>
+
+<!-- ══════════ MODAL: TUTORIAL DA ABA ══════════ -->
+<div class="modal-back" id="tutorialModal" onclick="if(event.target===this)fecharTutorial()">
+  <div class="modal-card" style="max-width:560px;">
+    <div class="modal-top">
+      <div class="modal-avatar">❓</div>
+      <div>
+        <div class="modal-cand-nome" id="tutorialTitulo">Como usar</div>
+        <div class="modal-cand-sub">Passo a passo desta aba</div>
+      </div>
+      <button class="modal-close" onclick="fecharTutorial()" title="Fechar">✕</button>
+    </div>
+    <div class="modal-scroll tutorial-corpo" id="tutorialCorpo" style="padding:20px;line-height:1.6;font-size:14px;"></div>
   </div>
 </div>
 
@@ -4309,6 +4326,136 @@
   function faltaAvaliarCriterio(store) {
     return CRITERIOS_AVALIACAO.some(c => !store[c.id]);
   }
+
+  // ══════════ TUTORIAL DE CADA ABA ══════════
+  // Link "Como usar esta aba" embaixo do título; abre um passo a passo.
+  const TUTORIAIS = {
+    'view-dashboard': ['Dashboard', `
+      <p>Visão geral do processo seletivo, atualizada em tempo real.</p>
+      <ol>
+        <li>Os cartões do topo mostram os totais: testes realizados, aprovados, contratados etc.</li>
+        <li>Os gráficos mostram o funil de recrutamento (quantos passam de uma etapa pra outra) e de onde vêm os candidatos.</li>
+        <li>O sininho de notificações avisa quem concluiu teste, quem foi aprovado e entrevistas sem decisão há mais de 24h. Clique numa notificação pra abrir a ficha.</li>
+      </ol>`],
+    'view-vagas': ['Vagas', `
+      <p>Aqui você controla quais vagas o candidato pode escolher na hora do teste.</p>
+      <ol>
+        <li>Clique em <b>criar vaga</b>, escolha o cargo e salve. Ela já aparece na ficha do candidato.</li>
+        <li><b>Encerrar</b> tira a vaga do menu do candidato, mas mantém o histórico. <b>Reabrir</b> volta a mostrar.</li>
+        <li><b>Excluir</b> só é permitido quando nenhum candidato se inscreveu nela.</li>
+      </ol>
+      <p>Sem nenhuma vaga aberta, o candidato não consegue começar o teste.</p>`],
+    'view-pendencias': ['Central de Pendências', `
+      <p>Tudo o que está esperando uma ação sua.</p>
+      <ol>
+        <li>Os cartões mostram cada tipo de pendência (ex.: aguardando entrevista, avaliação complementar).</li>
+        <li>Clique num cartão para filtrar a lista embaixo.</li>
+        <li>Clique no candidato para abrir a ficha e resolver.</li>
+      </ol>`],
+    'view-banco': ['Aprovados para entrevista', `
+      <p>Candidatos que foram selecionados na lista para a entrevista.</p>
+      <ol>
+        <li>Abra a ficha do candidato e clique em <b>🎤 Realizar entrevista</b>.</li>
+        <li>Responda disponibilidade 12x36 e experiência anterior.</li>
+        <li>Dê nota de 0 a 10 nos critérios gerais e nas 5 perguntas de situação do cargo.</li>
+        <li>Marque os pontos fortes e os pontos de atenção e escreva as observações.</li>
+        <li>Finalize com <b>Aprovar</b>, <b>Reprovar</b> ou <b>Avaliação complementar</b>.</li>
+      </ol>
+      <p>A avaliação fica gravada na ficha e sai nos relatórios.</p>`],
+    'view-contratados': ['Histórico de decisões', `
+      <p>Quem foi contratado ou recusado, quando e por quem.</p>
+      <ul>
+        <li>Use a busca e os filtros pra achar um candidato.</li>
+        <li>Clique no nome pra abrir a ficha completa com todo o histórico.</li>
+      </ul>`],
+    'view-bancoreserva': ['Banco de Reserva', `
+      <p>Candidatos bons guardados para vagas futuras.</p>
+      <ol>
+        <li>Para colocar alguém aqui, abra a ficha e use <b>Banco de reserva</b>. É obrigatório escrever o motivo e avaliar os critérios.</li>
+        <li>Quando surgir a vaga, é só abrir a ficha por aqui e seguir o processo.</li>
+      </ol>`],
+    'view-testes': ['Aplicar Teste', `
+      <p>Abre a tela do teste para o candidato preencher.</p>
+      <ol>
+        <li>Gere ou confira o código do dia na aba <b>Código de Acesso</b>.</li>
+        <li>Abra o teste aqui (ou peça pro candidato ler o QR Code).</li>
+        <li>O candidato preenche a ficha, digita o código e faz as provas.</li>
+      </ol>
+      <p>Se ele sair da tela durante a prova, isso vira uma violação.</p>`],
+    'view-violacoes': ['Violações', `
+      <p>Ocorrências registradas durante os testes (sair da tela, trocar de aba, etc.).</p>
+      <ul>
+        <li>Cada linha mostra o candidato, o tipo de ocorrência e a hora.</li>
+        <li>Use isso pra decidir se o resultado do teste é confiável.</li>
+      </ul>`],
+    'view-pipeline': ['Lista de Candidatos', `
+      <p>Todos os testes realizados.</p>
+      <ol>
+        <li>Use a busca e os filtros (cargo, período, situação) pra achar quem você quer.</li>
+        <li>Clique no candidato pra abrir a Ficha 360°: dados, notas, currículo, comentários e histórico.</li>
+        <li>Avaliador, coordenador, gerência e admin podem <b>selecionar para entrevista</b> e deixar comentários.</li>
+        <li>Na ficha dá pra gerar o <b>relatório completo</b> e o <b>resumo de competências</b> em PDF, ou mandar no WhatsApp.</li>
+      </ol>`],
+    'view-ranking': ['Ranking', `
+      <p>Candidatos em ordem da nota única ponderada.</p>
+      <ol>
+        <li>Filtre por cargo pra comparar só quem concorre à mesma vaga.</li>
+        <li>Clique no nome pra abrir a ficha.</li>
+      </ol>
+      <p>Os pesos de cada prova são definidos na aba <b>Pesos do Score</b>.</p>`],
+    'view-qrcodes': ['QR Codes', `
+      <p>Cartazes A4 pra imprimir e colar no local da entrevista.</p>
+      <ol>
+        <li>Escolha o cartaz e clique em imprimir.</li>
+        <li>O candidato aponta a câmera do celular e cai direto na tela do teste.</li>
+      </ol>`],
+    'view-codigos': ['Código de Acesso', `
+      <p>Código presencial que libera o teste. Serve pra garantir que o candidato está no local.</p>
+      <ol>
+        <li>Gere um código novo e passe para os candidatos presentes.</li>
+        <li>O código tem prazo de validade (mostrado na tabela).</li>
+        <li>Em <b>usos</b> você vê quem entrou com cada código.</li>
+      </ol>`],
+    'view-perguntas': ['Banco de Perguntas', `
+      <p>Controle dos módulos de prova.</p>
+      <ol>
+        <li>Ative ou desative módulos que o candidato vai fazer.</li>
+        <li>Importe perguntas novas pelo arquivo no formato indicado.</li>
+      </ol>`],
+    'view-pesos': ['Pesos do Score', `
+      <p>Define quanto cada prova vale na nota única de cada cargo.</p>
+      <ol>
+        <li>Escolha o cargo.</li>
+        <li>Ajuste os pesos (ex.: cargo de portaria pode valorizar mais a prova específica).</li>
+        <li>Salve. O Ranking passa a usar os novos pesos.</li>
+      </ol>`],
+    'view-usuarios': ['Gestão de Usuários', `
+      <p>Quem pode entrar no sistema.</p>
+      <ol>
+        <li>Pessoas novas se cadastram pela tela de cadastro e ficam <b>pendentes</b>.</li>
+        <li>Aprove escolhendo o perfil: Operador, Avaliador, Coordenador ou Gerência. Pedidos de Gerente só o Admin aprova.</li>
+        <li>Você também pode mudar o perfil ou remover o acesso de alguém.</li>
+      </ol>`]
+  };
+  Object.keys(TUTORIAIS).forEach(id => {
+    const sub = document.querySelector('#' + id + ' .page-subtitle');
+    if (!sub) return;
+    const a = document.createElement('span');
+    a.className = 'tutorial-link';
+    a.textContent = '❓ Como usar esta aba';
+    a.onclick = () => abrirTutorial(id);
+    sub.appendChild(a);
+  });
+  window.abrirTutorial = function (id) {
+    const t = TUTORIAIS[id];
+    if (!t) return;
+    document.getElementById('tutorialTitulo').textContent = 'Como usar: ' + t[0];
+    document.getElementById('tutorialCorpo').innerHTML = t[1];
+    document.getElementById('tutorialModal').classList.add('show');
+  };
+  window.fecharTutorial = function () {
+    document.getElementById('tutorialModal').classList.remove('show');
+  };
 
   // ══════════ ENTREVISTA (registro estruturado) ══════════
   let ENTREVISTA_CHAVE_ATUAL = null;
