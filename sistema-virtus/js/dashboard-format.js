@@ -354,34 +354,34 @@ export function htmlEntrevistaRelatorio(ent, fmtDataHoraFn) {
   const cor = n => n >= 7 ? '#00713C' : n >= 5 ? '#8A6100' : '#B32218';
   const linha = (label, nota) => `
     <tr>
-      <td style="padding:5px 8px;border-bottom:1px solid #E4E8EE;font-size:11px;color:#12141c;">${escapeHtml(label)}</td>
-      <td style="padding:5px 8px;border-bottom:1px solid #E4E8EE;width:34%;">
-        <div style="height:7px;background:#E4E8EE;border-radius:4px;overflow:hidden;"><div style="height:100%;width:${(nota || 0) * 10}%;background:${cor(nota)};"></div></div>
+      <td style="padding:6px 8px;border-bottom:1px solid #E4E8EE;font-size:13px;color:#12141c;">${escapeHtml(label)}</td>
+      <td style="padding:6px 8px;border-bottom:1px solid #E4E8EE;width:34%;">
+        <div style="height:8px;background:#E4E8EE;border-radius:4px;overflow:hidden;"><div style="height:100%;width:${(nota || 0) * 10}%;background:${cor(nota)};"></div></div>
       </td>
-      <td style="padding:5px 8px;border-bottom:1px solid #E4E8EE;font-weight:700;font-size:11px;color:${cor(nota)};text-align:right;width:40px;">${nota ?? '—'}</td>
+      <td style="padding:6px 8px;border-bottom:1px solid #E4E8EE;font-weight:700;font-size:13px;color:${cor(nota)};text-align:right;width:40px;">${nota ?? '—'}</td>
     </tr>`;
   const chips = (lista, fundo, texto) => (lista || []).map(t =>
-    `<span style="display:inline-block;margin:0 4px 4px 0;padding:2px 8px;border-radius:10px;font-size:10px;background:${fundo};color:${texto};">${escapeHtml(t)}</span>`).join('');
+    `<span style="display:inline-block;margin:0 4px 4px 0;padding:3px 9px;border-radius:10px;font-size:12px;background:${fundo};color:${texto};">${escapeHtml(t)}</span>`).join('');
   const criterios = CRITERIOS_ENTREVISTA.map(c => linha(c.label, (ent.criterios || {})[c.id])).join('');
   const perguntas = (ent.perguntas || []).map((p, i) => linha(`${i + 1}. ${p.pergunta}`, p.nota)).join('');
   return `
     <div class="pr-sec-title">🎤 Avaliação da Entrevista</div>
     <div style="border:1px solid #E4E8EE;border-radius:6px;padding:10px 12px;margin-bottom:10px;">
       <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:8px;">
-        <div style="font-size:11px;color:#5A6880;">Entrevistador: <b style="color:#12141c;">${escapeHtml(ent.por || '—')}</b>${ent.por_perfil ? ' · ' + escapeHtml(ent.por_perfil) : ''} · ${fmtDataHoraFn ? fmtDataHoraFn(ent.em) : ''}</div>
-        <div style="font-size:11px;font-weight:700;color:${dec[1]};">${dec[0]}</div>
+        <div style="font-size:13px;color:#5A6880;">Entrevistador: <b style="color:#12141c;">${escapeHtml(ent.por || '—')}</b>${ent.por_perfil ? ' · ' + escapeHtml(ent.por_perfil) : ''} · ${fmtDataHoraFn ? fmtDataHoraFn(ent.em) : ''}</div>
+        <div style="font-size:13px;font-weight:700;color:${dec[1]};">${dec[0]}</div>
       </div>
-      <div style="font-size:10px;color:#5A6880;margin-bottom:8px;">Escalas — 5x2: <b>${ent.escala_5x2 == null ? '—' : ent.escala_5x2 ? 'Sim' : 'Não'}</b> · 12x36: <b>${ent.disponibilidade_escala ? 'Sim' : 'Não'}</b> · 6x1: <b>${ent.escala_6x1 == null ? '—' : ent.escala_6x1 ? 'Sim' : 'Não'}</b> · Experiência anterior: <b>${ent.experiencia_anterior ? 'Sim' : 'Não'}</b></div>
+      <div style="font-size:12px;color:#5A6880;margin-bottom:8px;">Escalas — 5x2: <b>${ent.escala_5x2 == null ? '—' : ent.escala_5x2 ? 'Sim' : 'Não'}</b> · 12x36: <b>${ent.disponibilidade_escala ? 'Sim' : 'Não'}</b> · 6x1: <b>${ent.escala_6x1 == null ? '—' : ent.escala_6x1 ? 'Sim' : 'Não'}</b> · Experiência anterior: <b>${ent.experiencia_anterior ? 'Sim' : 'Não'}</b></div>
       <table style="width:100%;border-collapse:collapse;">
-        <tr><td colspan="3" style="padding:4px 8px;font-size:10px;font-weight:700;color:#5A6880;text-transform:uppercase;letter-spacing:1px;">Critérios gerais</td></tr>
+        <tr><td colspan="3" style="padding:4px 8px;font-size:11px;font-weight:700;color:#5A6880;text-transform:uppercase;letter-spacing:1px;">Critérios gerais</td></tr>
         ${criterios}
-        <tr><td colspan="3" style="padding:8px 8px 4px;font-size:10px;font-weight:700;color:#5A6880;text-transform:uppercase;letter-spacing:1px;">Perguntas de situação do cargo</td></tr>
+        <tr><td colspan="3" style="padding:8px 8px 4px;font-size:11px;font-weight:700;color:#5A6880;text-transform:uppercase;letter-spacing:1px;">Perguntas de situação do cargo</td></tr>
         ${perguntas}
       </table>
-      <div style="margin-top:10px;font-size:13px;font-weight:700;color:${cor(ent.media)};">Média geral: ${ent.media ?? '—'} / 10 <span style="color:#E8A000;letter-spacing:2px;">${estrelasDe10(ent.media)}</span></div>
-      ${(ent.destaques_fortes || []).length ? `<div style="margin-top:8px;font-size:10px;color:#5A6880;">👍 Pontos fortes:</div><div>${chips(ent.destaques_fortes, '#E3F6EA', '#00713C')}</div>` : ''}
-      ${(ent.destaques_atencao || []).length ? `<div style="margin-top:4px;font-size:10px;color:#5A6880;">⚠️ Pontos de atenção:</div><div>${chips(ent.destaques_atencao, '#FFF4DB', '#8A6100')}</div>` : ''}
-      <div style="margin-top:8px;font-size:10px;color:#5A6880;">💬 Observações do entrevistador:</div>
-      <div style="font-size:11px;color:#12141c;white-space:pre-wrap;">${ent.observacoes ? escapeHtml(ent.observacoes) : 'Nenhuma observação.'}</div>
+      <div style="margin-top:10px;font-size:15px;font-weight:700;color:${cor(ent.media)};">Média geral: ${ent.media ?? '—'} / 10 <span style="color:#E8A000;letter-spacing:2px;">${estrelasDe10(ent.media)}</span></div>
+      ${(ent.destaques_fortes || []).length ? `<div style="margin-top:8px;font-size:12px;color:#5A6880;">👍 Pontos fortes:</div><div>${chips(ent.destaques_fortes, '#E3F6EA', '#00713C')}</div>` : ''}
+      ${(ent.destaques_atencao || []).length ? `<div style="margin-top:4px;font-size:12px;color:#5A6880;">⚠️ Pontos de atenção:</div><div>${chips(ent.destaques_atencao, '#FFF4DB', '#8A6100')}</div>` : ''}
+      <div style="margin-top:8px;font-size:12px;color:#5A6880;">💬 Observações do entrevistador:</div>
+      <div style="font-size:13px;color:#12141c;white-space:pre-wrap;">${ent.observacoes ? escapeHtml(ent.observacoes) : 'Nenhuma observação.'}</div>
     </div>`;
 }
