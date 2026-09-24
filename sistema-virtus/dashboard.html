@@ -2515,6 +2515,15 @@
         </div>`;
     }
 
+    // ── Linha do tempo (histórico de mudanças de etapa) ──
+    html += `
+      <div class="tent-card">
+        <div class="tent-head"><div class="tent-mod">📝 Linha do tempo</div></div>
+        <div class="tent-body" id="cmTimeline">
+          <div style="font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--text3);">Carregando…</div>
+        </div>
+      </div>`;
+
     for (const t of quizzes) {
       const pct = t.pct || 0;
       const det = t.respostas_detalhadas || [];
@@ -2596,15 +2605,6 @@
           </div>
         </div>`;
     }
-
-    // ── Linha do tempo (histórico de mudanças de etapa) ──
-    html += `
-      <div class="tent-card">
-        <div class="tent-head"><div class="tent-mod">📝 Linha do tempo</div></div>
-        <div class="tent-body" id="cmTimeline">
-          <div style="font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--text3);">Carregando…</div>
-        </div>
-      </div>`;
 
     // ── Entrevista — resumo de quando já foi realizada (visível pra
     // qualquer um que veja a ficha, não só quem gerencia).
@@ -2781,8 +2781,9 @@
 
     // Veredito puramente automático, a partir da média de quiz (≥70% = aprovado).
     // Não existe mais decisão manual do avaliador neste sistema.
-    const vLabel = media === null ? '⏳ Sem prova técnica' : media >= 70 ? '✓ Aprovado' : '✕ Não aprovado';
-    const vClass = media === null ? 'pr-v-pendente' : media >= 70 ? 'pr-v-apto' : 'pr-v-naoapto';
+    const decPDF = decisaoFinalRelatorio();
+    const vLabel = decPDF ? (decPDF.contratado ? '🎉 Contratado' : '✕ Recusado') : media === null ? '⏳ Sem prova técnica' : media >= 70 ? '✓ Aprovado' : '✕ Não aprovado';
+    const vClass = decPDF ? (decPDF.contratado ? 'pr-v-apto' : 'pr-v-naoapto') : media === null ? 'pr-v-pendente' : media >= 70 ? 'pr-v-apto' : 'pr-v-naoapto';
 
     const corPct = p => p >= 70 ? '#00713C' : p >= 50 ? '#8A6100' : '#B32218';
     const agora = new Date().toLocaleString('pt-BR');
@@ -2811,7 +2812,8 @@
         <div class="pr-cand-item">Digitação<b>${melhorTyping ? `${melhorTyping.dispositivo === 'mobile' ? '📱' : '💻'} ${melhorTyping.wpm} WPM — ${digCabecalho.txt}` : '—'}</b></div>
         <div class="pr-cand-item">Violações<b style="color:${viols.length ? '#B32218' : '#00713C'}">${viols.length}</b></div>
         <div class="pr-veredito ${vClass}">${vLabel}</div>
-      </div>`;
+      </div>
+      ${linhaDecisaoHTML(decPDF)}`;
 
     const f = fichaDe(tents);
     if (f) {
@@ -3029,8 +3031,9 @@
     }
 
     // Situação puramente automática (média de quiz), sem decisão manual.
-    const vLabel = media === null ? 'SEM PROVA TÉCNICA' : media >= 70 ? 'APROVADO' : media >= 50 ? 'EM ANÁLISE' : 'NÃO APROVADO';
-    const vCor = media === null ? '#FFB800' : media >= 70 ? '#00EE88' : media >= 50 ? '#FFB800' : '#FF7A70';
+    const decRes = decisaoFinalRelatorio();
+    const vLabel = decRes ? decRes.label : media === null ? 'SEM PROVA TÉCNICA' : media >= 70 ? 'APROVADO' : media >= 50 ? 'EM ANÁLISE' : 'NÃO APROVADO';
+    const vCor = decRes ? (decRes.contratado ? '#00EE88' : '#FF7A70') : media === null ? '#FFB800' : media >= 70 ? '#00EE88' : media >= 50 ? '#FFB800' : '#FF7A70';
 
     let h = `
       <div class="pr-header">
@@ -3059,6 +3062,7 @@
           <div class="sk-hm"><div class="sk-hm-val" style="color:${vCor}">${vLabel}</div><div class="sk-hm-lbl">Situação</div></div>
         </div>
       </div>
+      ${linhaDecisaoHTML(decRes)}
 
       <div class="sk-reco ${recoCls}">
         <div class="sk-reco-icon">${recoIcon}</div>
@@ -4358,6 +4362,30 @@
   }
   function faltaAvaliarCriterio(store) {
     return CRITERIOS_AVALIACAO.some(c => !store[c.id]);
+  }
+
+  // Decisão final (Contratado/Recusado) vence a situação automática da
+  // nota nos relatórios, e mostra quem decidiu.
+  function decisaoFinalRelatorio() {
+    const p = pInfoAtual();
+    if (!p.decisao_final) return null;
+    const quem = (p.decisao_final_por || '—') + (p.decisao_final_por_perfil ? ` (${LABEL_PERFIL[p.decisao_final_por_perfil] || p.decisao_final_por_perfil})` : '');
+    const em = p.decisao_final_em ? fmtDataHora(p.decisao_final_em) : '';
+    const contratado = p.decisao_final === 'contratado';
+    return {
+      label: contratado ? 'CONTRATADO' : 'RECUSADO',
+      contratado,
+      linha: `${contratado ? 'Contratação aprovada' : 'Recusado'} por ${quem}${em ? ' em ' + em : ''}`,
+      marcouEntrevista: p.aprovado_por ? p.aprovado_por + (p.aprovado_por_perfil ? ` (${LABEL_PERFIL[p.aprovado_por_perfil] || p.aprovado_por_perfil})` : '') : null
+    };
+  }
+  function linhaDecisaoHTML(dec) {
+    if (!dec) return '';
+    const cor = dec.contratado ? '#00713C' : '#B32218', fundo = dec.contratado ? '#E3F6EA' : '#FDE8E6';
+    return `<div style="margin:0 0 12px;padding:8px 12px;border-radius:6px;background:${fundo};border:1px solid ${cor}33;font-size:11px;color:#12141c;">
+      <b style="color:${cor};">${dec.contratado ? '🎉' : '❌'} ${escapeHtml(dec.linha)}</b>
+      ${dec.marcouEntrevista ? `<span style="color:#5A6880;"> · Selecionado para entrevista por ${escapeHtml(dec.marcouEntrevista)}</span>` : ''}
+    </div>`;
   }
 
   // ══════════ FOTO DO COLABORADOR ══════════
