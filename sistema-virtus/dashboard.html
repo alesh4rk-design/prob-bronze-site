@@ -4947,7 +4947,14 @@
       const temViolacao = violacoesDe(c.nome).length > 0;
 
       const dadosCand = `data-chave="${escapeHtml(c.chave)}" data-nome="${escapeHtml(c.nome)}"`;
+      const entFeita = pipelineData.entrevista;
+      if (!decisaoFinal && entFeita) {
+        const m = entFeita.versao === 2 && entFeita.media != null ? ` · ${entFeita.media}/10` : '';
+        statusTxt = { aprovado: '🎤 Entrevista: aprovado', reprovado: '🎤 Entrevista: reprovado', complementar: '🎤 Entrevista: complementar' }[entFeita.decisao] + m;
+        corStatus = entFeita.decisao === 'aprovado' ? 'var(--green)' : entFeita.decisao === 'reprovado' ? 'var(--red)' : 'var(--amber)';
+      }
       const botoesAcao = (podeDecidir && !decisaoFinal) ? `
+          <button class="btn-act btn-neutral" style="font-size:11px;padding:6px 10px;background:var(--cyandim);color:var(--cyan);border-color:var(--cyanmid);" data-acao="abrirEntrevista" ${dadosCand}>🎤 ${entFeita ? 'Refazer entrevista' : 'Entrevista'}</button>
           <button class="btn-act btn-approve-admin" style="font-size:11px;padding:6px 10px;" data-acao="decidirEntrevista" data-decisao="contratado" ${dadosCand}>🎉 Contratado</button>
           <button class="btn-act btn-neutral" style="font-size:11px;padding:6px 10px;" data-acao="decidirEntrevista" data-decisao="recusado" ${dadosCand}>❌ Recusado</button>
         ` : '';
