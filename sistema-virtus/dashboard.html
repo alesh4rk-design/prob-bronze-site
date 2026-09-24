@@ -2314,7 +2314,7 @@
         ['Bairro / Região', f.bairro],
         ['Cargo pretendido', f.cargo_pretendido],
         ['Experiência na área', f.experiencia ? '✓ Sim' : '✕ Não'],
-        ['Turno disponível', f.turno],
+        ...(f.turno ? [['Turno disponível', f.turno]] : []),
         ['Disponibilidade total', f.disponibilidade_total == null ? '—' : (f.disponibilidade_total ? '✓ Sim' : '✕ Não')],
         ['Pendência judicial', f.pendencia_judicial == null ? '—' : (f.pendencia_judicial ? '⚠️ Sim' : '✓ Não'), f.pendencia_judicial ? 'var(--red)' : null],
         ['Como conheceu a vaga', f.origem]
@@ -2808,7 +2808,7 @@
         ['Bairro / Região', f.bairro],
         ['Cargo pretendido', f.cargo_pretendido],
         ['Experiência na área', f.experiencia ? 'Sim' : 'Não'],
-        ['Disponibilidade de turno', f.turno],
+        ...(f.turno ? [['Disponibilidade de turno', f.turno]] : []),
         ['Disponibilidade total', f.disponibilidade_total == null ? '—' : (f.disponibilidade_total ? 'Sim' : 'Não')],
         ['Pendência judicial', f.pendencia_judicial == null ? '—' : (f.pendencia_judicial ? 'Sim' : 'Não'), f.pendencia_judicial ? '#B32218' : null],
         ['Como conheceu a vaga', f.origem]
@@ -3053,7 +3053,7 @@
       h += `
         <div class="pr-sec-title">Perfil operacional</div>
         <div class="sk-perfil">
-          <div class="sk-p-cell"><div class="sk-p-lbl">Disponibilidade</div><div class="sk-p-val">${escapeHtml(f.turno || '—')}</div></div>
+          ${f.turno ? `<div class="sk-p-cell"><div class="sk-p-lbl">Disponibilidade</div><div class="sk-p-val">${escapeHtml(f.turno)}</div></div>` : ''}
           <div class="sk-p-cell"><div class="sk-p-lbl">Disponibilidade total</div><div class="sk-p-val">${f.disponibilidade_total == null ? '—' : (f.disponibilidade_total ? 'Sim' : 'Não')}</div></div>
           <div class="sk-p-cell"><div class="sk-p-lbl">Experiência na área</div><div class="sk-p-val">${f.experiencia ? 'Sim' : 'Não'}</div></div>
           <div class="sk-p-cell"><div class="sk-p-lbl">Idade</div><div class="sk-p-val">${f.idade != null ? f.idade + ' anos' : '—'}</div></div>

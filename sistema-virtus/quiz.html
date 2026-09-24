@@ -813,18 +813,6 @@
       </div>
 
       <div class="field-group">
-        <span class="field-label">Disponibilidade de turno *</span>
-        <select class="field-input" id="inTurno">
-          <option value="">— Selecionar —</option>
-          <option value="Diurno">Diurno</option>
-          <option value="Noturno">Noturno</option>
-          <option value="12x36 Diurno">12x36 — Diurno</option>
-          <option value="12x36 Noturno">12x36 — Noturno</option>
-          <option value="Qualquer">Qualquer turno</option>
-        </select>
-      </div>
-
-      <div class="field-group">
         <span class="field-label">Disponibilidade total de horário? *</span>
         <div class="opt-pills" id="inDispTotal">
           <div class="pill" data-val="sim">✓ Sim</div>
@@ -1436,8 +1424,6 @@
     const pillSel = document.querySelector('#inExp .pill.sel');
     if (!pillSel) return falha('Informe se possui experiência na área', 'inExp');
 
-    const turno = document.getElementById('inTurno').value;
-    if (!turno) return falha('Selecione a disponibilidade de turno', 'inTurno');
 
     const pillDispTotal = document.querySelector('#inDispTotal .pill.sel');
     if (!pillDispTotal) return falha('Informe se possui disponibilidade total de horário', 'inDispTotal');
@@ -1463,7 +1449,6 @@
       vaga_id: vagaEscolhida.id,
       experiencia: pillSel.dataset.val === 'sim',
       experiencia_texto: experienciaTexto || null,
-      turno,
       disponibilidade_total: pillDispTotal.dataset.val === 'sim',
       pendencia_judicial: pillPendenciaJudicial.dataset.val === 'sim',
       origem,
