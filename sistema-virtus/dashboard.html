@@ -4140,6 +4140,10 @@
         ativo: aprovado,
         fn: () => { window.fecharAcoesModal(); window.alternarAprovadoParaEntrevista(chave, nome, !aprovado); }
       },
+      ...(aprovado && !p.decisao_final ? [{
+        label: '🎤 ' + (p.entrevista ? 'Refazer entrevista' : 'Realizar entrevista'),
+        fn: () => { window.fecharAcoesModal(); window.abrirEntrevista(chave, nome); }
+      }] : []),
       {
         label: (noBanco ? '✅ No Banco de Reserva' : '🏦 Colocar no Banco de Reserva'),
         ativo: noBanco,
