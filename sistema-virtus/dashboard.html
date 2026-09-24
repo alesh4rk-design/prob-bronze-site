@@ -3108,19 +3108,6 @@
         </div>` : ''}`;
     }
 
-    // Comentários da equipe sobre o candidato, com autor e data.
-    h += htmlEntrevistaRelatorio((PIPELINE_MAP[CAND_ATUAL.replace(/[/]/g, '_')] || {}).entrevista, fmtDataHora);
-    if (comentariosResumo.length) {
-      h += `<div class="pr-sec-title">Comentários da equipe</div>` +
-        comentariosResumo.map((c, i) => `
-          <div class="sk-perfil" style="display:block;${i > 0 ? 'margin-top:6px;' : ''}">
-            <div style="font-size:12px;color:#12141c;white-space:pre-wrap;">${escapeHtml(c.texto)}</div>
-            <div style="font-family:'Share Tech Mono',monospace;font-size:9px;color:#5A6880;margin-top:4px;">
-              ${escapeHtml(c.por || '—')}${c.por_perfil ? ` · ${escapeHtml(LABEL_PERFIL[c.por_perfil] || c.por_perfil)}` : ''} · ${fmtDataHora(c.em)}
-            </div>
-          </div>`).join('');
-    }
-
     // Competências por módulo
     if (mods.length) {
       h += `<div class="pr-sec-title">Competências avaliadas</div>`;
@@ -3152,6 +3139,19 @@
               : '<div class="sk-vazio">Nenhuma lacuna relevante identificada.</div>'}
           </div>
         </div>`;
+    }
+
+    // Comentários da equipe sobre o candidato, com autor e data.
+    h += htmlEntrevistaRelatorio((PIPELINE_MAP[CAND_ATUAL.replace(/[/]/g, '_')] || {}).entrevista, fmtDataHora);
+    if (comentariosResumo.length) {
+      h += `<div class="pr-sec-title">Comentários da equipe</div>` +
+        comentariosResumo.map((c, i) => `
+          <div class="sk-perfil" style="display:block;${i > 0 ? 'margin-top:6px;' : ''}">
+            <div style="font-size:12px;color:#12141c;white-space:pre-wrap;">${escapeHtml(c.texto)}</div>
+            <div style="font-family:'Share Tech Mono',monospace;font-size:9px;color:#5A6880;margin-top:4px;">
+              ${escapeHtml(c.por || '—')}${c.por_perfil ? ` · ${escapeHtml(LABEL_PERFIL[c.por_perfil] || c.por_perfil)}` : ''} · ${fmtDataHora(c.em)}
+            </div>
+          </div>`).join('');
     }
 
     // Digitação
