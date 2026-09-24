@@ -563,7 +563,11 @@ export const tests = [
     name: 'Comentários: registra autor/perfil de cada um, mostra ícone com contagem e aparece no PDF',
     async run({ browser, baseUrl }) {
       const resultados = [{ id: '1', tipo: 'quiz', nome: 'Recebe Comentario', modulo: 'Atendimento', pct: 80, acertos: 8, total: 10, data_conclusao: hoje() }];
-      const pipeline = { 'nome:recebe comentario': { aprovado: true, aprovado_em: hoje() } };
+      // Comentários pela Ficha 360° só ficam disponíveis antes de aprovar
+      // para entrevista — depois disso, o comentário passa a ser feito
+      // direto na aba "Aprovados para entrevista" (ver botão editarObservacao
+      // que só aparece com !aprovado).
+      const pipeline = { 'nome:recebe comentario': { aprovado: false } };
       const { page, erros } = await abrirDashboard(browser, baseUrl, { perfil: 'avaliador', usuario: 'Bruna Avaliadora', resultados, pipeline });
 
       await page.evaluate(() => abrirCandidato('nome:recebe comentario'));

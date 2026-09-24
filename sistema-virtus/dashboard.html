@@ -2698,7 +2698,7 @@
               <button class="btn-act ${noBancoAtual ? 'btn-approve-admin' : 'btn-neutral'}" data-acao="toggleBanco" data-valor="${!noBancoAtual}" ${dadosDecisao}>
                 ${noBancoAtual ? '✅ No Banco de Reserva' : '🏦 Banco de Reserva'}
               </button>
-              <button class="btn-act btn-neutral" data-acao="editarObservacao" ${dadosDecisao}>💬 Comentários${pInfo.comentarios_count ? ` (${pInfo.comentarios_count})` : ''}</button>
+              ${!aprovadoAtual ? `<button class="btn-act btn-neutral" data-acao="editarObservacao" ${dadosDecisao}>💬 Comentários${pInfo.comentarios_count ? ` (${pInfo.comentarios_count})` : ''}</button>` : ''}
               ${aprovadoAtual ? `<button class="btn-act btn-neutral" style="background:var(--cyandim);color:var(--cyan);border-color:var(--cyanmid);" data-acao="abrirEntrevista" ${dadosDecisao}>🎤 ${pInfo.entrevista ? 'Refazer entrevista' : 'Realizar entrevista'}</button>` : ''}
               ${aprovadoAtual && !pInfo.decisao_final ? `
                 <button class="btn-act btn-approve-admin" data-acao="decidirEntrevista" data-decisao="contratado" ${dadosDecisao}>🎉 Contratado</button>
@@ -4169,10 +4169,10 @@
         ativo: noBanco,
         fn: () => { window.fecharAcoesModal(); window.alternarBancoReserva(chave, nome, !noBanco); }
       },
-      {
+      ...(!aprovado ? [{
         label: '💬 ' + (p.comentarios_count ? `Ver comentários (${p.comentarios_count})` : 'Comentar'),
         fn: () => { window.fecharAcoesModal(); window.editarObservacaoPipeline(chave, nome); }
-      },
+      }] : []),
       {
         label: '💬 Falar no WhatsApp',
         fn: () => { window.fecharAcoesModal(); window.abrirWhatsappCandidato(chave, nome); }
