@@ -30,25 +30,53 @@ service cloud.firestore {
     // nessa coleção.
     match /usuarios/{uid} {
       allow read: if request.auth != null && (request.auth.uid == uid || isGerencia());
+      // `filial`/`filial_pretendida` são campos livres que a própria pessoa
+      // escolhe no cadastro.html (qual filial quer acessar, ou nome da
+      // filial nova que quer criar) — não concedem nada sozinhos, só dizem
+      // qual fila de aprovação vai ver o pedido (ver dashboard.html).
       allow create: if request.auth != null && request.auth.uid == uid &&
                        request.resource.data.perfil == 'pendente';
-      // Só Admin pode conceder o perfil "gerencia" (ou "admin") — Gerência
-      // aprova/promove todo o resto (avaliador, viewer, coordenador), mas
-      // nunca cria outro Gerente. Ver dashboard.html (renderPendentes):
-      // pedidos marcados "solicita_gerente" só aparecem pro Admin.
+      // Só Admin pode criar uma FILIAL NOVA (perfil vira "gerencia" só
+      // nesse caso quando quem aprova é Admin). Gerência aprova/promove o
+      // resto (avaliador, viewer, coordenador) E também pode promover a
+      // "gerencia" — mas só quando (a) a conta ainda está pendente (nunca
+      // rebaixa/promove uma conta já ativa) e (b) fica na MESMA filial da
+      // Gerência que aprovou — é assim que um "gerente principal" adiciona
+      // outro gerente pra cuidar da mesma filial, sem conseguir mexer em
+      // filial alheia.
       // Gerência também não pode MEXER em conta que já é admin ou gerente
       // (rebaixar ou apagar) — senão um gerente conseguia trancar o Admin
-      // fora do sistema. Só mexe em pendente/avaliador/coordenador/operador.
+      // (ou outro gerente) fora do sistema.
       allow update: if request.auth != null && (
         isAdmin() ||
         (isGerencia() &&
          resource.data.perfil in ['pendente', 'avaliador', 'coordenador', 'viewer'] &&
-         !(request.resource.data.perfil in ['admin', 'gerencia']))
+         (
+           request.resource.data.perfil in ['avaliador', 'coordenador', 'viewer'] ||
+           (request.resource.data.perfil == 'gerencia' &&
+            resource.data.perfil == 'pendente' &&
+            request.resource.data.filial == minhaFilial())
+         ) &&
+         // Só mexe em pendente de fora da própria filial se ele ainda não
+         // tinha nenhuma filial escolhida (fica "adotado" pela Gerência que
+         // aprovar primeiro — ver renderPendentes em dashboard.html).
+         (!('filial' in resource.data) || resource.data.filial == null || resource.data.filial == minhaFilial())
+        )
       );
       allow delete: if request.auth != null && (
         isAdmin() ||
         (isGerencia() && resource.data.perfil in ['pendente', 'avaliador', 'coordenador', 'viewer'])
       );
+    }
+
+    // filiais/{id}: nome de cada filial/unidade cadastrada. Leitura pública
+    // (sem exigir login) porque cadastro.html precisa listar as filiais
+    // existentes ANTES da pessoa ter conta — não é informação sensível, só
+    // um nome. Só Admin cria (via aprovação de "quero criar uma filial
+    // nova" — ver aprovarSolicitacaoGerente em js/dashboard.js).
+    match /filiais/{id} {
+      allow read: if true;
+      allow create, update, delete: if request.auth != null && isAdmin();
     }
 
     // perguntas/{modulo}: banco de questões por módulo, COM o gabarito
@@ -75,12 +103,12 @@ service cloud.firestore {
     // ver a lista de participantes, e coordenador, que acompanha o funil).
     match /resultados/{id} {
       allow create: if false;
-      allow read: if request.auth != null && isLeitor();
-      allow update: if request.auth != null && isGerencia();
+      allow read: if request.auth != null && isLeitor() && mesmaFilialOuSemFilial(resource.data);
+      allow update: if request.auth != null && isGerencia() && mesmaFilialOuSemFilial(resource.data);
       // Excluir candidato: liberado pra quem gerencia o processo seletivo
       // (admin/gerência/avaliador/coordenador) — Operador (viewer) NÃO
       // exclui mais: ele só acompanha, não decide nem apaga nada.
-      allow delete: if request.auth != null && isGerenciaCandidatos();
+      allow delete: if request.auth != null && isGerenciaCandidatos() && mesmaFilialOuSemFilial(resource.data);
     }
 
     // codigos_acesso/{codigo}: código COMPARTILHADO que impede o candidato de
@@ -101,7 +129,9 @@ service cloud.firestore {
     // Operador (viewer) continua podendo gerar/desativar — é literalmente o
     // trabalho dele no dia da prova, não uma decisão sobre candidato.
     match /codigos_acesso/{codigo} {
-      allow get, list, create, update, delete: if request.auth != null && isOperacional();
+      allow create: if request.auth != null && isOperacional();
+      allow get, list: if request.auth != null && isOperacional() && mesmaFilialOuSemFilial(resource.data);
+      allow update, delete: if request.auth != null && isOperacional() && mesmaFilialOuSemFilial(resource.data);
     }
 
     // config/{doc}: configurações gerais do sistema (ex: número de WhatsApp
@@ -132,9 +162,9 @@ service cloud.firestore {
     // grupo que já mexe no pipeline dos candidatos.
     match /vagas/{id} {
       allow read: if true;
-      allow write: if request.auth != null &&
-                     exists(/databases/$(database)/documents/usuarios/$(request.auth.uid)) &&
-                     get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.perfil in ['admin', 'gerencia', 'avaliador', 'coordenador'];
+      allow create: if request.auth != null && isGerenciaCandidatos() &&
+                     (request.resource.data.filial == minhaFilial() || minhaFilial() == null);
+      allow update, delete: if request.auth != null && isGerenciaCandidatos() && mesmaFilialOuSemFilial(resource.data);
     }
 
     // violacoes/{id}: evento de anti-fraude reportado durante o teste. Não é
@@ -145,8 +175,8 @@ service cloud.firestore {
     // perfil aprovado lê.
     match /violacoes/{id} {
       allow create: if false;
-      allow update, delete: if request.auth != null && isGerencia();
-      allow read: if request.auth != null && isLeitor();
+      allow update, delete: if request.auth != null && isGerencia() && mesmaFilialOuSemFilial(resource.data);
+      allow read: if request.auth != null && isLeitor() && mesmaFilialOuSemFilial(resource.data);
     }
 
     // pipeline/{chave}: etapa do processo seletivo de cada candidato
@@ -159,10 +189,10 @@ service cloud.firestore {
     // Contratados continuam escondidos dele no client). Escrita continua
     // restrita a quem gerencia/aprova: admin/gerência/avaliador/coordenador.
     match /pipeline/{chave} {
-      allow read: if request.auth != null && isLeitor();
-      allow write: if request.auth != null &&
-                     exists(/databases/$(database)/documents/usuarios/$(request.auth.uid)) &&
-                     get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.perfil in ['admin', 'gerencia', 'avaliador', 'coordenador'];
+      allow read: if request.auth != null && isLeitor() && mesmaFilialOuSemFilial(resource.data);
+      allow write: if request.auth != null && isGerenciaCandidatos() &&
+                     (resource == null || mesmaFilialOuSemFilial(resource.data)) &&
+                     (request.resource.data.filial == null || request.resource.data.filial == minhaFilial() || isAdmin());
 
       // pipeline/{chave}/historico/{id}: trilha de auditoria — uma entrada
       // por mudança de etapa (quem mudou, quando, pra qual etapa). NUNCA é
@@ -223,6 +253,23 @@ service cloud.firestore {
     function isLeitor() {
       return exists(/databases/$(database)/documents/usuarios/$(request.auth.uid)) &&
              get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.perfil in ['admin', 'gerencia', 'avaliador', 'viewer', 'coordenador'];
+    }
+
+    // Filial de quem está logado (null se não tiver — admin ou conta de
+    // antes desta funcionalidade existir).
+    function minhaFilial() {
+      return exists(/databases/$(database)/documents/usuarios/$(request.auth.uid))
+        ? get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.filial
+        : null;
+    }
+
+    // Um documento é visível/editável por quem está logado quando: é Admin,
+    // OU o documento não tem filial definida (dado de antes desta
+    // funcionalidade existir, ou de código/vaga sem filial — fica visível
+    // pra todo mundo, nunca "some"), OU a filial bate com a de quem está
+    // logado.
+    function mesmaFilialOuSemFilial(dadosDoDoc) {
+      return isAdmin() || !('filial' in dadosDoDoc) || dadosDoDoc.filial == null || dadosDoDoc.filial == minhaFilial();
     }
   }
 }

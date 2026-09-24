@@ -1932,7 +1932,7 @@
   import { requireDashboardAccess, virtusLogout } from "./js/auth.js";
   import {
     assinarResultados, assinarViolacoes, excluirResultado,
-    assinarPendentes, assinarUsuarios, aprovarUsuario, removerUsuario,
+    assinarPendentes, assinarUsuarios, aprovarUsuario, removerUsuario, assinarFiliais, aprovarSolicitacaoGerente,
     assinarModulos, definirModuloAtivo,
     gerarCodigoAcesso, assinarCodigosAcesso, cancelarCodigoAcesso, excluirCodigoAcesso, VALIDADE_CODIGO_MS,
     definirNumeroWhatsapp, assinarNumeroWhatsapp,
@@ -2042,9 +2042,30 @@
     } else {
       nomeEl.textContent = me.usuario;
     }
-    document.getElementById('authUserPerfil').textContent = me.perfil;
+    document.getElementById('authUserPerfil').textContent = me.perfil + (me.filial_nome ? ' · ' + me.filial_nome : '');
   }
   document.getElementById('btnLogout').onclick = async () => { await virtusLogout(); window.location.replace('./index.html'); };
+
+  // ── Isolamento por filial ────────────────────────────────────────────
+  // Admin continua vendo o sistema inteiro. Gerência/Avaliador/Coordenador/
+  // Operador só enxergam a própria filial — mas um registro SEM filial
+  // definida (candidato/código/vaga/usuário de antes desta funcionalidade
+  // existir, ou de quem não tinha filial na hora) continua visível pra
+  // todo mundo, pra não sumir dado nenhum de uma hora pra outra.
+  function mesmaFilial(filialDoRegistro) {
+    if (me && me.perfil === 'admin') return true;
+    if (!filialDoRegistro) return true;
+    if (!me || !me.filial) return true;
+    return filialDoRegistro === me.filial;
+  }
+  // Filial do candidato, a partir das próprias tentativas dele (que já
+  // vêm com a filial do código de acesso usado — ver worker/virtus-api.js).
+  // Usado pra "carimbar" a filial no doc do pipeline na primeira decisão
+  // sobre o candidato (aprovar pra entrevista, banco de reserva).
+  function filialDoCandidato(chave) {
+    const r = ALL_RESULTADOS.find(x => chaveDe(x) === chave && x.filial);
+    return r ? { filial: r.filial, filial_nome: r.filial_nome || null } : { filial: null, filial_nome: null };
+  }
 
   // ── Hierarquia de perfis ────────────────────────────────────────────
   // admin/gerência: acesso total, únicos que cadastram gente (Usuários) e
@@ -4698,7 +4719,8 @@
       if (!ok) return;
     }
     try {
-      await definirAprovacaoManual(chave, aprovado, nome, me.usuario, me.perfil);
+      const fFil = filialDoCandidato(chave);
+      await definirAprovacaoManual(chave, aprovado, nome, me.usuario, me.perfil, fFil.filial, fFil.filial_nome);
       toast(aprovado ? '✅ Marcado para entrevista' : '↩ Desmarcado', 'ok');
     } catch (e) {
       console.error(e);
@@ -4723,7 +4745,7 @@
     }
     if (valor) { window.abrirAvaliacaoBanco(chave, nome); return; }
     try {
-      await definirBancoReserva(chave, false, nome, me.usuario, me.perfil);
+      await definirBancoReserva(chave, false, nome, me.usuario, me.perfil, null, filialDoCandidato(chave).filial, filialDoCandidato(chave).filial_nome);
       toast('↩ Removido do banco de reserva', 'ok');
     } catch (e) {
       console.error(e);
@@ -4761,12 +4783,13 @@
     if (faltaAvaliarCriterio(BANCO_AVAL_NOTAS)) { toast('❌ Avalie todos os critérios antes de confirmar', 'err'); return; }
 
     try {
+      const fFilBanco = filialDoCandidato(BANCO_AVAL_CHAVE_ATUAL);
       await definirBancoReserva(BANCO_AVAL_CHAVE_ATUAL, true, BANCO_AVAL_NOME_ATUAL, me.usuario, me.perfil, {
         criterios: { ...BANCO_AVAL_NOTAS },
         media: mediaNotas(BANCO_AVAL_NOTAS),
         motivo,
         observacoes: document.getElementById('bancoAvalObservacoes').value.trim()
-      });
+      }, fFilBanco.filial, fFilBanco.filial_nome);
       toast('🏦 Adicionado ao banco de reserva', 'ok');
       fecharAvaliacaoBanco();
     } catch (e) {
@@ -5343,22 +5366,30 @@
   // própria pessoa no cadastro.html) — só ele pode criar um novo Gerente.
   // Gerência vê/aprova todo o resto (Avaliador/Operador/Coordenador), sem
   // nunca poder promover ninguém a Gerente.
+  let PENDENTES_LOOKUP = {};
   function renderPendentes(lista) {
     const souAdmin = me && me.perfil === 'admin';
-    const filtrada = lista.filter(p => souAdmin ? p.solicita_gerente === true : !p.solicita_gerente);
+    // Admin só vê pedidos de FILIAL NOVA (solicita_gerente). Gerência só vê
+    // pedidos da PRÓPRIA filial (ou sem filial nenhuma escolhida no
+    // cadastro — esses ficam visíveis pra qualquer Gerência, e a primeira
+    // que aprovar "adota" a pessoa pra dentro da própria filial).
+    const filtrada = souAdmin
+      ? lista.filter(p => p.solicita_gerente === true)
+      : lista.filter(p => !p.solicita_gerente && mesmaFilial(p.filial));
+    PENDENTES_LOOKUP = {}; filtrada.forEach(p => { PENDENTES_LOOKUP[p.uid] = p; });
 
     document.getElementById('pendBadge').textContent = filtrada.length;
     document.getElementById('pendPanelTituloTxt').textContent = souAdmin
-      ? '🎖️ Solicitações de Gerente'
+      ? '🎖️ Solicitações de Filial Nova'
       : '🔑 Solicitações de Acesso Pendentes';
     document.getElementById('pendPanelAviso').innerHTML = souAdmin
-      ? `Só aparecem aqui os cadastros que marcaram <strong>"quero ser Gerente"</strong> — os demais (Avaliador/Operador/Coordenador) vão direto pra fila da Gerência aprovar.`
-      : `Quem se cadastra em <strong>cadastro.html</strong> entra nesta fila sem nenhum acesso. <strong>Avaliador</strong>: Dashboard completo e decide sobre candidatos. <strong>Operador</strong>: só QR Codes, Código de Acesso, Violações e lista de participantes. <strong>Coordenador</strong>: mesmo acesso do Avaliador. Pedidos de <strong>Gerente</strong> vão direto pro Admin aprovar, não aparecem aqui.`;
+      ? `Só aparecem aqui os cadastros que marcaram <strong>"quero criar uma filial nova"</strong> — os demais vão direto pra fila da Gerência da filial escolhida aprovar.`
+      : `Quem se cadastra em <strong>cadastro.html</strong> entra nesta fila sem nenhum acesso. <strong>Avaliador</strong>: Dashboard completo e decide sobre candidatos. <strong>Operador</strong>: só QR Codes, Código de Acesso, Violações e lista de participantes. <strong>Coordenador</strong>: mesmo acesso do Avaliador. <strong>+ Gerente</strong>: outro Gerente pra sua mesma filial. Pedidos de <strong>filial nova</strong> vão direto pro Admin aprovar, não aparecem aqui.`;
 
     const tbody = document.getElementById('pendTableBody');
     ligarAcoesDelegadas('pendTableBody');
     if (!filtrada.length) {
-      tbody.innerHTML = `<tr><td colspan="4"><div class="empty-state"><div class="empty-icon">🔑</div>${souAdmin ? 'Nenhuma solicitação de Gerente pendente' : 'Nenhuma solicitação pendente'}</div></td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="4"><div class="empty-state"><div class="empty-icon">🔑</div>${souAdmin ? 'Nenhuma solicitação de filial nova pendente' : 'Nenhuma solicitação pendente'}</div></td></tr>`;
       return;
     }
     tbody.innerHTML = filtrada.map(p => {
@@ -5367,10 +5398,11 @@
         ? `<button class="btn-act btn-approve-admin" data-acao="aprovarUsuario" data-perfil="gerencia" ${dadosUser}>Gerência</button>`
         : `<button class="btn-act btn-approve-viewer" data-acao="aprovarUsuario" data-perfil="avaliador" ${dadosUser}>Avaliador</button>
            <button class="btn-act btn-neutral" data-acao="aprovarUsuario" data-perfil="viewer" ${dadosUser}>Operador</button>
-           <button class="btn-act btn-neutral" data-acao="aprovarUsuario" data-perfil="coordenador" ${dadosUser}>Coordenador</button>`;
+           <button class="btn-act btn-neutral" data-acao="aprovarUsuario" data-perfil="coordenador" ${dadosUser}>Coordenador</button>
+           <button class="btn-act btn-neutral" data-acao="aprovarUsuario" data-perfil="gerencia" ${dadosUser}>+ Gerente</button>`;
       return `
       <tr>
-        <td class="td-nome">${escapeHtml(p.nome || '—')}</td>
+        <td class="td-nome">${escapeHtml(p.nome || '—')}${souAdmin && p.filial_pretendida ? `<div style="font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--amber);margin-top:2px;">🏢 ${escapeHtml(p.filial_pretendida)}</div>` : ''}</td>
         <td><span class="email-hover" data-email="${escapeHtml(p.email || '—')}">•••••</span></td>
         <td>
           <div style="display:flex;gap:6px;flex-wrap:wrap;">
@@ -5392,7 +5424,7 @@
   // ── Avaliadores já com acesso ─────────────────────────────────────────
   function renderUsuarios(todos) {
     const PERFIS = ['admin', 'gerencia', 'avaliador', 'viewer', 'coordenador'];
-    const ativos = todos.filter(u => PERFIS.includes(u.perfil));
+    const ativos = todos.filter(u => PERFIS.includes(u.perfil) && mesmaFilial(u.filial));
     document.getElementById('ativosBadge').textContent = ativos.length;
     const tbody = document.getElementById('usersTableBody');
     ligarAcoesDelegadas('usersTableBody');
@@ -5413,7 +5445,7 @@
         <tr>
           <td class="td-nome">${escapeHtml(u.nome || '—')}${souEu ? ' <span style="color:var(--text3);font-size:11px;">(você)</span>' : ''}</td>
           <td><span class="email-hover" data-email="${escapeHtml(u.email || '—')}">•••••</span></td>
-          <td><span class="perfil-chip perfil-${u.perfil}">${LABEL_PERFIL[u.perfil] || u.perfil}</span></td>
+          <td><span class="perfil-chip perfil-${u.perfil}">${LABEL_PERFIL[u.perfil] || u.perfil}</span>${souAdminUsuarios && u.filial_nome ? `<div style="font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--text3);margin-top:2px;">🏢 ${escapeHtml(u.filial_nome)}</div>` : ''}</td>
           <td>
             ${semAcoes
               ? '<span style="color:var(--text4);font-size:11px;font-family:\'Share Tech Mono\',monospace;">—</span>'
@@ -5424,8 +5456,20 @@
   }
 
   window.aprovar = async function (uid, perfil) {
-    try { await aprovarUsuario(uid, perfil); toast(`✅ Aprovado como ${LABEL_PERFIL[perfil] || perfil}`, 'ok'); }
-    catch (e) { console.error(e); toast('❌ Falha: ' + e.message, 'err'); }
+    try {
+      const p = PENDENTES_LOOKUP[uid];
+      if (p && p.solicita_gerente) {
+        const nomeFilial = p.filial_pretendida || p.nome || 'Filial sem nome';
+        await aprovarSolicitacaoGerente(uid, nomeFilial, me.usuario);
+        toast(`✅ Filial "${nomeFilial}" criada e Gerência aprovada`, 'ok');
+        return;
+      }
+      // Gerência aprovando alguém pra dentro da PRÓPRIA filial (inclusive
+      // "+ Gerente" — outro gerente pra mesma filial). Admin aprovando um
+      // pedido órfão (sem filial escolhida) continua sem filial nenhuma.
+      await aprovarUsuario(uid, perfil, me.filial, me.filial_nome);
+      toast(`✅ Aprovado como ${LABEL_PERFIL[perfil] || perfil}`, 'ok');
+    } catch (e) { console.error(e); toast('❌ Falha: ' + e.message, 'err'); }
   };
   window.alterarPerfil = async function (uid, perfil) {
     try { await aprovarUsuario(uid, perfil); toast(`✅ Perfil alterado para ${LABEL_PERFIL[perfil] || perfil}`, 'ok'); }
@@ -5608,7 +5652,7 @@
     const qtd = Number(document.getElementById('vagaQtdInput').value) || 1;
     if (!cargo) { toast('❌ Selecione o cargo', 'err'); return; }
     try {
-      await criarVaga(cargo, local, qtd, me.usuario);
+      await criarVaga(cargo, local, qtd, me.usuario, me.filial, me.filial_nome);
       document.getElementById('vagaLocalInput').value = '';
       document.getElementById('vagaQtdInput').value = '1';
       toast(`✅ Vaga de "${cargo}" criada`, 'ok');
@@ -5732,7 +5776,7 @@
     const btn = document.getElementById('btnGerarCodigo');
     btn.disabled = true;
     try {
-      const codigo = await gerarCodigoAcesso(me.usuario);
+      const codigo = await gerarCodigoAcesso(me.usuario, me.filial, me.filial_nome);
       document.getElementById('codigoValorGrande').textContent = codigo;
       document.getElementById('codigoValidadeTxt').textContent = 'válido por 4 horas · compartilhe com todos os candidatos';
       document.getElementById('codigoGerado').style.display = 'flex';
@@ -5992,7 +6036,7 @@
     try {
       unsubs.push(assinarResultados(
         (lista) => {
-          ALL_RESULTADOS = lista;
+          ALL_RESULTADOS = lista.filter(r => mesmaFilial(r.filial));
           try { renderAll(); } catch (e) { console.error('Erro ao renderizar:', e); toast('❌ Erro ao renderizar: ' + e.message, 'err'); }
           statusDot(true, 'Sistema online');
           document.getElementById('loadingOverlay').classList.add('hide');
@@ -6003,7 +6047,7 @@
         }
       ));
       unsubs.push(assinarViolacoes(
-        (lista) => { ALL_VIOLACOES = lista; renderViolacoes(); },
+        (lista) => { ALL_VIOLACOES = lista.filter(v => mesmaFilial(v.filial)); renderViolacoes(); },
         () => statusDot(false, 'Conexão perdida — reconectando...')
       ));
       // Usuários e Perguntas: só admin/gerência (únicos que cadastram gente
@@ -6017,7 +6061,7 @@
       // quem nunca vê a aba Código de Acesso) assina — coordenador tem o
       // mesmo acesso que avaliador, então também precisa desses dados.
       unsubs.push(assinarCodigosAcesso(
-        lista => { renderCodigos(lista); },
+        lista => { renderCodigos(lista.filter(c => mesmaFilial(c.filial))); },
         () => statusDot(false, 'Reconectando...')
       ));
       unsubs.push(assinarNumeroWhatsapp(
@@ -6034,7 +6078,11 @@
       // essas telas ficavam com dado desatualizado até a próxima atualização
       // de resultados (podendo demorar horas, ou nunca acontecer na sessão).
       unsubs.push(assinarPipeline(
-        mapa => { PIPELINE_MAP = mapa; renderAll(); },
+        mapa => {
+          PIPELINE_MAP = {};
+          for (const [id, dados] of Object.entries(mapa)) if (mesmaFilial(dados.filial)) PIPELINE_MAP[id] = dados;
+          renderAll();
+        },
         () => statusDot(false, 'Reconectando...')
       ));
       // Pesos do Score Virtus: sem onSnapshot (não muda com frequência) —
@@ -6044,7 +6092,7 @@
       // leitura pública que o próprio candidato usa na ficha, não precisa
       // assinar aqui.
       if (me.perfil !== 'viewer') {
-        unsubs.push(assinarVagas(lista => { ALL_VAGAS = lista; renderVagas(); }, () => statusDot(false, 'Reconectando...')));
+        unsubs.push(assinarVagas(lista => { ALL_VAGAS = lista.filter(v => mesmaFilial(v.filial)); renderVagas(); }, () => statusDot(false, 'Reconectando...')));
       }
     } catch (e) {
       console.error(e);

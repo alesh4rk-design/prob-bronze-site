@@ -24,6 +24,64 @@ function diasAtras(n) { return new Date(Date.now() - n * 86400000).toISOString()
 export const tests = [
 
   {
+    name: 'Filiais: Gerência de uma filial não vê candidatos, código de acesso nem usuários de outra filial',
+    async run({ browser, baseUrl }) {
+      const resultados = [
+        { id: '1', tipo: 'quiz', nome: 'Candidato Filial A', modulo: 'Atendimento', pct: 80, acertos: 8, total: 10, data_conclusao: hoje(), filial: 'filial-a', filial_nome: 'Unidade A' },
+        { id: '2', tipo: 'quiz', nome: 'Candidato Filial B', modulo: 'Atendimento', pct: 75, acertos: 7, total: 10, data_conclusao: hoje(), filial: 'filial-b', filial_nome: 'Unidade B' },
+        { id: '3', tipo: 'quiz', nome: 'Candidato Sem Filial', modulo: 'Atendimento', pct: 60, acertos: 6, total: 10, data_conclusao: hoje() }
+      ];
+      const usuarios = [
+        { uid: 'gA', nome: 'Gerente A', email: 'a@x.com', perfil: 'gerencia', filial: 'filial-a', filial_nome: 'Unidade A' },
+        { uid: 'gB', nome: 'Gerente B', email: 'b@x.com', perfil: 'gerencia', filial: 'filial-b', filial_nome: 'Unidade B' }
+      ];
+      const codigosAcesso = [
+        { codigo: '111111', ativo: true, criado_por: 'Gerente A', filial: 'filial-a', filial_nome: 'Unidade A' },
+        { codigo: '222222', ativo: true, criado_por: 'Gerente B', filial: 'filial-b', filial_nome: 'Unidade B' }
+      ];
+
+      // Gerência A: só vê o candidato/código/usuário da própria filial +
+      // o candidato sem filial nenhuma (dado antigo, continua visível).
+      const { page: pageA, erros: errosA } = await abrirDashboard(browser, baseUrl, {
+        perfil: 'gerencia', usuario: 'Gerente A', filial: 'filial-a', filialNome: 'Unidade A',
+        resultados, usuarios, codigosAcesso
+      });
+      await pageA.evaluate(() => switchView('pipeline'));
+      await pageA.waitForTimeout(300);
+      const nomesA = await pageA.evaluate(() => [...document.querySelectorAll('#pipelineTableBody .td-nome')].map(td => td.textContent.trim()).join(' | '));
+      assert(nomesA.includes('Candidato Filial A'), `Gerente A deveria ver o candidato da própria filial. Lista: ${nomesA}`);
+      assert(nomesA.includes('Candidato Sem Filial'), `Gerente A deveria ver o candidato sem filial (dado antigo). Lista: ${nomesA}`);
+      assert(!nomesA.includes('Candidato Filial B'), `Gerente A NÃO deveria ver o candidato da Filial B. Lista: ${nomesA}`);
+
+      await pageA.evaluate(() => switchView('codigos'));
+      await pageA.waitForTimeout(300);
+      const codigosTelaA = await pageA.evaluate(() => document.body.innerText);
+      assert(codigosTelaA.includes('111111'), 'Gerente A deveria ver o próprio código');
+      assert(!codigosTelaA.includes('222222'), 'Gerente A NÃO deveria ver o código da Filial B');
+
+      await pageA.evaluate(() => switchView('usuarios'));
+      await pageA.waitForTimeout(300);
+      const usersTelaA = await pageA.evaluate(() => document.getElementById('usersTableBody').innerText);
+      assert(usersTelaA.includes('Gerente A'), 'Gerente A deveria se ver na lista de usuários');
+      assert(!usersTelaA.includes('Gerente B'), 'Gerente A NÃO deveria ver o Gerente B (outra filial)');
+
+      assertEqual(errosA.length, 0, 'erros de JS (Gerente A): ' + errosA.join(' | '));
+      await pageA.close();
+
+      // Admin: vê todo mundo, das duas filiais.
+      const { page: pageAdmin, erros: errosAdmin } = await abrirDashboard(browser, baseUrl, { perfil: 'admin', resultados, usuarios, codigosAcesso });
+      await pageAdmin.evaluate(() => switchView('pipeline'));
+      await pageAdmin.waitForTimeout(300);
+      const nomesAdmin = await pageAdmin.evaluate(() => [...document.querySelectorAll('#pipelineTableBody .td-nome')].map(td => td.textContent.trim()).join(' | '));
+      assert(nomesAdmin.includes('Candidato Filial A') && nomesAdmin.includes('Candidato Filial B'), `Admin deveria ver candidatos das duas filiais. Lista: ${nomesAdmin}`);
+
+      assertEqual(errosAdmin.length, 0, 'erros de JS (Admin): ' + errosAdmin.join(' | '));
+      await pageAdmin.close();
+    }
+  },
+
+
+  {
     name: 'Dashboard carrega sem erros de JS, para todo perfil',
     async run({ browser, baseUrl }) {
       for (const perfil of ['admin', 'gerencia', 'avaliador', 'coordenador', 'viewer']) {
@@ -740,7 +798,7 @@ export const tests = [
   },
 
   {
-    name: 'Fila de pendentes dividida: Admin só vê pedido de Gerente, Gerência só vê o resto — e gerência não promove ninguém a Gerência',
+    name: 'Fila de pendentes dividida: Admin só vê pedido de filial nova, Gerência só vê o resto da própria filial (e pode promover a +Gerente, mas não a Admin)',
     async run({ browser, baseUrl }) {
       const usuarios = [
         { uid: 'p1', nome: 'Quer Ser Gerente', email: 'g@x.com', perfil: 'pendente', solicita_gerente: true },
@@ -758,7 +816,7 @@ export const tests = [
       assert(textoFilaAdmin.includes('Quer Ser Gerente'), `Admin deveria ver o pedido de Gerente. Fila: ${textoFilaAdmin}`);
       assert(!textoFilaAdmin.includes('Quer Ser Avaliador'), `Admin NÃO deveria ver pedido comum na sua fila. Fila: ${textoFilaAdmin}`);
       const botoesFilaAdmin = await pageAdmin.evaluate(() => [...document.querySelectorAll('#pendTableBody [data-acao="aprovarUsuario"]')].map(b => b.textContent.trim()));
-      assertEqual(botoesFilaAdmin.length, 1, `Admin deveria ter só o botão "Gerência" na fila. Botões: ${botoesFilaAdmin}`);
+      assertEqual(botoesFilaAdmin.length, 1, `Admin deveria ter só o botão "Gerência" na fila (cria a filial nova). Botões: ${botoesFilaAdmin}`);
       assert(botoesFilaAdmin[0] === 'Gerência', `único botão deveria ser "Gerência". Veio: ${botoesFilaAdmin[0]}`);
       await pageAdmin.close();
 
@@ -770,7 +828,11 @@ export const tests = [
       assert(textoFilaGerencia.includes('Quer Ser Avaliador'), `Gerência deveria ver o pedido comum. Fila: ${textoFilaGerencia}`);
       assert(!textoFilaGerencia.includes('Quer Ser Gerente'), `Gerência NÃO deveria ver pedido de Gerente. Fila: ${textoFilaGerencia}`);
       const botoesFilaGerencia = await pageGerencia.evaluate(() => [...document.querySelectorAll('#pendTableBody [data-acao="aprovarUsuario"]')].map(b => b.textContent.trim()));
-      assert(!botoesFilaGerencia.includes('Gerência'), `Gerência não deveria ter botão "Gerência" na fila. Botões: ${botoesFilaGerencia}`);
+      assert(!botoesFilaGerencia.includes('Gerência'), `Gerência não deveria ter o botão "Gerência" (criaria filial) na fila. Botões: ${botoesFilaGerencia}`);
+      // Mas PODE adicionar outro gerente pra própria filial — botão
+      // separado, com rótulo diferente ("+ Gerente"), não confundível com
+      // o de criar filial nova.
+      assert(botoesFilaGerencia.includes('+ Gerente'), `Gerência deveria poder aprovar "+ Gerente" (mesma filial). Botões: ${botoesFilaGerencia}`);
 
       // Gerência não tem botão "Ações" nas contas de admin nem de outro
       // gerente — não pode rebaixar nem apagar quem está acima/ao lado dela.

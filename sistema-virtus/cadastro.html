@@ -182,9 +182,22 @@
       <p class="hint">Depois de criar a conta, alguém precisa aprovar seu acesso antes que você consiga entrar no dashboard.</p>
     </div>
 
+    <div class="field" id="campoFilial">
+      <label for="inp_filial">Filial</label>
+      <select class="field-input" id="inp_filial">
+        <option value="">— Sem filial definida (Admin decide) —</option>
+      </select>
+      <p class="hint">Escolha a filial em que você vai trabalhar. Quem aprovar seu cadastro só verá candidatos e vagas dessa filial.</p>
+    </div>
+
     <div class="field" style="display:flex;align-items:flex-start;gap:8px;">
       <input type="checkbox" id="inp_solicita_gerente" style="width:auto;margin-top:3px;">
-      <label for="inp_solicita_gerente" style="margin:0;font-weight:400;">Este cadastro é para uma conta <strong>Gerente</strong>? (vai direto pra fila do Admin aprovar)</label>
+      <label for="inp_solicita_gerente" style="margin:0;font-weight:400;">Quero criar uma <strong>filial nova</strong> e ser o Gerente dela? (vai direto pra fila do Admin aprovar)</label>
+    </div>
+
+    <div class="field" id="campoFilialNova" style="display:none;">
+      <label for="inp_filial_nova">Nome da filial nova</label>
+      <input type="text" id="inp_filial_nova" placeholder="ex: Virtus — Unidade Guaratiba">
     </div>
 
     <button class="btn-login" id="btn_cadastrar" type="submit">
@@ -202,8 +215,31 @@
 
 <script type="module">
   import { virtusCadastrar } from "./js/auth.js";
+  import { db } from "./js/firebase-config.js";
+  import { collection, getDocs } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
 
   const $ = id => document.getElementById(id);
+
+  // Lista de filiais já existentes, pra escolher qual acessar. Leitura
+  // pública (só nome, nada sensível) — ver firestore.rules (filiais/{id}).
+  (async () => {
+    try {
+      const snap = await getDocs(collection(db, "filiais"));
+      const sel = $('inp_filial');
+      snap.forEach(d => {
+        const op = document.createElement('option');
+        op.value = d.id;
+        op.textContent = (d.data() || {}).nome || d.id;
+        sel.appendChild(op);
+      });
+    } catch (e) { console.error('Falha ao carregar filiais:', e); }
+  })();
+
+  $('inp_solicita_gerente').onchange = () => {
+    const criandoFilial = $('inp_solicita_gerente').checked;
+    $('campoFilialNova').style.display = criandoFilial ? 'block' : 'none';
+    $('campoFilial').style.display = criandoFilial ? 'none' : 'block';
+  };
 
   $('btn_show').onclick = () => {
     const p1 = $('inp_pass'), p2 = $('inp_pass2');
@@ -249,7 +285,8 @@
     spin.style.display = 'inline-block';
 
     try {
-      await virtusCadastrar(nome, email, senha, $('inp_solicita_gerente').checked);
+      const solicitaGerente = $('inp_solicita_gerente').checked;
+      await virtusCadastrar(nome, email, senha, solicitaGerente, $('inp_filial_nova').value, $('inp_filial').value);
       okEl.textContent = '✅ Conta criada! Aguarde um administrador aprovar seu acesso.';
       okEl.className = 'alert success show';
       $('formCadastro').reset();

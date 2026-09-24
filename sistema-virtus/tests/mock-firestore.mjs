@@ -20,6 +20,8 @@
 export function buildMocks({
   perfil = 'admin',
   usuario = 'teste',
+  filial = null,
+  filialNome = null,
   resultados = [],
   pipeline = {},
   violacoes = [],
@@ -55,7 +57,7 @@ window.__PESOS = ${JSON.stringify(pesosScore)};
 
 export async function getDoc(ref){
   if (ref.__doc && ref.__doc.startsWith('usuarios/')) {
-    return { exists: () => true, data: () => (${JSON.stringify({ perfil, usuario })}) };
+    return { exists: () => true, data: () => (${JSON.stringify({ perfil, usuario, filial, filial_nome: filialNome })}) };
   }
   if (ref.__doc === 'config/whatsapp_rh') {
     ${whatsappNumero

@@ -55,7 +55,10 @@ export async function virtusLogin(usuario, senha) {
     throw new Error("Usuário autenticado mas sem perfil cadastrado em Firestore (usuarios/{uid}). Contate o administrador.");
   }
   const data = perfilDoc.data();
-  return { uid: cred.user.uid, usuario: data.usuario || usuario, perfil: data.perfil };
+  return {
+    uid: cred.user.uid, usuario: data.usuario || usuario, perfil: data.perfil,
+    filial: data.filial || null, filial_nome: data.filial_nome || null, filial_dono: !!data.filial_dono
+  };
 }
 
 export async function virtusLogout() {
@@ -69,19 +72,27 @@ export async function virtusLogout() {
 // só pode criar seu doc `usuarios/{uid}` com perfil == "pendente"; só admin
 // pode mudar isso depois.
 // `solicitaGerente`: marcado pela própria pessoa em cadastro.html quando o
-// cadastro é pra uma conta Gerente — separa a fila de aprovação em duas (ver
-// dashboard.html, renderPendentes): só o Admin vê/aprova pedidos marcados
-// assim, porque só ele pode criar um Gerente novo. Os demais (avaliador,
-// operador, coordenador) caem na fila normal, que a própria Gerência aprova.
-export async function virtusCadastrar(nome, email, senha, solicitaGerente = false) {
+// cadastro é pra uma conta Gerente NOVA (dona de uma filial nova) — separa a
+// fila de aprovação em duas (ver dashboard.html, renderPendentes): só o
+// Admin vê/aprova pedidos marcados assim, porque só ele pode criar uma
+// filial. Os demais (avaliador, operador, coordenador, ou até outro
+// gerente da MESMA filial) caem na fila da Gerência daquela filial.
+// `filialPretendida`: nome digitado pra filial nova (só quando
+// solicitaGerente). `filialExistente`: id da filial escolhida na lista (ver
+// assinarFiliais em js/dashboard.js) — opcional; sem escolher nenhuma, o
+// pedido cai numa fila "sem filial" que só o Admin enxerga e decide.
+export async function virtusCadastrar(nome, email, senha, solicitaGerente = false, filialPretendida = "", filialExistente = "") {
   const cred = await createUserWithEmailAndPassword(auth, email.trim().toLowerCase(), senha);
-  await setDoc(doc(db, "usuarios", cred.user.uid), {
+  const dados = {
     nome: nome.trim(),
     email: email.trim().toLowerCase(),
     perfil: "pendente",
     solicita_gerente: !!solicitaGerente,
     criado_em: serverTimestamp()
-  });
+  };
+  if (solicitaGerente && filialPretendida.trim()) dados.filial_pretendida = filialPretendida.trim().slice(0, 80);
+  if (!solicitaGerente && filialExistente) dados.filial = filialExistente;
+  await setDoc(doc(db, "usuarios", cred.user.uid), dados);
   await signOut(auth); // não deixa a pessoa "logada" num estado pendente
 }
 
@@ -102,7 +113,10 @@ export function virtusGetCurrentUser() {
         // (Firestore rejeita campos undefined). Cai para o e-mail do Auth,
         // ou "avaliador" como último recurso.
         const usuario = data.usuario || data.nome || data.email || user.email || "avaliador";
-        resolve({ uid: user.uid, usuario, perfil: data.perfil });
+        resolve({
+          uid: user.uid, usuario, perfil: data.perfil,
+          filial: data.filial || null, filial_nome: data.filial_nome || null, filial_dono: !!data.filial_dono
+        });
       } catch (e) {
         resolve(null);
       }

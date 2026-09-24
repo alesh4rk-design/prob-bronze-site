@@ -487,6 +487,10 @@ async function handleSubmeterQuiz(request, env, cors) {
     percentual: pct,
     respostas_detalhadas,
     data_conclusao: new Date().toISOString(),
+    // Filial de quem usou o código (ver conferirCodigo) — isola o candidato
+    // no painel da Gerência que gerou o código, ver dashboard.html/js.
+    filial: conf.doc.filial || null,
+    filial_nome: conf.doc.filial_nome || null,
   };
   const created = await firestoreCreate(env, token, "resultados", resultadoDoc);
   const id = created.name.split("/").pop();
@@ -532,6 +536,8 @@ async function handleSubmeterDigitacao(request, env, cors) {
     elapsedSec: numero(r.elapsedSec, 0, 36000),
     data_conclusao: agora.toISOString(),
     hora_recebimento: texto(r.horaLocal, 8) || agora.toISOString().slice(11, 19),
+    filial: conf.doc.filial || null,
+    filial_nome: conf.doc.filial_nome || null,
   };
   const created = await firestoreCreate(env, token, "resultados", resultadoDoc);
   return json({ ok: true, id: created.name.split("/").pop() }, cors);
@@ -608,6 +614,8 @@ async function handleRegistrarViolacao(request, env, cors) {
     hora_recebimento: /^\d{2}:\d{2}:\d{2}$/.test(v.horaLocal || "") ? v.horaLocal : agora.toISOString().slice(11, 19),
     data: /^\d{4}-\d{2}-\d{2}$/.test(v.dataLocal || "") ? v.dataLocal : agora.toISOString().slice(0, 10),
     codigoAcesso: conf.codigo,
+    filial: conf.doc.filial || null,
+    filial_nome: conf.doc.filial_nome || null,
   });
   return json({ ok: true }, cors);
 }

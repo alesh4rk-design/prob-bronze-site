@@ -61,9 +61,59 @@ export function assinarPendentes(callback, onError) {
   }, (err) => { console.error("assinarPendentes:", err); if (onError) onError(err); });
 }
 
-// Aprova uma conta pendente, definindo perfil "admin" ou "viewer".
-export async function aprovarUsuario(uid, perfil) {
-  await updateDoc(doc(db, "usuarios", uid), { perfil, aprovado_em: serverTimestamp() });
+// ── Filiais (filiais/{id}) ──────────────────────────────────────────────
+// Uma filial só nasce quando o Admin aprova um pedido de "quero criar uma
+// filial nova" (cadastro.html, campo filial_pretendida). Daí em diante,
+// candidatos, vagas, código de acesso e usuários dessa filial ficam
+// isolados dos de outra — cada Gerência só enxerga a própria (ver
+// dashboard.html, filtros por `me.filial`). O Admin continua vendo tudo.
+export function assinarFiliais(callback, onError) {
+  return onSnapshot(collection(db, "filiais"), (snap) => {
+    const lista = [];
+    snap.forEach((d) => lista.push({ id: d.id, ...d.data() }));
+    lista.sort((a, b) => (a.nome || '').localeCompare(b.nome || ''));
+    callback(lista);
+  }, (err) => { console.error("assinarFiliais:", err); if (onError) onError(err); });
+}
+
+// Nome -> id de documento (slug simples, sem acento/espaço), com um sufixo
+// se já existir uma filial com o mesmo nome.
+function slugFilial(nome) {
+  const base = nome.trim().toLowerCase()
+    .normalize('NFD').replace(/[̀-ͯ]/g, '')
+    .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'filial';
+  return base.slice(0, 60);
+}
+
+// Aprova uma conta pendente, definindo perfil "admin"/"viewer"/etc.
+// `filial`/`filialNome`: quando quem aprova é uma Gerência, deve sempre
+// passar a PRÓPRIA filial — a pessoa aprovada passa a pertencer a ela,
+// mesmo que tenha escolhido outra coisa no cadastro (evita alguém "se
+// candidatar" pra uma filial e a Gerência de outra aprovar por engano).
+export async function aprovarUsuario(uid, perfil, filial, filialNome) {
+  const dados = { perfil, aprovado_em: serverTimestamp() };
+  if (filial) { dados.filial = filial; dados.filial_nome = filialNome || null; }
+  await updateDoc(doc(db, "usuarios", uid), dados);
+}
+
+// Aprova um pedido de FILIAL NOVA (só Admin) — cria o documento em
+// `filiais` e promove a pessoa a Gerência, dona daquela filial.
+export async function aprovarSolicitacaoGerente(uid, nomeFilial, quem) {
+  const nome = (nomeFilial || '').trim().slice(0, 80) || 'Filial sem nome';
+  let slug = slugFilial(nome), tentativa = 0;
+  while (tentativa < 5) {
+    const ref = doc(db, "filiais", slug);
+    const snap = await getDoc(ref);
+    if (!snap.exists()) {
+      await setDoc(ref, { nome, criada_por: uid, criada_por_nome: quem || null, criado_em: serverTimestamp() });
+      break;
+    }
+    tentativa++;
+    slug = slugFilial(nome) + '-' + (tentativa + 1);
+  }
+  await updateDoc(doc(db, "usuarios", uid), {
+    perfil: "gerencia", filial: slug, filial_nome: nome, filial_dono: true, aprovado_em: serverTimestamp()
+  });
 }
 
 // Recusa/remove uma conta pendente (ou revoga acesso de admin/viewer já
@@ -125,14 +175,16 @@ export function assinarVagas(callback, onError) {
   }, (err) => { console.error("assinarVagas:", err); if (onError) onError(err); });
 }
 
-export async function criarVaga(cargo, local, numeroVagas, quem) {
+export async function criarVaga(cargo, local, numeroVagas, quem, filial, filialNome) {
   await addDoc(collection(db, "vagas"), {
     cargo,
     local: local || null,
     numero_vagas: numeroVagas,
     status: "aberta",
     criado_por: quem || null,
-    criado_em: serverTimestamp()
+    criado_em: serverTimestamp(),
+    filial: filial || null,
+    filial_nome: filialNome || null
   });
 }
 
@@ -171,7 +223,7 @@ export async function excluirVaga(id) {
 export const VALIDADE_CODIGO_MS = 4 * 60 * 60 * 1000; // 4 horas
 
 // Gera um código novo de 6 dígitos, válido por 4 horas a partir de agora.
-export async function gerarCodigoAcesso(avaliador) {
+export async function gerarCodigoAcesso(avaliador, filial, filialNome) {
   // Firestore rejeita setDoc/updateDoc com campo undefined — mesma causa do
   // bug de "Falha ao salvar decisão" (conta sem o campo "usuario" salvo).
   const nomeAvaliador = avaliador || null;
@@ -186,7 +238,13 @@ export async function gerarCodigoAcesso(avaliador) {
         usos: 0,
         criado_por: nomeAvaliador,
         criado_em: serverTimestamp(),
-        ultimo_uso_em: null
+        ultimo_uso_em: null,
+        // Quem faz o teste com este código pertence a esta filial (worker
+        // grava isso no resultado — ver worker/virtus-api.js). Sem filial
+        // (avaliador/admin sem filial própria), fica "sem filial" — visível
+        // pra todo mundo, igual era antes desta funcionalidade existir.
+        filial: filial || null,
+        filial_nome: filialNome || null
       });
       return codigo;
     }
@@ -327,7 +385,7 @@ export async function buscarHistorico(chave) {
 
 // Aprovação para entrevista — decisão do avaliador/coordenador/gerência
 // sobre qual candidato será chamado para entrevista.
-export async function definirAprovacaoManual(chave, aprovado, nome, avaliador, perfilAvaliador) {
+export async function definirAprovacaoManual(chave, aprovado, nome, avaliador, perfilAvaliador, filial, filialNome) {
   const id = chave.replace(/[/]/g, "_");
   const etapa = aprovado ? "aguardando_entrevista" : "testes_concluidos";
   const dados = {
@@ -338,6 +396,10 @@ export async function definirAprovacaoManual(chave, aprovado, nome, avaliador, p
     aprovado_em: serverTimestamp(),
     etapa
   };
+  // A filial do candidato vem do código de acesso que ele usou no teste
+  // (ver PIPELINE_MAP em dashboard.html) — gravada aqui na primeira vez que
+  // alguém decide algo sobre ele, pra isolar o pipeline por filial.
+  if (filial) { dados.filial = filial; dados.filial_nome = filialNome || null; }
   if (aprovado) {
     // Reabre o processo: uma decisão final ou uma marcação de banco de
     // reserva de uma rodada anterior não pode continuar valendo.
@@ -364,7 +426,7 @@ export async function definirAprovacaoManual(chave, aprovado, nome, avaliador, p
 // se aplica a resultados vindos do teste (isso já é o Score Virtus) — é a
 // impressão da equipe sobre o candidato, pra decidir rápido quando surgir
 // uma vaga compatível.
-export async function definirBancoReserva(chave, valor, nome, avaliador, perfilAvaliador, avaliacaoBanco) {
+export async function definirBancoReserva(chave, valor, nome, avaliador, perfilAvaliador, avaliacaoBanco, filial, filialNome) {
   const id = chave.replace(/[/]/g, "_");
   const etapa = valor ? "banco_reserva" : "testes_concluidos";
   const dados = {
@@ -375,6 +437,7 @@ export async function definirBancoReserva(chave, valor, nome, avaliador, perfilA
     banco_reserva_em: serverTimestamp(),
     etapa
   };
+  if (filial) { dados.filial = filial; dados.filial_nome = filialNome || null; }
   if (valor) {
     dados.aprovado = deleteField();
     dados.aprovado_por = deleteField();
