@@ -1167,8 +1167,22 @@
     </div>
     <div class="modal-scroll" style="padding:20px;">
       <div class="field-group">
+        <span class="field-label">Possui disponibilidade para escala 5x2?</span>
+        <div class="opt-pills" id="entrevistaEscala5x2">
+          <div class="pill" data-val="sim">✓ Sim</div>
+          <div class="pill" data-val="nao">✕ Não</div>
+        </div>
+      </div>
+      <div class="field-group">
         <span class="field-label">Possui disponibilidade para escala 12x36?</span>
         <div class="opt-pills" id="entrevistaDisponibilidade">
+          <div class="pill" data-val="sim">✓ Sim</div>
+          <div class="pill" data-val="nao">✕ Não</div>
+        </div>
+      </div>
+      <div class="field-group">
+        <span class="field-label">Possui disponibilidade para escala 6x1?</span>
+        <div class="opt-pills" id="entrevistaEscala6x1">
           <div class="pill" data-val="sim">✓ Sim</div>
           <div class="pill" data-val="nao">✕ Não</div>
         </div>
@@ -2607,6 +2621,8 @@
           </div>
           <div class="tent-body">
             <div class="ficha-grid">
+              ${ent.escala_5x2 != null ? `<div class="ficha-item"><div class="ficha-lbl">Escala 5x2</div><div class="ficha-val">${ent.escala_5x2 ? '✓ Sim' : '✕ Não'}</div></div>` : ''}
+              ${ent.escala_6x1 != null ? `<div class="ficha-item"><div class="ficha-lbl">Escala 6x1</div><div class="ficha-val">${ent.escala_6x1 ? '✓ Sim' : '✕ Não'}</div></div>` : ''}
               <div class="ficha-item"><div class="ficha-lbl">Disponibilidade 12x36</div><div class="ficha-val">${ent.disponibilidade_escala ? '✓ Sim' : '✕ Não'}</div></div>
               <div class="ficha-item"><div class="ficha-lbl">Experiência anterior</div><div class="ficha-val">${ent.experiencia_anterior ? '✓ Sim' : '✕ Não'}</div></div>
               ${ent.avaliacao_media != null ? `<div class="ficha-item"><div class="ficha-lbl">Média da avaliação</div><div class="ficha-val" style="color:${corNota(ent.avaliacao_media * 20)};font-weight:700;">${ent.avaliacao_media} / 5</div></div>` : ''}
@@ -4427,7 +4443,7 @@
       <p>Candidatos que foram selecionados na lista para a entrevista.</p>
       <ol>
         <li>Abra a ficha do candidato e clique em <b>🎤 Realizar entrevista</b>.</li>
-        <li>Responda disponibilidade 12x36 e experiência anterior.</li>
+        <li>Responda a disponibilidade para as escalas 5x2, 12x36 e 6x1 e a experiência anterior.</li>
         <li>Dê nota de 0 a 10 nos critérios gerais e nas 5 perguntas de situação do cargo.</li>
         <li>Marque os pontos fortes e os pontos de atenção e escreva as observações.</li>
         <li>Finalize com <b>Aprovar</b>, <b>Reprovar</b> ou <b>Avaliação complementar</b>.</li>
@@ -4575,7 +4591,7 @@
     atualizarMediaEntrevista();
   }
 
-  document.querySelectorAll('#entrevistaDisponibilidade .pill, #entrevistaExperiencia .pill').forEach(p => {
+  document.querySelectorAll('#entrevistaDisponibilidade .pill, #entrevistaEscala5x2 .pill, #entrevistaEscala6x1 .pill, #entrevistaExperiencia .pill').forEach(p => {
     p.onclick = () => {
       p.parentElement.querySelectorAll('.pill').forEach(x => x.classList.remove('sel'));
       p.classList.add('sel');
@@ -4586,7 +4602,7 @@
     ENTREVISTA_CHAVE_ATUAL = chave;
     ENTREVISTA_NOME_ATUAL = nome;
     document.getElementById('entrevistaNomeCandidato').textContent = nome;
-    document.querySelectorAll('#entrevistaDisponibilidade .pill, #entrevistaExperiencia .pill').forEach(p => p.classList.remove('sel'));
+    document.querySelectorAll('#entrevistaDisponibilidade .pill, #entrevistaEscala5x2 .pill, #entrevistaEscala6x1 .pill, #entrevistaExperiencia .pill').forEach(p => p.classList.remove('sel'));
     document.getElementById('entrevistaObservacoes').value = '';
     let modulo = null;
     try {
@@ -4605,6 +4621,9 @@
 
   window.concluirEntrevista = async function (decisao) {
     const pillDisp = document.querySelector('#entrevistaDisponibilidade .pill.sel');
+    const pill5x2 = document.querySelector('#entrevistaEscala5x2 .pill.sel');
+    const pill6x1 = document.querySelector('#entrevistaEscala6x1 .pill.sel');
+    if (!pill5x2 || !pill6x1) { toast('❌ Responda a disponibilidade para as escalas 5x2, 12x36 e 6x1', 'err'); return; }
     const pillExp = document.querySelector('#entrevistaExperiencia .pill.sel');
     if (!pillDisp || !pillExp) { toast('❌ Responda as duas perguntas de sim/não antes de concluir', 'err'); return; }
     if (CRITERIOS_ENTREVISTA.some(c => ENT_CRIT[c.id] == null)) { toast('❌ Dê nota (0 a 10) para todos os critérios gerais', 'err'); return; }
@@ -4614,6 +4633,8 @@
       versao: 2,
       decisao,
       disponibilidadeEscala: pillDisp.dataset.val === 'sim',
+      escala5x2: pill5x2.dataset.val === 'sim',
+      escala6x1: pill6x1.dataset.val === 'sim',
       experienciaAnterior: pillExp.dataset.val === 'sim',
       criterios: { ...ENT_CRIT },
       perguntas: ENT_PERG.map(p => ({ ...p })),

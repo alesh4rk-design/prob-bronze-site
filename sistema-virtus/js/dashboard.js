@@ -456,6 +456,8 @@ export async function registrarEntrevista(chave, dados, nome, quem, perfilQuem) 
     entrevista: {
       decisao: dados.decisao,
       disponibilidade_escala: dados.disponibilidadeEscala,
+      escala_5x2: dados.escala5x2 ?? null,
+      escala_6x1: dados.escala6x1 ?? null,
       experiencia_anterior: dados.experienciaAnterior,
       versao: dados.versao || 1,
       avaliacao: dados.avaliacao || null,

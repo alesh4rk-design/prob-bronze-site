@@ -1457,6 +1457,8 @@ export const tests = [
 
       await page.evaluate(() => {
         document.querySelector('#entrevistaDisponibilidade .pill[data-val="sim"]').click();
+        document.querySelector('#entrevistaEscala5x2 .pill[data-val="sim"]').click();
+        document.querySelector('#entrevistaEscala6x1 .pill[data-val="nao"]').click();
         document.querySelector('#entrevistaExperiencia .pill[data-val="nao"]').click();
         document.querySelectorAll('#entrevistaModal .nota010').forEach(l => l.querySelector('[data-nota="8"]').click());
         document.getElementById('entrevistaObservacoes').value = 'Boa comunicação, um pouco tímido.';
@@ -1467,6 +1469,8 @@ export const tests = [
       const gravado = await page.evaluate(() => window.__PIPE['cpf:40404040404'].entrevista);
       assertEqual(gravado.decisao, 'aprovado', 'decisão da entrevista deveria ser "aprovado"');
       assertEqual(gravado.disponibilidade_escala, true, 'disponibilidade deveria ser true');
+      assertEqual(gravado.escala_5x2, true, 'escala 5x2 deveria ser true');
+      assertEqual(gravado.escala_6x1, false, 'escala 6x1 deveria ser false');
       assertEqual(gravado.experiencia_anterior, false, 'experiência anterior deveria ser false');
       assertEqual(gravado.versao, 2, 'entrevista deveria estar no formato novo');
       assertEqual(gravado.media, 8, 'média deveria ser 8 (todas as notas 8)');
@@ -1499,6 +1503,8 @@ export const tests = [
       await page.waitForTimeout(200);
       await page.evaluate(() => {
         document.querySelector('#entrevistaDisponibilidade .pill[data-val="nao"]').click();
+        document.querySelector('#entrevistaEscala5x2 .pill[data-val="sim"]').click();
+        document.querySelector('#entrevistaEscala6x1 .pill[data-val="nao"]').click();
         document.querySelector('#entrevistaExperiencia .pill[data-val="nao"]').click();
         document.querySelectorAll('#entrevistaModal .nota010').forEach(l => l.querySelector('[data-nota="4"]').click());
       });
@@ -1527,6 +1533,8 @@ export const tests = [
       await page.waitForTimeout(200);
       await page.evaluate(() => {
         document.querySelector('#entrevistaDisponibilidade .pill[data-val="sim"]').click();
+        document.querySelector('#entrevistaEscala5x2 .pill[data-val="sim"]').click();
+        document.querySelector('#entrevistaEscala6x1 .pill[data-val="nao"]').click();
         document.querySelector('#entrevistaExperiencia .pill[data-val="sim"]').click();
         document.querySelectorAll('#entrevistaModal .nota010').forEach(l => l.querySelector('[data-nota="6"]').click());
       });

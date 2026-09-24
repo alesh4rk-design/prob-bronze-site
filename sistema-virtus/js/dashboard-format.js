@@ -371,7 +371,7 @@ export function htmlEntrevistaRelatorio(ent, fmtDataHoraFn) {
         <div style="font-size:11px;color:#5A6880;">Entrevistador: <b style="color:#12141c;">${escapeHtml(ent.por || '—')}</b>${ent.por_perfil ? ' · ' + escapeHtml(ent.por_perfil) : ''} · ${fmtDataHoraFn ? fmtDataHoraFn(ent.em) : ''}</div>
         <div style="font-size:11px;font-weight:700;color:${dec[1]};">${dec[0]}</div>
       </div>
-      <div style="font-size:10px;color:#5A6880;margin-bottom:8px;">Disponibilidade 12x36: <b>${ent.disponibilidade_escala ? 'Sim' : 'Não'}</b> · Experiência anterior: <b>${ent.experiencia_anterior ? 'Sim' : 'Não'}</b></div>
+      <div style="font-size:10px;color:#5A6880;margin-bottom:8px;">Escalas — 5x2: <b>${ent.escala_5x2 == null ? '—' : ent.escala_5x2 ? 'Sim' : 'Não'}</b> · 12x36: <b>${ent.disponibilidade_escala ? 'Sim' : 'Não'}</b> · 6x1: <b>${ent.escala_6x1 == null ? '—' : ent.escala_6x1 ? 'Sim' : 'Não'}</b> · Experiência anterior: <b>${ent.experiencia_anterior ? 'Sim' : 'Não'}</b></div>
       <table style="width:100%;border-collapse:collapse;">
         <tr><td colspan="3" style="padding:4px 8px;font-size:10px;font-weight:700;color:#5A6880;text-transform:uppercase;letter-spacing:1px;">Critérios gerais</td></tr>
         ${criterios}
