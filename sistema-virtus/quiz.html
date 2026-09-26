@@ -1099,6 +1099,10 @@
       if (r.ok) {
         globalCodigoValidado = true;
         globalCodigoAcesso = codigo;
+        // A lista de vagas só é conhecida depois de validar o código — ele
+        // diz de qual filial é (ver worker/virtus-api.js), e o candidato só
+        // deve ver as vagas daquela filial.
+        preencherVagas(r.filial);
         hideCodigoModal();
         playOk();
         if (!globalConsentGiven || !globalLgpdAccepted) showConsentModal();
@@ -1993,8 +1997,8 @@
     document.getElementById('btnIniciar').disabled = semVagas || MODULOS_CARREGADOS === 0;
   }
 
-  async function preencherVagas() {
-    VAGAS_ABERTAS = await listarVagasAbertas();
+  async function preencherVagas(filial) {
+    VAGAS_ABERTAS = await listarVagasAbertas(filial);
     const sel = document.getElementById('inCargo');
     sel.innerHTML = '<option value="">— Selecionar —</option>';
     for (const vaga of VAGAS_ABERTAS) {

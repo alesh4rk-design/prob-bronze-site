@@ -384,7 +384,9 @@ async function handleVerificarCodigo(request, env, cors) {
   );
 
   await env.RATE_LIMIT_KV.delete(rlKey);
-  return json({ ok: true }, cors);
+  // Devolve a filial deste código pro site já filtrar a lista de vagas —
+  // o candidato só deve ver vagas da filial que gerou o código dele.
+  return json({ ok: true, filial: doc.filial || null, filialNome: doc.filial_nome || null }, cors);
 }
 
 // Mesma configuração usada no js/quiz.js do site — precisa ficar igual nos

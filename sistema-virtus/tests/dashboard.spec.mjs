@@ -24,6 +24,59 @@ function diasAtras(n) { return new Date(Date.now() - n * 86400000).toISOString()
 export const tests = [
 
   {
+    name: 'Vagas por filial: candidato só vê as vagas da filial do código de acesso que ele digitou',
+    async run({ browser, baseUrl }) {
+      const page = await browser.newPage();
+      const { APP, AUTH, FS } = buildMocks({
+        vagas: [
+          { id: 'v1', cargo: 'ASG', local: 'Barra', numero_vagas: 2, status: 'aberta', filial: 'filial-a' },
+          { id: 'v2', cargo: 'Recepcionista', local: 'Centro', numero_vagas: 1, status: 'aberta', filial: 'filial-b' },
+          { id: 'v3', cargo: 'Jardineiro', local: 'Sede', numero_vagas: 1, status: 'aberta' }
+        ]
+      });
+      const map = { 'firebase-app.js': APP, 'firebase-auth.js': AUTH, 'firebase-firestore.js': FS };
+      await page.route('**/firebasejs/**', route => {
+        const chave = Object.keys(map).find(k => route.request().url().endsWith(k));
+        return chave ? route.fulfill({ status: 200, contentType: 'application/javascript', body: map[chave] }) : route.abort();
+      });
+      await page.route('**/fonts.googleapis.com/**', r => r.fulfill({ status: 200, contentType: 'text/css', body: '' }));
+      // Simula o Worker: o código "111111" pertence à filial-a.
+      await page.route('**/virtus-api.ale-sh4rk.workers.dev/**', route => {
+        const url = route.request().url();
+        if (url.endsWith('/verificar-codigo')) {
+          return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, filial: 'filial-a', filialNome: 'Unidade A' }) });
+        }
+        if (url.endsWith('/listar-modulos')) {
+          return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ modulos: [{ nome: 'ASG' }], total_perguntas: 15 }) });
+        }
+        return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true }) });
+      });
+      const erros = [];
+      page.on('pageerror', e => erros.push(e.message));
+      await page.goto(`${baseUrl}/quiz.html`, { waitUntil: 'load' });
+      await page.waitForTimeout(1000);
+
+      // O modal do código só abre quando o candidato tenta iniciar, e o
+      // botão "Iniciar" só habilita depois que módulos/vagas carregarem.
+      await page.waitForFunction(() => !document.getElementById('btnIniciar').disabled, { timeout: 5000 });
+      await page.evaluate(() => requestConsentAndStart());
+      await page.waitForTimeout(200);
+      await page.fill('#inCodigoAcesso', '111111');
+      await page.click('#codigoConfirmBtn');
+      await page.waitForTimeout(500);
+
+      const opcoes = await page.evaluate(() => [...document.getElementById('inCargo').options].map(o => o.textContent));
+      assert(opcoes.some(o => o.includes('ASG')), `deveria mostrar a vaga da própria filial (ASG). Opções: ${opcoes.join(' | ')}`);
+      assert(opcoes.some(o => o.includes('Jardineiro')), `deveria mostrar a vaga sem filial definida. Opções: ${opcoes.join(' | ')}`);
+      assert(!opcoes.some(o => o.includes('Recepcionista')), `NÃO deveria mostrar a vaga de outra filial (Recepcionista). Opções: ${opcoes.join(' | ')}`);
+
+      assertEqual(erros.length, 0, 'erros de JS: ' + erros.join(' | '));
+      await page.close();
+    }
+  },
+
+
+  {
     name: 'Filiais: Gerência de uma filial não vê candidatos, código de acesso nem usuários de outra filial',
     async run({ browser, baseUrl }) {
       const resultados = [

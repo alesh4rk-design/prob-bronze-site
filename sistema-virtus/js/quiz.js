@@ -37,13 +37,19 @@ import {
 // cargos (ver CARGO_PRETENDIDO_OPCOES acima). Leitura pública (o candidato
 // nunca tem login), gerenciada pelo dashboard em "vagas/{id}": { cargo,
 // local, numero_vagas, status: 'aberta'|'encerrada' }.
-export async function listarVagasAbertas() {
+// `filial`: id da filial dona do código de acesso que o candidato digitou
+// (ver verificarCodigoAcesso abaixo) — filtra a lista pra só mostrar vagas
+// daquela filial. Vaga sem filial definida (de antes desta funcionalidade
+// existir) continua aparecendo pra todo mundo. Sem filial nenhuma (código
+// de quem não tem filial própria, ex: admin), mostra todas.
+export async function listarVagasAbertas(filial) {
   try {
     const q = query(collection(db, "vagas"), where("status", "==", "aberta"));
     const snap = await getDocs(q);
     const vagas = [];
     snap.forEach((d) => vagas.push({ id: d.id, ...d.data() }));
-    return vagas;
+    if (!filial) return vagas;
+    return vagas.filter(v => !v.filial || v.filial === filial);
   } catch (e) {
     return [];
   }
