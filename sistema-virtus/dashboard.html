@@ -170,10 +170,17 @@
   .page-title-area { margin-bottom:28px; display:flex; align-items:flex-end; justify-content:space-between; flex-wrap:wrap; gap:12px; }
   .page-title { font-family:'Rajdhani',sans-serif; font-size:32px; font-weight:700; letter-spacing:6px; color:var(--text); text-transform:uppercase; line-height:1; }
   .page-title em { color:var(--amber2); font-style:normal; }
-  .tutorial-link { display:inline-block; margin-left:8px; color:var(--amber); cursor:pointer; text-decoration:underline; text-transform:none; letter-spacing:0; font-family:'Inter',sans-serif; }
+  .tutorial-link { display:inline-block; margin-left:0; color:var(--amber); cursor:pointer; text-decoration:underline; text-transform:none; letter-spacing:0; font-family:'Inter',sans-serif; }
   .tutorial-corpo ol, .tutorial-corpo ul { padding-left:20px; margin:6px 0 12px; }
-  .page-subtitle { font-family:'Share Tech Mono',monospace; font-size:11px; letter-spacing:2px; color:var(--text2); text-transform:uppercase; margin-top:4px; font-weight:600; }
+  .page-subtitle { font-family:'Share Tech Mono',monospace; font-size:11px; letter-spacing:2px; color:var(--text2); text-transform:uppercase; margin-top:8px; font-weight:600; }
+  .page-subtitle:empty { display:none; }
+  .page-title-area { align-items:center; }
   .page-actions { display:flex; gap:8px; flex-wrap:wrap; }
+  /* Formulários: rótulo sempre em cima do campo, campo ocupando a largura
+     toda — antes o rótulo ficava ao lado e cada campo saía de um tamanho. */
+  .field-group { display:flex; flex-direction:column; gap:6px; margin-bottom:12px; min-width:0; }
+  .field-label { font-family:'Share Tech Mono',monospace; font-size:10px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text3); font-weight:700; }
+  .field-group > .field-input, .field-group > select, .field-group > textarea { width:100%; box-sizing:border-box; }
 
   .kpi-bar-5 { display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:12px; margin-bottom:24px; }
   @media(max-width:1100px){.kpi-bar-5{grid-template-columns:repeat(3,1fr);}}
@@ -259,7 +266,7 @@
   .mod-bar-track { height:7px; background:var(--ink4); border-radius:2px; overflow:hidden; }
   .mod-bar-fill  { height:100%; border-radius:2px; background:linear-gradient(90deg,var(--amber),var(--amber3)); transition:width 0.8s cubic-bezier(.4,0,.2,1); }
   .funil-wrap { display:flex; flex-direction:column; gap:16px; }
-  .funil-etapa-head { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:5px; font-size:13px; color:var(--text); font-weight:600; }
+  .funil-etapa-head { display:flex; justify-content:space-between; align-items:baseline; flex-wrap:wrap; gap:2px 12px; margin-bottom:5px; font-size:13px; color:var(--text); font-weight:600; }
   .funil-etapa-val { font-family:'Share Tech Mono',monospace; font-size:13px; color:var(--cyan); font-weight:700; }
   .hist-wrap { display:flex; align-items:flex-end; gap:4px; height:80px; }
   .hist-col { flex:1; display:flex; flex-direction:column; align-items:center; gap:4px; height:100%; justify-content:flex-end; }
@@ -318,9 +325,11 @@
     background:linear-gradient(90deg,transparent,var(--amber) 20%,var(--amber3) 50%,var(--amber) 80%,transparent);
   }
   .modal-top {
-    display:flex; align-items:flex-start; gap:16px; padding:22px 24px 16px;
-    border-bottom:1px solid var(--line); flex-wrap:wrap;
+    display:flex; align-items:center; gap:16px; padding:22px 24px 16px;
+    border-bottom:1px solid var(--line); flex-wrap:nowrap;
   }
+  .modal-top > div:not(.modal-avatar) { min-width:0; flex:1 1 auto; }
+  .modal-cand-nome { overflow-wrap:anywhere; }
   .modal-avatar {
     width:52px; height:52px; border-radius:4px; flex-shrink:0;
     background:var(--amberdim); border:1px solid var(--ambermid);
@@ -339,7 +348,7 @@
   .modal-cand-nome { font-family:'Rajdhani',sans-serif; font-size:24px; font-weight:700; letter-spacing:1.5px; color:var(--text); line-height:1.1; }
   .modal-cand-sub { font-family:'Share Tech Mono',monospace; font-size:10px; letter-spacing:1.5px; color:var(--text3); text-transform:uppercase; margin-top:4px; }
   .modal-close {
-    margin-left:auto; background:transparent; border:1px solid var(--line2); color:var(--text3);
+    margin-left:auto; flex-shrink:0; background:transparent; border:1px solid var(--line2); color:var(--text3);
     width:34px; height:34px; border-radius:4px; cursor:pointer; font-size:16px; transition:all .15s;
   }
   .modal-close:hover { border-color:var(--red); color:var(--red); background:var(--reddim); }
@@ -699,6 +708,14 @@
   }
   .pill:hover { border-color:var(--ambermid); color:var(--text); }
   .pill.sel { background:var(--amberdim); border-color:var(--amber); color:var(--amber); }
+  /* Notas 0–10 da entrevista: 11 botões sempre numa linha só */
+  .nota010 { display:grid !important; grid-template-columns:repeat(11,1fr); gap:4px !important; }
+  .nota010 .pill { min-width:0 !important; padding:7px 0 !important; font-size:13px; letter-spacing:0; }
+  /* Destaques: chips do tamanho do texto, quebrando linha */
+  #entrevistaFortes, #entrevistaAtencao { flex-wrap:wrap; gap:6px; margin-top:6px; }
+  #entrevistaFortes .pill, #entrevistaAtencao .pill { flex:0 0 auto; padding:7px 12px; font-size:13px; letter-spacing:.5px; }
+  /* Títulos de seção dentro dos formulários (entrevista, banco de reserva) */
+  .form-sec { font-family:'Rajdhani',sans-serif; font-weight:700; font-size:14px; letter-spacing:2px; text-transform:uppercase; color:var(--amber); margin:20px 0 10px; padding-bottom:6px; border-bottom:1px solid var(--line); }
 
   /* ── QR Codes: prévia na tela ── */
   .qr-preview-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(240px,1fr)); gap:16px; }
@@ -903,7 +920,10 @@
     .modal-actions { flex-direction:column; align-items:stretch; }
     .modal-actions #btnExcluirCandidato { margin-left:0; }
     .modal-scroll { padding:16px; }
-    .modal-top { padding:16px; }
+    .modal-top { padding:16px; gap:12px; }
+    .modal-cand-nome { font-size:20px; }
+    #inWhatsappRH { max-width:none !important; width:100%; }
+    .panel-title-sm { font-size:13px; }
 
 
     /* Tabelas: rolam dentro do próprio wrapper, nunca a página inteira */
@@ -1368,7 +1388,7 @@
           <span class="field-label">Nº de vagas</span>
           <input class="field-input" type="number" id="vagaQtdInput" min="1" value="1">
         </div>
-        <button class="btn-act btn-approve-admin" id="btnCriarVaga" style="height:44px;">➕ Criar vaga</button>
+        <button class="btn-act btn-approve-admin" id="btnCriarVaga" style="height:36px;margin-bottom:12px;">➕ Criar vaga</button>
       </div>
     </div>
   </div>
@@ -1745,7 +1765,7 @@
   </div>
 <div class="panel">
       <div class="panel-head">
-        <div class="panel-title-sm">🔑 Código de Acesso do Candidato <span class="badge green" id="cntCodigosDisp">0</span> ativo(s)</div>
+        <div class="panel-title-sm">🔑 Código de Acesso do Candidato <span class="badge green"><span id="cntCodigosDisp">0</span> ativo(s)</span></div>
       </div>
       <div class="panel-body" style="padding:16px 20px;">
         <div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap;">
@@ -1777,8 +1797,8 @@
         que concluiu a avaliação — abre o WhatsApp dele já com a mensagem pronta pra esse número.
       </div>
       <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
-        <input class="field-input" type="tel" id="inWhatsappRH" placeholder="Ex: 5511999998888 (DDI+DDD+número, só números)" style="max-width:320px;">
-        <button class="btn-act btn-approve-admin" id="btnSalvarWhatsapp">💾 Salvar número</button>
+        <input class="field-input" type="tel" id="inWhatsappRH" placeholder="Ex: 5511999998888 (DDI+DDD+número, só números)" style="flex:1 1 320px;max-width:420px;height:38px;">
+        <button class="btn-act btn-approve-admin" id="btnSalvarWhatsapp" style="height:38px;">💾 Salvar número</button>
         <span id="whatsappSalvoTxt" style="font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--text3);"></span>
       </div>
     </div>
@@ -3684,6 +3704,14 @@
     let angle = -90;
     data.forEach((item, i) => {
       const sliceAngle = (item.value / total) * 360;
+      if (sliceAngle >= 359.99) {
+        const c = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+        c.setAttribute('cx', 100); c.setAttribute('cy', 100); c.setAttribute('r', 70);
+        c.setAttribute('fill', colors[i % colors.length]);
+        svg.appendChild(c);
+        angle += sliceAngle;
+        return;
+      }
       const startAngle = angle * Math.PI / 180;
       const endAngle = (angle + sliceAngle) * Math.PI / 180;
       const x1 = 100 + 70 * Math.cos(startAngle);
