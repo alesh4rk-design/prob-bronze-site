@@ -4100,7 +4100,10 @@
 
       const colunasGerenciar = podeGerenciar ? `
         <td data-acao="ignorar">
-          <button class="btn-act-mini ${aprovadoParaEntrevista || noBancoReserva ? 'ativo' : ''}" data-acao="acoesCandidato" ${dadosCand}>⚙️ Ações</button>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;">
+            <button class="btn-act-mini ${aprovadoParaEntrevista || noBancoReserva ? 'ativo' : ''}" data-acao="acoesCandidato" ${dadosCand}>⚙️ Ações</button>
+            ${!pipelineInfo.decisao_final && !aprovadoParaEntrevista ? `<button class="btn-act-mini" style="color:var(--red);border-color:var(--red);" data-acao="decidirEntrevista" data-decisao="recusado" ${dadosCand} title="Não passou no teste">❌ Reprovado</button>` : ''}
+          </div>
         </td>
         <td class="td-time">${atualizadoEm}</td>` : '';
 
@@ -4415,7 +4418,7 @@
     const atual = etapaWhatsappDe(p);
     WHATSAPP_CAND_MSGS = [
       { etapa: 'etapa1', label: '1️⃣ Etapa 1 · Teste recebido', texto: `Olá, ${nome}! Recebemos seu teste para a vaga de ${cargo}. Obrigado pela participação! Estamos analisando os resultados e, se você avançar para a próxima etapa, entraremos em contato por aqui.` },
-      { etapa: 'etapa2', label: '2️⃣ Etapa 2 · Convite para entrevista', convite: true, texto: '' },
+      { etapa: 'etapa2', label: '2️⃣ Etapa 2 · Passou para a entrevista', texto: `Olá, ${nome}! Temos uma boa notícia: você passou para a fase de entrevista do processo seletivo para a vaga de ${cargo}. Em breve entraremos em contato por aqui para combinar os detalhes.` },
       { etapa: 'etapa3', label: '3️⃣ Etapa 3 · Seguiu para a etapa final', texto: `Olá, ${nome}! Obrigado por participar da entrevista para a vaga de ${cargo}. Seu processo seguiu para a etapa final de avaliação. Assim que tivermos uma definição, entraremos em contato por aqui. 🙂` },
       { etapa: 'contratado', label: '4️⃣ Etapa 4 · Contratado(a)', texto: `Olá, ${nome}! Temos uma ótima notícia: você foi contratado(a) para a vaga de ${cargo}! 🎉 Em breve enviaremos as orientações sobre documentos e início.` },
       { etapa: 'recusado', label: '4️⃣ Etapa 4 · Não selecionado(a)', texto: `Olá, ${nome}! Agradecemos muito sua participação no processo seletivo para a vaga de ${cargo}. Desta vez seguimos com outro perfil, mas seus dados ficam em nosso banco de talentos para futuras oportunidades.` },
@@ -4437,7 +4440,6 @@
       el.value = '';
       el.oninput = () => { if (WHATSAPP_ETAPA_ESCOLHIDA === 'etapa2') document.getElementById('whatsappCandTextarea').value = textoConvite(nome, cargo); };
     });
-    WHATSAPP_CAND_MSGS.find(m => m.convite).cargo = cargo;
     document.getElementById('whatsappCandTextarea').value = '';
     document.getElementById('whatsappConvite').style.display = 'none';
     WHATSAPP_ETAPA_ESCOLHIDA = null;
@@ -4467,9 +4469,6 @@
   window.enviarWhatsappCandidatoDireto = function () {
     const texto = document.getElementById('whatsappCandTextarea').value.trim();
     if (!texto) { toast('Escreva ou escolha uma mensagem antes de enviar', 'err'); return; }
-    if (WHATSAPP_ETAPA_ESCOLHIDA === 'etapa2' && /\[(data|horário|local)\]/.test(texto)) {
-      toast('Preencha data, horário e local do convite', 'err'); return;
-    }
     window.open(`https://wa.me/${WHATSAPP_CAND_TELEFONE}?text=${encodeURIComponent(texto)}`, '_blank');
     // Marca que o aviso da etapa foi enviado (quem e quando).
     if (WHATSAPP_ETAPA_ESCOLHIDA && me && PODE_GERENCIAR_CANDIDATOS.includes(me.perfil)) {
@@ -4781,7 +4780,7 @@
     'view-banco': ['Etapa 2 · Entrevista', `
       <p>Candidatos da Etapa 1 que foram selecionados para a entrevista.</p>
       <ol>
-        <li>Clique em <b>💬 Convite</b>, preencha data, horário e local e envie pelo WhatsApp.</li>
+        <li>Clique em <b>💬 Avisar</b> para contar ao candidato, pelo WhatsApp, que ele passou para a entrevista.</li>
         <li>No dia, clique em <b>🎤 Entrevista</b> e preencha a avaliação (escalas, notas de 0 a 10, destaques e observações).</li>
         <li>Finalize com <b>Aprovar</b>, <b>Reprovar</b> ou <b>Avaliação complementar</b>.</li>
       </ol>
@@ -5328,7 +5327,7 @@
       }
       const botoesAcao = (podeDecidir && !decisaoFinal) ? `
           <button class="btn-act btn-neutral" style="font-size:11px;padding:6px 10px;background:var(--cyandim);color:var(--cyan);border-color:var(--cyanmid);" data-acao="abrirEntrevista" ${dadosCand}>🎤 ${entFeita ? 'Refazer entrevista' : 'Entrevista'}</button>
-          <button class="btn-act btn-neutral" style="font-size:11px;padding:6px 10px;background:#25D366;color:#052e16;border-color:#25D366;" data-acao="whatsappEtapa" ${dadosCand}>💬 Convite</button>
+          <button class="btn-act btn-neutral" style="font-size:11px;padding:6px 10px;background:#25D366;color:#052e16;border-color:#25D366;" data-acao="whatsappEtapa" ${dadosCand}>💬 Avisar</button>
           <button class="btn-act btn-neutral" style="font-size:11px;padding:6px 10px;" data-acao="decidirEntrevista" data-decisao="recusado" ${dadosCand}>❌ Recusado</button>
         ` : '';
 

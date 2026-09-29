@@ -24,6 +24,27 @@ function diasAtras(n) { return new Date(Date.now() - n * 86400000).toISOString()
 export const tests = [
 
   {
+    name: 'Etapa 1: botão Reprovado recusa o candidato e manda pra Etapa 4',
+    async run({ browser, baseUrl }) {
+      const resultados = [{ id: '1', tipo: 'quiz', nome: 'Nao Passou', cpf: '20000000001', modulo: 'CFTV', pct: 30, acertos: 3, total: 10, data_conclusao: hoje() }];
+      const { page, erros } = await abrirDashboard(browser, baseUrl, { perfil: 'admin', resultados });
+      await page.evaluate(() => switchView('pipeline'));
+      await page.waitForTimeout(300);
+      await page.click('#pipelineTableBody [data-decisao="recusado"]');
+      await page.waitForTimeout(200);
+      await page.click('#confirmBtnOk');
+      await page.waitForTimeout(300);
+      const p = await page.evaluate(() => window.__PIPE['cpf:20000000001']);
+      assertEqual(p && p.decisao_final, 'recusado', 'candidato deveria ficar recusado');
+      const temBotao = await page.evaluate(() => !!document.querySelector('#pipelineTableBody [data-decisao="recusado"]'));
+      assert(!temBotao, 'depois de recusado, o botão Reprovado não deveria mais aparecer');
+      assertEqual(erros.length, 0, 'erros de JS: ' + erros.join(' | '));
+      await page.close();
+    }
+  },
+
+
+  {
     name: 'Menu mostra contador piscando em cada etapa com candidatos aguardando ação',
     async run({ browser, baseUrl }) {
       const q = (id, nome, cpf) => ({ id, tipo: 'quiz', nome, cpf, modulo: 'CFTV', pct: 80, acertos: 8, total: 10, data_conclusao: hoje() });
@@ -94,16 +115,11 @@ export const tests = [
       const registrou = await page.evaluate(() => window.__writes.some(w => w.path === 'pipeline/cpf:55566677788' && w.data && w.data.avisos_whatsapp && w.data.avisos_whatsapp.etapa3));
       assert(registrou, 'envio do WhatsApp da Etapa 3 deveria ficar registrado');
 
-      // Convite da Etapa 2: exige data, horário e local.
+      // Etapa 2: mensagem avisa que passou para a entrevista, sem data/hora.
       await page.evaluate(() => abrirWhatsappCandidato('cpf:11122233344', 'Na Etapa Dois'));
       await page.waitForTimeout(200);
-      const conviteVisivel = await page.evaluate(() => document.getElementById('whatsappConvite').style.display);
-      assertEqual(conviteVisivel, 'grid', 'campos do convite deveriam aparecer na Etapa 2');
-      await page.fill('#wppData', '2026-10-05');
-      await page.fill('#wppHora', '09:30');
-      await page.fill('#wppLocal', 'Rua A, 100');
       const txt2 = await page.evaluate(() => document.getElementById('whatsappCandTextarea').value);
-      assert(txt2.includes('05/10/2026') && txt2.includes('09:30') && txt2.includes('Rua A, 100'), `convite deveria ter data, hora e local. Texto: ${txt2}`);
+      assert(txt2.includes('passou para a fase de entrevista'), `mensagem da Etapa 2 deveria avisar a passagem pra entrevista. Texto: ${txt2}`);
 
       assertEqual(erros.length, 0, 'erros de JS: ' + erros.join(' | '));
       await page.close();
