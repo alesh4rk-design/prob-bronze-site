@@ -4039,6 +4039,22 @@
     const podeGerenciar = PODE_GERENCIAR_CANDIDATOS.includes(me.perfil);
 
     let candidatos = candidatosAgrupados();
+    // Quem só fez a digitação (ainda sem quiz) também aparece na Etapa 1 —
+    // antes sumia da lista porque o agrupamento parte das provas do quiz.
+    const jaListados = new Set(candidatos.map(c => c.chave));
+    const soDigitacao = {};
+    for (const t of ALL_RESULTADOS) {
+      if (t.tipo !== 'typing') continue;
+      const ch = chaveDe(t);
+      if (jaListados.has(ch)) continue;
+      const atual = soDigitacao[ch];
+      if (!atual || (t.pct || 0) > (atual.digitacao || 0)) {
+        soDigitacao[ch] = { chave: ch, nome: t.nome || ch, modulos: [], moduloEscolhido: null, media: null,
+          digitacao: t.pct || 0, digitacaoDispositivo: t.dispositivo || 'desktop',
+          ultima: atual && String(atual.ultima) > String(t.data_conclusao) ? atual.ultima : t.data_conclusao };
+      }
+    }
+    candidatos = candidatos.concat(Object.values(soDigitacao));
 
     const buscaEl = document.getElementById('pipelineSearchInput');
     const busca = buscaEl ? buscaEl.value.trim().toLowerCase() : '';
@@ -4091,7 +4107,7 @@
             ${c.digitacao != null ? `<div title="Teste de digitação feito ${c.digitacaoDispositivo === 'mobile' ? 'pelo CELULAR' : 'no COMPUTADOR'}">${c.digitacaoDispositivo === 'mobile' ? '📱' : '💻'} Digitação: <b style="color:${c.digitacao >= 70 ? 'var(--green)' : c.digitacao >= 50 ? 'var(--amber)' : 'var(--red)'}">${c.digitacao}%</b></div>` : ''}
           </div>
         </td>
-        <td><span class="td-pct" style="color:${c.media >= 70 ? 'var(--green)' : c.media >= 50 ? 'var(--amber)' : 'var(--red)'}">${c.media >= 70 ? '✅' : '❌'} ${c.media}%</span></td>
+        <td>${c.media == null ? '<span style="color:var(--text4);font-size:12px;">— sem quiz</span>' : `<span class="td-pct" style="color:${c.media >= 70 ? 'var(--green)' : c.media >= 50 ? 'var(--amber)' : 'var(--red)'}">${c.media >= 70 ? '✅' : '❌'} ${c.media}%</span>`}</td>
         <td><span style="font-size:12px;font-weight:700;color:${etapaCand.cor};white-space:nowrap;">${etapaCand.icone} ${etapaCand.txt}</span>${avisoWhatsappHTML(pipelineInfo, etapaWhatsappDe(pipelineInfo))}</td>
         ${colunasGerenciar}
       </tr>`;

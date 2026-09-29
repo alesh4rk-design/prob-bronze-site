@@ -24,6 +24,21 @@ function diasAtras(n) { return new Date(Date.now() - n * 86400000).toISOString()
 export const tests = [
 
   {
+    name: 'Etapa 1 mostra também quem só fez a digitação (sem quiz ainda)',
+    async run({ browser, baseUrl }) {
+      const resultados = [{ id: 't1', tipo: 'typing', nome: 'So Digitou', cpf: '99988877766', pct: 72, wpm: 35, dispositivo: 'mobile', data_conclusao: hoje() }];
+      const { page, erros } = await abrirDashboard(browser, baseUrl, { perfil: 'admin', resultados });
+      await page.evaluate(() => switchView('pipeline'));
+      await page.waitForTimeout(300);
+      const lista = await page.evaluate(() => document.getElementById('pipelineTableBody').innerText);
+      assert(lista.includes('So Digitou'), `candidato só com digitação deveria aparecer na Etapa 1. Lista: ${lista}`);
+      assertEqual(erros.length, 0, 'erros de JS: ' + erros.join(' | '));
+      await page.close();
+    }
+  },
+
+
+  {
     name: 'Etapas: aprovado na entrevista sai da Etapa 2 e vai pra Etapa 3; WhatsApp já abre com a mensagem da etapa e registra o envio',
     async run({ browser, baseUrl }) {
       const resultados = [
