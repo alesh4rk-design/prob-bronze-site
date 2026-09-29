@@ -467,6 +467,21 @@ export async function definirBancoReserva(chave, valor, nome, avaliador, perfilA
 // ou recusado. Qualquer um de avaliador/coordenador/gerência/admin pode
 // registrar. Alimenta a aba "Contratados" (histórico de quem decidiu o
 // quê e quando).
+// Aviso enviado ao candidato pelo WhatsApp em cada etapa (etapa1, etapa2,
+// etapa3, contratado, recusado, reserva). O envio em si é feito pela
+// pessoa da equipe (link wa.me); aqui só fica registrado quem avisou e
+// quando, pra não mandar duas vezes nem esquecer ninguém.
+export async function registrarAvisoWhatsapp(chave, etapa, nome, quem, perfilQuem, filial, filialNome) {
+  const id = chave.replace(/[/]/g, "_");
+  const dados = {
+    avisos_whatsapp: { [etapa]: { por: quem || null, por_perfil: perfilQuem || null, em: serverTimestamp() } },
+    nome: nome || null
+  };
+  if (filial) { dados.filial = filial; dados.filial_nome = filialNome || null; }
+  await setDoc(doc(db, "pipeline", id), dados, { merge: true });
+  await registrarHistorico(chave, { etapa: "aviso_whatsapp", nome, por: quem, por_perfil: perfilQuem, motivo: "WhatsApp enviado: " + etapa });
+}
+
 // Foto do colaborador (depois de contratado). Vem já reduzida pelo painel
 // (JPEG ~240px, poucos KB), então cabe direto no documento do pipeline.
 export async function salvarFotoColaborador(chave, dataUrl, quem) {

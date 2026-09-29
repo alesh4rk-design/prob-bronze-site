@@ -24,6 +24,55 @@ function diasAtras(n) { return new Date(Date.now() - n * 86400000).toISOString()
 export const tests = [
 
   {
+    name: 'Etapas: aprovado na entrevista sai da Etapa 2 e vai pra Etapa 3; WhatsApp já abre com a mensagem da etapa e registra o envio',
+    async run({ browser, baseUrl }) {
+      const resultados = [
+        { id: '1', tipo: 'quiz', nome: 'Na Etapa Dois', cpf: '11122233344', modulo: 'CFTV', pct: 80, acertos: 8, total: 10, data_conclusao: hoje(), candidato: { telefone: '21999990000', cargo_pretendido: 'CFTV' } },
+        { id: '2', tipo: 'quiz', nome: 'Na Etapa Tres', cpf: '55566677788', modulo: 'CFTV', pct: 85, acertos: 8, total: 10, data_conclusao: hoje(), candidato: { telefone: '21988880000', cargo_pretendido: 'CFTV' } }
+      ];
+      const pipeline = {
+        'cpf:11122233344': { aprovado: true, aprovado_em: hoje(), etapa: 'aguardando_entrevista' },
+        'cpf:55566677788': { aprovado: true, aprovado_em: hoje(), etapa: 'aguardando_entrevista', entrevista: { versao: 2, decisao: 'aprovado', media: 8.5, por: 'Ana' } }
+      };
+      const { page, erros } = await abrirDashboard(browser, baseUrl, { perfil: 'admin', resultados, pipeline });
+      await page.evaluate(() => { window.open = () => {}; switchView('banco'); limparFiltrosBanco(); });
+      await page.waitForTimeout(300);
+      const etapa2 = await page.evaluate(() => document.getElementById('bancoTableBody').innerText);
+      assert(etapa2.includes('Na Etapa Dois') && !etapa2.includes('Na Etapa Tres'), `Etapa 2 deveria ter só quem ainda não passou na entrevista. Conteúdo: ${etapa2}`);
+
+      await page.evaluate(() => switchView('etapa3'));
+      await page.waitForTimeout(300);
+      const etapa3 = await page.evaluate(() => document.getElementById('etapa3TableBody').innerText);
+      assert(etapa3.includes('Na Etapa Tres') && !etapa3.includes('Na Etapa Dois'), `Etapa 3 deveria ter só quem passou na entrevista. Conteúdo: ${etapa3}`);
+
+      // WhatsApp da Etapa 3: já vem com a mensagem neutra (sem "aprovado").
+      await page.evaluate(() => abrirWhatsappCandidato('cpf:55566677788', 'Na Etapa Tres'));
+      await page.waitForTimeout(200);
+      const txt3 = await page.evaluate(() => document.getElementById('whatsappCandTextarea').value);
+      assert(txt3.includes('etapa final') && !/aprovad/i.test(txt3), `mensagem da Etapa 3 deveria ser neutra. Texto: ${txt3}`);
+      await page.evaluate(() => enviarWhatsappCandidatoDireto());
+      await page.waitForTimeout(300);
+      const registrou = await page.evaluate(() => window.__writes.some(w => w.path === 'pipeline/cpf:55566677788' && w.data && w.data.avisos_whatsapp && w.data.avisos_whatsapp.etapa3));
+      assert(registrou, 'envio do WhatsApp da Etapa 3 deveria ficar registrado');
+
+      // Convite da Etapa 2: exige data, horário e local.
+      await page.evaluate(() => abrirWhatsappCandidato('cpf:11122233344', 'Na Etapa Dois'));
+      await page.waitForTimeout(200);
+      const conviteVisivel = await page.evaluate(() => document.getElementById('whatsappConvite').style.display);
+      assertEqual(conviteVisivel, 'grid', 'campos do convite deveriam aparecer na Etapa 2');
+      await page.fill('#wppData', '2026-10-05');
+      await page.fill('#wppHora', '09:30');
+      await page.fill('#wppLocal', 'Rua A, 100');
+      const txt2 = await page.evaluate(() => document.getElementById('whatsappCandTextarea').value);
+      assert(txt2.includes('05/10/2026') && txt2.includes('09:30') && txt2.includes('Rua A, 100'), `convite deveria ter data, hora e local. Texto: ${txt2}`);
+
+      assertEqual(erros.length, 0, 'erros de JS: ' + erros.join(' | '));
+      await page.close();
+    }
+  },
+
+
+  {
     name: 'Entrevista fica fora dos PDFs do candidato e sai só no botão "Resultado da entrevista"',
     async run({ browser, baseUrl }) {
       const resultados = [{ id: '1', tipo: 'quiz', nome: 'Com Entrevista', cpf: '12312312312', modulo: 'CFTV', pct: 80, acertos: 8, total: 10, data_conclusao: hoje() }];

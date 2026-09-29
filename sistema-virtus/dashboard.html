@@ -1008,11 +1008,12 @@
     <div class="sidebar-item" data-view="dashboard" id="sidebarItemDashboard" onclick="switchView('dashboard')"><span class="si-icon">📊</span> Dashboard</div>
     <div class="sidebar-item" data-view="vagas" id="sidebarItemVagas" onclick="switchView('vagas')"><span class="si-icon">📌</span> Vagas</div>
     <div class="sidebar-item" data-view="pendencias" id="sidebarItemPendencias" onclick="switchView('pendencias')"><span class="si-icon">🔔</span> Pendências</div>
-    <div class="sidebar-item active" data-view="pipeline" id="sidebarItemPipeline" onclick="switchView('pipeline')"><span class="si-icon">👥</span> Candidatos</div>
-    <div class="sidebar-item" data-view="ranking" id="sidebarItemRanking" onclick="switchView('ranking')"><span class="si-icon">🏅</span> Ranking</div>
-    <div class="sidebar-item" data-view="banco" id="sidebarItemBanco" onclick="switchView('banco')"><span class="si-icon">🎯</span> Aprovados para Entrevista<span class="sb-badge" id="badgeAptosEntrevista" style="display:none;">0</span></div>
-    <div class="sidebar-item" data-view="contratados" id="sidebarItemContratados" onclick="switchView('contratados')"><span class="si-icon">🏆</span> Contratados</div>
+    <div class="sidebar-item active" data-view="pipeline" id="sidebarItemPipeline" onclick="switchView('pipeline')"><span class="si-icon">1️⃣</span> Etapa 1 · Candidatos</div>
+    <div class="sidebar-item" data-view="banco" id="sidebarItemBanco" onclick="switchView('banco')"><span class="si-icon">2️⃣</span> Etapa 2 · Entrevista<span class="sb-badge" id="badgeAptosEntrevista" style="display:none;">0</span></div>
+    <div class="sidebar-item" data-view="etapa3" id="sidebarItemEtapa3" onclick="switchView('etapa3')"><span class="si-icon">3️⃣</span> Etapa 3 · Aprovados na entrevista<span class="sb-badge" id="badgeEtapa3" style="display:none;">0</span></div>
+    <div class="sidebar-item" data-view="contratados" id="sidebarItemContratados" onclick="switchView('contratados')"><span class="si-icon">4️⃣</span> Etapa 4 · Resultado final</div>
     <div class="sidebar-item" data-view="bancoreserva" id="sidebarItemBancoReserva" onclick="switchView('bancoreserva')"><span class="si-icon">🏦</span> Banco de Reserva</div>
+    <div class="sidebar-item" data-view="ranking" id="sidebarItemRanking" onclick="switchView('ranking')"><span class="si-icon">🏅</span> Ranking</div>
     <div class="sidebar-item" data-view="violacoes" id="sidebarItemViolacoes" onclick="switchView('violacoes')"><span class="si-icon">🚨</span> Violações</div>
     <div class="sidebar-section-lbl" id="sidebarFerramentasLbl">Ferramentas</div>
     <div class="sidebar-item" data-view="testes" id="sidebarItemTestes" onclick="switchView('testes')"><span class="si-icon">⌨️</span> Testes</div>
@@ -1108,6 +1109,11 @@
     <div class="modal-scroll" style="padding:20px;">
       <div style="font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--text3);margin-bottom:12px;">Escolha uma frase pronta (você pode editar antes de enviar):</div>
       <div id="whatsappCandTemplates" style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px;"></div>
+      <div id="whatsappConvite" style="display:none;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;">
+        <div class="field-group" style="margin:0;"><span class="field-label">Data</span><input class="field-input" type="date" id="wppData"></div>
+        <div class="field-group" style="margin:0;"><span class="field-label">Horário</span><input class="field-input" type="time" id="wppHora"></div>
+        <div class="field-group" style="margin:0;grid-column:1 / -1;"><span class="field-label">Local</span><input class="field-input" type="text" id="wppLocal" placeholder="Endereço da entrevista"></div>
+      </div>
       <textarea class="field-input" id="whatsappCandTextarea" rows="4" style="width:100%;resize:vertical;font-family:inherit;line-height:1.5;" placeholder="Ou escreva sua própria mensagem..."></textarea>
     </div>
     <div class="modal-actions">
@@ -1442,7 +1448,7 @@
 <section class="app-view" id="view-banco">
   <div class="page-title-area">
     <div>
-      <div class="page-title">Aprovados para <em>Entrevista</em></div>
+      <div class="page-title">Etapa 2 · <em>Entrevista</em></div>
       <div class="page-subtitle"></div>
     </div>
   </div>
@@ -1480,11 +1486,43 @@
   </div>
 </section>
 
+<!-- ══════════ VIEW: ETAPA 3 · APROVADOS NA ENTREVISTA ══════════ -->
+<section class="app-view" id="view-etapa3">
+  <div class="page-title-area">
+    <div>
+      <div class="page-title">Etapa 3 · <em>Aprovados na entrevista</em></div>
+      <div class="page-subtitle"></div>
+    </div>
+  </div>
+  <div class="panel">
+    <div class="panel-head">
+      <div class="panel-title-sm">⏳ Aguardando a Gerência <span class="badge green" id="etapa3CountBadge">0 registros</span></div>
+    </div>
+    <div class="results-table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th style="width:40px;text-align:center;">#</th>
+            <th>Candidato</th>
+            <th style="width:90px;">Entrevista</th>
+            <th style="width:70px;text-align:center;">💬</th>
+            <th>WhatsApp</th>
+            <th>Ações</th>
+          </tr>
+        </thead>
+        <tbody id="etapa3TableBody">
+          <tr><td colspan="6"><div class="empty-state"><div class="empty-icon">⏳</div>Ninguém aguardando decisão</div></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
 <!-- ══════════ VIEW: CONTRATADOS (histórico de decisões) ══════════ -->
 <section class="app-view" id="view-contratados">
   <div class="page-title-area">
     <div>
-      <div class="page-title">Histórico de <em>Contratados</em></div>
+      <div class="page-title">Etapa 4 · <em>Resultado final</em></div>
       <div class="page-subtitle"></div>
     </div>
   </div>
@@ -1623,7 +1661,7 @@
 <section class="app-view" id="view-pipeline">
   <div class="page-title-area">
     <div>
-      <div class="page-title">Lista de <em>Candidatos</em></div>
+      <div class="page-title">Etapa 1 · <em>Candidatos</em></div>
       <div class="page-subtitle"></div>
     </div>
   </div>
@@ -1957,7 +1995,7 @@
     gerarCodigoAcesso, assinarCodigosAcesso, cancelarCodigoAcesso, excluirCodigoAcesso, VALIDADE_CODIGO_MS,
     definirNumeroWhatsapp, assinarNumeroWhatsapp,
     assinarPipeline, registrarComentario, buscarComentarios, definirAprovacaoManual, definirBancoReserva,
-    registrarDecisaoFinal, buscarHistorico, registrarEntrevista, salvarFotoColaborador,
+    registrarDecisaoFinal, buscarHistorico, registrarEntrevista, salvarFotoColaborador, registrarAvisoWhatsapp,
     assinarVagas, criarVaga, encerrarVaga, reabrirVaga, excluirVaga,
     obterPesosScore, salvarPesosPadrao, salvarPesosCargo, removerPesosCargo
   } from "./js/dashboard.js";
@@ -2118,6 +2156,7 @@
     document.getElementById('sidebarItemPendencias').style.display = 'none';
     document.getElementById('sidebarItemBanco').style.display = 'none';
     document.getElementById('sidebarItemContratados').style.display = 'none';
+    document.getElementById('sidebarItemEtapa3').style.display = 'none';
     document.getElementById('sidebarItemRanking').style.display = 'none';
     document.getElementById('sidebarItemVagas').style.display = 'none';
     // Banco de Reserva fica visível pro view — só não pode marcar/desmarcar
@@ -2134,10 +2173,11 @@
     dashboard: 'Dashboard',
     vagas: 'Vagas',
     pendencias: 'Central de Pendências',
-    pipeline: 'Candidatos',
+    pipeline: 'Etapa 1 · Candidatos',
     ranking: 'Ranking por Score Virtus',
-    banco: 'Aprovados para Entrevista',
-    contratados: 'Contratados',
+    banco: 'Etapa 2 · Entrevista',
+    etapa3: 'Etapa 3 · Aprovados na entrevista',
+    contratados: 'Etapa 4 · Resultado final',
     bancoreserva: 'Banco de Reserva',
     testes: 'Aplicar Testes',
     violacoes: 'Violações Registradas',
@@ -2176,7 +2216,7 @@
     if ((view === 'perguntas' || view === 'usuarios' || view === 'pesos') && !ehGerenciaSV) view = 'dashboard';
     // Viewer só tem a aba Candidatos (vê os testes realizados de todo
     // mundo, sem poder selecionar ninguém pra entrevista).
-    if ((view === 'banco' || view === 'contratados' || view === 'dashboard' || view === 'pendencias' || view === 'ranking' || view === 'vagas') && me && me.perfil === 'viewer') view = 'pipeline';
+    if ((view === 'banco' || view === 'etapa3' || view === 'contratados' || view === 'dashboard' || view === 'pendencias' || view === 'ranking' || view === 'vagas') && me && me.perfil === 'viewer') view = 'pipeline';
     document.querySelectorAll('.app-view').forEach(v => v.classList.toggle('active', v.id === 'view-' + view));
     document.querySelectorAll('.sidebar-item').forEach(i => i.classList.toggle('active', i.dataset.view === view));
     const sub = document.getElementById('hudSubTitle');
@@ -2186,6 +2226,7 @@
     if (view === 'qrcodes') gerarQRCodes();
     if (view === 'pipeline') renderPipeline();
     if (view === 'contratados') renderContratados();
+    if (view === 'etapa3') renderEtapa3();
     if (view === 'bancoreserva') renderBancoReserva();
     if (view === 'pendencias') renderPendencias();
     if (view === 'pesos') renderPesosView();
@@ -3953,6 +3994,7 @@
     whatsappCandidato: el => window.abrirWhatsappCandidato(el.dataset.chave, el.dataset.nome),
     removerBancoReserva: el => window.alternarBancoReserva(el.dataset.chave, el.dataset.nome, false),
     decidirEntrevista: el => window.decidirEntrevista(el.dataset.chave, el.dataset.nome, el.dataset.decisao),
+    whatsappEtapa: el => window.abrirWhatsappCandidato(el.dataset.chave, el.dataset.nome),
     aprovarUsuario: el => window.aprovar(el.dataset.uid, el.dataset.perfil),
     recusarUsuario: el => window.recusar(el.dataset.uid, el.dataset.nome),
     alterarPerfil: el => window.alterarPerfil(el.dataset.uid, el.dataset.perfil),
@@ -4045,7 +4087,7 @@
           </div>
         </td>
         <td><span class="td-pct" style="color:${c.media >= 70 ? 'var(--green)' : c.media >= 50 ? 'var(--amber)' : 'var(--red)'}">${c.media >= 70 ? '✅' : '❌'} ${c.media}%</span></td>
-        <td><span style="font-size:12px;font-weight:700;color:${etapaCand.cor};white-space:nowrap;">${etapaCand.icone} ${etapaCand.txt}</span></td>
+        <td><span style="font-size:12px;font-weight:700;color:${etapaCand.cor};white-space:nowrap;">${etapaCand.icone} ${etapaCand.txt}</span>${avisoWhatsappHTML(pipelineInfo, etapaWhatsappDe(pipelineInfo))}</td>
         ${colunasGerenciar}
       </tr>`;
     }).join('');
@@ -4298,6 +4340,37 @@
   // equipe — aqui é a equipe entrando em contato com o candidato).
   let WHATSAPP_CAND_TELEFONE = null;
   let WHATSAPP_CAND_MSGS = [];
+  let WHATSAPP_CAND_CHAVE = null;
+  let WHATSAPP_CAND_NOME = null;
+  let WHATSAPP_ETAPA_ESCOLHIDA = null;
+
+  // Em que etapa o candidato está — decide qual mensagem vem pronta.
+  function etapaWhatsappDe(p) {
+    p = p || {};
+    if (p.decisao_final === 'contratado') return 'contratado';
+    if (p.decisao_final === 'recusado') return 'recusado';
+    if (p.banco_reserva) return 'reserva';
+    if (p.aprovado && p.entrevista && p.entrevista.decisao === 'aprovado') return 'etapa3';
+    if (p.aprovado) return 'etapa2';
+    return 'etapa1';
+  }
+  const ROTULO_AVISO = { etapa1: 'Etapa 1', etapa2: 'Convite', etapa3: 'Etapa 3', contratado: 'Contratação', recusado: 'Resultado', reserva: 'Banco de reserva' };
+
+  // "✓ Avisado por Fulano em dd/mm" embaixo do status, quando já foi.
+  function avisoWhatsappHTML(p, etapa) {
+    const a = p && p.avisos_whatsapp && p.avisos_whatsapp[etapa];
+    if (!a) return '';
+    const dia = a.em ? fmtDataHora(a.em).slice(0, 5) : '';
+    return `<div style="font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--green);font-weight:700;margin-top:3px;">✓ WhatsApp enviado${a.por ? ' por ' + escapeHtml(a.por) : ''}${dia ? ' em ' + dia : ''}</div>`;
+  }
+
+  function textoConvite(nome, cargo) {
+    const d = document.getElementById('wppData').value;
+    const dataTxt = d ? d.split('-').reverse().join('/') : '[data]';
+    const hora = document.getElementById('wppHora').value || '[horário]';
+    const local = document.getElementById('wppLocal').value.trim() || '[local]';
+    return `Olá, ${nome}! Você foi selecionado(a) para a entrevista da vaga de ${cargo}.\n\n📅 Data: ${dataTxt}\n⏰ Horário: ${hora}\n📍 Local: ${local}\n\nPor favor, confirme sua presença respondendo esta mensagem.`;
+  }
 
   window.abrirWhatsappCandidato = function (chave, nome) {
     const tents = tentativasDe(chave);
@@ -4306,28 +4379,51 @@
     if (!telefone) { toast('❌ Esse candidato não tem telefone cadastrado', 'err'); return; }
     if (telefone.length <= 11) telefone = '55' + telefone; // DDI Brasil
     WHATSAPP_CAND_TELEFONE = telefone;
+    WHATSAPP_CAND_CHAVE = chave;
+    WHATSAPP_CAND_NOME = nome;
 
     const cargo = (f && f.cargo_pretendido) || 'a vaga';
+    const p = PIPELINE_MAP[chave.replace(/[/]/g, '_')] || {};
+    const atual = etapaWhatsappDe(p);
     WHATSAPP_CAND_MSGS = [
-      { label: '📋 Interesse na vaga', texto: `Olá ${nome}! Tudo bem? Aqui é da equipe de recrutamento. Você ainda tem interesse na vaga de ${cargo}?` },
-      { label: '🎤 Convocação para entrevista', texto: `Olá ${nome}! Você foi selecionado(a) para a próxima etapa do processo seletivo. Podemos agendar uma entrevista?` },
-      { label: '🎉 Aprovado(a) no processo', texto: `Olá ${nome}! Temos uma ótima notícia: você foi aprovado(a) no processo seletivo para a vaga de ${cargo}. Em breve entraremos em contato com os próximos passos.` },
-      { label: '❌ Não aprovado(a) no processo', texto: `Olá ${nome}! Agradecemos sua participação no processo seletivo para a vaga de ${cargo}. No momento você não foi selecionado(a) para esta vaga, mas seu currículo fica em nosso banco de talentos.` }
+      { etapa: 'etapa1', label: '1️⃣ Etapa 1 · Teste recebido', texto: `Olá, ${nome}! Recebemos seu teste para a vaga de ${cargo}. Obrigado pela participação! Estamos analisando os resultados e, se você avançar para a próxima etapa, entraremos em contato por aqui.` },
+      { etapa: 'etapa2', label: '2️⃣ Etapa 2 · Convite para entrevista', convite: true, texto: '' },
+      { etapa: 'etapa3', label: '3️⃣ Etapa 3 · Seguiu para a etapa final', texto: `Olá, ${nome}! Obrigado por participar da entrevista para a vaga de ${cargo}. Seu processo seguiu para a etapa final de avaliação. Assim que tivermos uma definição, entraremos em contato por aqui. 🙂` },
+      { etapa: 'contratado', label: '4️⃣ Etapa 4 · Contratado(a)', texto: `Olá, ${nome}! Temos uma ótima notícia: você foi contratado(a) para a vaga de ${cargo}! 🎉 Em breve enviaremos as orientações sobre documentos e início.` },
+      { etapa: 'recusado', label: '4️⃣ Etapa 4 · Não selecionado(a)', texto: `Olá, ${nome}! Agradecemos muito sua participação no processo seletivo para a vaga de ${cargo}. Desta vez seguimos com outro perfil, mas seus dados ficam em nosso banco de talentos para futuras oportunidades.` },
+      { etapa: 'reserva', label: '🏦 Banco de reserva', texto: `Olá, ${nome}! Obrigado por participar do processo seletivo para a vaga de ${cargo}. Gostamos do seu perfil e você ficou no nosso banco de reserva: assim que surgir uma vaga compatível, entraremos em contato.` },
+      { etapa: null, label: '📋 Interesse na vaga', texto: `Olá ${nome}! Tudo bem? Aqui é da equipe de recrutamento. Você ainda tem interesse na vaga de ${cargo}?` }
     ];
     document.getElementById('whatsappCandNome').textContent = nome;
     const templates = document.getElementById('whatsappCandTemplates');
-    templates.innerHTML = WHATSAPP_CAND_MSGS.map((m, i) =>
-      `<button type="button" class="btn-act btn-neutral" style="text-align:left;white-space:normal;" data-item="${i}">${m.label}</button>`
-    ).join('');
+    templates.innerHTML = WHATSAPP_CAND_MSGS.map((m, i) => {
+      const ehAtual = m.etapa === atual;
+      const jaFoi = m.etapa && p.avisos_whatsapp && p.avisos_whatsapp[m.etapa];
+      return `<button type="button" class="btn-act btn-neutral" style="text-align:left;white-space:normal;${ehAtual ? 'border-color:var(--amber);background:var(--amberdim);' : ''}" data-item="${i}">${m.label}${ehAtual ? ' · etapa atual' : ''}${jaFoi ? ' ✓ enviada' : ''}</button>`;
+    }).join('');
     templates.querySelectorAll('[data-item]').forEach(btn => {
       btn.addEventListener('click', () => window.usarTemplateWhatsappCandidato(Number(btn.dataset.item)));
     });
+    ['wppData', 'wppHora', 'wppLocal'].forEach(id => {
+      const el = document.getElementById(id);
+      el.value = '';
+      el.oninput = () => { if (WHATSAPP_ETAPA_ESCOLHIDA === 'etapa2') document.getElementById('whatsappCandTextarea').value = textoConvite(nome, cargo); };
+    });
+    WHATSAPP_CAND_MSGS.find(m => m.convite).cargo = cargo;
     document.getElementById('whatsappCandTextarea').value = '';
+    document.getElementById('whatsappConvite').style.display = 'none';
+    WHATSAPP_ETAPA_ESCOLHIDA = null;
+    // Já deixa pronta a mensagem da etapa em que o candidato está.
+    const iAtual = WHATSAPP_CAND_MSGS.findIndex(m => m.etapa === atual);
+    if (iAtual >= 0) window.usarTemplateWhatsappCandidato(iAtual);
     document.getElementById('whatsappCandModal').classList.add('show');
   };
 
   window.usarTemplateWhatsappCandidato = function (i) {
-    document.getElementById('whatsappCandTextarea').value = WHATSAPP_CAND_MSGS[i].texto;
+    const m = WHATSAPP_CAND_MSGS[i];
+    WHATSAPP_ETAPA_ESCOLHIDA = m.etapa;
+    document.getElementById('whatsappConvite').style.display = m.convite ? 'grid' : 'none';
+    document.getElementById('whatsappCandTextarea').value = m.convite ? textoConvite(WHATSAPP_CAND_NOME, m.cargo) : m.texto;
   };
 
   window.fecharWhatsappCandidato = function () {
@@ -4337,8 +4433,66 @@
   window.enviarWhatsappCandidatoDireto = function () {
     const texto = document.getElementById('whatsappCandTextarea').value.trim();
     if (!texto) { toast('Escreva ou escolha uma mensagem antes de enviar', 'err'); return; }
+    if (WHATSAPP_ETAPA_ESCOLHIDA === 'etapa2' && /\[(data|horário|local)\]/.test(texto)) {
+      toast('Preencha data, horário e local do convite', 'err'); return;
+    }
     window.open(`https://wa.me/${WHATSAPP_CAND_TELEFONE}?text=${encodeURIComponent(texto)}`, '_blank');
+    // Marca que o aviso da etapa foi enviado (quem e quando).
+    if (WHATSAPP_ETAPA_ESCOLHIDA && me && PODE_GERENCIAR_CANDIDATOS.includes(me.perfil)) {
+      const fil = filialDoCandidato(WHATSAPP_CAND_CHAVE);
+      registrarAvisoWhatsapp(WHATSAPP_CAND_CHAVE, WHATSAPP_ETAPA_ESCOLHIDA, WHATSAPP_CAND_NOME, me.usuario, me.perfil, fil.filial, fil.filial_nome)
+        .catch(e => console.error('Falha ao registrar aviso de WhatsApp:', e));
+    }
     fecharWhatsappCandidato();
+  };
+
+  // ══════════ ETAPA 3 · APROVADOS NA ENTREVISTA ══════════
+  // Passaram na entrevista e esperam a Gerência decidir contratar ou não.
+  window.renderEtapa3 = function renderEtapa3() {
+    const tbody = document.getElementById('etapa3TableBody');
+    if (!tbody) return;
+    ligarAcoesDelegadas('etapa3TableBody');
+    const lista = candidatosAgrupados().filter(c => {
+      const p = PIPELINE_MAP[c.chave.replace(/[/]/g, '_')];
+      return p && p.aprovado === true && !p.decisao_final && p.entrevista && p.entrevista.decisao === 'aprovado';
+    }).sort((a, b) => {
+      const ma = ((PIPELINE_MAP[a.chave.replace(/[/]/g, '_')] || {}).entrevista || {}).media ?? 0;
+      const mb = ((PIPELINE_MAP[b.chave.replace(/[/]/g, '_')] || {}).entrevista || {}).media ?? 0;
+      return mb - ma;
+    });
+    const badge = document.getElementById('etapa3CountBadge');
+    if (badge) badge.textContent = lista.length + ' registro' + (lista.length !== 1 ? 's' : '');
+    const sb = document.getElementById('badgeEtapa3');
+    if (sb) { sb.textContent = lista.length > 99 ? '99+' : String(lista.length); sb.style.display = lista.length ? 'flex' : 'none'; }
+    if (!lista.length) {
+      tbody.innerHTML = '<tr><td colspan="6"><div class="empty-state"><div class="empty-icon">⏳</div>Ninguém aguardando decisão</div></td></tr>';
+      return;
+    }
+    const podeDecidir = me && PODE_GERENCIAR_CANDIDATOS.includes(me.perfil);
+    tbody.innerHTML = lista.map((c, i) => {
+      const p = PIPELINE_MAP[c.chave.replace(/[/]/g, '_')] || {};
+      const ent = p.entrevista || {};
+      const dadosCand = `data-chave="${escapeHtml(c.chave)}" data-nome="${escapeHtml(c.nome)}"`;
+      const nota = ent.versao === 2 && ent.media != null ? `${ent.media}/10` : (ent.avaliacao_media != null ? `${ent.avaliacao_media}/5` : '—');
+      return `
+      <tr class="row-aprovado">
+        <td style="text-align:center;color:var(--text3);">${i + 1}</td>
+        <td class="td-nome" data-acao="abrirCandidato" ${dadosCand} style="cursor:pointer;">${escapeHtml(c.nome)} <span class="row-hint">▸ detalhes</span>
+          <div style="font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--text3);margin-top:2px;">Entrevistado por ${escapeHtml(ent.por || '—')}</div></td>
+        <td style="font-weight:700;color:var(--green);">${nota}</td>
+        <td style="text-align:center;" data-acao="ignorar">${badgeComentarios(p.comentarios_count, dadosCand)}</td>
+        <td style="font-size:12px;">${avisoWhatsappHTML(p, 'etapa3') || '<span style="color:var(--text4);">Ainda não avisado</span>'}</td>
+        <td data-acao="ignorar" style="font-size:11px;">
+          <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;">
+            ${podeDecidir ? `
+            <button class="btn-act btn-neutral" style="font-size:11px;padding:6px 10px;background:#25D366;color:#052e16;border-color:#25D366;" data-acao="whatsappEtapa" ${dadosCand}>💬 Avisar</button>
+            <button class="btn-act btn-approve-admin" style="font-size:11px;padding:6px 10px;" data-acao="decidirEntrevista" data-decisao="contratado" ${dadosCand}>🎉 Contratado</button>
+            <button class="btn-act btn-neutral" style="font-size:11px;padding:6px 10px;" data-acao="decidirEntrevista" data-decisao="recusado" ${dadosCand}>❌ Recusado</button>` : ''}
+            <button class="btn-act btn-neutral" style="font-size:11px;padding:6px 10px;" data-acao="abrirCandidato" ${dadosCand} title="Ver detalhes completos">📋</button>
+          </div>
+        </td>
+      </tr>`;
+    }).join('');
   };
 
   // Botão com o ícone de comentário + quantidade, usado nas tabelas de
@@ -4560,22 +4714,27 @@
         <li>Clique num cartão para filtrar a lista embaixo.</li>
         <li>Clique no candidato para abrir a ficha e resolver.</li>
       </ol>`],
-    'view-banco': ['Aprovados para entrevista', `
-      <p>Candidatos que foram selecionados na lista para a entrevista.</p>
+    'view-banco': ['Etapa 2 · Entrevista', `
+      <p>Candidatos da Etapa 1 que foram selecionados para a entrevista.</p>
       <ol>
-        <li>Abra a ficha do candidato e clique em <b>🎤 Realizar entrevista</b>.</li>
-        <li>Responda a disponibilidade para as escalas 5x2, 12x36 e 6x1 e a experiência anterior.</li>
-        <li>Dê nota de 0 a 10 nos critérios gerais e nas 5 perguntas de situação do cargo.</li>
-        <li>Marque os pontos fortes e os pontos de atenção e escreva as observações.</li>
+        <li>Clique em <b>💬 Convite</b>, preencha data, horário e local e envie pelo WhatsApp.</li>
+        <li>No dia, clique em <b>🎤 Entrevista</b> e preencha a avaliação (escalas, notas de 0 a 10, destaques e observações).</li>
         <li>Finalize com <b>Aprovar</b>, <b>Reprovar</b> ou <b>Avaliação complementar</b>.</li>
       </ol>
-      <p>A avaliação fica gravada na ficha e sai nos relatórios.</p>`],
-    'view-contratados': ['Histórico de decisões', `
+      <p>Quem é aprovado na entrevista passa sozinho para a <b>Etapa 3</b>. Quem é reprovado vai para a <b>Etapa 4</b> como recusado.</p>`],
+    'view-etapa3': ['Etapa 3 · Aprovados na entrevista', `
+      <p>Quem passou na entrevista e está aguardando a decisão da Gerência.</p>
+      <ol>
+        <li>Clique em <b>💬 Avisar</b> para contar ao candidato que o processo seguiu para a etapa final (sem prometer a vaga).</li>
+        <li>Veja a nota e o resultado da entrevista na ficha (botão 📋).</li>
+        <li>Decida com <b>🎉 Contratado</b> ou <b>❌ Recusado</b>. O candidato vai para a Etapa 4.</li>
+      </ol>`],
+    'view-contratados': ['Etapa 4 · Resultado final', `
       <p>Quem foi contratado ou recusado, quando e por quem.</p>
-      <ul>
-        <li>Use a busca e os filtros pra achar um candidato.</li>
-        <li>Clique no nome pra abrir a ficha completa com todo o histórico.</li>
-      </ul>`],
+      <ol>
+        <li>Abra o candidato e use <b>💬 Falar no WhatsApp</b>: a mensagem de contratação ou de agradecimento já vem pronta.</li>
+        <li>Use os filtros de data para achar um candidato.</li>
+      </ol>`],
     'view-bancoreserva': ['Banco de Reserva', `
       <p>Candidatos bons guardados para vagas futuras.</p>
       <ol>
@@ -4596,12 +4755,13 @@
         <li>Cada linha mostra o candidato, o tipo de ocorrência e a hora.</li>
         <li>Use isso pra decidir se o resultado do teste é confiável.</li>
       </ul>`],
-    'view-pipeline': ['Lista de Candidatos', `
-      <p>Todos os testes realizados.</p>
+    'view-pipeline': ['Etapa 1 · Candidatos', `
+      <p>Todo mundo que terminou os testes.</p>
       <ol>
         <li>Use a busca e os filtros (cargo, período, situação) pra achar quem você quer.</li>
         <li>Clique no candidato pra abrir a Ficha 360°: dados, notas, currículo, comentários e histórico.</li>
-        <li>Avaliador, coordenador, gerência e admin podem <b>selecionar para entrevista</b> e deixar comentários.</li>
+        <li>Em <b>⚙️ Ações → Falar no WhatsApp</b>, a mensagem de "teste recebido" já vem pronta.</li>
+        <li>Avaliador, coordenador, gerência e admin podem <b>aprovar para entrevista</b>: o candidato passa para a Etapa 2.</li>
         <li>Na ficha dá pra gerar o <b>relatório completo</b> e o <b>resumo de competências</b> em PDF, ou mandar no WhatsApp.</li>
       </ol>`],
     'view-ranking': ['Ranking', `
@@ -5036,7 +5196,7 @@
     const marcadosParaEntrevista = todos.filter(c => {
       const chaveId = c.chave.replace(/[/]/g, '_');
       const p = PIPELINE_MAP[chaveId];
-      return p && p.aprovado === true && !p.decisao_final;
+      return p && p.aprovado === true && !p.decisao_final && !(p.entrevista && p.entrevista.decisao === 'aprovado');
     });
 
     // O filtro de data usa QUANDO A PESSOA FOI MARCADA para entrevista
@@ -5103,7 +5263,7 @@
       }
       const botoesAcao = (podeDecidir && !decisaoFinal) ? `
           <button class="btn-act btn-neutral" style="font-size:11px;padding:6px 10px;background:var(--cyandim);color:var(--cyan);border-color:var(--cyanmid);" data-acao="abrirEntrevista" ${dadosCand}>🎤 ${entFeita ? 'Refazer entrevista' : 'Entrevista'}</button>
-          <button class="btn-act btn-approve-admin" style="font-size:11px;padding:6px 10px;" data-acao="decidirEntrevista" data-decisao="contratado" ${dadosCand}>🎉 Contratado</button>
+          <button class="btn-act btn-neutral" style="font-size:11px;padding:6px 10px;background:#25D366;color:#052e16;border-color:#25D366;" data-acao="whatsappEtapa" ${dadosCand}>💬 Convite</button>
           <button class="btn-act btn-neutral" style="font-size:11px;padding:6px 10px;" data-acao="decidirEntrevista" data-decisao="recusado" ${dadosCand}>❌ Recusado</button>
         ` : '';
 
@@ -5125,7 +5285,7 @@
           </div>
         </td>
         <td style="text-align:center;" data-acao="ignorar">${badgeComentarios(pipelineData.comentarios_count, dadosCand)}</td>
-        <td style="font-size:12px;color:${corStatus};font-weight:700;">${statusTxt}</td>
+        <td style="font-size:12px;color:${corStatus};font-weight:700;">${statusTxt}${avisoWhatsappHTML(pipelineData, 'etapa2')}</td>
         <td data-acao="ignorar" style="font-size:11px;">
           <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;">
             ${botoesAcao}
@@ -5140,7 +5300,7 @@
 
   window.decidirEntrevista = async function (chave, nome, decisao) {
     const label = decisao === 'contratado' ? 'CONTRATAR' : 'RECUSAR';
-    const ok = await abrirConfirmacao(`Confirma ${label} o candidato ${nome}?\n\nIsso vai aparecer no histórico da aba "Contratados".`, {
+    const ok = await abrirConfirmacao(`Confirma ${label} o candidato ${nome}?\n\nIsso vai para a aba "Etapa 4 · Resultado final".`, {
       titulo: decisao === 'contratado' ? 'Contratar candidato' : 'Recusar candidato',
       textoConfirmar: decisao === 'contratado' ? '🎉 Contratar' : '❌ Recusar',
       corConfirmar: decisao === 'contratado' ? 'btn-approve-admin' : 'btn-danger',
@@ -5254,6 +5414,7 @@
       renderDigitacaoDashboard();
       renderViolacoes();
       renderBancoAprovados();
+      renderEtapa3();
       renderPipeline();
       renderRanking();
       renderContratados();

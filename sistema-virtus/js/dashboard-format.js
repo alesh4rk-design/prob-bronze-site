@@ -102,13 +102,18 @@ export const ETAPA_LABELS = {
   aguardando_entrevista: { txt: 'Aguardando entrevista', cor: 'var(--amber)', icone: '🟠' },
   contratado: { txt: 'Contratado', cor: 'var(--green)', icone: '🏆' },
   recusado: { txt: 'Recusado', cor: 'var(--red)', icone: '❌' },
-  banco_reserva: { txt: 'Banco de Reserva', cor: 'var(--cyan)', icone: '🏦' }
+  banco_reserva: { txt: 'Banco de Reserva', cor: 'var(--cyan)', icone: '🏦' },
+  etapa_final: { txt: 'Etapa 3 · aguardando Gerência', cor: 'var(--green)', icone: '⏳' },
+  entrevista_realizada: { txt: 'Entrevista realizada', cor: 'var(--cyan)', icone: '🎤' },
+  aviso_whatsapp: { txt: 'Aviso por WhatsApp', cor: 'var(--green)', icone: '💬' }
 };
 
 // `p` é o valor de PIPELINE_MAP[chaveId] (pode ser undefined — candidato
 // que ainda não teve nenhuma ação da equipe).
 export function etapaDoPipeline(p) {
-  const chave = (p && p.etapa) || 'testes_concluidos';
+  let chave = (p && p.etapa) || 'testes_concluidos';
+  // Passou na entrevista e ainda sem decisão final: Etapa 3.
+  if (chave === 'aguardando_entrevista' && p && p.entrevista && p.entrevista.decisao === 'aprovado' && !p.decisao_final) chave = 'etapa_final';
   return { chave, ...(ETAPA_LABELS[chave] || ETAPA_LABELS.testes_concluidos) };
 }
 
