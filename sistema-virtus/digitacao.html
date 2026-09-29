@@ -151,6 +151,30 @@ textarea::placeholder { color:#4A6078; }
 
 .btn-row { display:flex; gap:10px; margin-top:12px; }
 
+/* ── Celular durante o teste ──
+   A tela do teste ocupa só a parte visível acima do teclado (altura
+   ajustada pelo JS com visualViewport): frase no topo, campo embaixo,
+   colado no teclado. Estatísticas e cabeçalho somem pra sobrar espaço. */
+body.modo-celular { padding:0; }
+body.modo-celular .corner { display:none; }
+body.modo-celular .container { padding:0; border:none; box-shadow:none; background:#05080F; }
+body.modo-celular .container::before { display:none; }
+body.modo-celular #testScreen {
+  position:fixed; left:0; right:0; top:0; height:100vh; z-index:50;
+  flex-direction:column; gap:6px; padding:8px 10px; background:#05080F;
+}
+body.modo-celular .stats, body.modo-celular .text-header, body.modo-celular .timer-bar-wrap { display:none; }
+body.modo-celular .candidate-bar { margin:0; padding:6px 10px; flex-shrink:0; }
+body.modo-celular .candidate-name { font-size:13px; }
+body.modo-celular .timer { font-size:16px; padding:3px 10px; }
+body.modo-celular .type-display {
+  flex:1 1 auto; min-height:0; overflow-y:auto; margin:0; position:relative;
+  font-size:17px; line-height:1.7; padding:10px 12px;
+}
+body.modo-celular #typeArea { flex-shrink:0; height:64px; font-size:16px; padding:10px 12px; }
+body.modo-celular .btn-row { margin-top:0; flex-shrink:0; }
+body.modo-celular .btn-row .btn { padding:8px 14px; font-size:12px; }
+
 .ready-overlay {
   display:none; position:fixed; inset:0;
   background:rgba(5,8,15,0.92); z-index:600;
@@ -706,7 +730,13 @@ function renderTypeDisplay(typed){
       html+=`<span class="pending">${esc(orig[i])}</span>`;
     }
   }
-  document.getElementById('displayText').innerHTML=html;
+  const disp=document.getElementById('displayText');
+  disp.innerHTML=html;
+  // No celular a frase fica numa caixa menor: mantém a letra atual visível.
+  if(document.body.classList.contains('modo-celular')){
+    const cur=disp.querySelector('.cur');
+    if(cur) disp.scrollTop=Math.max(0,cur.offsetTop-disp.clientHeight/3);
+  }
   const pct=Math.min(100,Math.round((typed.length/orig.length)*100));
   document.getElementById('textProgress').textContent=`${typed.length} / ${orig.length} chars · ${pct}%`;
 }
@@ -810,6 +840,7 @@ function finishTest(){
   document.getElementById('delWarning').innerHTML='';
 
   document.getElementById('testScreen').style.display='none';
+  document.body.classList.remove('modo-celular');
   document.getElementById('resultScreen').style.display='block';
   document.getElementById('syncStatus').innerHTML='';
   enviarAoServidor(lastResult);
@@ -980,7 +1011,10 @@ function iniciarTesteReal(){
 
 document.getElementById('readyGoBtn').onclick=()=>{
   document.getElementById('readyOverlay').classList.remove('show');
-  document.getElementById('testScreen').style.display='block';
+  const celular = dispositivoAtual === 'mobile';
+  document.body.classList.toggle('modo-celular', celular);
+  document.getElementById('testScreen').style.display = celular ? 'flex' : 'block';
+  ajustarAoTeclado();
   document.getElementById('sPrecisao').textContent='100%';
   document.getElementById('sWpm').textContent='0';
   document.getElementById('sChars').textContent='0';
@@ -995,6 +1029,7 @@ document.getElementById('finishBtn').onclick = finishTest;
 document.getElementById('cancelBtn').onclick = ()=>{
   if(active){clearInterval(timerInterval);active=false;}
   document.getElementById('testScreen').style.display='none';
+  document.body.classList.remove('modo-celular');
   document.getElementById('prepScreen').style.display='block';
 };
 document.getElementById('newTestBtn').onclick=()=>{
@@ -1008,11 +1043,26 @@ document.getElementById('typeArea').addEventListener('paste',e=>{e.preventDefaul
 // referência pra cima do teclado assim que o candidato toca no campo,
 // em vez de deixar ele escondido/cortado pela área ocupada pelo teclado.
 document.getElementById('typeArea').addEventListener('focus', () => {
+  if (document.body.classList.contains('modo-celular')) { setTimeout(ajustarAoTeclado, 300); return; }
   setTimeout(() => {
     const ref = document.querySelector('.type-display');
     if (ref) ref.scrollIntoView({ block: 'start', behavior: 'smooth' });
   }, 350);
 });
+
+// Celular: a tela do teste acompanha a área visível acima do teclado.
+function ajustarAoTeclado(){
+  if(!document.body.classList.contains('modo-celular')) return;
+  const ts=document.getElementById('testScreen');
+  const vv=window.visualViewport;
+  ts.style.height=(vv ? vv.height : window.innerHeight)+'px';
+  ts.style.top=(vv ? vv.offsetTop : 0)+'px';
+}
+if(window.visualViewport){
+  window.visualViewport.addEventListener('resize', ajustarAoTeclado);
+  window.visualViewport.addEventListener('scroll', ajustarAoTeclado);
+}
+window.addEventListener('resize', ajustarAoTeclado);
 
 // Expor funções usadas em atributos inline (onclick="setToday()" etc.)
 window.setToday = setToday;
