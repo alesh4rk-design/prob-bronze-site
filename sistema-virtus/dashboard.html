@@ -4427,7 +4427,7 @@
     templates.innerHTML = WHATSAPP_CAND_MSGS.map((m, i) => {
       const ehAtual = m.etapa === atual;
       const jaFoi = m.etapa && p.avisos_whatsapp && p.avisos_whatsapp[m.etapa];
-      return `<button type="button" class="btn-act btn-neutral" style="text-align:left;white-space:normal;${ehAtual ? 'border-color:var(--amber);background:var(--amberdim);' : ''}" data-item="${i}">${m.label}${ehAtual ? ' · etapa atual' : ''}${jaFoi ? ' ✓ enviada' : ''}</button>`;
+      return `<button type="button" class="btn-act btn-neutral wpp-modelo" style="text-align:left;white-space:normal;" data-item="${i}">${m.label}${ehAtual ? ' · etapa atual' : ''}${jaFoi ? ' ✓ enviada' : ''}</button>`;
     }).join('');
     templates.querySelectorAll('[data-item]').forEach(btn => {
       btn.addEventListener('click', () => window.usarTemplateWhatsappCandidato(Number(btn.dataset.item)));
@@ -4449,6 +4449,12 @@
 
   window.usarTemplateWhatsappCandidato = function (i) {
     const m = WHATSAPP_CAND_MSGS[i];
+    // O destaque acompanha a mensagem escolhida (antes ficava preso na etapa atual).
+    document.querySelectorAll('#whatsappCandTemplates .wpp-modelo').forEach(b => {
+      const sel = Number(b.dataset.item) === i;
+      b.style.borderColor = sel ? 'var(--amber)' : '';
+      b.style.background = sel ? 'var(--amberdim)' : '';
+    });
     WHATSAPP_ETAPA_ESCOLHIDA = m.etapa;
     document.getElementById('whatsappConvite').style.display = m.convite ? 'grid' : 'none';
     document.getElementById('whatsappCandTextarea').value = m.convite ? textoConvite(WHATSAPP_CAND_NOME, m.cargo) : m.texto;

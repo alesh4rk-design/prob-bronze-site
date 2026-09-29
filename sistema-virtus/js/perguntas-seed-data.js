@@ -12,7 +12,7 @@ export const PERGUNTAS_SEED = {
       "resposta": "Avast"
     },
     {
-      "q": "Para que serve o microsoft powerpoint?",
+      "q": "Para que serve o Microsoft powerpoint?",
       "o": [
         "Criar apresentações",
         "Editar textos",
@@ -23,7 +23,7 @@ export const PERGUNTAS_SEED = {
       "resposta": "Criar apresentações"
     },
     {
-      "q": "Para que serve o programa microsoft word?",
+      "q": "Para que serve o programa Microsoft Word?",
       "o": [
         "Editar textos",
         "Criar planilhas",
@@ -34,7 +34,7 @@ export const PERGUNTAS_SEED = {
       "resposta": "Editar textos"
     },
     {
-      "q": "Qual a função do atalho ctrl + c no windows?",
+      "q": "Qual a função do atalho Ctrl + c no Windows?",
       "o": [
         "Copiar",
         "Colar",
@@ -45,7 +45,7 @@ export const PERGUNTAS_SEED = {
       "resposta": "Copiar"
     },
     {
-      "q": "Qual a principal função do microsoft excel?",
+      "q": "Qual a principal função do Microsoft Excel?",
       "o": [
         "Criar planilhas",
         "Editar textos",
@@ -78,18 +78,18 @@ export const PERGUNTAS_SEED = {
       "resposta": "Google Chrome"
     },
     {
-      "q": "Qual desses abre o sistema de cftv?",
+      "q": "Qual desses abre o sistema de CFTV?",
       "o": [
         "Software de monitoramento",
-        "Bloco de notas",
-        "Calculadora (procedimento padrão)",
-        "Paint (procedimento padrão)"
+        "Navegador de internet",
+        "Editor de planilhas",
+        "Programa de e-mail"
       ],
       "n": "facil",
       "resposta": "Software de monitoramento"
     },
     {
-      "q": "Para pesquisar um nome em uma lista no excel, qual atalho usar?",
+      "q": "Para pesquisar um nome em uma lista no Excel, qual atalho usar?",
       "o": [
         "Ctrl + L",
         "Ctrl + C",
@@ -100,7 +100,7 @@ export const PERGUNTAS_SEED = {
       "resposta": "Ctrl + L"
     },
     {
-      "q": "Considerando contexto operacional, qual a função do atalho ctrl + v no windows?",
+      "q": "Qual a função do atalho Ctrl + v no Windows?",
       "o": [
         "Colar",
         "Copiar",
@@ -111,12 +111,12 @@ export const PERGUNTAS_SEED = {
       "resposta": "Colar"
     },
     {
-      "q": "Considerando contexto operacional, qual botão apaga letras à esquerda do cursor?",
+      "q": "Qual botão apaga letras à esquerda do cursor?",
       "o": [
         "Backspace",
         "Delete",
-        "Enter",
-        "Shift"
+        "Insert",
+        "Home"
       ],
       "n": "medio",
       "resposta": "Backspace"
@@ -144,7 +144,7 @@ export const PERGUNTAS_SEED = {
       "resposta": "No disco rígido"
     },
     {
-      "q": "Considerando contexto operacional, qual das tarefas abaixo não pode ser realizada diretamente no microsoft excel?",
+      "q": "Qual das tarefas abaixo não pode ser realizada diretamente no Microsoft Excel?",
       "o": [
         "Criar gráficos a partir de dados",
         "Aplicar filtros em tabelas",
@@ -155,7 +155,7 @@ export const PERGUNTAS_SEED = {
       "resposta": "Editar imagens com múltiplas camadas"
     },
     {
-      "q": "Para criar um pdf a partir do excel, o procedimento correto é?",
+      "q": "Para criar um PDF a partir do Excel, o procedimento correto é?",
       "o": [
         "Salvar como PDF",
         "Imprimir em papel",
@@ -166,18 +166,18 @@ export const PERGUNTAS_SEED = {
       "resposta": "Salvar como PDF"
     },
     {
-      "q": "Qual é a finalidade técnica do botão capslock no teclado?",
+      "q": "Qual é a finalidade técnica do botão Caps Lock no teclado?",
       "o": [
         "Digitar letras maiúsculas",
-        "Digitar números",
-        "Abrir menu",
-        "Salvar arquivo"
+        "Ativar o teclado numérico",
+        "Rolar a tela para baixo",
+        "Travar as setas do cursor"
       ],
       "n": "medio",
       "resposta": "Digitar letras maiúsculas"
     },
     {
-      "q": "Considerando contexto operacional, qual comando é usado no teclado para inserir um @?",
+      "q": "Qual comando é usado no teclado para inserir um @?",
       "o": [
         "Shift + 2",
         "Ctrl + C",
@@ -188,7 +188,7 @@ export const PERGUNTAS_SEED = {
       "resposta": "Shift + 2"
     },
     {
-      "q": "Considerando contexto operacional, qual a função do atalho ctrl + z?",
+      "q": "Qual a função do atalho Ctrl + z?",
       "o": [
         "Desfazer última ação",
         "Refazer ação",
@@ -199,18 +199,18 @@ export const PERGUNTAS_SEED = {
       "resposta": "Desfazer última ação"
     },
     {
-      "q": "O que significa 'ram' em um computador?",
+      "q": "O que significa 'RAM' em um computador?",
       "o": [
         "Memória de acesso rápido",
-        "Disco rígido",
-        "Processador",
-        "Placa de vídeo"
+        "Memória de armazenamento fixo",
+        "Unidade de processamento central",
+        "Registro de arquivos do sistema"
       ],
       "n": "dificil",
       "resposta": "Memória de acesso rápido"
     },
     {
-      "q": "Para salvar um documento no windows, qual atalho usar?",
+      "q": "Para salvar um documento no Windows, qual atalho usar?",
       "o": [
         "Ctrl + S",
         "Ctrl + P",
@@ -221,7 +221,7 @@ export const PERGUNTAS_SEED = {
       "resposta": "Ctrl + S"
     },
     {
-      "q": "De acordo com os protocolos de segurança, qual programa é usado para compactar arquivos?",
+      "q": "Qual programa é usado para compactar arquivos?",
       "o": [
         "WinRAR",
         "Word",
@@ -243,7 +243,7 @@ export const PERGUNTAS_SEED = {
       "resposta": "Ctrl + A"
     },
     {
-      "q": "De acordo com os protocolos de segurança, qual dispositivo conecta o computador à internet via cabo?",
+      "q": "Qual dispositivo conecta o computador à internet via cabo?",
       "o": [
         "Placa de rede",
         "Placa de vídeo",
@@ -254,7 +254,7 @@ export const PERGUNTAS_SEED = {
       "resposta": "Placa de rede"
     },
     {
-      "q": "Conceitualmente, como se define um backup?",
+      "q": "Como se define um backup?",
       "o": [
         "Cópia de segurança",
         "Tipo de vírus",
@@ -265,18 +265,18 @@ export const PERGUNTAS_SEED = {
       "resposta": "Cópia de segurança"
     },
     {
-      "q": "Conceitualmente, como se define um sistema operacional?",
+      "q": "Como se define um sistema operacional?",
       "o": [
         "Software que gerencia o computador",
-        "Hardware de memória",
-        "Tipo de processador",
-        "Programa de antivírus"
+        "Programa que cria documentos de texto",
+        "Peça que armazena os arquivos",
+        "Aplicativo que protege contra vírus"
       ],
       "n": "dificil",
       "resposta": "Software que gerencia o computador"
     },
     {
-      "q": "De acordo com os protocolos de segurança, qual extensão de arquivo indica uma imagem?",
+      "q": "Qual extensão de arquivo indica uma imagem?",
       "o": [
         ".jpg",
         ".txt",
@@ -287,7 +287,7 @@ export const PERGUNTAS_SEED = {
       "resposta": ".jpg"
     },
     {
-      "q": "De acordo com os protocolos de segurança, qual das funções abaixo não pertence ao microsoft powerpoint?",
+      "q": "Qual das funções abaixo não pertence ao Microsoft powerpoint?",
       "o": [
         "Criar apresentações com slides",
         "Editar textos com formatação avançada",
@@ -309,7 +309,7 @@ export const PERGUNTAS_SEED = {
       "resposta": "Teclado"
     },
     {
-      "q": "O que significa a sigla pdf?",
+      "q": "O que significa a sigla PDF?",
       "o": [
         "Portable Document Format",
         "Print Document File",
@@ -333,7 +333,7 @@ export const PERGUNTAS_SEED = {
       "resposta": "Monitorar o fluxo de entrada e saída"
     },
     {
-      "q": "Um prestador diz 'sempre trabalhei aqui' mas não há registro. o que fazer?",
+      "q": "Um prestador diz 'sempre trabalhei aqui' mas não há registro. O que fazer?",
       "o": [
         "Solicitar que aguarde e confirmar com o responsável",
         "Permitir acesso pois já prestou serviço antes",
@@ -366,7 +366,7 @@ export const PERGUNTAS_SEED = {
       "resposta": "Sistema de leitura de placas"
     },
     {
-      "q": "Técnico autorizado se recusa a se identificar. qual a conduta correta?",
+      "q": "Técnico autorizado se recusa a se identificar. Qual a conduta correta?",
       "o": [
         "Recusar o acesso até que apresente documento oficial com foto",
         "Permitir acesso se fornecer nome e apartamento",
@@ -388,7 +388,7 @@ export const PERGUNTAS_SEED = {
       "resposta": "Solicitar documento oficial com foto e cadastrar no sistema"
     },
     {
-      "q": "Entregador tenta subir ao apartamento alegando 'já ser de casa'. como proceder?",
+      "q": "Entregador tenta subir ao apartamento alegando 'já ser de casa'. Como proceder?",
       "o": [
         "Seguir o procedimento padrão e consultar o morador",
         "Permitir entrada pois é conhecido",
@@ -399,7 +399,7 @@ export const PERGUNTAS_SEED = {
       "resposta": "Seguir o procedimento padrão e consultar o morador"
     },
     {
-      "q": "Visitante se identifica mas não há autorização no sistema. qual o procedimento?",
+      "q": "Visitante se identifica mas não há autorização no sistema. Qual o procedimento?",
       "o": [
         "Consultar o responsável para confirmar entrada",
         "Permitir entrada com base nos dados fornecidos",
@@ -410,7 +410,7 @@ export const PERGUNTAS_SEED = {
       "resposta": "Consultar o responsável para confirmar entrada"
     },
     {
-      "q": "Considerando contexto operacional, qual o número da samu?",
+      "q": "Qual o número da samu?",
       "o": [
         "192",
         "190",
@@ -435,15 +435,15 @@ export const PERGUNTAS_SEED = {
       "q": "É permitido liberar veículo apenas por reconhecimento de voz?",
       "o": [
         "Não, sempre deve haver verificação formal",
-        "Sim, em todos os casos",
-        "Somente à noite",
-        "Apenas para moradores"
+        "Sim, se a voz for de morador conhecido",
+        "Sim, quando o veículo já tiver adesivo",
+        "Sim, desde que anotado no livro depois"
       ],
       "n": "medio",
       "resposta": "Não, sempre deve haver verificação formal"
     },
     {
-      "q": "Considerando contexto operacional, qual o número do bombeiro?",
+      "q": "Qual o número do bombeiro?",
       "o": [
         "193",
         "190",
@@ -454,7 +454,7 @@ export const PERGUNTAS_SEED = {
       "resposta": "193"
     },
     {
-      "q": "O lpr não reconheceu a placa de um veículo. qual a ação do porteiro?",
+      "q": "O lpr não reconheceu a placa de um veículo. Qual a ação do porteiro?",
       "o": [
         "Registrar manualmente e verificar autorização",
         "Liberar a entrada imediatamente",
@@ -465,18 +465,18 @@ export const PERGUNTAS_SEED = {
       "resposta": "Registrar manualmente e verificar autorização"
     },
     {
-      "q": "Entregador de aplicativo chega de madrugada sem registro. qual procedimento?",
+      "q": "Entregador de aplicativo chega de madrugada sem registro. Qual procedimento?",
       "o": [
         "Contatar o morador para confirmação",
-        "Liberar a entrada",
-        "Negar a entrada",
-        "Chamar segurança"
+        "Liberar, pois é serviço de entrega",
+        "Pedir que deixe o pedido na calçada",
+        "Recusar e orientar voltar de manhã"
       ],
       "n": "medio",
       "resposta": "Contatar o morador para confirmação"
     },
     {
-      "q": "Considerando contexto operacional, qual o número da polícia?",
+      "q": "Qual o número da polícia?",
       "o": [
         "190",
         "192",
@@ -509,12 +509,12 @@ export const PERGUNTAS_SEED = {
       "resposta": "Registrar e armazenar corretamente"
     },
     {
-      "q": "Visitante alega ser autoridade e exige entrada sem se identificar. como proceder?",
+      "q": "Visitante alega ser autoridade e exige entrada sem se identificar. Como proceder?",
       "o": [
         "Solicitar identificação oficial e seguir protocolo",
-        "Liberar imediatamente",
-        "Chamar a polícia",
-        "Negar a entrada sem questionar"
+        "Liberar, pois autoridades têm prioridade",
+        "Anotar só o nome dito e permitir acesso",
+        "Acompanhar até o destino sem identificar"
       ],
       "n": "dificil",
       "resposta": "Solicitar identificação oficial e seguir protocolo"
@@ -531,7 +531,7 @@ export const PERGUNTAS_SEED = {
       "resposta": "Manter postura profissional e cumprir os protocolos"
     },
     {
-      "q": "Veículo de aplicativo solicita acesso para embarque. qual a conduta?",
+      "q": "Veículo de aplicativo solicita acesso para embarque. Qual a conduta?",
       "o": [
         "Manter fora da área interna e acionar o morador",
         "Autorizar entrada para agilizar o atendimento",
@@ -542,7 +542,7 @@ export const PERGUNTAS_SEED = {
       "resposta": "Manter fora da área interna e acionar o morador"
     },
     {
-      "q": "Morador quer liberar um amigo mas não fornece os dados completos. o que fazer?",
+      "q": "Morador quer liberar um amigo mas não fornece os dados completos. O que fazer?",
       "o": [
         "Solicitar os dados completos antes de autorizar",
         "Liberar quando a pessoa chegar",
@@ -564,7 +564,7 @@ export const PERGUNTAS_SEED = {
       "resposta": "Somente o indivíduo autorizado"
     },
     {
-      "q": "De acordo com os protocolos de segurança, qual a principal função do livro de ocorrências?",
+      "q": "Qual a principal função do livro de ocorrências?",
       "o": [
         "Assegurar registro contínuo e rastreável do plantão",
         "Documentar apenas situações fora da rotina",
@@ -586,23 +586,23 @@ export const PERGUNTAS_SEED = {
       "resposta": "Nunca, deve sempre haver alguém no posto"
     },
     {
-      "q": "Menor de idade tenta entrar sozinho. qual o procedimento?",
+      "q": "Menor de idade tenta entrar sozinho. Qual o procedimento?",
       "o": [
         "Contatar o responsável do apartamento para autorização",
-        "Liberar se ele tiver documento",
-        "Negar a entrada",
-        "Deixar esperar na portaria"
+        "Liberar se apresentar um documento com foto",
+        "Deixar entrar se um vizinho conhecer ele",
+        "Liberar se disser o número do apartamento"
       ],
       "n": "dificil",
       "resposta": "Contatar o responsável do apartamento para autorização"
     },
     {
-      "q": "De acordo com os protocolos de segurança, qual documento não é aceito como identificação válida?",
+      "q": "Qual documento não é aceito como identificação válida?",
       "o": [
         "Carteirinha de estudante",
-        "RG (procedimento padrão)",
-        "CNH (procedimento padrão)",
-        "Passaporte (procedimento padrão)"
+        "Carteira de Trabalho",
+        "Carteira da OAB",
+        "Passaporte válido"
       ],
       "n": "dificil",
       "resposta": "Carteirinha de estudante"
@@ -665,7 +665,7 @@ export const PERGUNTAS_SEED = {
       "resposta": "Ocorrências, falhas e situações atípicas"
     },
     {
-      "q": "Morador solicita imagens de vídeo. o que fazer?",
+      "q": "Morador solicita imagens de vídeo. O que fazer?",
       "o": [
         "Encaminhar a solicitação para a administração",
         "Fornecer as imagens imediatamente",
@@ -676,7 +676,7 @@ export const PERGUNTAS_SEED = {
       "resposta": "Encaminhar a solicitação para a administração"
     },
     {
-      "q": "O que é um sistema de monitoramento por câmera (cftv)?",
+      "q": "O que é um sistema de monitoramento por câmera (CFTV)?",
       "o": [
         "Sistema de vigilância por vídeo",
         "Controle de acesso de pessoas",
@@ -687,7 +687,7 @@ export const PERGUNTAS_SEED = {
       "resposta": "Sistema de vigilância por vídeo"
     },
     {
-      "q": "Prestador se desloca para área sem câmeras. qual a conduta correta?",
+      "q": "Prestador se desloca para área sem câmeras. Qual a conduta correta?",
       "o": [
         "Comunicar imediatamente pelo rádio",
         "Ignorar a situação",
@@ -698,7 +698,7 @@ export const PERGUNTAS_SEED = {
       "resposta": "Comunicar imediatamente pelo rádio"
     },
     {
-      "q": "Ao assumir o plantão, qual a primeira ação do operador de cftv?",
+      "q": "Ao assumir o plantão, qual a primeira ação do operador de CFTV?",
       "o": [
         "Verificar o funcionamento de todas as câmeras",
         "Ler o relatório do turno anterior",
@@ -709,18 +709,18 @@ export const PERGUNTAS_SEED = {
       "resposta": "Verificar o funcionamento de todas as câmeras"
     },
     {
-      "q": "Veículo com placa não lida pelo sistema. qual a ação do operador?",
+      "q": "Veículo com placa não lida pelo sistema. Qual a ação do operador?",
       "o": [
         "Comunicar imediatamente à portaria",
-        "Ignorar a situação",
-        "Desligar o sistema",
-        "Alterar a gravação"
+        "Anotar e verificar só no fim do turno",
+        "Reiniciar a câmera de leitura de placas",
+        "Liberar, pois pode ser falha do sistema"
       ],
       "n": "medio",
       "resposta": "Comunicar imediatamente à portaria"
     },
     {
-      "q": "Movimentação suspeita em área restrita. qual a primeira ação?",
+      "q": "Movimentação suspeita em área restrita. Qual a primeira ação?",
       "o": [
         "Comunicar imediatamente à segurança",
         "Ignorar por ser área restrita",
@@ -742,29 +742,29 @@ export const PERGUNTAS_SEED = {
       "resposta": "Não, deve monitorar todas as áreas"
     },
     {
-      "q": "O que é um relatório de divergência em cftv?",
+      "q": "O que é um relatório de divergência em CFTV?",
       "o": [
         "Documento que registra situações fora do normal",
-        "Relatório de manutenção",
-        "Lista de equipamentos",
-        "Controle de horários"
+        "Registro das câmeras instaladas no local",
+        "Planilha com as trocas de turno da equipe",
+        "Relatório mensal de manutenção preventiva"
       ],
       "n": "medio",
       "resposta": "Documento que registra situações fora do normal"
     },
     {
-      "q": "Considerando contexto operacional, qual a função de um sistema de backup de gravações?",
+      "q": "Qual a função de um sistema de backup de gravações?",
       "o": [
         "Garantir a preservação das imagens em caso de falha",
-        "Aumentar a velocidade do sistema",
-        "Melhorar a qualidade da imagem",
-        "Reduzir custos"
+        "Liberar espaço no disco apagando as antigas",
+        "Transmitir as imagens em tempo real ao celular",
+        "Aumentar a resolução das câmeras instaladas"
       ],
       "n": "medio",
       "resposta": "Garantir a preservação das imagens em caso de falha"
     },
     {
-      "q": "Considerando contexto operacional, qual a importância de monitorar áreas de pouca movimentação?",
+      "q": "Qual a importância de monitorar áreas de pouca movimentação?",
       "o": [
         "Prevenir invasões e atividades suspeitas",
         "Economizar tempo do operador",
@@ -775,18 +775,18 @@ export const PERGUNTAS_SEED = {
       "resposta": "Prevenir invasões e atividades suspeitas"
     },
     {
-      "q": "Porta de emergência aberta sem autorização. qual ação seguir?",
+      "q": "Porta de emergência aberta sem autorização. Qual ação seguir?",
       "o": [
         "Comunicar segurança e registrar a ocorrência",
-        "Fechar a porta pessoalmente",
-        "Ignorar por ser emergência",
-        "Aguardar alguém fechar"
+        "Fechar a porta e seguir o monitoramento",
+        "Aguardar o fim do turno para comunicar",
+        "Ignorar, pois porta de emergência é livre"
       ],
       "n": "medio",
       "resposta": "Comunicar segurança e registrar a ocorrência"
     },
     {
-      "q": "Câmera essencial com imagem escura. o que fazer imediatamente?",
+      "q": "Câmera essencial com imagem escura. O que fazer imediatamente?",
       "o": [
         "Registrar e acionar manutenção",
         "Tentar ajustar o contraste",
@@ -800,9 +800,9 @@ export const PERGUNTAS_SEED = {
       "q": "O operador deve usar rádio para incidentes de qual natureza?",
       "o": [
         "Todos os incidentes relevantes à segurança",
-        "Apenas incidentes graves",
-        "Nenhum incidente",
-        "Apenas durante a noite"
+        "Somente os incidentes com vítimas feridas",
+        "Apenas os que envolverem moradores",
+        "Somente os que ocorrerem durante a noite"
       ],
       "n": "medio",
       "resposta": "Todos os incidentes relevantes à segurança"
@@ -811,42 +811,42 @@ export const PERGUNTAS_SEED = {
       "q": "O que fazer ao perceber que alguém vandaliza uma câmera?",
       "o": [
         "Comunicar imediatamente a segurança e registrar",
-        "Sair para confrontar a pessoa",
-        "Aguardar até terminar",
-        "Desligar a câmera"
+        "Sair do posto para impedir pessoalmente",
+        "Desligar a câmera para evitar mais danos",
+        "Anotar e comunicar só na troca de turno"
       ],
       "n": "dificil",
       "resposta": "Comunicar imediatamente a segurança e registrar"
     },
     {
-      "q": "De acordo com os protocolos de segurança, qual o tempo mínimo de armazenamento das gravações?",
+      "q": "Qual o tempo mínimo de armazenamento das gravações?",
       "o": [
         "Mínimo de 30 dias conforme legislação",
-        "7 dias",
-        "1 ano",
-        "Para sempre"
+        "Mínimo de 7 dias, depois pode apagar",
+        "Apenas enquanto houver espaço no disco",
+        "Mínimo de 24 horas após a gravação"
       ],
       "n": "dificil",
       "resposta": "Mínimo de 30 dias conforme legislação"
     },
     {
-      "q": "De acordo com os protocolos de segurança, qual a diferença entre câmera analógica e ip?",
+      "q": "Qual a diferença entre câmera analógica e IP?",
       "o": [
         "IP transmite dados pela rede, analógica usa cabo coaxial",
-        "Não há diferença",
-        "IP é mais barata",
-        "Analógica tem melhor qualidade"
+        "Analógica transmite pela rede, IP usa coaxial",
+        "IP só funciona com gravação na nuvem",
+        "Analógica grava em cores, IP só em preto e branco"
       ],
       "n": "dificil",
       "resposta": "IP transmite dados pela rede, analógica usa cabo coaxial"
     },
     {
-      "q": "De acordo com os protocolos de segurança, qual situação exige atenção imediata no cftv?",
+      "q": "Qual situação exige atenção imediata no CFTV?",
       "o": [
         "Invasão ou atividade criminosa",
-        "Pessoas conversando",
-        "Veículos estacionados",
-        "Animais circulando"
+        "Movimento intenso na entrada principal",
+        "Câmera com imagem levemente escura",
+        "Veículo parado por muito tempo na vaga"
       ],
       "n": "dificil",
       "resposta": "Invasão ou atividade criminosa"
@@ -855,53 +855,53 @@ export const PERGUNTAS_SEED = {
       "q": "Ao detectar fumaça em uma câmera, qual a primeira ação?",
       "o": [
         "Acionar o alarme de incêndio e bombeiros",
-        "Verificar se é real",
-        "Desligar a câmera",
-        "Aguardar confirmação"
+        "Aproximar a imagem para ver se é vapor",
+        "Avisar o síndico e aguardar a orientação",
+        "Registrar no relatório e seguir monitorando"
       ],
       "n": "dificil",
       "resposta": "Acionar o alarme de incêndio e bombeiros"
     },
     {
-      "q": "O que significa dvr em sistemas de cftv?",
+      "q": "O que significa DVR em sistemas de CFTV?",
       "o": [
         "Digital Video Recorder — Gravador digital de vídeo",
-        "Direct Video Record",
-        "Dispositivo de vigilância remota",
-        "Digital Vision Recorder"
+        "Dispositivo de Vigilância Remota — acesso externo",
+        "Direct Video Record — gravação direta em cartão",
+        "Digital Visual Router — roteador de imagens"
       ],
       "n": "dificil",
       "resposta": "Digital Video Recorder — Gravador digital de vídeo"
     },
     {
-      "q": "Quando utilizar a função ptz (pan-tilt-zoom)?",
+      "q": "Quando utilizar a função PTZ (pan-tilt-zoom)?",
       "o": [
         "Para acompanhar movimentação suspeita em tempo real",
-        "Sempre que ligar o sistema",
-        "Apenas durante a noite",
-        "Para testar câmeras"
+        "Para girar as câmeras automaticamente a cada hora",
+        "Para ajustar o foco de todas as câmeras fixas",
+        "Para reduzir o uso de disco durante a gravação"
       ],
       "n": "dificil",
       "resposta": "Para acompanhar movimentação suspeita em tempo real"
     },
     {
-      "q": "Conceitualmente, como se define zoom digital em uma câmera?",
+      "q": "Como se define zoom digital em uma câmera?",
       "o": [
         "Ampliação de imagem por software com perda de qualidade",
-        "Zoom óptico de alta qualidade",
-        "Função de gravação",
-        "Modo noturno"
+        "Ampliação feita pela lente, sem perda de qualidade",
+        "Recurso que melhora a imagem em baixa iluminação",
+        "Ajuste automático de foco em objetos distantes"
       ],
       "n": "dificil",
       "resposta": "Ampliação de imagem por software com perda de qualidade"
     },
     {
-      "q": "De acordo com os protocolos de segurança, qual a importância da iluminação para câmeras de segurança?",
+      "q": "Qual a importância da iluminação para câmeras de segurança?",
       "o": [
         "Essencial para a qualidade da imagem, especialmente à noite",
-        "Não tem importância",
-        "Apenas decorativa",
-        "Só importante para câmeras antigas"
+        "Importa apenas nas câmeras com infravermelho",
+        "Serve só para evitar reflexo nas lentes",
+        "Reduz o consumo de energia das câmeras"
       ],
       "n": "dificil",
       "resposta": "Essencial para a qualidade da imagem, especialmente à noite"
@@ -920,12 +920,12 @@ export const PERGUNTAS_SEED = {
   ],
   "Vigilante Patrimonial": [
     {
-      "q": "A principal função da portaria é:?",
+      "q": "A principal função da portaria é:",
       "o": [
-        "Decorar o local",
+        "Receber encomendas e guardar para os moradores",
         "Controlar entrada e saída de pessoas e veículos",
-        "Guardar equipamentos",
-        "Fazer manutenção"
+        "Fiscalizar o trabalho dos funcionários do local",
+        "Resolver conflitos entre moradores e vizinhos"
       ],
       "n": "facil",
       "resposta": "Controlar entrada e saída de pessoas e veículos"
@@ -933,16 +933,16 @@ export const PERGUNTAS_SEED = {
     {
       "q": "Qual é a principal função do vigilante?",
       "o": [
-        "Prender criminosos",
+        "Prender suspeitos e levá-los à delegacia",
         "Prevenir riscos e proteger pessoas e patrimônios",
-        "Aplicar multas",
-        "Realizar investigações"
+        "Investigar crimes ocorridos no local",
+        "Aplicar multas por descumprimento de regras"
       ],
       "n": "facil",
       "resposta": "Prevenir riscos e proteger pessoas e patrimônios"
     },
     {
-      "q": "O livro de ocorrências serve para:?",
+      "q": "O livro de ocorrências serve para:",
       "o": [
         "Guardar documentos pessoais",
         "Registrar fatos relevantes do serviço",
@@ -953,23 +953,23 @@ export const PERGUNTAS_SEED = {
       "resposta": "Registrar fatos relevantes do serviço"
     },
     {
-      "q": "Em caso de incêndio, a primeira ação é:?",
+      "q": "Em caso de incêndio, a primeira ação é:",
       "o": [
-        "Correr do local",
+        "Tentar apagar o fogo antes de avisar alguém",
         "Avisar a central e acionar o alarme de incêndio",
-        "Desligar as câmeras",
-        "Esperar os bombeiros"
+        "Retirar os próprios pertences do posto",
+        "Ligar para o síndico e aguardar orientação"
       ],
       "n": "facil",
       "resposta": "Avisar a central e acionar o alarme de incêndio"
     },
     {
-      "q": "O uso do rádio comunicador serve para:?",
+      "q": "O uso do rádio comunicador serve para:",
       "o": [
-        "Conversas pessoais",
+        "Registrar oficialmente as ocorrências do turno",
         "Comunicação rápida entre equipe de segurança",
-        "Ouvir música",
-        "Apenas registrar ocorrências"
+        "Substituir o telefone em ligações externas",
+        "Falar diretamente com a polícia militar"
       ],
       "n": "facil",
       "resposta": "Comunicação rápida entre equipe de segurança"
@@ -977,10 +977,10 @@ export const PERGUNTAS_SEED = {
     {
       "q": "Ao identificar uma situação suspeita, qual deve ser a primeira ação do vigilante?",
       "o": [
-        "Ignorar (procedimento padrão)",
+        "Abordar a pessoa suspeita sozinho e na hora",
         "Comunicar imediatamente à supervisão ou central",
-        "Abordar de forma agressiva",
-        "Deixar o local"
+        "Aguardar para ver se a situação se resolve",
+        "Anotar e relatar apenas na troca de turno"
       ],
       "n": "facil",
       "resposta": "Comunicar imediatamente à supervisão ou central"
@@ -988,27 +988,27 @@ export const PERGUNTAS_SEED = {
     {
       "q": "O que é uma ronda?",
       "o": [
-        "Um descanso do vigilante",
+        "Registro das entradas e saídas no livro",
         "Verificação periódica do local para identificar riscos",
-        "Uma reunião de vigilantes",
-        "Um relatório administrativo"
+        "Reunião da equipe no início do plantão",
+        "Troca de posto entre vigilantes do turno"
       ],
       "n": "facil",
       "resposta": "Verificação periódica do local para identificar riscos"
     },
     {
-      "q": "O vigilante deve agir sempre com:?",
+      "q": "O vigilante deve agir sempre com:",
       "o": [
-        "Violência (procedimento padrão)",
+        "Violência",
         "Autoridade excessiva",
         "Educação e profissionalismo",
-        "Indiferença (procedimento padrão)"
+        "Indiferença"
       ],
       "n": "facil",
       "resposta": "Educação e profissionalismo"
     },
     {
-      "q": "O que significa cftv?",
+      "q": "O que significa CFTV?",
       "o": [
         "Central de Fiscalização de Transporte",
         "Circuito Fechado de Televisão",
@@ -1021,16 +1021,16 @@ export const PERGUNTAS_SEED = {
     {
       "q": "O vigilante pode portar arma de fogo quando?",
       "o": [
-        "Sempre que quiser",
+        "Sempre que estiver uniformizado, mesmo fora",
         "Somente em serviço e quando autorizado",
-        "Apenas fora do trabalho",
-        "Nunca (procedimento padrão)"
+        "Apenas quando o cliente pedir verbalmente",
+        "Em serviço, mesmo sem autorização da empresa"
       ],
       "n": "facil",
       "resposta": "Somente em serviço e quando autorizado"
     },
     {
-      "q": "Considerando contexto operacional, qual equipamento é usado para monitoramento por câmeras?",
+      "q": "Qual equipamento é usado para monitoramento por câmeras?",
       "o": [
         "DVR ou NVR",
         "Impressora",
@@ -1043,21 +1043,21 @@ export const PERGUNTAS_SEED = {
     {
       "q": "O que é controle de acesso?",
       "o": [
-        "Controle financeiro",
+        "Controle dos horários de trabalho da equipe",
         "Verificação e autorização de entrada e saída de pessoas",
-        "Controle de estoque",
-        "Controle de vigilantes"
+        "Registro dos materiais que saem do estoque",
+        "Verificação dos veículos da empresa na garagem"
       ],
       "n": "medio",
       "resposta": "Verificação e autorização de entrada e saída de pessoas"
     },
     {
-      "q": "O uso da força pelo vigilante deve ser:?",
+      "q": "O uso da força pelo vigilante deve ser:",
       "o": [
-        "Sempre imediato",
+        "Imediato, para encerrar logo a situação",
         "Proporcional à situação",
-        "Exagerado",
-        "Desnecessário"
+        "Sempre máximo, para impor respeito",
+        "Usado apenas depois de pedir autorização"
       ],
       "n": "medio",
       "resposta": "Proporcional à situação"
@@ -1076,10 +1076,10 @@ export const PERGUNTAS_SEED = {
     {
       "q": "O que é perímetro de segurança?",
       "o": [
-        "Área sem vigilância",
+        "Área interna liberada para visitantes",
         "Área delimitada para controle e proteção",
-        "Local de descanso",
-        "Área administrativa"
+        "Espaço reservado para o descanso da equipe",
+        "Local onde ficam os equipamentos de ronda"
       ],
       "n": "medio",
       "resposta": "Área delimitada para controle e proteção"
@@ -1088,7 +1088,7 @@ export const PERGUNTAS_SEED = {
       "q": "O vigilante deve manter sigilo sobre informações do local de trabalho?",
       "o": [
         "Sim",
-        "Não (procedimento padrão)",
+        "Não",
         "Apenas às vezes",
         "Somente para colegas"
       ],
@@ -1096,18 +1096,18 @@ export const PERGUNTAS_SEED = {
       "resposta": "Sim"
     },
     {
-      "q": "Considerando contexto operacional, qual é o objetivo da segurança patrimonial?",
+      "q": "Qual é o objetivo da segurança patrimonial?",
       "o": [
         "Proteger bens, instalações e pessoas",
-        "Somente observar câmeras",
-        "Fazer policiamento urbano",
-        "Aplicar leis"
+        "Fiscalizar o trabalho dos funcionários",
+        "Fazer o policiamento das ruas próximas",
+        "Controlar apenas as câmeras do local"
       ],
       "n": "medio",
       "resposta": "Proteger bens, instalações e pessoas"
     },
     {
-      "q": "Considerando contexto operacional, qual é a carga horária mínima do curso de formação de vigilante no brasil?",
+      "q": "Qual é a carga horária mínima do curso de formação de vigilante no brasil?",
       "o": [
         "50 horas",
         "100 horas",
@@ -1129,18 +1129,18 @@ export const PERGUNTAS_SEED = {
       "resposta": "Evitar que incidentes aconteçam"
     },
     {
-      "q": "Ao realizar uma abordagem, o vigilante deve:?",
+      "q": "Ao realizar uma abordagem, o vigilante deve:",
       "o": [
-        "Agir com agressividade",
+        "Falar em tom alto para impor autoridade",
         "Manter postura profissional e respeitosa",
-        "Ignorar a situação",
-        "Fazer ameaças"
+        "Revistar a pessoa antes de conversar",
+        "Segurar a pessoa pelo braço por precaução"
       ],
       "n": "medio",
       "resposta": "Manter postura profissional e respeitosa"
     },
     {
-      "q": "De acordo com os protocolos de segurança, qual documento registra oficialmente as ocorrências do serviço?",
+      "q": "Qual documento registra oficialmente as ocorrências do serviço?",
       "o": [
         "Livro de ocorrências",
         "Escala de trabalho",
@@ -1153,98 +1153,98 @@ export const PERGUNTAS_SEED = {
     {
       "q": "O que caracteriza legítima defesa?",
       "o": [
-        "Ataque sem motivo",
+        "Reagir depois que a agressão já terminou",
         "Reação proporcional para repelir agressão injusta",
-        "Uso excessivo da força",
-        "Vingança (procedimento padrão)"
+        "Atacar primeiro quando houver suspeita",
+        "Usar toda a força disponível para intimidar"
       ],
       "n": "dificil",
       "resposta": "Reação proporcional para repelir agressão injusta"
     },
     {
-      "q": "De acordo com os protocolos de segurança, qual é a função do alarme perimetral?",
+      "q": "Qual é a função do alarme perimetral?",
       "o": [
-        "Iluminar o local",
+        "Gravar as imagens do perímetro externo",
         "Detectar invasões em áreas delimitadas",
-        "Controlar visitantes",
-        "Registrar imagens"
+        "Iluminar as áreas externas à noite",
+        "Controlar a entrada de visitantes"
       ],
       "n": "dificil",
       "resposta": "Detectar invasões em áreas delimitadas"
     },
     {
-      "q": "Em caso de suspeita de bomba ou objeto suspeito, o vigilante deve:?",
+      "q": "Em caso de suspeita de bomba ou objeto suspeito, o vigilante deve:",
       "o": [
         "Tocar no objeto",
         "Isolar a área e comunicar autoridades",
-        "Ignorar (procedimento padrão)",
+        "Ignorar",
         "Levar o objeto para outro local"
       ],
       "n": "dificil",
       "resposta": "Isolar a área e comunicar autoridades"
     },
     {
-      "q": "O planejamento de segurança serve para:?",
+      "q": "O planejamento de segurança serve para:",
       "o": [
         "Organizar ações de prevenção e resposta a incidentes",
-        "Apenas cumprir regras",
-        "Fazer relatórios",
-        "Controlar vigilantes"
+        "Definir apenas as escalas e folgas da equipe",
+        "Cumprir exigências do contrato com o cliente",
+        "Registrar as ocorrências do mês anterior"
       ],
       "n": "dificil",
       "resposta": "Organizar ações de prevenção e resposta a incidentes"
     },
     {
-      "q": "De acordo com os protocolos de segurança, qual é a importância da ronda noturna?",
+      "q": "Qual é a importância da ronda noturna?",
       "o": [
-        "Apenas cumprir horário",
+        "Cumprir o horário mínimo exigido no posto",
         "Identificar riscos e irregularidades",
-        "Fazer descanso",
-        "Conversar com colegas"
+        "Manter a equipe acordada durante o plantão",
+        "Verificar apenas a iluminação externa"
       ],
       "n": "dificil",
       "resposta": "Identificar riscos e irregularidades"
     },
     {
-      "q": "Conceitualmente, como se define análise de risco na segurança?",
+      "q": "Como se define análise de risco na segurança?",
       "o": [
         "Estudo para identificar vulnerabilidades",
-        "Apenas observação de câmeras",
-        "Controle de visitantes",
-        "Registro de ocorrências"
+        "Registro das ocorrências após acontecerem",
+        "Contagem de visitantes que entram no dia",
+        "Verificação do funcionamento das câmeras"
       ],
       "n": "dificil",
       "resposta": "Estudo para identificar vulnerabilidades"
     },
     {
-      "q": "A postura do vigilante influencia:?",
+      "q": "A postura do vigilante influencia:",
       "o": [
-        "Apenas a aparência",
+        "Apenas a imagem pessoal do vigilante",
         "A credibilidade e segurança do local",
-        "Somente a empresa",
-        "Nada (procedimento padrão)"
+        "Somente a avaliação feita pela empresa",
+        "Apenas a relação com os colegas de turno"
       ],
       "n": "dificil",
       "resposta": "A credibilidade e segurança do local"
     },
     {
-      "q": "De acordo com os protocolos de segurança, qual é a função da central de monitoramento?",
+      "q": "Qual é a função da central de monitoramento?",
       "o": [
-        "Apenas gravar imagens",
+        "Apenas armazenar as gravações das câmeras",
         "Monitorar e apoiar operações de segurança",
-        "Fazer manutenção",
-        "Controlar escalas"
+        "Organizar as escalas e folgas da equipe",
+        "Fazer a manutenção dos equipamentos"
       ],
       "n": "dificil",
       "resposta": "Monitorar e apoiar operações de segurança"
     },
     {
-      "q": "Em caso de invasão, o vigilante deve prioritariamente:?",
+      "q": "Em caso de invasão, o vigilante deve prioritariamente:",
       "o": [
-        "Confrontar sozinho o invasor",
+        "Confrontar o invasor sozinho imediatamente",
         "Comunicar a central e seguir o protocolo de segurança",
-        "Abandonar o posto",
-        "Desligar equipamentos"
+        "Aguardar o invasor sair para depois avisar",
+        "Trancar-se no posto e não comunicar ninguém"
       ],
       "n": "dificil",
       "resposta": "Comunicar a central e seguir o protocolo de segurança"
@@ -1254,10 +1254,10 @@ export const PERGUNTAS_SEED = {
     {
       "q": "Qual procedimento deve ser adotado antes de realizar manutenção em circuito elétrico energizado?",
       "o": [
-        "Utilizar apenas luvas de proteção",
+        "Usar apenas luvas isolantes e trabalhar com cuidado",
         "Aplicar procedimento de bloqueio e sinalização do circuito",
-        "Reduzir a carga do circuito",
-        "Trabalhar rapidamente para evitar riscos"
+        "Reduzir a carga do circuito antes de começar",
+        "Trabalhar rápido para diminuir o tempo de exposição"
       ],
       "n": "facil",
       "resposta": "Aplicar procedimento de bloqueio e sinalização do circuito"
@@ -1276,16 +1276,16 @@ export const PERGUNTAS_SEED = {
     {
       "q": "Qual problema estrutural pode ser causado por infiltração contínua em lajes ou paredes?",
       "o": [
-        "Melhor isolamento térmico",
+        "Melhora do isolamento térmico do ambiente",
         "Corrosão de armaduras e comprometimento da estrutura",
-        "Redução do peso da estrutura",
-        "Aumento da resistência do concreto"
+        "Aumento da resistência do concreto com o tempo",
+        "Apenas manchas na pintura, sem risco estrutural"
       ],
       "n": "facil",
       "resposta": "Corrosão de armaduras e comprometimento da estrutura"
     },
     {
-      "q": "O aquecimento excessivo de um motor elétrico pode ser causado por:?",
+      "q": "O aquecimento excessivo de um motor elétrico pode ser causado por:",
       "o": [
         "Falta de ventilação ou sobrecarga",
         "Baixa tensão constante",
@@ -1298,10 +1298,10 @@ export const PERGUNTAS_SEED = {
     {
       "q": "Qual é o principal objetivo do sistema de aterramento em uma instalação elétrica predial?",
       "o": [
-        "Aumentar a tensão elétrica",
-        "Reduzir o consumo de energia",
+        "Aumentar a tensão disponível nas tomadas e nos quadros elétricos",
+        "Reduzir o consumo de energia elétrica em todo o prédio",
         "Conduzir correntes de falha para o solo, protegendo pessoas e equipamentos",
-        "Armazenar energia elétrica"
+        "Manter a tensão estável durante quedas de energia da rede"
       ],
       "n": "facil",
       "resposta": "Conduzir correntes de falha para o solo, protegendo pessoas e equipamentos"
@@ -1309,10 +1309,10 @@ export const PERGUNTAS_SEED = {
     {
       "q": "O que pode indicar vibração excessiva em uma bomba hidráulica em funcionamento?",
       "o": [
-        "Funcionamento ideal",
+        "Funcionamento normal em alta rotação",
         "Desalinhamento ou desgaste de componentes internos",
-        "Baixo consumo de energia",
-        "Pressão adequada da água"
+        "Excesso de água no reservatório superior",
+        "Pressão ideal na tubulação de recalque"
       ],
       "n": "facil",
       "resposta": "Desalinhamento ou desgaste de componentes internos"
@@ -1320,10 +1320,10 @@ export const PERGUNTAS_SEED = {
     {
       "q": "Em sistemas hidráulicos prediais, qual é a função da válvula de retenção?",
       "o": [
-        "Controlar a pressão da água",
+        "Regular a pressão da água na tubulação",
         "Impedir o retorno do fluxo de água na tubulação",
-        "Aumentar a vazão de água",
-        "Filtrar impurezas da rede"
+        "Aumentar a vazão da água nos pontos de uso",
+        "Filtrar as impurezas que vêm da rua"
       ],
       "n": "facil",
       "resposta": "Impedir o retorno do fluxo de água na tubulação"
@@ -1343,9 +1343,9 @@ export const PERGUNTAS_SEED = {
       "q": "Em manutenção predial, o que caracteriza uma inspeção técnica periódica?",
       "o": [
         "Avaliação programada das condições dos sistemas e equipamentos",
-        "Reparos apenas após falhas",
-        "Substituição completa de equipamentos",
-        "Inspeção visual sem registro"
+        "Reparo feito somente depois que o equipamento apresenta falha",
+        "Troca completa dos equipamentos antigos por modelos novos",
+        "Olhada rápida nos equipamentos, sem registro das condições"
       ],
       "n": "facil",
       "resposta": "Avaliação programada das condições dos sistemas e equipamentos"
@@ -1353,16 +1353,16 @@ export const PERGUNTAS_SEED = {
     {
       "q": "Em sistemas de combate a incêndio, qual é a função da bomba de incêndio?",
       "o": [
-        "Filtrar água",
+        "Armazenar água extra para o combate ao fogo",
         "Manter pressão suficiente na rede de hidrantes e sprinklers",
-        "Armazenar água",
-        "Controlar o fluxo de energia"
+        "Filtrar a água usada nos hidrantes",
+        "Abastecer a caixa d'água em falta de energia"
       ],
       "n": "facil",
       "resposta": "Manter pressão suficiente na rede de hidrantes e sprinklers"
     },
     {
-      "q": "Considerando contexto operacional, qual procedimento deve ser adotado ao trabalhar em altura durante manutenção?",
+      "q": "Qual procedimento deve ser adotado ao trabalhar em altura durante manutenção?",
       "o": [
         "Trabalhar sem equipamentos para maior mobilidade",
         "Utilizar sistemas de proteção contra quedas e EPIs adequados",
@@ -1373,12 +1373,12 @@ export const PERGUNTAS_SEED = {
       "resposta": "Utilizar sistemas de proteção contra quedas e EPIs adequados"
     },
     {
-      "q": "Considerando contexto operacional, qual equipamento é responsável por manter iluminação em rotas de fuga durante falta de energia?",
+      "q": "Qual equipamento é responsável por manter iluminação em rotas de fuga durante falta de energia?",
       "o": [
-        "Gerador principal",
+        "Gerador principal do prédio",
         "Sistema de iluminação de emergência",
-        "Transformador elétrico",
-        "Quadro de distribuição"
+        "Nobreak da central de CFTV",
+        "Quadro geral de distribuição"
       ],
       "n": "medio",
       "resposta": "Sistema de iluminação de emergência"
@@ -1417,18 +1417,18 @@ export const PERGUNTAS_SEED = {
       "resposta": "Ruídos metálicos e aumento de vibração"
     },
     {
-      "q": "Considerando contexto operacional, qual é a principal função de um quadro de comando de bombas?",
+      "q": "Qual é a principal função de um quadro de comando de bombas?",
       "o": [
-        "Armazenar energia",
+        "Armazenar energia para as bombas em falhas",
         "Controlar o acionamento e proteção dos motores das bombas",
-        "Regular a pressão da água",
-        "Filtrar impurezas da rede"
+        "Regular sozinho a pressão da rede hidráulica",
+        "Filtrar a água antes de chegar às bombas"
       ],
       "n": "medio",
       "resposta": "Controlar o acionamento e proteção dos motores das bombas"
     },
     {
-      "q": "Considerando contexto operacional, qual é a finalidade da manutenção preditiva em sistemas prediais?",
+      "q": "Qual é a finalidade da manutenção preditiva em sistemas prediais?",
       "o": [
         "Substituir todos os equipamentos periodicamente",
         "Monitorar condições para prever falhas antes que ocorram",
@@ -1441,10 +1441,10 @@ export const PERGUNTAS_SEED = {
     {
       "q": "O que pode indicar queda de tensão em uma instalação elétrica predial?",
       "o": [
-        "Aumento da iluminação",
+        "Aumento da iluminação nos corredores",
         "Funcionamento inadequado de equipamentos elétricos",
-        "Redução da corrente elétrica",
-        "Aumento da potência instalada"
+        "Redução do consumo na conta de energia",
+        "Melhor desempenho dos motores elétricos"
       ],
       "n": "medio",
       "resposta": "Funcionamento inadequado de equipamentos elétricos"
@@ -1461,12 +1461,12 @@ export const PERGUNTAS_SEED = {
       "resposta": "Isolar o equipamento e providenciar reparo imediato"
     },
     {
-      "q": "Em instalações prediais, qual é a função do dr (dispositivo diferencial residual)?",
+      "q": "Em instalações prediais, qual é a função do DR (dispositivo diferencial residual)?",
       "o": [
-        "Controlar tensão elétrica",
+        "Proteger os circuitos contra sobrecarga de corrente",
         "Proteger contra choques elétricos causados por fuga de corrente",
-        "Aumentar a potência elétrica",
-        "Controlar iluminação"
+        "Manter a tensão estável nas tomadas do prédio",
+        "Desligar a iluminação em horários programados"
       ],
       "n": "medio",
       "resposta": "Proteger contra choques elétricos causados por fuga de corrente"
@@ -1474,21 +1474,21 @@ export const PERGUNTAS_SEED = {
     {
       "q": "O que deve ser feito ao identificar fissuras estruturais em paredes ou vigas?",
       "o": [
-        "Pintar o local",
+        "Fechar as fissuras com massa e pintar o local",
         "Comunicar imediatamente a avaliação técnica especializada",
-        "Ignorar se não houver infiltração",
-        "Fechar com massa corrida"
+        "Monitorar por alguns meses antes de avisar",
+        "Ignorar enquanto não houver infiltração"
       ],
       "n": "dificil",
       "resposta": "Comunicar imediatamente a avaliação técnica especializada"
     },
     {
-      "q": "De acordo com os protocolos de segurança, qual é a principal função de um gerador em edificações?",
+      "q": "Qual é a principal função de um gerador em edificações?",
       "o": [
-        "Aumentar potência da rede",
+        "Aumentar a potência da rede em horários de pico",
         "Fornecer energia em caso de falha no fornecimento principal",
-        "Controlar tensão",
-        "Reduzir consumo"
+        "Controlar a tensão fornecida pela concessionária",
+        "Reduzir o valor da conta de energia do prédio"
       ],
       "n": "dificil",
       "resposta": "Fornecer energia em caso de falha no fornecimento principal"
@@ -1496,10 +1496,10 @@ export const PERGUNTAS_SEED = {
     {
       "q": "Em um plano de manutenção predial eficiente, qual elemento é essencial?",
       "o": [
-        "Apenas reparos emergenciais",
+        "Equipe disponível apenas para atender os reparos urgentes",
         "Cronograma de inspeções, manutenção preventiva e registros técnicos",
-        "Apenas substituição de equipamentos",
-        "Apenas limpeza periódica"
+        "Troca dos equipamentos somente quando eles pararem de funcionar",
+        "Limpeza periódica das áreas técnicas e casas de máquinas"
       ],
       "n": "dificil",
       "resposta": "Cronograma de inspeções, manutenção preventiva e registros técnicos"
@@ -1507,21 +1507,21 @@ export const PERGUNTAS_SEED = {
     {
       "q": "Em manutenção elétrica, o que significa identificar um curto-circuito?",
       "o": [
-        "Aumento da resistência elétrica",
+        "Aumento da resistência elétrica ao longo dos condutores",
         "Contato direto entre condutores energizados causando alta corrente",
-        "Redução de energia",
-        "Falta de corrente elétrica"
+        "Queda de tensão causada por excesso de aparelhos ligados",
+        "Interrupção da corrente elétrica por um fio rompido no circuito"
       ],
       "n": "dificil",
       "resposta": "Contato direto entre condutores energizados causando alta corrente"
     },
     {
-      "q": "De acordo com os protocolos de segurança, qual risco está associado a conexões elétricas mal apertadas?",
+      "q": "Qual risco está associado a conexões elétricas mal apertadas?",
       "o": [
-        "Redução de tensão",
+        "Queda leve de tensão nas tomadas próximas",
         "Aquecimento excessivo e risco de incêndio",
-        "Aumento de potência",
-        "Melhoria da condução elétrica"
+        "Aumento da potência disponível no circuito",
+        "Desligamento imediato do disjuntor geral"
       ],
       "n": "dificil",
       "resposta": "Aquecimento excessivo e risco de incêndio"
@@ -1529,10 +1529,10 @@ export const PERGUNTAS_SEED = {
     {
       "q": "Em manutenção predial, o que caracteriza um sistema de pressurização de água?",
       "o": [
-        "Sistema que armazena água",
+        "Sistema que armazena água para o prédio",
         "Equipamento que mantém pressão constante na rede hidráulica",
-        "Sistema que filtra água",
-        "Equipamento que aquece água"
+        "Conjunto que filtra a água da rede pública",
+        "Equipamento que aquece a água dos chuveiros"
       ],
       "n": "dificil",
       "resposta": "Equipamento que mantém pressão constante na rede hidráulica"
@@ -1541,31 +1541,31 @@ export const PERGUNTAS_SEED = {
       "q": "Em sistemas prediais, qual é a função do reservatório inferior?",
       "o": [
         "Armazenar água antes do bombeamento para reservatórios superiores",
-        "Filtrar água",
-        "Aquecer água",
-        "Controlar pressão"
+        "Filtrar a água que chega da rede pública antes do consumo",
+        "Guardar água exclusivamente para os hidrantes do prédio",
+        "Controlar a pressão da água que chega aos andares superiores"
       ],
       "n": "dificil",
       "resposta": "Armazenar água antes do bombeamento para reservatórios superiores"
     },
     {
-      "q": "Em sistemas de ventilação mecânica, filtros sujos podem causar:?",
+      "q": "Em sistemas de ventilação mecânica, filtros sujos podem causar:",
       "o": [
-        "Melhoria da circulação de ar",
+        "Melhora da circulação de ar no ambiente",
         "Redução da eficiência e aumento do consumo de energia",
-        "Aumento da pressão do ar",
-        "Resfriamento do ambiente"
+        "Aumento da pressão e da vazão de ar",
+        "Resfriamento mais rápido do ambiente"
       ],
       "n": "dificil",
       "resposta": "Redução da eficiência e aumento do consumo de energia"
     },
     {
-      "q": "De acordo com os protocolos de segurança, qual é a importância do registro técnico das manutenções realizadas?",
+      "q": "Qual é a importância do registro técnico das manutenções realizadas?",
       "o": [
-        "Apenas controle administrativo",
+        "Controle administrativo de horas trabalhadas",
         "Histórico para planejamento, controle e prevenção de falhas",
-        "Redução de custos imediatos",
-        "Controle de presença"
+        "Comprovação de presença do técnico no local",
+        "Redução imediata dos custos com materiais"
       ],
       "n": "dificil",
       "resposta": "Histórico para planejamento, controle e prevenção de falhas"
@@ -1573,10 +1573,10 @@ export const PERGUNTAS_SEED = {
     {
       "q": "O que caracteriza uma falha crítica em equipamentos prediais?",
       "o": [
-        "Pequeno ruído",
+        "Ruído leve que aparece, mas não afeta o funcionamento",
         "Defeito que compromete segurança ou funcionamento essencial do sistema",
-        "Necessidade de limpeza",
-        "Pequena redução de desempenho"
+        "Necessidade de limpeza nos componentes externos do equipamento",
+        "Pequena perda de desempenho, sem risco para as pessoas"
       ],
       "n": "dificil",
       "resposta": "Defeito que compromete segurança ou funcionamento essencial do sistema"
@@ -1586,10 +1586,10 @@ export const PERGUNTAS_SEED = {
     {
       "q": "Qual é o procedimento correto ao limpar um ambiente interno?",
       "o": [
-        "Começar pelo chão",
+        "Começar pelo chão e terminar nas paredes",
         "Limpar do local mais alto para o mais baixo",
-        "Começar pelas portas",
-        "Limpar primeiro os cantos"
+        "Começar pelos cantos e terminar no centro",
+        "Limpar primeiro as portas e depois o resto"
       ],
       "n": "facil",
       "resposta": "Limpar do local mais alto para o mais baixo"
@@ -1597,10 +1597,10 @@ export const PERGUNTAS_SEED = {
     {
       "q": "Qual é o principal objetivo da limpeza profissional em ambientes coletivos?",
       "o": [
-        "Apenas melhorar a aparência",
+        "Deixar o ambiente com boa aparência e cheiro",
         "Reduzir riscos de contaminação e manter o ambiente saudável",
-        "Diminuir o trabalho da manutenção",
-        "Apenas retirar poeira"
+        "Diminuir o trabalho da equipe de manutenção",
+        "Retirar a poeira visível das superfícies"
       ],
       "n": "facil",
       "resposta": "Reduzir riscos de contaminação e manter o ambiente saudável"
@@ -1608,10 +1608,10 @@ export const PERGUNTAS_SEED = {
     {
       "q": "Em pisos molhados durante a limpeza, qual procedimento aumenta a segurança?",
       "o": [
-        "Acelerar o processo",
+        "Terminar o mais rápido possível",
         "Sinalizar a área com aviso de piso molhado",
-        "Fechar todas as portas",
-        "Aumentar a iluminação"
+        "Fechar as portas até o piso secar",
+        "Aumentar a iluminação do local"
       ],
       "n": "facil",
       "resposta": "Sinalizar a área com aviso de piso molhado"
@@ -1619,10 +1619,10 @@ export const PERGUNTAS_SEED = {
     {
       "q": "Qual é a função do pano de microfibra na limpeza profissional?",
       "o": [
-        "Apenas secar superfícies",
+        "Espalhar o produto de forma uniforme",
         "Capturar poeira e sujeira com maior eficiência",
-        "Aplicar desinfetante apenas",
-        "Polir metais"
+        "Secar rapidamente superfícies molhadas",
+        "Dar brilho em metais e vidros"
       ],
       "n": "facil",
       "resposta": "Capturar poeira e sujeira com maior eficiência"
@@ -1630,10 +1630,10 @@ export const PERGUNTAS_SEED = {
     {
       "q": "Qual é a forma correta de armazenar produtos químicos de limpeza?",
       "o": [
-        "Em qualquer recipiente disponível",
+        "Em garrafas reaproveitadas para economizar",
         "Em recipientes identificados e local apropriado",
-        "Misturados para economizar espaço",
-        "Próximo a alimentos"
+        "Misturados em um só recipiente maior",
+        "Na copa, perto dos itens de uso diário"
       ],
       "n": "facil",
       "resposta": "Em recipientes identificados e local apropriado"
@@ -1641,10 +1641,10 @@ export const PERGUNTAS_SEED = {
     {
       "q": "Por que é importante utilizar luvas durante atividades de limpeza?",
       "o": [
-        "Melhorar aparência do funcionário",
+        "Evitar que as mãos fiquem molhadas no serviço",
         "Proteger a pele contra produtos químicos e contaminações",
-        "Evitar molhar as mãos",
-        "Facilitar o uso de equipamentos"
+        "Padronizar a aparência do uniforme da equipe",
+        "Facilitar o manuseio de vassouras e rodos"
       ],
       "n": "facil",
       "resposta": "Proteger a pele contra produtos químicos e contaminações"
@@ -1652,10 +1652,10 @@ export const PERGUNTAS_SEED = {
     {
       "q": "Qual é a função do desinfetante em processos de limpeza?",
       "o": [
-        "Apenas perfumar o ambiente",
+        "Remover gordura pesada de pisos, bancadas e fogões",
         "Eliminar ou reduzir microrganismos presentes nas superfícies",
-        "Remover gordura pesada",
-        "Secar superfícies"
+        "Deixar o ambiente com cheiro agradável após a limpeza",
+        "Dar brilho e criar uma camada de proteção na superfície"
       ],
       "n": "facil",
       "resposta": "Eliminar ou reduzir microrganismos presentes nas superfícies"
@@ -1674,10 +1674,10 @@ export const PERGUNTAS_SEED = {
     {
       "q": "O que caracteriza uma limpeza terminal em ambientes profissionais?",
       "o": [
-        "Limpeza rápida",
+        "Limpeza rápida feita durante o expediente",
         "Limpeza profunda realizada após desocupação do ambiente",
-        "Limpeza superficial",
-        "Apenas varrição"
+        "Limpeza feita apenas nas áreas visíveis",
+        "Varrição diária realizada pela manhã"
       ],
       "n": "facil",
       "resposta": "Limpeza profunda realizada após desocupação do ambiente"
@@ -1685,10 +1685,10 @@ export const PERGUNTAS_SEED = {
     {
       "q": "O que pode ocorrer ao misturar produtos químicos de limpeza sem conhecimento técnico?",
       "o": [
-        "Aumentar eficiência",
+        "Aumentar a eficiência da limpeza",
         "Produzir gases tóxicos ou reações perigosas",
-        "Melhorar o cheiro do ambiente",
-        "Reduzir o consumo de produto"
+        "Deixar o cheiro do ambiente mais forte",
+        "Reduzir a quantidade de produto usado"
       ],
       "n": "facil",
       "resposta": "Produzir gases tóxicos ou reações perigosas"
@@ -1696,16 +1696,16 @@ export const PERGUNTAS_SEED = {
     {
       "q": "O que deve ser feito ao identificar um produto de limpeza sem rótulo?",
       "o": [
-        "Utilizar normalmente",
+        "Usar normalmente, pelo cheiro dá para saber",
         "Identificar corretamente antes de usar",
-        "Misturar com outro produto",
-        "Descartar no ralo"
+        "Misturar com um produto conhecido para testar",
+        "Descartar no ralo mais próximo"
       ],
       "n": "medio",
       "resposta": "Identificar corretamente antes de usar"
     },
     {
-      "q": "Considerando contexto operacional, qual é o principal risco de não utilizar epi durante limpeza com produtos químicos?",
+      "q": "Qual é o principal risco de não utilizar EPI durante limpeza com produtos químicos?",
       "o": [
         "Sujar a roupa",
         "Irritações, intoxicações ou acidentes",
@@ -1716,18 +1716,18 @@ export const PERGUNTAS_SEED = {
       "resposta": "Irritações, intoxicações ou acidentes"
     },
     {
-      "q": "Considerando contexto operacional, qual é a função do mop úmido na limpeza profissional?",
+      "q": "Qual é a função do mop úmido na limpeza profissional?",
       "o": [
-        "Remover poeira seca",
+        "Remover a poeira seca antes de varrer",
         "Limpar e higienizar pisos com solução de limpeza",
-        "Secar janelas",
-        "Polir superfícies metálicas"
+        "Secar o piso depois da lavagem",
+        "Encerar e dar brilho no piso"
       ],
       "n": "medio",
       "resposta": "Limpar e higienizar pisos com solução de limpeza"
     },
     {
-      "q": "Considerando contexto operacional, qual procedimento reduz a propagação de germes ao limpar banheiros?",
+      "q": "Qual procedimento reduz a propagação de germes ao limpar banheiros?",
       "o": [
         "Usar o mesmo pano em todas as superfícies",
         "Utilizar materiais específicos para cada área",
@@ -1738,34 +1738,34 @@ export const PERGUNTAS_SEED = {
       "resposta": "Utilizar materiais específicos para cada área"
     },
     {
-      "q": "Considerando contexto operacional, qual é o objetivo da varrição úmida em ambientes internos?",
+      "q": "Qual é o objetivo da varrição úmida em ambientes internos?",
       "o": [
-        "Espalhar poeira",
+        "Deixar o piso com mais brilho",
         "Reduzir suspensão de poeira no ar",
-        "Aumentar brilho do piso",
-        "Secar superfícies"
+        "Secar o piso mais rapidamente",
+        "Economizar produto de limpeza"
       ],
       "n": "medio",
       "resposta": "Reduzir suspensão de poeira no ar"
     },
     {
-      "q": "Considerando contexto operacional, qual equipamento é mais indicado para remover poeira de áreas altas?",
+      "q": "Qual equipamento é mais indicado para remover poeira de áreas altas?",
       "o": [
-        "Vassoura comum",
+        "Vassoura comum de cabo longo",
         "Extensor com espanador",
-        "Rodo (procedimento padrão)",
-        "Mop seco"
+        "Rodo com pano úmido",
+        "Escada e pano seco"
       ],
       "n": "medio",
       "resposta": "Extensor com espanador"
     },
     {
-      "q": "O uso excessivo de produto químico na limpeza pode causar:?",
+      "q": "O uso excessivo de produto químico na limpeza pode causar:",
       "o": [
-        "Melhor limpeza",
+        "Limpeza mais eficiente e duradoura",
         "Resíduos no ambiente e desperdício",
-        "Redução da sujeira",
-        "Menor tempo de trabalho"
+        "Redução do tempo de limpeza",
+        "Eliminação total dos microrganismos"
       ],
       "n": "medio",
       "resposta": "Resíduos no ambiente e desperdício"
@@ -1773,16 +1773,16 @@ export const PERGUNTAS_SEED = {
     {
       "q": "Em limpeza profissional, qual é a finalidade do enxágue após uso de detergentes?",
       "o": [
-        "Melhorar cheiro",
+        "Deixar o cheiro do produto no local",
         "Remover resíduos do produto da superfície",
-        "Secar superfícies",
-        "Polir o local"
+        "Secar a superfície mais rápido",
+        "Dar brilho à superfície limpa"
       ],
       "n": "medio",
       "resposta": "Remover resíduos do produto da superfície"
     },
     {
-      "q": "Considerando contexto operacional, qual é a importância da ventilação durante a limpeza de ambientes fechados?",
+      "q": "Qual é a importância da ventilação durante a limpeza de ambientes fechados?",
       "o": [
         "Aumentar a iluminação",
         "Reduzir concentração de vapores químicos",
@@ -1795,27 +1795,27 @@ export const PERGUNTAS_SEED = {
     {
       "q": "Em áreas comuns de condomínios, qual local exige maior frequência de higienização?",
       "o": [
-        "Paredes externas",
+        "Paredes externas e fachadas do prédio, por causa da poeira",
         "Superfícies de contato frequente como corrimãos e maçanetas",
-        "Tetos (procedimento padrão)",
-        "Garagens abertas"
+        "Tetos e luminárias dos corredores e áreas de circulação",
+        "Pisos das garagens abertas, que recebem mais sujeira"
       ],
       "n": "medio",
       "resposta": "Superfícies de contato frequente como corrimãos e maçanetas"
     },
     {
-      "q": "De acordo com os protocolos de segurança, qual é o objetivo da diluição correta de produtos de limpeza?",
+      "q": "Qual é o objetivo da diluição correta de produtos de limpeza?",
       "o": [
-        "Aumentar consumo",
+        "Deixar o produto com cheiro mais forte",
         "Garantir eficiência e segurança no uso",
-        "Diminuir tempo de trabalho",
-        "Melhorar aparência"
+        "Economizar produto a qualquer custo",
+        "Diminuir o tempo de cada limpeza"
       ],
       "n": "dificil",
       "resposta": "Garantir eficiência e segurança no uso"
     },
     {
-      "q": "O descarte correto de resíduos coletados durante a limpeza deve seguir:?",
+      "q": "O descarte correto de resíduos coletados durante a limpeza deve seguir:",
       "o": [
         "Apenas o tipo de saco disponível",
         "Normas de separação e coleta de resíduos",
@@ -1826,7 +1826,7 @@ export const PERGUNTAS_SEED = {
       "resposta": "Normas de separação e coleta de resíduos"
     },
     {
-      "q": "De acordo com os protocolos de segurança, qual problema pode ocorrer se equipamentos de limpeza não forem higienizados após o uso?",
+      "q": "Qual problema pode ocorrer se equipamentos de limpeza não forem higienizados após o uso?",
       "o": [
         "Melhor desempenho",
         "Acúmulo de sujeira e contaminação cruzada",
@@ -1837,45 +1837,45 @@ export const PERGUNTAS_SEED = {
       "resposta": "Acúmulo de sujeira e contaminação cruzada"
     },
     {
-      "q": "De acordo com os protocolos de segurança, qual é o risco de deixar cabos e equipamentos espalhados no local de trabalho?",
+      "q": "Qual é o risco de deixar cabos e equipamentos espalhados no local de trabalho?",
       "o": [
-        "Nenhum (procedimento padrão)",
+        "Nenhum, se o serviço for rápido",
         "Possibilidade de quedas e acidentes",
-        "Aumento da eficiência",
-        "Melhor organização"
+        "Maior agilidade para trocar de tarefa",
+        "Apenas aparência de desorganização"
       ],
       "n": "dificil",
       "resposta": "Possibilidade de quedas e acidentes"
     },
     {
-      "q": "De acordo com os protocolos de segurança, qual é o procedimento correto ao limpar vidros em altura?",
+      "q": "Qual é o procedimento correto ao limpar vidros em altura?",
       "o": [
-        "Utilizar qualquer equipamento",
+        "Usar qualquer escada disponível no local",
         "Utilizar equipamentos adequados e técnicas seguras",
-        "Usar apenas pano seco",
-        "Jogar água diretamente"
+        "Limpar só com pano seco para não escorregar",
+        "Jogar água direto para ganhar tempo"
       ],
       "n": "dificil",
       "resposta": "Utilizar equipamentos adequados e técnicas seguras"
     },
     {
-      "q": "De acordo com os protocolos de segurança, qual é a principal função do rodo na limpeza de pisos?",
+      "q": "Qual é a principal função do rodo na limpeza de pisos?",
       "o": [
-        "Espalhar água",
+        "Espalhar o produto de limpeza no piso",
         "Remover excesso de água após lavagem",
-        "Limpar paredes",
-        "Aplicar desinfetante"
+        "Tirar a poeira seca antes da lavagem",
+        "Aplicar a cera de forma uniforme"
       ],
       "n": "dificil",
       "resposta": "Remover excesso de água após lavagem"
     },
     {
-      "q": "De acordo com os protocolos de segurança, qual é a importância do planejamento das rotinas de limpeza?",
+      "q": "Qual é a importância do planejamento das rotinas de limpeza?",
       "o": [
-        "Reduzir funcionários",
+        "Reduzir o número de funcionários",
         "Garantir organização e eficiência no serviço",
-        "Aumentar uso de produtos",
-        "Diminuir controle"
+        "Justificar a compra de mais produtos",
+        "Diminuir a supervisão do serviço"
       ],
       "n": "dificil",
       "resposta": "Garantir organização e eficiência no serviço"
@@ -1883,10 +1883,10 @@ export const PERGUNTAS_SEED = {
     {
       "q": "Em limpeza profissional, o que significa contaminação cruzada?",
       "o": [
-        "Mistura de produtos",
+        "Mistura de dois produtos de limpeza no mesmo balde",
         "Transferência de microrganismos de um local para outro",
-        "Uso de água contaminada",
-        "Mistura de resíduos"
+        "Uso de água da rede sem tratamento na limpeza",
+        "Descarte de resíduos recicláveis no lixo comum"
       ],
       "n": "dificil",
       "resposta": "Transferência de microrganismos de um local para outro"
@@ -1903,12 +1903,12 @@ export const PERGUNTAS_SEED = {
       "resposta": "Condições climáticas"
     },
     {
-      "q": "De acordo com os protocolos de segurança, qual procedimento aumenta a durabilidade dos equipamentos de limpeza?",
+      "q": "Qual procedimento aumenta a durabilidade dos equipamentos de limpeza?",
       "o": [
-        "Guardar molhados",
+        "Guardar ainda molhados para secar no depósito",
         "Higienizar e armazenar corretamente após o uso",
-        "Deixar expostos ao sol",
-        "Utilizar sem manutenção"
+        "Deixar expostos ao sol para secar rápido",
+        "Usar até quebrar e depois trocar"
       ],
       "n": "dificil",
       "resposta": "Higienizar e armazenar corretamente após o uso"
@@ -1916,7 +1916,7 @@ export const PERGUNTAS_SEED = {
   ],
   "VSPP": [
     {
-      "q": "Qual é o significado da sigla vspp?",
+      "q": "Qual é o significado da sigla VSPP?",
       "o": [
         "Vigilância e Segurança Patrimonial Privada",
         "Vigilância de Sistemas de Proteção Predial",
@@ -1927,23 +1927,23 @@ export const PERGUNTAS_SEED = {
       "resposta": "Vigilância e Segurança Patrimonial Privada"
     },
     {
-      "q": "Qual é o principal objetivo do vspp?",
+      "q": "Qual é o principal objetivo do VSPP?",
       "o": [
-        "Proteger apenas os funcionários",
+        "Proteger apenas os funcionários da empresa",
         "Proteger o patrimônio e as pessoas no ambiente corporativo",
-        "Fiscalizar apenas o trânsito interno",
-        "Controlar o estoque de materiais"
+        "Fiscalizar a produtividade dos colaboradores",
+        "Controlar a entrada e saída de mercadorias"
       ],
       "n": "facil",
       "resposta": "Proteger o patrimônio e as pessoas no ambiente corporativo"
     },
     {
-      "q": "Em uma ronda vspp, qual equipamento é fundamental para registrar pontos de verificação?",
+      "q": "Em uma ronda VSPP, qual equipamento é fundamental para registrar pontos de verificação?",
       "o": [
-        "Rastreador veicular",
-        "Câmera portátil",
+        "Rastreador veicular (GPS)",
+        "Câmera portátil de lapela",
         "Ponto eletrônico (PDA ou similar)",
-        "Leitor de placas"
+        "Livro de ocorrências (papel)"
       ],
       "n": "facil",
       "resposta": "Ponto eletrônico (PDA ou similar)"
@@ -1951,115 +1951,115 @@ export const PERGUNTAS_SEED = {
     {
       "q": "Qual a conduta correta ao identificar uma porta de emergência violada durante uma inspeção?",
       "o": [
-        "Fechar a porta e seguir a ronda",
+        "Fechar a porta, anotar e continuar a ronda normalmente",
         "Comunicar imediatamente a central de segurança e registrar a ocorrência",
-        "Ignorar se não houver sinais de arrombamento",
-        "Realizar uma busca sozinho no local"
+        "Ignorar se não houver sinais claros de arrombamento",
+        "Entrar sozinho na área para procurar o responsável"
       ],
       "n": "facil",
       "resposta": "Comunicar imediatamente a central de segurança e registrar a ocorrência"
     },
     {
-      "q": "Qual documento deve ser consultado para conhecer os procedimentos de segurança vspp da empresa?",
+      "q": "Qual documento deve ser consultado para conhecer os procedimentos de segurança VSPP da empresa?",
       "o": [
-        "Contrato de trabalho",
+        "Contrato de trabalho do vigilante",
         "Plano de segurança patrimonial",
-        "Manual de manutenção",
-        "Código de ética"
+        "Manual de manutenção predial",
+        "Regimento interno do setor de RH"
       ],
       "n": "facil",
       "resposta": "Plano de segurança patrimonial"
     },
     {
-      "q": "Durante a ronda noturna, um vspp observa uma luz acesa em uma sala que deveria estar vazia. o que fazer?",
+      "q": "Durante a ronda noturna, um VSPP observa uma luz acesa em uma sala que deveria estar vazia. O que fazer?",
       "o": [
-        "Desligar a luz e continuar a ronda",
+        "Apagar a luz e continuar a ronda normalmente",
         "Verificar a causa com cautela e comunicar a central",
-        "Ignorar, pois é comum",
-        "Registrar apenas no dia seguinte"
+        "Ignorar, pois alguém deve ter esquecido acesa",
+        "Anotar e comunicar só no fim do plantão"
       ],
       "n": "facil",
       "resposta": "Verificar a causa com cautela e comunicar a central"
     },
     {
-      "q": "O que é um perímetro de segurança em vspp?",
+      "q": "O que é um perímetro de segurança em VSPP?",
       "o": [
         "Limite físico ou virtual que separa área controlada de área pública",
-        "Área destinada ao descanso dos vigilantes",
-        "Região onde não há cobertura de câmeras",
-        "Local de estacionamento restrito"
+        "Área reservada ao descanso e às refeições dos vigilantes",
+        "Região do prédio que ainda não tem cobertura de câmeras",
+        "Espaço de estacionamento exclusivo da diretoria da empresa"
       ],
       "n": "facil",
       "resposta": "Limite físico ou virtual que separa área controlada de área pública"
     },
     {
-      "q": "Considerando contexto operacional, qual a primeira ação ao detectar princípio de incêndio em uma área administrativa?",
+      "q": "Qual a primeira ação ao detectar princípio de incêndio em uma área administrativa?",
       "o": [
         "Tentar apagar com extintor se estiver seguro e acionar o alarme",
-        "Correr para fora do prédio",
-        "Esperar os bombeiros chegarem",
-        "Desligar o sistema de CFTV"
+        "Sair do prédio imediatamente sem avisar ninguém",
+        "Esperar os bombeiros chegarem para tomar alguma ação",
+        "Desligar a energia geral do prédio antes de tudo"
       ],
       "n": "medio",
       "resposta": "Tentar apagar com extintor se estiver seguro e acionar o alarme"
     },
     {
-      "q": "Considerando contexto operacional, qual é a função do código de condomínio para o vspp?",
+      "q": "Qual é a função do código de condomínio para o VSPP?",
       "o": [
         "Estabelecer regras de convivência e segurança a serem seguidas",
-        "Substituir o plano de segurança",
-        "Definir salários dos vigilantes",
-        "Controlar a manutenção predial"
+        "Substituir o plano de segurança patrimonial",
+        "Definir os salários e as escalas dos vigilantes",
+        "Controlar os serviços de manutenção predial"
       ],
       "n": "medio",
       "resposta": "Estabelecer regras de convivência e segurança a serem seguidas"
     },
     {
-      "q": "Em vspp, o que caracteriza uma ocorrência grave que exige registro detalhado?",
+      "q": "Em VSPP, o que caracteriza uma ocorrência grave que exige registro detalhado?",
       "o": [
-        "Troca de turno sem problemas",
+        "Troca de turno com atraso de poucos minutos",
         "Roubo, incêndio, acidente com vítima ou ameaça",
-        "Visita de fornecedor autorizado",
-        "Falha em uma câmera secundária"
+        "Visita de fornecedor já autorizado",
+        "Falha pontual em uma câmera secundária"
       ],
       "n": "medio",
       "resposta": "Roubo, incêndio, acidente com vítima ou ameaça"
     },
     {
-      "q": "Como o vspp deve agir ao receber um alerta de invasão no sistema de alarme?",
+      "q": "Como o VSPP deve agir ao receber um alerta de invasão no sistema de alarme?",
       "o": [
-        "Desligar o alarme e verificar pessoalmente",
+        "Desligar o alarme e verificar sozinho o local",
         "Acionar a central, seguir o protocolo de verificação e registrar",
-        "Ignorar se for horário comercial",
-        "Comunicar apenas os bombeiros"
+        "Ignorar, pois em horário comercial é comum disparar",
+        "Comunicar só os bombeiros e aguardar a chegada"
       ],
       "n": "medio",
       "resposta": "Acionar a central, seguir o protocolo de verificação e registrar"
     },
     {
-      "q": "O que significa 'análise de risco' no contexto vspp?",
+      "q": "O que significa 'análise de risco' no contexto VSPP?",
       "o": [
         "Estudo para identificar vulnerabilidades e ameaças ao patrimônio",
-        "Reunião semanal da equipe",
-        "Inspeção visual rápida",
-        "Relatório de manutenção"
+        "Reunião semanal para revisar as escalas da equipe",
+        "Inspeção visual rápida feita no início da ronda",
+        "Relatório mensal de manutenção dos equipamentos"
       ],
       "n": "medio",
       "resposta": "Estudo para identificar vulnerabilidades e ameaças ao patrimônio"
     },
     {
-      "q": "Considerando contexto operacional, qual a conduta correta ao abordar uma pessoa não autorizada na área restrita?",
+      "q": "Qual a conduta correta ao abordar uma pessoa não autorizada na área restrita?",
       "o": [
         "Solicitar identificação e encaminhar à portaria para registro",
-        "Expulsar imediatamente com agressividade",
-        "Ignorar se estiver bem vestida",
-        "Apenas observar e registrar depois"
+        "Retirar a pessoa da área à força imediatamente",
+        "Ignorar, se a pessoa estiver bem vestida",
+        "Apenas observar e registrar no fim do turno"
       ],
       "n": "medio",
       "resposta": "Solicitar identificação e encaminhar à portaria para registro"
     },
     {
-      "q": "Considerando contexto operacional, qual equipamento é indispensável para o vspp em rondas noturnas?",
+      "q": "Qual equipamento é indispensável para o VSPP em rondas noturnas?",
       "o": [
         "Lanterna recarregável e rádio comunicador",
         "Máquina fotográfica profissional",
@@ -2070,7 +2070,7 @@ export const PERGUNTAS_SEED = {
       "resposta": "Lanterna recarregável e rádio comunicador"
     },
     {
-      "q": "Em relação ao sigilo das informações, o vspp deve:?",
+      "q": "Em relação ao sigilo das informações, o VSPP deve:",
       "o": [
         "Compartilhar apenas com colegas de trabalho",
         "Manter sigilo sobre procedimentos e dados da empresa",
@@ -2081,7 +2081,7 @@ export const PERGUNTAS_SEED = {
       "resposta": "Manter sigilo sobre procedimentos e dados da empresa"
     },
     {
-      "q": "De acordo com os protocolos de segurança, qual é o papel do vspp na prevenção de acidentes de trabalho?",
+      "q": "Qual é o papel do VSPP na prevenção de acidentes de trabalho?",
       "o": [
         "Identificar condições inseguras e comunicar à supervisão",
         "Apenas registrar ocorrências",
@@ -2092,95 +2092,95 @@ export const PERGUNTAS_SEED = {
       "resposta": "Identificar condições inseguras e comunicar à supervisão"
     },
     {
-      "q": "Ao receber uma ameaça de bomba por telefone, o vspp deve:?",
+      "q": "Ao receber uma ameaça de bomba por telefone, o VSPP deve:",
       "o": [
-        "Desligar imediatamente",
+        "Desligar na hora para não prender a linha ocupada",
         "Anotar o máximo de informações e acionar o protocolo de emergência",
-        "Transferir a ligação para a polícia",
-        "Ignorar se for trotes frequentes"
+        "Transferir a ligação para a polícia sem anotar nada",
+        "Ignorar, pois ligações assim quase sempre são trote"
       ],
       "n": "dificil",
       "resposta": "Anotar o máximo de informações e acionar o protocolo de emergência"
     },
     {
-      "q": "De acordo com os protocolos de segurança, qual a conduta ao identificar uma falha no sistema de controle de acesso biométrico?",
+      "q": "Qual a conduta ao identificar uma falha no sistema de controle de acesso biométrico?",
       "o": [
-        "Aguardar a manutenção programada",
+        "Aguardar a manutenção programada e manter o sistema funcionando",
         "Registrar a falha, acionar a manutenção e utilizar plano de contingência",
-        "Desativar o sistema até resolver",
-        "Trocar o equipamento sem comunicar"
+        "Desativar todo o controle de acesso até o conserto do leitor",
+        "Trocar o equipamento sozinho, sem registrar nem comunicar a falha"
       ],
       "n": "dificil",
       "resposta": "Registrar a falha, acionar a manutenção e utilizar plano de contingência"
     },
     {
-      "q": "Conceitualmente, como se define 'cadeia de comando' na segurança vspp?",
+      "q": "Como se define 'cadeia de comando' na segurança VSPP?",
       "o": [
         "Hierarquia de comunicação e decisão em situações críticas",
-        "Lista de equipamentos",
-        "Sequência de rondas",
-        "Conjunto de câmeras"
+        "Ordem em que as rondas devem ser realizadas",
+        "Lista dos equipamentos sob guarda da equipe",
+        "Sequência de câmeras monitoradas pela central"
       ],
       "n": "dificil",
       "resposta": "Hierarquia de comunicação e decisão em situações críticas"
     },
     {
-      "q": "Durante uma ocorrência de roubo em andamento, o vspp deve:?",
+      "q": "Durante uma ocorrência de roubo em andamento, o VSPP deve:",
       "o": [
-        "Tentar deter o criminoso sozinho",
+        "Tentar deter o criminoso para proteger o patrimônio",
         "Acionar a polícia, manter distância segura e preservar a vida",
-        "Fechar todas as saídas",
-        "Se esconder até o criminoso ir embora"
+        "Trancar todas as saídas para impedir a fuga",
+        "Seguir o criminoso de perto até ele deixar o local"
       ],
       "n": "dificil",
       "resposta": "Acionar a polícia, manter distância segura e preservar a vida"
     },
     {
-      "q": "De acordo com os protocolos de segurança, qual a importância do registro fotográfico em uma inspeção vspp?",
+      "q": "Qual a importância do registro fotográfico em uma inspeção VSPP?",
       "o": [
         "Documentar evidências para futuras análises e ocorrências",
-        "Ilustrar relatórios de vendas",
-        "Publicidade nas redes sociais",
-        "Apenas para arquivo pessoal"
+        "Ilustrar os relatórios mensais para a diretoria",
+        "Divulgar o trabalho da equipe nas redes sociais",
+        "Guardar como arquivo pessoal do vigilante"
       ],
       "n": "dificil",
       "resposta": "Documentar evidências para futuras análises e ocorrências"
     },
     {
-      "q": "Dentro dos procedimentos técnicos, como deve ser a postura do vspp ao interagir com o público externo?",
+      "q": "Como deve ser a postura do VSPP ao interagir com o público externo?",
       "o": [
         "Rígida e intimidadora",
         "Cordial, profissional e seguindo os protocolos da empresa",
-        "Indiferente (procedimento padrão)",
+        "Indiferente",
         "Apenas responde perguntas se for superior"
       ],
       "n": "dificil",
       "resposta": "Cordial, profissional e seguindo os protocolos da empresa"
     },
     {
-      "q": "Em relação à lgpd (lei geral de proteção de dados), o vspp deve:?",
+      "q": "Em relação à LGPD (lei geral de proteção de dados), o VSPP deve:",
       "o": [
-        "Ignorar, pois não se aplica à segurança",
+        "Compartilhar imagens com quem pedir, se for morador",
         "Tratar dados pessoais apenas para finalidades autorizadas e com sigilo",
-        "Compartilhar imagens livremente",
-        "Excluir todos os registros diariamente"
+        "Ignorar, pois a LGPD não se aplica à segurança",
+        "Apagar todos os registros ao final de cada dia"
       ],
       "n": "dificil",
       "resposta": "Tratar dados pessoais apenas para finalidades autorizadas e com sigilo"
     },
     {
-      "q": "De acordo com os protocolos de segurança, qual ação é prioritária em um plano de evacuação de emergência?",
+      "q": "Qual ação é prioritária em um plano de evacuação de emergência?",
       "o": [
         "Orientar as pessoas a sair em ordem e pelos caminhos seguros",
-        "Recolher pertences antes de sair",
-        "Usar elevador para acelerar",
-        "Esperar por ordem da polícia"
+        "Recolher documentos e pertences antes de sair do local",
+        "Usar os elevadores para retirar as pessoas mais rápido",
+        "Aguardar a chegada da polícia para iniciar a saída"
       ],
       "n": "dificil",
       "resposta": "Orientar as pessoas a sair em ordem e pelos caminhos seguros"
     },
     {
-      "q": "De acordo com os protocolos de segurança, qual a frequência recomendada para treinamentos da equipe vspp?",
+      "q": "Qual a frequência recomendada para treinamentos da equipe VSPP?",
       "o": [
         "Anual, com reciclagens periódicas",
         "Apenas na admissão",
@@ -2196,20 +2196,20 @@ export const PERGUNTAS_SEED = {
       "q": "Qual a primeira impressão que uma recepcionista deve transmitir ao atender um visitante?",
       "o": [
         "Cordialidade e profissionalismo",
-        "Indiferença (procedimento padrão)",
-        "Apresso (procedimento padrão)",
-        "Autoritarismo (procedimento padrão)"
+        "Pressa e objetividade",
+        "Formalidade e distância",
+        "Simpatia e intimidade"
       ],
       "n": "facil",
       "resposta": "Cordialidade e profissionalismo"
     },
     {
-      "q": "Ao atender um telefone, a recepcionista deve:?",
+      "q": "Ao atender um telefone, a recepcionista deve:",
       "o": [
         "Atender de forma clara, identificando a empresa e se oferecendo para ajudar",
-        "Apenas dizer 'alô'",
-        "Transferir sem ouvir",
-        "Deixar tocar várias vezes"
+        "Atender com 'alô' e esperar a pessoa dizer o que deseja",
+        "Transferir logo para o setor mais provável sem ouvir tudo",
+        "Deixar tocar algumas vezes para não parecer desocupada"
       ],
       "n": "facil",
       "resposta": "Atender de forma clara, identificando a empresa e se oferecendo para ajudar"
@@ -2217,10 +2217,10 @@ export const PERGUNTAS_SEED = {
     {
       "q": "O que fazer ao receber uma encomenda endereçada a um funcionário ausente?",
       "o": [
-        "Recusar a entrega",
+        "Recusar e pedir que o entregador volte outro dia",
         "Guardar em local seguro e notificar o funcionário",
-        "Abrir para verificar o conteúdo",
-        "Descartar a encomenda"
+        "Abrir para conferir o conteúdo antes de guardar",
+        "Entregar a qualquer colega do setor do funcionário"
       ],
       "n": "facil",
       "resposta": "Guardar em local seguro e notificar o funcionário"
@@ -2229,9 +2229,9 @@ export const PERGUNTAS_SEED = {
       "q": "Como lidar com um visitante que está visivelmente irritado?",
       "o": [
         "Manter a calma, ouvir atentamente e tentar resolver ou encaminhar",
-        "Ignorar o visitante",
-        "Discutir para mostrar razão",
-        "Chamar a polícia imediatamente"
+        "Pedir que ele volte quando estiver mais calmo",
+        "Explicar com firmeza que ele está sendo grosseiro",
+        "Chamar a segurança logo no início da conversa"
       ],
       "n": "facil",
       "resposta": "Manter a calma, ouvir atentamente e tentar resolver ou encaminhar"
@@ -2248,12 +2248,12 @@ export const PERGUNTAS_SEED = {
       "resposta": "Informar que aguarde e comunicar o recrutador"
     },
     {
-      "q": "Em relação à aparência pessoal, a recepcionista deve:?",
+      "q": "Em relação à aparência pessoal, a recepcionista deve:",
       "o": [
         "Vestir-se de forma adequada ao ambiente profissional",
-        "Usar roupas informais",
-        "Ignorar a aparência",
-        "Seguir a moda pessoal sem limites"
+        "Vestir-se conforme o próprio estilo pessoal",
+        "Usar roupas confortáveis e informais no dia a dia",
+        "Priorizar tendências da moda para passar boa imagem"
       ],
       "n": "facil",
       "resposta": "Vestir-se de forma adequada ao ambiente profissional"
@@ -2262,9 +2262,9 @@ export const PERGUNTAS_SEED = {
       "q": "Qual a função principal da recepcionista em uma empresa?",
       "o": [
         "Recepcionar e direcionar visitantes, além de atender chamadas",
-        "Fazer serviços de limpeza",
-        "Realizar vendas externas",
-        "Gerenciar o financeiro"
+        "Controlar a agenda pessoal de todos os diretores",
+        "Cuidar das compras de material do escritório",
+        "Fiscalizar horários de entrada dos funcionários"
       ],
       "n": "facil",
       "resposta": "Recepcionar e direcionar visitantes, além de atender chamadas"
@@ -2284,31 +2284,31 @@ export const PERGUNTAS_SEED = {
       "q": "É permitido que a recepcionista realize atendimento pessoal e telefônico simultaneamente?",
       "o": [
         "Sim, desde que priorize quem chegou primeiro e mantenha o profissionalismo",
-        "Não, deve atender apenas um de cada vez",
-        "Sim, mas apenas se houver fone de ouvido",
-        "Não, é proibido"
+        "Não, deve encerrar a ligação sempre que alguém chegar",
+        "Sim, dando prioridade sempre a quem está no telefone",
+        "Não, precisa pedir que o visitante volte mais tarde"
       ],
       "n": "facil",
       "resposta": "Sim, desde que priorize quem chegou primeiro e mantenha o profissionalismo"
     },
     {
-      "q": "Considerando contexto operacional, qual a melhor forma de transmitir uma mensagem para um funcionário ausente?",
+      "q": "Qual a melhor forma de transmitir uma mensagem para um funcionário ausente?",
       "o": [
         "Anotar nome do contato, telefone e assunto, e entregar por escrito",
-        "Falar em voz alta na recepção",
-        "Enviar por e-mail pessoal",
-        "Não anotar, pedir para ligar depois"
+        "Pedir que a pessoa ligue de novo mais tarde, sem anotar",
+        "Repassar o recado de memória quando o funcionário voltar",
+        "Deixar o recado com qualquer colega que estiver por perto"
       ],
       "n": "medio",
       "resposta": "Anotar nome do contato, telefone e assunto, e entregar por escrito"
     },
     {
-      "q": "Ao identificar uma pessoa não autorizada tentando acessar área restrita, a recepcionista deve:?",
+      "q": "Ao identificar uma pessoa não autorizada tentando acessar área restrita, a recepcionista deve:",
       "o": [
         "Solicitar identificação e orientar conforme procedimento",
-        "Deixar passar para evitar conflito",
-        "Gritar com a pessoa",
-        "Chamar a polícia imediatamente"
+        "Deixar passar para evitar um conflito na recepção",
+        "Chamar a polícia antes de falar com a pessoa",
+        "Segurar a pessoa pelo braço até a segurança chegar"
       ],
       "n": "medio",
       "resposta": "Solicitar identificação e orientar conforme procedimento"
@@ -2317,20 +2317,20 @@ export const PERGUNTAS_SEED = {
       "q": "Como a recepcionista deve agir em uma situação de emergência (ex.: incêndio)?",
       "o": [
         "Acionar o alarme, seguir o plano de emergência e orientar as pessoas",
-        "Sair correndo sem avisar",
-        "Esconder-se na recepção",
-        "Continuar atendendo telefone normalmente"
+        "Sair do prédio imediatamente sem avisar os visitantes",
+        "Continuar atendendo as ligações até receber ordem",
+        "Ligar para o gerente e aguardar a decisão dele"
       ],
       "n": "medio",
       "resposta": "Acionar o alarme, seguir o plano de emergência e orientar as pessoas"
     },
     {
-      "q": "Considerando contexto operacional, qual a importância da discrição para a recepcionista?",
+      "q": "Qual a importância da discrição para a recepcionista?",
       "o": [
         "Não divulgar informações confidenciais da empresa ou de funcionários",
-        "Compartilhar informações nas redes sociais",
-        "Contar para os colegas sobre visitantes",
-        "Ignorar segredos da empresa"
+        "Comentar com colegas quem visitou a empresa no dia",
+        "Passar informações de funcionários a quem pedir com educação",
+        "Guardar sigilo apenas sobre assuntos financeiros"
       ],
       "n": "medio",
       "resposta": "Não divulgar informações confidenciais da empresa ou de funcionários"
@@ -2339,20 +2339,20 @@ export const PERGUNTAS_SEED = {
       "q": "Como proceder se um visitante se recusar a se identificar?",
       "o": [
         "Explicar a política de segurança e, se persistir, não autorizar o acesso",
-        "Permitir entrada mesmo assim",
-        "Chamar a polícia imediatamente",
-        "Ignorar e deixar passar"
+        "Liberar a entrada, desde que ele informe para onde vai",
+        "Anotar só o nome falado e permitir o acesso normalmente",
+        "Chamar a polícia logo na primeira recusa, sem explicar nada"
       ],
       "n": "medio",
       "resposta": "Explicar a política de segurança e, se persistir, não autorizar o acesso"
     },
     {
-      "q": "Considerando contexto operacional, qual a conduta ao receber um fornecedor sem agendamento prévio?",
+      "q": "Qual a conduta ao receber um fornecedor sem agendamento prévio?",
       "o": [
         "Consultar o responsável pela área antes de autorizar a entrada",
-        "Recusar imediatamente",
-        "Deixar entrar sem aviso",
-        "Encaminhar diretamente ao estoque"
+        "Recusar a entrada na hora, sem consultar ninguém da área",
+        "Liberar a entrada e avisar o setor responsável depois",
+        "Encaminhar direto ao estoque para agilizar a entrega"
       ],
       "n": "medio",
       "resposta": "Consultar o responsável pela área antes de autorizar a entrada"
@@ -2361,9 +2361,9 @@ export const PERGUNTAS_SEED = {
       "q": "O que fazer quando sistema de registro de visitantes estiver fora do ar?",
       "o": [
         "Utilizar plano de contingência (registro manual) e comunicar TI",
-        "Liberar todos sem registro",
-        "Fechar a recepção",
-        "Deixar de atender visitantes"
+        "Liberar todos sem registro até o sistema voltar",
+        "Fechar a recepção até a TI resolver o problema",
+        "Pedir que os visitantes voltem no dia seguinte"
       ],
       "n": "medio",
       "resposta": "Utilizar plano de contingência (registro manual) e comunicar TI"
@@ -2372,20 +2372,20 @@ export const PERGUNTAS_SEED = {
       "q": "Como deve ser o atendimento a uma pessoa com deficiência?",
       "o": [
         "Oferecer ajuda de forma respeitosa e perguntar como pode auxiliar",
-        "Ignorar para não constranger",
-        "Tocar na pessoa sem permissão",
-        "Falar em tom muito alto"
+        "Ajudar logo, conduzindo a pessoa pelo braço sem perguntar",
+        "Falar sempre com o acompanhante em vez da própria pessoa",
+        "Evitar oferecer ajuda para não causar constrangimento"
       ],
       "n": "medio",
       "resposta": "Oferecer ajuda de forma respeitosa e perguntar como pode auxiliar"
     },
     {
-      "q": "Considerando contexto operacional, qual a postura correta ao atender um cliente que já está sendo atendido por outro funcionário?",
+      "q": "Qual a postura correta ao atender um cliente que já está sendo atendido por outro funcionário?",
       "o": [
         "Pedir que aguarde um momento e informar que logo será atendido",
-        "Interromper o atendimento anterior",
-        "Ignorar o cliente",
-        "Encaminhar para outro setor sem explicação"
+        "Interromper o atendimento em andamento para ajudá-lo",
+        "Encaminhar para outro setor sem explicar o motivo",
+        "Não dizer nada até terminar o atendimento atual"
       ],
       "n": "medio",
       "resposta": "Pedir que aguarde um momento e informar que logo será atendido"
@@ -2402,7 +2402,7 @@ export const PERGUNTAS_SEED = {
       "resposta": "Nome do contato, telefone, data, hora e assunto"
     },
     {
-      "q": "Em relação ao uso do telefone celular durante o expediente, a recepcionista deve:?",
+      "q": "Em relação ao uso do telefone celular durante o expediente, a recepcionista deve:",
       "o": [
         "Evitar uso pessoal para não prejudicar o atendimento",
         "Usar livremente",
@@ -2413,23 +2413,23 @@ export const PERGUNTAS_SEED = {
       "resposta": "Evitar uso pessoal para não prejudicar o atendimento"
     },
     {
-      "q": "Dentro dos procedimentos técnicos, como proceder ao receber uma ligação de telemarketing?",
+      "q": "Como proceder ao receber uma ligação de telemarketing?",
       "o": [
         "Agradecer e informar que não há interesse, desligando educadamente",
-        "Gritar e desligar",
-        "Transferir para qualquer ramal",
-        "Atender normalmente e passar informações"
+        "Passar os dados da empresa para encerrar logo a ligação",
+        "Transferir para qualquer ramal disponível no momento",
+        "Desligar sem dizer nada assim que perceber a oferta"
       ],
       "n": "dificil",
       "resposta": "Agradecer e informar que não há interesse, desligando educadamente"
     },
     {
-      "q": "De acordo com os protocolos de segurança, qual a atitude correta ao perceber que um visitante está perdido nas dependências?",
+      "q": "Qual a atitude correta ao perceber que um visitante está perdido nas dependências?",
       "o": [
         "Oferecer acompanhamento ou orientação clara sobre o caminho",
-        "Ignorar (procedimento padrão)",
-        "Dar instruções vagas",
-        "Chamar a segurança"
+        "Apontar a direção de longe e voltar ao trabalho",
+        "Chamar a segurança para retirar a pessoa do local",
+        "Esperar que ela peça ajuda antes de se aproximar"
       ],
       "n": "dificil",
       "resposta": "Oferecer acompanhamento ou orientação clara sobre o caminho"
@@ -2446,23 +2446,23 @@ export const PERGUNTAS_SEED = {
       "resposta": "Recusar educadamente, explicando que não pode mentir"
     },
     {
-      "q": "Dentro dos procedimentos técnicos, como deve ser a comunicação com colegas de trabalho na frente de visitantes?",
+      "q": "Como deve ser a comunicação com colegas de trabalho na frente de visitantes?",
       "o": [
         "Profissional e discreta, evitando assuntos particulares",
-        "Falar alto sobre problemas internos",
-        "Usar gírias e brincadeiras",
-        "Ignorar os colegas"
+        "Descontraída, com brincadeiras para aliviar o clima",
+        "Sobre problemas internos, desde que em voz baixa",
+        "Informal, usando apelidos e gírias do dia a dia"
       ],
       "n": "dificil",
       "resposta": "Profissional e discreta, evitando assuntos particulares"
     },
     {
-      "q": "De acordo com os protocolos de segurança, qual a conduta ao identificar um pacote suspeito na recepção?",
+      "q": "Qual a conduta ao identificar um pacote suspeito na recepção?",
       "o": [
         "Não tocar, isolar a área e acionar segurança",
-        "Abrir para verificar",
-        "Jogar fora",
-        "Ignorar (procedimento padrão)"
+        "Abrir com cuidado para identificar",
+        "Levar para a sala da segurança",
+        "Jogar no lixo externo do prédio"
       ],
       "n": "dificil",
       "resposta": "Não tocar, isolar a área e acionar segurança"
@@ -2484,9 +2484,9 @@ export const PERGUNTAS_SEED = {
       "q": "Qual é a primeira ação ao identificar um princípio de incêndio?",
       "o": [
         "Acionar o alarme e tentar combater com extintor se seguro",
-        "Correr para fora",
-        "Guardar pertences",
-        "Desligar o disjuntor geral"
+        "Correr para fora sem avisar as outras pessoas",
+        "Desligar o disjuntor geral e aguardar os bombeiros",
+        "Ligar para o síndico e esperar a orientação dele"
       ],
       "n": "facil",
       "resposta": "Acionar o alarme e tentar combater com extintor se seguro"
@@ -2495,8 +2495,8 @@ export const PERGUNTAS_SEED = {
       "q": "Qual extintor é indicado para incêndio em materiais elétricos energizados?",
       "o": [
         "CO2 ou Pó Químico Seco (Classe C)",
-        "Água (procedimento padrão)",
-        "Espuma (procedimento padrão)",
+        "Água",
+        "Espuma",
         "Pó Químico Seco (Classe B)"
       ],
       "n": "facil",
@@ -2506,20 +2506,20 @@ export const PERGUNTAS_SEED = {
       "q": "O que significa a sigla pass para uso do extintor?",
       "o": [
         "Puxar, Apontar, Squeeze (apertar), Sweep (varrer)",
-        "Pegar, Acionar, Soltar, Sair",
-        "Pressionar, Armar, Sacar, Suprimir",
-        "Puxar, Armar, Socorrer, Sinalizar"
+        "Pegar, Acionar, Soltar, Sair do local",
+        "Pressionar, Armar, Sacar, Suprimir as chamas",
+        "Puxar, Armar, Socorrer, Sinalizar a área"
       ],
       "n": "facil",
       "resposta": "Puxar, Apontar, Squeeze (apertar), Sweep (varrer)"
     },
     {
-      "q": "Em uma evacuação, o bombeiro civil deve:?",
+      "q": "Em uma evacuação, o bombeiro civil deve:",
       "o": [
         "Orientar as pessoas para as saídas de emergência",
-        "Sair na frente correndo",
-        "Empurrar as pessoas",
-        "Usar o elevador"
+        "Sair primeiro para abrir as portas",
+        "Usar o elevador com os mais lentos",
+        "Esperar todos saírem para depois agir"
       ],
       "n": "facil",
       "resposta": "Orientar as pessoas para as saídas de emergência"
@@ -2528,9 +2528,9 @@ export const PERGUNTAS_SEED = {
       "q": "Qual o procedimento ao encontrar uma pessoa desacordada em um incêndio?",
       "o": [
         "Remover a pessoa para local seguro e iniciar primeiros socorros",
-        "Abandonar (procedimento padrão)",
-        "Tentar reanimar no local",
-        "Chamar apenas os bombeiros e aguardar"
+        "Iniciar a reanimação ali mesmo, no meio da fumaça",
+        "Aguardar os bombeiros militares sem mexer na vítima",
+        "Procurar o documento da vítima antes de removê-la"
       ],
       "n": "facil",
       "resposta": "Remover a pessoa para local seguro e iniciar primeiros socorros"
@@ -2550,26 +2550,26 @@ export const PERGUNTAS_SEED = {
       "q": "Qual a conduta correta ao usar uma mangueira de incêndio (hidrante)?",
       "o": [
         "Verificar se há água, posicionar-se e direcionar o jato à base do fogo",
-        "Apontar para o alto",
-        "Usar sozinho sem apoio",
-        "Molhar primeiro o teto"
+        "Abrir o registro e apontar o jato para o alto das chamas",
+        "Operar sozinho, sem apoio, para agir mais rápido",
+        "Molhar primeiro o teto e as paredes ao redor do fogo"
       ],
       "n": "facil",
       "resposta": "Verificar se há água, posicionar-se e direcionar o jato à base do fogo"
     },
     {
-      "q": "Em relação às rotas de fuga, o bombeiro civil deve:?",
+      "q": "Em relação às rotas de fuga, o bombeiro civil deve:",
       "o": [
         "Manter sempre desobstruídas e sinalizadas",
-        "Bloquear para evitar acesso",
-        "Ignorar a sinalização",
-        "Usar como depósito"
+        "Liberar só em dias de vistoria",
+        "Usar como apoio para materiais leves",
+        "Trancar à noite para evitar invasões"
       ],
       "n": "facil",
       "resposta": "Manter sempre desobstruídas e sinalizadas"
     },
     {
-      "q": "Considerando contexto operacional, qual a classificação do fogo envolvendo líquidos inflamáveis (gasolina, álcool)?",
+      "q": "Qual a classificação do fogo envolvendo líquidos inflamáveis (gasolina, álcool)?",
       "o": [
         "Classe B",
         "Classe A",
@@ -2580,7 +2580,7 @@ export const PERGUNTAS_SEED = {
       "resposta": "Classe B"
     },
     {
-      "q": "Ao perceber cheiro de gás em um ambiente, o bombeiro civil deve:?",
+      "q": "Ao perceber cheiro de gás em um ambiente, o bombeiro civil deve:",
       "o": [
         "Não acionar interruptores, abrir janelas e evacuar",
         "Acender um isqueiro para localizar o vazamento",
@@ -2602,23 +2602,23 @@ export const PERGUNTAS_SEED = {
       "resposta": "Metais combustíveis"
     },
     {
-      "q": "Considerando contexto operacional, qual a distância mínima que os extintores devem ser instalados do chão?",
+      "q": "Qual a distância mínima que os extintores devem ser instalados do chão?",
       "o": [
         "Entre 0,20m e 1,20m do piso",
-        "No chão",
-        "Acima de 2 metros",
-        "Não há exigência"
+        "Apoiados direto no chão",
+        "Acima de 2 metros do piso",
+        "Entre 1,50m e 2,00m do piso"
       ],
       "n": "medio",
       "resposta": "Entre 0,20m e 1,20m do piso"
     },
     {
-      "q": "Considerando contexto operacional, qual o procedimento correto em caso de primeiros socorros para queimadura?",
+      "q": "Qual o procedimento correto em caso de primeiros socorros para queimadura?",
       "o": [
         "Resfriar com água corrente em temperatura ambiente por alguns minutos",
-        "Passar manteiga",
-        "Estourar bolhas",
-        "Aplicar gelo diretamente"
+        "Passar pomada ou manteiga logo depois da queimadura",
+        "Estourar as bolhas para aliviar a dor da vítima",
+        "Aplicar gelo diretamente sobre a pele queimada"
       ],
       "n": "medio",
       "resposta": "Resfriar com água corrente em temperatura ambiente por alguns minutos"
@@ -2627,20 +2627,20 @@ export const PERGUNTAS_SEED = {
       "q": "Em uma evacuação, onde os bombeiros civis devem se posicionar?",
       "o": [
         "Nos pontos de encontro e rotas de fuga para orientar",
-        "Dentro do prédio em chamas",
-        "No telhado",
-        "Na entrada principal apenas"
+        "Dentro do prédio, nos andares mais atingidos",
+        "Apenas na entrada principal do edifício",
+        "No telhado, para observar a evacuação"
       ],
       "n": "medio",
       "resposta": "Nos pontos de encontro e rotas de fuga para orientar"
     },
     {
-      "q": "Considerando contexto operacional, qual a validade da recarga do extintor de incêndio?",
+      "q": "Qual a validade da recarga do extintor de incêndio?",
       "o": [
         "Depende do tipo, mas geralmente anual ou conforme norma",
-        "5 anos",
-        "10 anos",
-        "Nunca precisa recarregar"
+        "A cada 5 anos, para todos os tipos",
+        "A cada 10 anos, junto com o teste hidrostático",
+        "Só quando o ponteiro chegar na faixa vermelha"
       ],
       "n": "medio",
       "resposta": "Depende do tipo, mas geralmente anual ou conforme norma"
@@ -2649,31 +2649,31 @@ export const PERGUNTAS_SEED = {
       "q": "O que deve ser feito com o extintor após uso parcial?",
       "o": [
         "Enviar para recarga imediatamente, mesmo que tenha sobrado carga",
-        "Guardar para usar depois",
-        "Descartar (procedimento padrão)",
-        "Deixar no local"
+        "Guardar de volta no suporte para uso em outra emergência",
+        "Descartar o cilindro, pois não pode mais ser usado",
+        "Deixar no local até a próxima inspeção de rotina"
       ],
       "n": "medio",
       "resposta": "Enviar para recarga imediatamente, mesmo que tenha sobrado carga"
     },
     {
-      "q": "Dentro dos procedimentos técnicos, como agir em caso de incêndio em uma panela com óleo (cozinha)?",
+      "q": "Como agir em caso de incêndio em uma panela com óleo (cozinha)?",
       "o": [
         "Abrafar com uma tampa ou pano molhado, nunca jogar água",
-        "Jogar água",
-        "Soprar (procedimento padrão)",
-        "Usar extintor de água"
+        "Jogar água aos poucos para esfriar o óleo",
+        "Usar extintor de água pressurizada",
+        "Tirar a panela do fogo e levar até a pia"
       ],
       "n": "dificil",
       "resposta": "Abrafar com uma tampa ou pano molhado, nunca jogar água"
     },
     {
-      "q": "De acordo com os protocolos de segurança, qual a função do chuveiro automático (sprinkler) em um edifício?",
+      "q": "Qual a função do chuveiro automático (sprinkler) em um edifício?",
       "o": [
         "Ativar automaticamente no calor do fogo e liberar água",
-        "Molhar o telhado",
-        "Resfriar o ar",
-        "Acionar o alarme apenas"
+        "Acionar o alarme de incêndio do prédio",
+        "Resfriar o ambiente em dias muito quentes",
+        "Molhar o telhado para evitar a propagação"
       ],
       "n": "dificil",
       "resposta": "Ativar automaticamente no calor do fogo e liberar água"
@@ -2682,64 +2682,64 @@ export const PERGUNTAS_SEED = {
       "q": "O que significa brigada de incêndio?",
       "o": [
         "Grupo treinado para ações iniciais de combate a incêndio e evacuação",
-        "Equipe que constrói edifícios",
-        "Polícia especializada",
-        "Empresa de extintores"
+        "Equipe responsável pela manutenção dos extintores e hidrantes",
+        "Grupo de moradores que fiscaliza as regras do condomínio",
+        "Divisão da polícia que investiga as causas de incêndios"
       ],
       "n": "dificil",
       "resposta": "Grupo treinado para ações iniciais de combate a incêndio e evacuação"
     },
     {
-      "q": "De acordo com os protocolos de segurança, qual a conduta ao encontrar uma porta corta-fogo aberta?",
+      "q": "Qual a conduta ao encontrar uma porta corta-fogo aberta?",
       "o": [
         "Fechar imediatamente, pois deve permanecer fechada para conter fogo e fumaça",
-        "Deixar aberta para ventilação",
-        "Remover a porta",
-        "Ignorar (procedimento padrão)"
+        "Deixar aberta, pois ela ajuda na ventilação do corredor",
+        "Travar aberta com um calço para facilitar a passagem das pessoas",
+        "Anotar no relatório e fechar só na próxima ronda programada"
       ],
       "n": "dificil",
       "resposta": "Fechar imediatamente, pois deve permanecer fechada para conter fogo e fumaça"
     },
     {
-      "q": "Em relação às inspeções periódicas, o bombeiro civil deve:?",
+      "q": "Em relação às inspeções periódicas, o bombeiro civil deve:",
       "o": [
         "Verificar extintores, hidrantes, iluminação de emergência e rotas de fuga",
-        "Apenas olhar os extintores",
-        "Não fazer inspeções",
-        "Somente testar o alarme"
+        "Verificar apenas os extintores, que são o item mais importante",
+        "Testar somente o alarme de incêndio, uma vez por ano",
+        "Inspecionar os equipamentos só quando houver uma ocorrência"
       ],
       "n": "dificil",
       "resposta": "Verificar extintores, hidrantes, iluminação de emergência e rotas de fuga"
     },
     {
-      "q": "Dentro dos procedimentos técnicos, como deve ser o transporte de uma vítima com suspeita de trauma na coluna?",
+      "q": "Como deve ser o transporte de uma vítima com suspeita de trauma na coluna?",
       "o": [
         "Imobilizar a vítima e evitar movimentos bruscos",
-        "Levantar pelos braços",
-        "Colocar sentada",
-        "Arrastar pelo chão"
+        "Levantar a vítima pelos braços",
+        "Colocar a vítima sentada para respirar",
+        "Arrastar a vítima pelo chão até a saída"
       ],
       "n": "dificil",
       "resposta": "Imobilizar a vítima e evitar movimentos bruscos"
     },
     {
-      "q": "De acordo com os protocolos de segurança, qual o objetivo do plano de emergência contra incêndio?",
+      "q": "Qual o objetivo do plano de emergência contra incêndio?",
       "o": [
         "Estabelecer procedimentos para prevenção, alarme, evacuação e combate inicial",
-        "Multar os funcionários",
-        "Treinar apenas os bombeiros civis",
-        "Decorar o edifício"
+        "Definir apenas onde ficam os extintores e hidrantes do prédio",
+        "Treinar somente os bombeiros civis contratados pela empresa",
+        "Cumprir uma exigência burocrática da seguradora do imóvel"
       ],
       "n": "dificil",
       "resposta": "Estabelecer procedimentos para prevenção, alarme, evacuação e combate inicial"
     },
     {
-      "q": "Em caso de falta de luz, o bombeiro civil deve:?",
+      "q": "Em caso de falta de luz, o bombeiro civil deve:",
       "o": [
         "Acionar a iluminação de emergência e orientar as pessoas com calma",
-        "Entrar em pânico",
-        "Usar o celular como lanterna",
-        "Gritar por ajuda"
+        "Usar a lanterna do celular e aguardar a luz voltar",
+        "Pedir que todos fiquem parados onde estão",
+        "Ligar para a concessionária antes de tudo"
       ],
       "n": "dificil",
       "resposta": "Acionar a iluminação de emergência e orientar as pessoas com calma"
@@ -2749,10 +2749,10 @@ export const PERGUNTAS_SEED = {
     {
       "q": "Um morador pergunta se pode receber uma encomenda fora do horário. A resposta mais adequada é:",
       "o": [
-        "Não pode, é contra as regras.",
+        "Não é possível receber depois das 18h, é o que está no regulamento do condomínio e eu preciso seguir.",
         "Posso receber encomendas até as 18h. Depois desse horário, consigo registrar a tentativa e avisar você assim que chegar.",
-        "Isso não é comigo.",
-        "Você devia ter lido o regulamento."
+        "Fora do horário eu não posso fazer nada, o senhor vai precisar ligar para a transportadora e remarcar.",
+        "Encomenda fora do horário não é responsabilidade da portaria, isso já foi avisado para todos os moradores."
       ],
       "n": "facil",
       "resposta": "Posso receber encomendas até as 18h. Depois desse horário, consigo registrar a tentativa e avisar você assim que chegar."
@@ -2761,9 +2761,9 @@ export const PERGUNTAS_SEED = {
       "q": "Qual frase substitui melhor \"Não posso fazer isso\"?",
       "o": [
         "O que eu consigo fazer é registrar sua solicitação e encaminhar ao responsável.",
-        "Isso é impossível.",
-        "Não é função minha.",
-        "Já falei que não dá."
+        "Isso não é possível, porque não faz parte das minhas funções aqui.",
+        "Infelizmente não dá, o senhor precisa procurar outra pessoa para isso.",
+        "Não tenho como ajudar, esse assunto é de responsabilidade de outro setor."
       ],
       "n": "facil",
       "resposta": "O que eu consigo fazer é registrar sua solicitação e encaminhar ao responsável."
@@ -2783,9 +2783,9 @@ export const PERGUNTAS_SEED = {
       "q": "Um visitante se irrita porque precisa se identificar. A melhor conduta é:",
       "o": [
         "Manter tom calmo e explicar que o registro é para a segurança de todos, inclusive dele",
-        "Responder no mesmo tom para mostrar firmeza",
-        "Ignorar e liberar a entrada para evitar discussão",
-        "Chamar a atenção dele na frente das outras pessoas"
+        "Responder no mesmo tom de voz, para mostrar que a regra precisa ser cumprida",
+        "Liberar a entrada sem identificação, para evitar que a discussão aumente",
+        "Chamar a atenção dele na frente das outras pessoas, para servir de exemplo"
       ],
       "n": "medio",
       "resposta": "Manter tom calmo e explicar que o registro é para a segurança de todos, inclusive dele"
@@ -2805,9 +2805,9 @@ export const PERGUNTAS_SEED = {
       "q": "Ao precisar que a pessoa aguarde, a abordagem mais adequada é:",
       "o": [
         "Explicar o motivo e dar uma previsão: \"Preciso confirmar com a portaria, leva cerca de 2 minutos.\"",
-        "Dizer apenas \"aguarde\" e sair",
-        "Deixar a pessoa esperando sem falar nada",
-        "Dizer que vai ser rápido mesmo sem saber"
+        "Dizer apenas \"aguarde um momento, por favor\" e sair sem explicar o motivo",
+        "Deixar a pessoa esperando em silêncio até conseguir resolver a situação",
+        "Dizer que vai ser bem rápido, mesmo sem saber quanto tempo vai levar"
       ],
       "n": "medio",
       "resposta": "Explicar o motivo e dar uma previsão: \"Preciso confirmar com a portaria, leva cerca de 2 minutos.\""
@@ -2816,9 +2816,9 @@ export const PERGUNTAS_SEED = {
       "q": "Substitua a frase \"O senhor está errado\" por uma versão positiva:",
       "o": [
         "\"Deixa eu conferir esse dado com o senhor, acho que houve uma informação diferente.\"",
-        "\"O senhor está muito enganado.\"",
-        "\"Não é bem assim que funciona.\"",
-        "\"Quem te falou isso errou.\""
+        "\"O senhor está enganado, essa informação que o senhor trouxe não está correta.\"",
+        "\"Não é bem assim que funciona aqui, acho que o senhor entendeu tudo errado.\"",
+        "\"Quem passou essa informação para o senhor se enganou, isso não existe aqui.\""
       ],
       "n": "medio",
       "resposta": "\"Deixa eu conferir esse dado com o senhor, acho que houve uma informação diferente.\""
@@ -2827,9 +2827,9 @@ export const PERGUNTAS_SEED = {
       "q": "Por que evitar a palavra \"problema\" no atendimento?",
       "o": [
         "Porque reforça a dificuldade; é melhor falar em \"situação\" e apresentar a solução",
-        "Porque é uma palavra proibida por lei",
-        "Porque ninguém entende o significado",
-        "Porque só pode ser usada por supervisores"
+        "Porque é considerada uma palavra ofensiva pela maioria dos clientes",
+        "Porque só pode ser usada por supervisores e gestores no atendimento",
+        "Porque deixa a conversa formal demais e afasta o cliente do atendente"
       ],
       "n": "medio",
       "resposta": "Porque reforça a dificuldade; é melhor falar em \"situação\" e apresentar a solução"
@@ -2838,9 +2838,9 @@ export const PERGUNTAS_SEED = {
       "q": "Ao atender alguém pela primeira vez no dia, o mais adequado é:",
       "o": [
         "Cumprimentar, se identificar e perguntar como pode ajudar",
-        "Esperar a pessoa falar primeiro",
-        "Perguntar direto o que ela quer",
-        "Apontar para a placa de instruções"
+        "Esperar a pessoa falar primeiro para não incomodar",
+        "Perguntar direto o que ela deseja, sem cumprimentar",
+        "Indicar a placa de instruções e aguardar a dúvida"
       ],
       "n": "facil",
       "resposta": "Cumprimentar, se identificar e perguntar como pode ajudar"
@@ -2849,9 +2849,9 @@ export const PERGUNTAS_SEED = {
       "q": "Um cliente reclama de algo que não foi culpa sua. A melhor reação é:",
       "o": [
         "Ouvir sem interromper, reconhecer o incômodo e encaminhar a solução",
-        "Explicar que a culpa foi de outro setor",
-        "Dizer que não tem nada a ver com isso",
-        "Pedir para ele reclamar com outra pessoa"
+        "Explicar que a falha foi de outro setor, não sua",
+        "Pedir que ele registre a reclamação com o gerente",
+        "Dizer que vai ver o que pode fazer e mudar de assunto"
       ],
       "n": "medio",
       "resposta": "Ouvir sem interromper, reconhecer o incômodo e encaminhar a solução"
@@ -2860,9 +2860,9 @@ export const PERGUNTAS_SEED = {
       "q": "Qual é a forma mais positiva de recusar um pedido que foge das regras?",
       "o": [
         "\"Esse procedimento eu não consigo autorizar, mas posso registrar seu pedido com o síndico hoje mesmo.\"",
-        "\"Regra é regra.\"",
-        "\"Não insista.\"",
-        "\"Isso nunca vai ser liberado.\""
+        "\"Regra é regra, não posso abrir exceção para ninguém, nem para o senhor.\"",
+        "\"Não adianta insistir, isso não depende de mim e não vai ser liberado.\"",
+        "\"Isso é proibido aqui, o senhor deveria conhecer o regulamento do local.\""
       ],
       "n": "dificil",
       "resposta": "\"Esse procedimento eu não consigo autorizar, mas posso registrar seu pedido com o síndico hoje mesmo.\""
@@ -2882,9 +2882,9 @@ export const PERGUNTAS_SEED = {
       "q": "Ao encerrar um atendimento, a conduta adequada é:",
       "o": [
         "Confirmar se a pessoa foi atendida no que precisava e se colocar à disposição",
-        "Sair sem falar nada assim que resolver",
-        "Falar \"tchau\" e virar as costas",
-        "Esperar a pessoa ir embora sozinha"
+        "Encerrar logo que resolver, para já chamar e atender a próxima pessoa",
+        "Dizer \"pronto\" e voltar a atenção para o computador sem mais nada",
+        "Esperar a pessoa se despedir primeiro para só então dar tchau a ela"
       ],
       "n": "facil",
       "resposta": "Confirmar se a pessoa foi atendida no que precisava e se colocar à disposição"
@@ -2893,9 +2893,9 @@ export const PERGUNTAS_SEED = {
       "q": "Como registrar uma ocorrência no livro de forma profissional?",
       "o": [
         "De forma objetiva e factual, sem opiniões pessoais ou julgamentos",
-        "Descrevendo o que você achou da pessoa",
-        "Usando gírias para ser mais rápido",
-        "Escrevendo só se for algo grave"
+        "Descrevendo também a impressão que teve da pessoa",
+        "Com abreviações e gírias para ganhar tempo no plantão",
+        "Apenas quando a situação for grave ou envolver polícia"
       ],
       "n": "medio",
       "resposta": "De forma objetiva e factual, sem opiniões pessoais ou julgamentos"
@@ -2904,9 +2904,9 @@ export const PERGUNTAS_SEED = {
       "q": "Uma pessoa idosa tem dificuldade em entender uma orientação. O correto é:",
       "o": [
         "Repetir com calma, em frases curtas, verificando se ela acompanhou",
-        "Falar mais alto e mais rápido",
-        "Pedir para outra pessoa explicar",
-        "Entregar um papel escrito e encerrar"
+        "Falar mais alto e repetir a orientação do mesmo jeito",
+        "Pedir que um familiar venha ouvir a explicação",
+        "Entregar a orientação por escrito e encerrar"
       ],
       "n": "medio",
       "resposta": "Repetir com calma, em frases curtas, verificando se ela acompanhou"
@@ -2915,9 +2915,9 @@ export const PERGUNTAS_SEED = {
       "q": "\"Infelizmente o sistema caiu e não vai dar para atender.\" Como reescrever positivamente?",
       "o": [
         "\"O sistema está temporariamente indisponível. Posso anotar seus dados e retornar assim que normalizar.\"",
-        "\"Deu problema, volta depois.\"",
-        "\"Não tem o que fazer agora.\"",
-        "\"O sistema sempre cai mesmo.\""
+        "\"O sistema caiu de novo, o senhor vai ter que voltar outra hora para ser atendido.\"",
+        "\"Agora não tem o que fazer, o sistema está fora e não sei quando vai voltar.\"",
+        "\"Infelizmente hoje não vai dar, esse sistema vive caindo e ninguém resolve.\""
       ],
       "n": "dificil",
       "resposta": "\"O sistema está temporariamente indisponível. Posso anotar seus dados e retornar assim que normalizar.\""
@@ -2926,9 +2926,9 @@ export const PERGUNTAS_SEED = {
       "q": "Sobre o uso do celular durante o atendimento:",
       "o": [
         "Deve ser evitado; olhar para o celular transmite desatenção e desinteresse",
-        "É permitido se for rápido",
-        "Não interfere na percepção do cliente",
-        "É aceitável desde que a pessoa não reclame"
+        "É permitido, desde que seja apenas uma consulta rápida entre um atendimento e outro",
+        "Não interfere na percepção do cliente, se ele não estiver olhando naquele momento",
+        "É aceitável sempre que o assunto for de trabalho, mesmo com o cliente na frente"
       ],
       "n": "facil",
       "resposta": "Deve ser evitado; olhar para o celular transmite desatenção e desinteresse"
@@ -2937,9 +2937,9 @@ export const PERGUNTAS_SEED = {
       "q": "O que significa \"escuta ativa\"?",
       "o": [
         "Prestar atenção genuína, sem interromper, confirmando o que foi entendido",
-        "Ouvir enquanto executa outras tarefas",
-        "Concordar com tudo que a pessoa fala",
-        "Repetir literalmente cada palavra dita"
+        "Ouvir a pessoa enquanto adianta outras tarefas para não perder tempo",
+        "Concordar com tudo o que a pessoa diz para que ela se sinta acolhida",
+        "Repetir palavra por palavra tudo o que a pessoa disse durante a conversa"
       ],
       "n": "medio",
       "resposta": "Prestar atenção genuína, sem interromper, confirmando o que foi entendido"
@@ -2948,9 +2948,9 @@ export const PERGUNTAS_SEED = {
       "q": "Ao cometer um erro no atendimento, a atitude correta é:",
       "o": [
         "Reconhecer, pedir desculpas de forma objetiva e corrigir",
-        "Esconder para não se prejudicar",
-        "Colocar a culpa no procedimento",
-        "Fingir que não aconteceu"
+        "Corrigir sem comentar, para não chamar atenção",
+        "Explicar que o erro foi causado pelo procedimento",
+        "Esperar a pessoa perceber antes de dizer algo"
       ],
       "n": "medio",
       "resposta": "Reconhecer, pedir desculpas de forma objetiva e corrigir"
@@ -2959,9 +2959,9 @@ export const PERGUNTAS_SEED = {
       "q": "Qual expressão demonstra disponibilidade sem prometer o que não pode cumprir?",
       "o": [
         "\"Vou verificar essa possibilidade e te dou um retorno ainda hoje.\"",
-        "\"Pode deixar que eu resolvo tudo.\"",
-        "\"Isso com certeza vai ser aprovado.\"",
-        "\"Não se preocupe, já está resolvido.\""
+        "\"Pode deixar que eu resolvo tudo isso hoje mesmo.\"",
+        "\"Com certeza vai ser aprovado, não se preocupe.\"",
+        "\"Já está resolvido, pode ficar tranquilo agora.\""
       ],
       "n": "dificil",
       "resposta": "\"Vou verificar essa possibilidade e te dou um retorno ainda hoje.\""
@@ -2972,9 +2972,9 @@ export const PERGUNTAS_SEED = {
       "q": "Qual é a principal função do atendimento em portaria e recepção?",
       "o": [
         "Garantir segurança e acolhimento, controlando o acesso com cordialidade",
-        "Apenas abrir e fechar o portão",
-        "Verificar documentos sem falar com ninguém",
-        "Fiscalizar o comportamento dos moradores"
+        "Abrir e fechar o portão com agilidade para não formar fila",
+        "Conferir documentos de forma rápida, sem conversa",
+        "Fiscalizar o comportamento de moradores e visitantes"
       ],
       "n": "facil",
       "resposta": "Garantir segurança e acolhimento, controlando o acesso com cordialidade"
@@ -2983,9 +2983,9 @@ export const PERGUNTAS_SEED = {
       "q": "Um prestador de serviço chega sem autorização prévia. O procedimento correto é:",
       "o": [
         "Confirmar com o morador ou responsável antes de liberar o acesso",
-        "Liberar, pois prestador sempre pode entrar",
-        "Barrar sem verificar nada",
-        "Pedir para ele voltar outro dia"
+        "Liberar, pois prestador de serviço já é esperado",
+        "Barrar a entrada sem consultar ninguém",
+        "Pedir que ele volte outro dia com autorização"
       ],
       "n": "facil",
       "resposta": "Confirmar com o morador ou responsável antes de liberar o acesso"
@@ -3005,9 +3005,9 @@ export const PERGUNTAS_SEED = {
       "q": "Um cliente exaltado eleva a voz. A conduta profissional é:",
       "o": [
         "Manter a calma, baixar o próprio tom e conduzir para um local mais reservado",
-        "Elevar a voz também para se impor",
-        "Ameaçar chamar a polícia imediatamente",
-        "Dar as costas e ignorar"
+        "Falar mais alto também, para mostrar quem conduz a conversa",
+        "Avisar que vai chamar a polícia se ele não se acalmar",
+        "Encerrar o atendimento e pedir que ele volte depois"
       ],
       "n": "medio",
       "resposta": "Manter a calma, baixar o próprio tom e conduzir para um local mais reservado"
@@ -3016,9 +3016,9 @@ export const PERGUNTAS_SEED = {
       "q": "O que é fundamental ao transferir um atendimento para outro setor?",
       "o": [
         "Explicar o contexto ao colega para o cliente não precisar repetir tudo",
-        "Apenas apontar para onde a pessoa deve ir",
-        "Transferir sem avisar o colega",
-        "Pedir para a pessoa explicar tudo de novo"
+        "Apenas indicar o caminho até o setor responsável",
+        "Transferir sem avisar o colega, para agilizar a fila",
+        "Pedir que o cliente explique tudo de novo no outro setor"
       ],
       "n": "medio",
       "resposta": "Explicar o contexto ao colega para o cliente não precisar repetir tudo"
@@ -3038,9 +3038,9 @@ export const PERGUNTAS_SEED = {
       "q": "Uma visita pede informações sobre a rotina de um morador. Você deve:",
       "o": [
         "Não fornecer; informações de moradores são confidenciais",
-        "Informar apenas o horário que ele sai",
-        "Contar se a pessoa parecer conhecida",
-        "Confirmar se o morador está em casa"
+        "Informar apenas o horário em que ele costuma sair",
+        "Responder se a pessoa parecer conhecida do morador",
+        "Confirmar se o morador está em casa naquele momento"
       ],
       "n": "dificil",
       "resposta": "Não fornecer; informações de moradores são confidenciais"
@@ -3049,9 +3049,9 @@ export const PERGUNTAS_SEED = {
       "q": "Qual atitude demonstra proatividade no atendimento?",
       "o": [
         "Perceber que alguém está perdido e oferecer ajuda antes de ser solicitado",
-        "Esperar sempre que a pessoa peça ajuda",
-        "Fazer apenas o que está no procedimento",
-        "Resolver tudo sem consultar ninguém"
+        "Esperar que a pessoa peça ajuda, para não parecer intrometido",
+        "Fazer exatamente o que está previsto no procedimento, sem ir além",
+        "Resolver tudo sozinho, sem consultar ninguém, para ganhar tempo"
       ],
       "n": "medio",
       "resposta": "Perceber que alguém está perdido e oferecer ajuda antes de ser solicitado"
@@ -3060,9 +3060,9 @@ export const PERGUNTAS_SEED = {
       "q": "Ao atender uma pessoa com deficiência, o correto é:",
       "o": [
         "Falar diretamente com ela e perguntar como pode ajudar, sem presumir",
-        "Falar com o acompanhante em vez dela",
-        "Ajudar sem perguntar, pegando no braço",
-        "Evitar contato para não constranger"
+        "Falar com o acompanhante, que conhece melhor a situação",
+        "Ajudar logo, conduzindo a pessoa pelo braço sem perguntar",
+        "Evitar contato direto para não causar constrangimento"
       ],
       "n": "medio",
       "resposta": "Falar diretamente com ela e perguntar como pode ajudar, sem presumir"
@@ -3104,9 +3104,9 @@ export const PERGUNTAS_SEED = {
       "q": "Durante a troca de turno, o profissional deve:",
       "o": [
         "Repassar pendências e ocorrências relevantes ao colega que assume",
-        "Sair assim que der o horário",
-        "Repassar apenas se houver algo grave",
-        "Deixar tudo anotado sem conversar"
+        "Sair no horário e deixar o colega descobrir sozinho",
+        "Repassar só as ocorrências mais graves do turno",
+        "Deixar tudo anotado no livro, sem conversar"
       ],
       "n": "medio",
       "resposta": "Repassar pendências e ocorrências relevantes ao colega que assume"
@@ -3115,9 +3115,9 @@ export const PERGUNTAS_SEED = {
       "q": "Um entregador insiste em subir até o apartamento. O correto é:",
       "o": [
         "Manter o procedimento, receber na portaria e comunicar o morador",
-        "Liberar para agilizar a entrega",
-        "Liberar se ele estiver uniformizado",
-        "Deixar subir acompanhado de outro morador"
+        "Liberar a subida para agilizar a entrega do pedido",
+        "Liberar se ele estiver uniformizado e com crachá",
+        "Deixar subir acompanhado de outro morador do prédio"
       ],
       "n": "medio",
       "resposta": "Manter o procedimento, receber na portaria e comunicar o morador"
@@ -3126,9 +3126,9 @@ export const PERGUNTAS_SEED = {
       "q": "O que significa personalizar o atendimento?",
       "o": [
         "Tratar a pessoa pelo nome e considerar seu histórico e necessidade",
-        "Fazer exceções às regras para quem você conhece",
-        "Atender mais rápido os clientes preferidos",
-        "Usar linguagem informal com todos"
+        "Abrir exceções às regras para quem você já conhece",
+        "Atender primeiro os clientes que você prefere",
+        "Usar linguagem informal e apelidos com todos"
       ],
       "n": "dificil",
       "resposta": "Tratar a pessoa pelo nome e considerar seu histórico e necessidade"
@@ -3137,9 +3137,9 @@ export const PERGUNTAS_SEED = {
       "q": "Ao receber uma crítica sobre seu próprio atendimento, o profissional deve:",
       "o": [
         "Ouvir sem se defender de imediato e usar como aprendizado",
-        "Explicar por que a crítica é injusta",
-        "Levar para o lado pessoal",
-        "Rebater com outra crítica"
+        "Explicar logo por que a crítica não é justa",
+        "Levar para o lado pessoal e se afastar do cliente",
+        "Responder apontando falhas do próprio cliente"
       ],
       "n": "medio",
       "resposta": "Ouvir sem se defender de imediato e usar como aprendizado"
@@ -3159,9 +3159,9 @@ export const PERGUNTAS_SEED = {
       "q": "A confidencialidade no atendimento significa:",
       "o": [
         "Não comentar informações de clientes com terceiros, nem fora do trabalho",
-        "Guardar segredo apenas de assuntos financeiros",
-        "Só não contar para quem não trabalha no local",
-        "Poder comentar desde que não cite nomes"
+        "Guardar segredo apenas sobre assuntos financeiros dos clientes",
+        "Não contar para quem não trabalha no local, só para colegas",
+        "Poder comentar os casos, desde que não cite os nomes"
       ],
       "n": "medio",
       "resposta": "Não comentar informações de clientes com terceiros, nem fora do trabalho"
@@ -3170,9 +3170,9 @@ export const PERGUNTAS_SEED = {
       "q": "Um cliente pede algo que contraria o procedimento, mas insiste muito. Você deve:",
       "o": [
         "Manter o procedimento com cordialidade e acionar o supervisor se necessário",
-        "Ceder para evitar conflito",
-        "Ceder se ninguém estiver vendo",
-        "Discutir até ele desistir"
+        "Ceder desta vez, para evitar que o conflito fique maior",
+        "Ceder ao pedido, desde que ninguém esteja vendo a exceção",
+        "Discutir o procedimento com ele até que desista do pedido"
       ],
       "n": "dificil",
       "resposta": "Manter o procedimento com cordialidade e acionar o supervisor se necessário"
@@ -3781,9 +3781,9 @@ export const PERGUNTAS_SEED = {
       "q": "Para que serve a poda de plantas e árvores?",
       "o": [
         "Estimular o crescimento saudável e a forma da planta",
-        "Apenas deixar o jardim mais bonito",
         "Reduzir o consumo de água do jardim",
-        "Evitar que a planta floresça"
+        "Deixar a planta com menos folhas e flores",
+        "Evitar a necessidade de adubação periódica"
       ],
       "n": "facil",
       "resposta": "Estimular o crescimento saudável e a forma da planta"
@@ -3803,9 +3803,9 @@ export const PERGUNTAS_SEED = {
       "q": "Como deve ser feito o descarte de galhos e folhas cortadas?",
       "o": [
         "Em local apropriado, seguindo as normas do local de trabalho",
-        "Deixados espalhados pelo jardim",
-        "Queimados em qualquer lugar do terreno",
-        "Jogados na rua, próximo ao trabalho"
+        "Espalhados no jardim para virar adubo natural",
+        "Queimados em um canto afastado do terreno",
+        "Deixados na calçada para a coleta recolher"
       ],
       "n": "facil",
       "resposta": "Em local apropriado, seguindo as normas do local de trabalho"
@@ -3814,9 +3814,9 @@ export const PERGUNTAS_SEED = {
       "q": "Qual ferramenta é mais indicada para aparar grama em áreas pequenas?",
       "o": [
         "Tesoura de jardim ou aparador manual",
-        "Motosserra,",
-        "Enxada grande,",
-        "Pá de corte,"
+        "Roçadeira a gasolina de grande porte",
+        "Enxada ou enxadão de cabo longo",
+        "Facão para mato grosso e galhos"
       ],
       "n": "facil",
       "resposta": "Tesoura de jardim ou aparador manual"
