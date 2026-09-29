@@ -2437,6 +2437,7 @@
       <div style="display:flex;gap:10px;flex-wrap:wrap;margin:16px 0 20px;">
         <button class="btn-pdf" onclick="gerarPDF()">📄 Relatório completo</button>
         <button class="btn-pdf" style="background:linear-gradient(135deg,#0088B0,#00C8E8);color:#02222c;" onclick="gerarResumoSkills()">📊 Resumo de competências</button>
+        ${pInfo.entrevista ? `<button class="btn-pdf" style="background:linear-gradient(135deg,#6B3FA0,#9B6BD6);color:#fff;" onclick="gerarPDFEntrevista()">🎤 Resultado da entrevista</button>` : ''}
         <button class="btn-act btn-neutral" style="background:#1F8A3B;color:#fff;" onclick="enviarWhatsappRelatorio('completo')">💬 Completo (WhatsApp)</button>
         <button class="btn-act btn-neutral" style="background:#1F8A3B;color:#fff;" onclick="enviarWhatsappRelatorio('resumo')">💬 Resumo (WhatsApp)</button>
       </div>`;
@@ -2912,7 +2913,6 @@
 
     // Comentários da equipe sobre o candidato — cada um com autor e data
     // (ver registrarComentario/buscarComentarios em js/dashboard.js).
-    h += htmlEntrevistaRelatorio((PIPELINE_MAP[CAND_ATUAL.replace(/[/]/g, '_')] || {}).entrevista, fmtDataHora);
     if (comentariosPDF.length) {
       h += `<div class="pr-sec-title">Comentários da equipe</div>` +
         comentariosPDF.map((c, i) => `
@@ -3183,7 +3183,6 @@
     }
 
     // Comentários da equipe sobre o candidato, com autor e data.
-    h += htmlEntrevistaRelatorio((PIPELINE_MAP[CAND_ATUAL.replace(/[/]/g, '_')] || {}).entrevista, fmtDataHora);
     if (comentariosResumo.length) {
       h += `<div class="pr-sec-title">Comentários da equipe</div>` +
         comentariosResumo.map((c, i) => `
@@ -3286,6 +3285,51 @@
 
     msg += `\n_Gerado em ${new Date().toLocaleString('pt-BR')}_`;
     window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
+  };
+
+  // Resultado da entrevista em PDF separado — uso INTERNO. Os PDFs do
+  // candidato (completo e resumo) não levam a entrevista, porque o resumo
+  // vai para o cliente do contrato onde o colaborador vai trabalhar.
+  window.gerarPDFEntrevista = function () {
+    const tents = tentativasDe(CAND_ATUAL);
+    const ent = (PIPELINE_MAP[CAND_ATUAL.replace(/[/]/g, '_')] || {}).entrevista;
+    if (!ent) { toast('Este candidato ainda não fez entrevista', 'err'); return; }
+    const nome = (tents[0] && tents[0].nome) || CAND_ATUAL;
+    const f = fichaDe(tents);
+    const agora = new Date().toLocaleString('pt-BR');
+    let corpo = htmlEntrevistaRelatorio(ent, fmtDataHora);
+    if (!corpo) {
+      // Entrevista no formato antigo (estrelas 1–5): resumo simples.
+      corpo = `<div class="pr-sec-title">🎤 Entrevista</div>
+        <div class="pr-cand" style="display:block;">
+          <div>Decisão: <b>${escapeHtml(ent.decisao || '—')}</b></div>
+          <div>Disponibilidade 12x36: <b>${ent.disponibilidade_escala ? 'Sim' : 'Não'}</b> · Experiência anterior: <b>${ent.experiencia_anterior ? 'Sim' : 'Não'}</b></div>
+          ${ent.avaliacao_media != null ? `<div>Média: <b>${ent.avaliacao_media} / 5</b></div>` : ''}
+          <div>Entrevistador: <b>${escapeHtml(ent.por || '—')}</b> · ${fmtDataHora(ent.em)}</div>
+          <div style="margin-top:6px;white-space:pre-wrap;">${ent.observacoes ? escapeHtml(ent.observacoes) : 'Nenhuma observação.'}</div>
+        </div>`;
+    }
+    const h = `
+      <div class="pr-header">
+        <div class="pr-hex">⚡</div>
+        <div>
+          <div class="pr-brand-name">Virtus</div>
+          <div class="pr-brand-sub">Resultado da Entrevista</div>
+        </div>
+        <div class="pr-doc-label">
+          Uso interno · Não enviar ao cliente<br>
+          Emitido em ${agora}<br>
+          Documento confidencial
+        </div>
+      </div>
+      <div class="pr-cand">
+        <div>
+          <div class="pr-cand-nome">${escapeHtml(nome)}</div>
+          <div class="pr-cand-item" style="margin-top:4px;">${escapeHtml((f && f.cargo_pretendido) || 'Cargo não informado')}</div>
+        </div>
+      </div>
+      ${corpo}`;
+    imprimirRelatorio(h, `Virtus - Entrevista - ${nome.replace(/[^\w\s-]/g, '')}`);
   };
 
   // Envia um HTML para o container de impressão e abre o diálogo do navegador.

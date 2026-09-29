@@ -24,6 +24,36 @@ function diasAtras(n) { return new Date(Date.now() - n * 86400000).toISOString()
 export const tests = [
 
   {
+    name: 'Entrevista fica fora dos PDFs do candidato e sai só no botão "Resultado da entrevista"',
+    async run({ browser, baseUrl }) {
+      const resultados = [{ id: '1', tipo: 'quiz', nome: 'Com Entrevista', cpf: '12312312312', modulo: 'CFTV', pct: 80, acertos: 8, total: 10, data_conclusao: hoje() }];
+      const entrevista = { versao: 2, decisao: 'aprovado', criterios: { asseio: 8, postura: 8, comunicacao: 8, equipe: 8 }, perguntas: [{ pergunta: 'Pergunta X', nota: 7 }], media: 7.8, observacoes: 'OBSERVACAO-SIGILOSA', por: 'Ana', destaques_fortes: [], destaques_atencao: [] };
+      const pipeline = { 'cpf:12312312312': { aprovado: true, aprovado_em: hoje(), entrevista } };
+      const { page, erros } = await abrirDashboard(browser, baseUrl, { perfil: 'admin', resultados, pipeline });
+      await page.evaluate(() => { window.print = () => {}; abrirCandidato('cpf:12312312312'); });
+      await page.waitForTimeout(300);
+      const temBotao = await page.evaluate(() => !!document.querySelector('[onclick="gerarPDFEntrevista()"]'));
+      assert(temBotao, 'ficha deveria ter o botão "Resultado da entrevista"');
+
+      await page.evaluate(() => gerarResumoSkills()); await page.waitForTimeout(300);
+      let html = await page.evaluate(() => document.getElementById('printReport').innerHTML);
+      assert(!html.includes('OBSERVACAO-SIGILOSA') && !html.includes('Avaliação da Entrevista'), 'resumo (vai pro cliente) NÃO pode ter a entrevista');
+
+      await page.evaluate(() => gerarPDF()); await page.waitForTimeout(300);
+      html = await page.evaluate(() => document.getElementById('printReport').innerHTML);
+      assert(!html.includes('OBSERVACAO-SIGILOSA'), 'relatório completo NÃO deveria ter a entrevista');
+
+      await page.evaluate(() => gerarPDFEntrevista()); await page.waitForTimeout(300);
+      html = await page.evaluate(() => document.getElementById('printReport').innerHTML);
+      assert(html.includes('OBSERVACAO-SIGILOSA') && html.includes('Resultado da Entrevista'), 'PDF da entrevista deveria ter a avaliação');
+
+      assertEqual(erros.length, 0, 'erros de JS: ' + erros.join(' | '));
+      await page.close();
+    }
+  },
+
+
+  {
     name: 'Vagas por filial: candidato só vê as vagas da filial do código de acesso que ele digitou',
     async run({ browser, baseUrl }) {
       const page = await browser.newPage();
