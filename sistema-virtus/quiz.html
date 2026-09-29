@@ -986,6 +986,7 @@
   let globalConsentGiven = false;
   let globalLgpdAccepted = false;
   let globalCodigoAcesso = '';
+  let globalCodigoFilial = null;
 
   // Mesma detecção usada em digitacao.html (toque + ponteiro grosso) — usada
   // aqui só pra decidir se, ao terminar o quiz, o candidato vai automático
@@ -1099,6 +1100,7 @@
       if (r.ok) {
         globalCodigoValidado = true;
         globalCodigoAcesso = codigo;
+        globalCodigoFilial = r.filial || null;
         // A lista de vagas só é conhecida depois de validar o código — ele
         // diz de qual filial é (ver worker/virtus-api.js), e o candidato só
         // deve ver as vagas daquela filial.
@@ -1710,7 +1712,7 @@
   // número de WhatsApp no dashboard. O candidato ainda precisa apertar
   // "Enviar" no WhatsApp — não é um envio automático por trás das câmeras.
   async function montarBotaoWhatsapp(nome, candidato, precisaDigitacao) {
-    const numero = await obterNumeroWhatsappRH();
+    const numero = await obterNumeroWhatsappRH(globalCodigoFilial);
     const notice = document.getElementById('whatsappNotice');
     if (!numero || !notice) return;
     const cargo = (candidato && candidato.cargo_pretendido) || '';

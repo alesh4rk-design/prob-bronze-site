@@ -719,6 +719,14 @@
   #entrevistaFortes, #entrevistaAtencao { flex-wrap:wrap; gap:6px; margin-top:6px; }
   #entrevistaFortes .pill, #entrevistaAtencao .pill { flex:0 0 auto; padding:7px 12px; font-size:13px; letter-spacing:.5px; }
   /* Títulos de seção dentro dos formulários (entrevista, banco de reserva) */
+  .guia-lista { display:flex; flex-direction:column; gap:8px; }
+  .guia-item { display:flex; align-items:center; gap:12px; padding:10px 12px; border:1px solid var(--line2); border-radius:6px; background:var(--ink3); }
+  .guia-item.feito { opacity:.7; }
+  .guia-check { width:26px; height:26px; flex-shrink:0; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:13px; border:2px solid var(--line2); color:var(--text3); }
+  .guia-item.feito .guia-check { background:var(--green); border-color:var(--green); color:#04170e; }
+  .guia-txt { flex:1; min-width:0; }
+  .guia-tit { font-weight:700; font-size:13.5px; color:var(--text); }
+  .guia-desc { font-size:12px; color:var(--text3); margin-top:2px; line-height:1.4; }
   .form-sec { font-family:'Rajdhani',sans-serif; font-weight:700; font-size:14px; letter-spacing:2px; text-transform:uppercase; color:var(--amber); margin:20px 0 10px; padding-bottom:6px; border-bottom:1px solid var(--line); }
 
   /* ── QR Codes: prévia na tela ── */
@@ -1184,6 +1192,28 @@
   </div>
 </div>
 
+<!-- ══════════ MODAL: PRIMEIRO ACESSO (GUIA) ══════════ -->
+<div class="modal-back" id="guiaModal" onclick="if(event.target===this)fecharGuia()">
+  <div class="modal-card" style="max-width:560px;">
+    <div class="modal-top">
+      <div class="modal-avatar">🚀</div>
+      <div>
+        <div class="modal-cand-nome">Bem-vindo(a) ao Virtus</div>
+        <div class="modal-cand-sub" id="guiaSubtitulo">Primeiros passos da sua filial</div>
+      </div>
+      <button class="modal-close" onclick="fecharGuia()" title="Fechar">✕</button>
+    </div>
+    <div class="modal-scroll" style="padding:20px;">
+      <p style="font-size:14px;color:var(--text2);line-height:1.5;margin-bottom:14px;">Antes de receber candidatos, deixe estes itens prontos. Cada um é marcado sozinho quando você concluir. Este guia continua no topo do Dashboard até terminar.</p>
+      <div id="guiaListaModal" class="guia-lista"></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-act btn-neutral" style="padding:12px 20px;border-radius:6px;" onclick="dispensarGuia()">Não mostrar mais</button>
+      <button class="btn-act btn-approve-admin" style="padding:12px 20px;border-radius:6px;margin-left:auto;" onclick="fecharGuia()">Entendi</button>
+    </div>
+  </div>
+</div>
+
 <!-- ══════════ MODAL: ENTREVISTA ══════════ -->
 <div class="modal-back" id="entrevistaModal" onclick="if(event.target===this)fecharEntrevista()">
   <div class="modal-card" style="max-width:520px;">
@@ -1310,6 +1340,14 @@
     <div class="page-actions">
       <button class="btn btn-amber" id="btnExportExcel" onclick="exportCSV()">⬇ Exportar Excel</button>
     </div>
+  </div>
+
+  <div class="panel" id="guiaCard" style="display:none;margin-bottom:16px;border-color:var(--amber);">
+    <div class="panel-head">
+      <div class="panel-title-sm">🚀 Primeiros passos <span class="badge" id="guiaProgresso">0/5</span></div>
+      <button class="btn-act btn-neutral" onclick="dispensarGuia()">Dispensar</button>
+    </div>
+    <div class="panel-body" style="padding:14px 20px;"><div id="guiaListaCard" class="guia-lista"></div></div>
   </div>
 
   <div class="toolbar" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:16px;">
@@ -2244,7 +2282,7 @@
     if (view === 'etapa3') renderEtapa3();
     if (view === 'bancoreserva') renderBancoReserva();
     if (view === 'pendencias') renderPendencias();
-    if (view === 'pesos') renderPesosView();
+    if (view === 'pesos') { renderPesosView(); try { localStorage.setItem('virtus_guia_pesos_' + (me && me.uid), '1'); } catch (_) {} }
     if (view === 'ranking') renderRanking();
     if (view === 'vagas') renderVagas();
   };
@@ -2880,7 +2918,7 @@
     // Veredito puramente automático, a partir da média de quiz (≥70% = aprovado).
     // Não existe mais decisão manual do avaliador neste sistema.
     const decPDF = decisaoFinalRelatorio();
-    const vLabel = decPDF ? (decPDF.contratado ? '🎉 Contratado' : '✕ Recusado') : media === null ? '⏳ Sem prova técnica' : media >= 70 ? '✓ Aprovado' : '✕ Não aprovado';
+    const vLabel = decPDF ? (decPDF.contratado ? '🎉 Contratado' : '✕ Recusado') : media === null ? '⏳ Sem teste de conhecimento' : media >= 70 ? '✓ Aprovado' : '✕ Não aprovado';
     const vClass = decPDF ? (decPDF.contratado ? 'pr-v-apto' : 'pr-v-naoapto') : media === null ? 'pr-v-pendente' : media >= 70 ? 'pr-v-apto' : 'pr-v-naoapto';
 
     const corPct = p => p >= 70 ? '#00713C' : p >= 50 ? '#8A6100' : '#B32218';
@@ -3123,13 +3161,13 @@
       }
     } else {
       recoCls = 'sk-reco-media'; recoIcon = 'ℹ️';
-      recoTitulo = 'Sem prova técnica registrada';
+      recoTitulo = 'Sem teste de conhecimento registrado';
       recoTxt = 'O candidato não possui avaliação de conhecimento concluída neste sistema.';
     }
 
     // Situação puramente automática (média de quiz), sem decisão manual.
     const decRes = decisaoFinalRelatorio();
-    const vLabel = decRes ? decRes.label : media === null ? 'SEM PROVA TÉCNICA' : media >= 70 ? 'APROVADO' : media >= 50 ? 'EM ANÁLISE' : 'NÃO APROVADO';
+    const vLabel = decRes ? decRes.label : media === null ? 'SEM TESTE DE CONHECIMENTO' : media >= 70 ? 'APROVADO' : media >= 50 ? 'EM ANÁLISE' : 'NÃO APROVADO';
     const vCor = decRes ? (decRes.contratado ? '#00EE88' : '#FF7A70') : media === null ? '#FFB800' : media >= 70 ? '#00EE88' : media >= 50 ? '#FFB800' : '#FF7A70';
 
     let h = `
@@ -3319,7 +3357,7 @@
       const melhorTyping = melhorDigitacao(typings);
       const melhorWpm = melhorTyping ? melhorTyping.wpm : null;
       const dig = melhorTyping ? classificarDigitacao(melhorTyping.wpm, melhorTyping.dispositivo) : null;
-      const situacao = media === null ? 'SEM PROVA TÉCNICA' : media >= 70 ? 'APROVADO' : media >= 50 ? 'EM ANÁLISE' : 'NÃO APROVADO';
+      const situacao = media === null ? 'SEM TESTE DE CONHECIMENTO' : media >= 70 ? 'APROVADO' : media >= 50 ? 'EM ANÁLISE' : 'NÃO APROVADO';
 
       msg += `*Média geral:* ${media !== null ? media + '%' : '—'}\n`;
       msg += `*Situação:* ${situacao}\n\n`;
@@ -4479,6 +4517,64 @@
     fecharWhatsappCandidato();
   };
 
+  // ══════════ PRIMEIRO ACESSO: GUIA DA GERÊNCIA ══════════
+  // Só pra Gerência. Cada passo é marcado sozinho olhando os dados reais
+  // (vaga criada, número salvo, código gerado...). "Não mostrar mais" fica
+  // guardado neste aparelho.
+  let GUIA_CODIGOS = [];
+  let GUIA_WHATSAPP = '';
+  let GUIA_MODAL_JA_ABERTO = false;
+  const chaveGuia = (k) => 'virtus_guia_' + k + '_' + (me && me.uid);
+  function lerLS(k) { try { return localStorage.getItem(k); } catch (_) { return null; } }
+  function passosGuia() {
+    const outrosDaEquipe = GUIA_USUARIOS.filter(u => u.uid !== (me && me.uid) && ['avaliador', 'coordenador', 'viewer', 'gerencia'].includes(u.perfil) && mesmaFilial(u.filial));
+    return [
+      { id: 'whatsapp', tit: 'WhatsApp do RH', desc: 'Número que recebe o aviso quando o candidato termina o teste.', feito: !!GUIA_WHATSAPP, ir: 'codigos' },
+      { id: 'vaga', tit: 'Criar a primeira vaga', desc: 'Sem vaga aberta, o candidato não consegue começar o teste.', feito: ALL_VAGAS.length > 0, ir: 'vagas' },
+      { id: 'pesos', tit: 'Revisar os pesos do Score (opcional)', desc: 'Confira se o peso de cada teste serve para os cargos da filial.', feito: !!lerLS(chaveGuia('pesos')), ir: 'pesos' },
+      { id: 'equipe', tit: 'Aprovar a equipe', desc: 'Aprove avaliadores, coordenadores e operadores que se cadastraram na filial.', feito: outrosDaEquipe.length > 0, ir: 'usuarios' },
+      { id: 'dia', tit: 'Preparar o dia do teste', desc: 'Gere o código de acesso e imprima o QR Code para os candidatos.', feito: GUIA_CODIGOS.length > 0, ir: 'codigos' }
+    ];
+  }
+  function htmlPassos(passos) {
+    return passos.map((p, i) => `
+      <div class="guia-item ${p.feito ? 'feito' : ''}">
+        <div class="guia-check">${p.feito ? '✓' : i + 1}</div>
+        <div class="guia-txt"><div class="guia-tit">${p.tit}</div><div class="guia-desc">${p.desc}</div></div>
+        ${p.feito ? '<span style="font-size:11px;color:var(--green);font-weight:700;">Feito</span>' : `<button class="btn-act btn-approve-admin" style="font-size:11px;padding:6px 10px;white-space:nowrap;" onclick="irPassoGuia('${p.ir}')">Fazer agora</button>`}
+      </div>`).join('');
+  }
+  function atualizarGuia() {
+    const card = document.getElementById('guiaCard');
+    if (!card) return;
+    if (!me || me.perfil !== 'gerencia' || lerLS(chaveGuia('dispensado'))) { card.style.display = 'none'; return; }
+    const passos = passosGuia();
+    const feitos = passos.filter(p => p.feito).length;
+    if (feitos === passos.length) { card.style.display = 'none'; return; }
+    card.style.display = '';
+    document.getElementById('guiaProgresso').textContent = feitos + '/' + passos.length;
+    document.getElementById('guiaListaCard').innerHTML = htmlPassos(passos);
+    const modal = document.getElementById('guiaModal');
+    if (modal.classList.contains('show')) document.getElementById('guiaListaModal').innerHTML = htmlPassos(passos);
+    // Primeiro acesso: abre a janela de boas-vindas uma vez por sessão.
+    if (!GUIA_MODAL_JA_ABERTO && !lerLS(chaveGuia('visto'))) {
+      GUIA_MODAL_JA_ABERTO = true;
+      if (me.filial_nome) document.getElementById('guiaSubtitulo').textContent = 'Primeiros passos · ' + me.filial_nome;
+      document.getElementById('guiaListaModal').innerHTML = htmlPassos(passos);
+      modal.classList.add('show');
+    }
+  }
+  window.irPassoGuia = function (view) { fecharGuia(); switchView(view); };
+  window.fecharGuia = function () {
+    document.getElementById('guiaModal').classList.remove('show');
+    try { localStorage.setItem(chaveGuia('visto'), '1'); } catch (_) {}
+  };
+  window.dispensarGuia = function () {
+    try { localStorage.setItem(chaveGuia('dispensado'), '1'); localStorage.setItem(chaveGuia('visto'), '1'); } catch (_) {}
+    document.getElementById('guiaModal').classList.remove('show');
+    atualizarGuia();
+  };
+
   // ══════════ CONTADORES DAS ETAPAS (menu lateral) ══════════
   // Quantos candidatos pedem ação em cada etapa — pisca em vermelho pra
   // chamar a atenção:
@@ -4810,9 +4906,9 @@
         <li>Gere ou confira o código do dia na aba <b>Código de Acesso</b>.</li>
         <li>Abra o teste aqui (ou peça pro candidato ler o QR Code).</li>
         <li>Na digitação, escolha a versão do aparelho: <b>💻 Computador</b> (texto completo, 90 s) ou <b>📱 Celular</b> (texto curto, 45 s). Cada uma tem sua própria régua de nota.</li>
-        <li>O candidato preenche a ficha, digita o código e faz as provas.</li>
+        <li>O candidato preenche a ficha, digita o código e faz os testes.</li>
       </ol>
-      <p>Se ele sair da tela durante a prova, isso vira uma violação.</p>`],
+      <p>Se ele sair da tela durante o teste, isso vira uma violação.</p>`],
     'view-violacoes': ['Violações', `
       <p>Ocorrências registradas durante os testes (sair da tela, trocar de aba, etc.).</p>
       <ul>
@@ -4834,7 +4930,7 @@
         <li>Filtre por cargo pra comparar só quem concorre à mesma vaga.</li>
         <li>Clique no nome pra abrir a ficha.</li>
       </ol>
-      <p>Os pesos de cada prova são definidos na aba <b>Pesos do Score</b>.</p>`],
+      <p>Os pesos de cada teste são definidos na aba <b>Pesos do Score</b>.</p>`],
     'view-qrcodes': ['QR Codes', `
       <p>Cartazes A4 pra imprimir e colar no local da entrevista.</p>
       <ol>
@@ -4849,16 +4945,16 @@
         <li>Em <b>usos</b> você vê quem entrou com cada código.</li>
       </ol>`],
     'view-perguntas': ['Banco de Perguntas', `
-      <p>Controle dos módulos de prova.</p>
+      <p>Controle dos módulos de teste.</p>
       <ol>
         <li>Ative ou desative módulos que o candidato vai fazer.</li>
         <li>Importe perguntas novas pelo arquivo no formato indicado.</li>
       </ol>`],
     'view-pesos': ['Pesos do Score', `
-      <p>Define quanto cada prova vale na nota única de cada cargo.</p>
+      <p>Define quanto cada teste vale na nota única de cada cargo.</p>
       <ol>
         <li>Escolha o cargo.</li>
-        <li>Ajuste os pesos (ex.: cargo de portaria pode valorizar mais a prova específica).</li>
+        <li>Ajuste os pesos (ex.: cargo de portaria pode valorizar mais o teste específico).</li>
         <li>Salve. O Ranking passa a usar os novos pesos.</li>
       </ol>`],
     'view-usuarios': ['Gestão de Usuários', `
@@ -5480,6 +5576,7 @@
       renderBancoAprovados();
       renderEtapa3();
       atualizarContadoresEtapas();
+      atualizarGuia();
       renderPipeline();
       renderRanking();
       renderContratados();
@@ -5720,7 +5817,10 @@
   const LABEL_PERFIL = { admin: 'Admin', gerencia: 'Gerência', avaliador: 'Avaliador', viewer: 'Operador', coordenador: 'Coordenador' };
 
   // ── Avaliadores já com acesso ─────────────────────────────────────────
+  let GUIA_USUARIOS = [];
   function renderUsuarios(todos) {
+    GUIA_USUARIOS = todos;
+    setTimeout(atualizarGuia, 0);
     const PERFIS = ['admin', 'gerencia', 'avaliador', 'viewer', 'coordenador'];
     const ativos = todos.filter(u => PERFIS.includes(u.perfil) && mesmaFilial(u.filial));
     document.getElementById('ativosBadge').textContent = ativos.length;
@@ -6093,7 +6193,7 @@
     if (!numero) { toast('▸ Informe o número com DDI+DDD (só números)', 'err'); return; }
     btn.disabled = true;
     try {
-      await definirNumeroWhatsapp(numero);
+      await definirNumeroWhatsapp(numero, me.filial || null);
       document.getElementById('whatsappSalvoTxt').textContent = '✓ Salvo';
       toast('✅ Número do WhatsApp salvo', 'ok');
     } catch (e) {
@@ -6361,13 +6461,14 @@
       // quem nunca vê a aba Código de Acesso) assina — coordenador tem o
       // mesmo acesso que avaliador, então também precisa desses dados.
       unsubs.push(assinarCodigosAcesso(
-        lista => { renderCodigos(lista.filter(c => mesmaFilial(c.filial))); },
+        lista => { GUIA_CODIGOS = lista.filter(c => mesmaFilial(c.filial)); renderCodigos(GUIA_CODIGOS); atualizarGuia(); },
         () => statusDot(false, 'Reconectando...'),
         FILTRO_FILIAL
       ));
       unsubs.push(assinarNumeroWhatsapp(
-        numero => { document.getElementById('inWhatsappRH').value = numero || ''; },
-        () => statusDot(false, 'Reconectando...')
+        numero => { GUIA_WHATSAPP = numero || ''; document.getElementById('inWhatsappRH').value = numero || ''; atualizarGuia(); },
+        () => statusDot(false, 'Reconectando...'),
+        (me && me.filial) || null
       ));
       // Processo Seletivo: admin/gerência/avaliador/coordenador gerenciam
       // igual; viewer só lê (precisa disso pra ver quem está no Banco de
@@ -6394,7 +6495,7 @@
       // leitura pública que o próprio candidato usa na ficha, não precisa
       // assinar aqui.
       if (me.perfil !== 'viewer') {
-        unsubs.push(assinarVagas(lista => { ALL_VAGAS = lista.filter(v => mesmaFilial(v.filial)); renderVagas(); }, () => statusDot(false, 'Reconectando...')));
+        unsubs.push(assinarVagas(lista => { ALL_VAGAS = lista.filter(v => mesmaFilial(v.filial)); renderVagas(); atualizarGuia(); }, () => statusDot(false, 'Reconectando...')));
       }
     } catch (e) {
       console.error(e);

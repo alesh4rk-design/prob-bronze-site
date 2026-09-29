@@ -504,7 +504,7 @@ import { salvarResultadoDigitacao, obterNumeroWhatsappRH, buscarCandidatoPorCpf 
 // número de WhatsApp no dashboard. O candidato ainda precisa apertar
 // "Enviar" no WhatsApp — não é um envio automático por trás das câmeras.
 async function montarBotaoWhatsapp(nome) {
-  const numero = await obterNumeroWhatsappRH();
+  const numero = await obterNumeroWhatsappRH(codigoFilialAtual);
   const notice = document.getElementById('whatsappNotice');
   if (!numero || !notice) return;
   const msg = `Olá! Sou ${nome} e acabei de concluir minha avaliação (teste de digitação) no Sistema Virtus.`;
@@ -890,6 +890,7 @@ function beginTiming(){
 
 // ── Código de acesso presencial ─────────────────────────────────────────
 let codigoValidado = false;
+let codigoFilialAtual = null;
 // Guardado pra ir junto do resultado — o Worker confere o código de novo no
 // envio (não basta ter passado pela tela de código).
 let codigoAcessoAtual = '';
@@ -913,6 +914,7 @@ async function validarCodigoEIniciar(){
     const r = await verificarCodigoAcesso(codigo);
     if (r.ok) {
       codigoValidado = true;
+      codigoFilialAtual = r.filial || null;
       codigoAcessoAtual = codigo;
       codigoModal.classList.remove('show');
       conferirCandidatoEIniciar();
@@ -1089,7 +1091,7 @@ validateForm();
   if (dados.codigoAcesso) {
     try {
       const r = await verificarCodigoAcesso(dados.codigoAcesso);
-      if (r.ok) { codigoValidado = true; codigoAcessoAtual = dados.codigoAcesso; }
+      if (r.ok) { codigoValidado = true; codigoAcessoAtual = dados.codigoAcesso; codigoFilialAtual = r.filial || null; }
     } catch (e) { /* mantém codigoValidado = false, pede o código na hora de iniciar */ }
   }
 })();

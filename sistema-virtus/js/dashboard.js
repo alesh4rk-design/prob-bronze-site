@@ -307,12 +307,15 @@ export async function excluirCodigoAcesso(codigo) {
 // pelo próprio candidato (via link wa.me, aberto no navegador dele — não é
 // um envio automático por trás das câmeras, é o candidato que confirma o
 // envio no WhatsApp). Guardado como documento único em `config`.
-export async function definirNumeroWhatsapp(numero) {
-  await setDoc(doc(db, "config", "whatsapp_rh"), { numero, atualizado_em: serverTimestamp() });
+// Com filial: config/whatsapp_rh_<filial> (cada filial tem o próprio
+// número). Sem filial (Admin): o número geral, usado por quem não tem.
+const docWhatsapp = (filial) => doc(db, "config", filial ? "whatsapp_rh_" + filial : "whatsapp_rh");
+export async function definirNumeroWhatsapp(numero, filial) {
+  await setDoc(docWhatsapp(filial), { numero, atualizado_em: serverTimestamp() });
 }
 
-export function assinarNumeroWhatsapp(callback, onError) {
-  return onSnapshot(doc(db, "config", "whatsapp_rh"), (snap) => {
+export function assinarNumeroWhatsapp(callback, onError, filial) {
+  return onSnapshot(docWhatsapp(filial), (snap) => {
     callback(snap.exists() ? (snap.data().numero || "") : "");
   }, (err) => { console.error("assinarNumeroWhatsapp:", err); if (onError) onError(err); });
 }

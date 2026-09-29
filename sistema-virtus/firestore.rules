@@ -139,9 +139,15 @@ service cloud.firestore {
     // do RH, usado para o candidato avisar que terminou a avaliação). Não é
     // sensível — leitura liberada mesmo sem login, pois o candidato precisa
     // ler o número pra montar o link do WhatsApp. Escrita pela equipe.
+    // Cada filial grava só o próprio número (config/whatsapp_rh_<filial>);
+    // quem não tem filial grava o número geral (config/whatsapp_rh).
     match /config/{doc} {
       allow read: if true;
-      allow write: if request.auth != null && isOperacional();
+      allow write: if request.auth != null && isOperacional() && (
+        isAdmin() ||
+        (minhaFilial() == null && doc == 'whatsapp_rh') ||
+        (minhaFilial() != null && doc == 'whatsapp_rh_' + minhaFilial())
+      );
     }
 
     // config_pesos/pesos: pesos do Score Virtus (por cargo + um padrão pra

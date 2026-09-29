@@ -24,6 +24,31 @@ function diasAtras(n) { return new Date(Date.now() - n * 86400000).toISOString()
 export const tests = [
 
   {
+    name: 'Primeiro acesso da Gerência: guia abre, marca passos feitos e some ao dispensar',
+    async run({ browser, baseUrl }) {
+      const vagas = [{ id: 'v1', cargo: 'CFTV', status: 'aberta', filial: 'f1' }];
+      const { page, erros } = await abrirDashboard(browser, baseUrl, { perfil: 'gerencia', filial: 'f1', filialNome: 'Unidade 1', vagas });
+      await page.waitForTimeout(300);
+      const abriu = await page.evaluate(() => document.getElementById('guiaModal').classList.contains('show'));
+      assert(abriu, 'janela de boas-vindas deveria abrir no primeiro acesso da Gerência');
+      const txt = await page.evaluate(() => document.getElementById('guiaListaModal').innerText);
+      assert(/Criar a primeira vaga[\s\S]*Feito/.test(txt), `passo da vaga deveria aparecer como feito. Texto: ${txt}`);
+      await page.evaluate(() => dispensarGuia());
+      await page.waitForTimeout(100);
+      const card = await page.evaluate(() => document.getElementById('guiaCard').style.display);
+      assertEqual(card, 'none', 'depois de dispensar, o cartão não deveria aparecer');
+      assertEqual(erros.length, 0, 'erros de JS: ' + erros.join(' | '));
+      await page.close();
+
+      const { page: pAdmin } = await abrirDashboard(browser, baseUrl, { perfil: 'admin' });
+      const abriuAdmin = await pAdmin.evaluate(() => document.getElementById('guiaModal').classList.contains('show'));
+      assert(!abriuAdmin, 'Admin não deveria ver o guia de primeiro acesso');
+      await pAdmin.close();
+    }
+  },
+
+
+  {
     name: 'Etapa 1: botão Reprovado recusa o candidato e manda pra Etapa 4',
     async run({ browser, baseUrl }) {
       const resultados = [{ id: '1', tipo: 'quiz', nome: 'Nao Passou', cpf: '20000000001', modulo: 'CFTV', pct: 30, acertos: 3, total: 10, data_conclusao: hoje() }];
@@ -1009,7 +1034,7 @@ export const tests = [
 
       // Gerência: só vê "Quer Ser Avaliador" na fila, sem opção de promover a Gerência.
       const { page: pageGerencia } = await abrirDashboard(browser, baseUrl, { perfil: 'gerencia', usuarios });
-      await pageGerencia.evaluate(() => switchView('usuarios'));
+      await pageGerencia.evaluate(() => { fecharGuia(); switchView('usuarios'); });
       await pageGerencia.waitForTimeout(300);
       const textoFilaGerencia = await pageGerencia.evaluate(() => document.getElementById('pendTableBody').innerText);
       assert(textoFilaGerencia.includes('Quer Ser Avaliador'), `Gerência deveria ver o pedido comum. Fila: ${textoFilaGerencia}`);
