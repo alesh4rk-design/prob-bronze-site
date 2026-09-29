@@ -129,7 +129,8 @@ service cloud.firestore {
     // Operador (viewer) continua podendo gerar/desativar — é literalmente o
     // trabalho dele no dia da prova, não uma decisão sobre candidato.
     match /codigos_acesso/{codigo} {
-      allow create: if request.auth != null && isOperacional();
+      allow create: if request.auth != null && isOperacional() &&
+                       (isAdmin() || request.resource.data.get('filial', null) == minhaFilial());
       allow get, list: if request.auth != null && isOperacional() && mesmaFilialOuSemFilial(resource.data);
       allow update, delete: if request.auth != null && isOperacional() && mesmaFilialOuSemFilial(resource.data);
     }
@@ -163,7 +164,7 @@ service cloud.firestore {
     match /vagas/{id} {
       allow read: if true;
       allow create: if request.auth != null && isGerenciaCandidatos() &&
-                     (request.resource.data.filial == minhaFilial() || minhaFilial() == null);
+                     (isAdmin() || request.resource.data.get('filial', null) == minhaFilial());
       allow update, delete: if request.auth != null && isGerenciaCandidatos() && mesmaFilialOuSemFilial(resource.data);
     }
 
@@ -192,7 +193,7 @@ service cloud.firestore {
       allow read: if request.auth != null && isLeitor() && mesmaFilialOuSemFilial(resource.data);
       allow write: if request.auth != null && isGerenciaCandidatos() &&
                      (resource == null || mesmaFilialOuSemFilial(resource.data)) &&
-                     (request.resource.data.filial == null || request.resource.data.filial == minhaFilial() || isAdmin());
+                     (isAdmin() || request.resource.data.get('filial', null) == minhaFilial());
 
       // pipeline/{chave}/historico/{id}: trilha de auditoria — uma entrada
       // por mudança de etapa (quem mudou, quando, pra qual etapa). NUNCA é
@@ -259,17 +260,18 @@ service cloud.firestore {
     // antes desta funcionalidade existir).
     function minhaFilial() {
       return exists(/databases/$(database)/documents/usuarios/$(request.auth.uid))
-        ? get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.filial
+        ? get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.get('filial', null)
         : null;
     }
 
-    // Um documento é visível/editável por quem está logado quando: é Admin,
-    // OU o documento não tem filial definida (dado de antes desta
-    // funcionalidade existir, ou de código/vaga sem filial — fica visível
-    // pra todo mundo, nunca "some"), OU a filial bate com a de quem está
-    // logado.
+    // Um documento é visível/editável por quem está logado quando é Admin
+    // OU a filial do documento é a mesma de quem está logado. Precisa ser
+    // uma comparação simples assim: o Firestore NÃO filtra documento por
+    // documento numa consulta — ele só libera a consulta se ela mesma já
+    // pedir `filial == minha filial` (é o que o painel faz, ver
+    // consultaDaFilial em js/dashboard.js).
     function mesmaFilialOuSemFilial(dadosDoDoc) {
-      return isAdmin() || !('filial' in dadosDoDoc) || dadosDoDoc.filial == null || dadosDoDoc.filial == minhaFilial();
+      return isAdmin() || dadosDoDoc.get('filial', null) == minhaFilial();
     }
   }
 }

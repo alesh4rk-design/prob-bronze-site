@@ -15,11 +15,32 @@ import {
   collection, query, where, orderBy, limit, onSnapshot, getDoc, getDocs, doc, addDoc, setDoc, updateDoc, deleteDoc, serverTimestamp, deleteField, increment
 } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
 
+// Isolamento por filial: o Firestore NÃO filtra documento por documento
+// pelas regras — uma consulta que poderia trazer algo proibido é recusada
+// inteira. Por isso, pra quem não é Admin, a consulta já pede só a própria
+// filial (`where filial == X`), que é exatamente o que as regras permitem.
+// `filial === undefined` = Admin (sem filtro). Sem orderBy junto do where
+// pra não exigir índice composto no Firestore — o painel já ordena.
+function consultaDaFilial(nomeColecao, filial, ...ordem) {
+  const ref = collection(db, nomeColecao);
+  return filial === undefined ? query(ref, ...ordem) : query(ref, where("filial", "==", filial));
+}
+
+// Toda escrita no pipeline leva a filial do candidato (vinda do código de
+// acesso que ele usou), pra que a Gerência daquela filial enxergue o
+// registro. O painel informa como descobrir a filial (definirResolverFilial).
+let resolverFilial = () => null;
+export function definirResolverFilial(fn) { resolverFilial = fn; }
+function carimboFilial(chave) {
+  const f = resolverFilial(chave);
+  return f && f.filial ? { filial: f.filial, filial_nome: f.filial_nome || null } : {};
+}
+
 // Assina a coleção `resultados` em tempo real (substitui o polling de 10s do
 // dashboard original por atualização instantânea via onSnapshot).
 // callback recebe um array de { id, ...dados }.
-export function assinarResultados(callback, onError) {
-  const q = query(collection(db, "resultados"), orderBy("data_conclusao", "desc"));
+export function assinarResultados(callback, onError, filial) {
+  const q = consultaDaFilial("resultados", filial, orderBy("data_conclusao", "desc"));
   return onSnapshot(q, (snap) => {
     const lista = [];
     snap.forEach((d) => lista.push({ id: d.id, ...d.data() }));
@@ -28,8 +49,8 @@ export function assinarResultados(callback, onError) {
 }
 
 // Assina a coleção `violacoes` em tempo real.
-export function assinarViolacoes(callback, onError) {
-  const q = query(collection(db, "violacoes"), orderBy("data", "desc"));
+export function assinarViolacoes(callback, onError, filial) {
+  const q = consultaDaFilial("violacoes", filial, orderBy("data", "desc"));
   return onSnapshot(q, (snap) => {
     const lista = [];
     snap.forEach((d) => lista.push({ id: d.id, ...d.data() }));
@@ -255,11 +276,15 @@ export async function gerarCodigoAcesso(avaliador, filial, filialNome) {
 // Assina os últimos códigos gerados (para a lista no painel), mais recentes
 // primeiro. Usa apenas os 10 mais recentes — não há mais um por candidato,
 // então não precisa de uma lista longa.
-export function assinarCodigosAcesso(callback, onError) {
-  const q = query(collection(db, "codigos_acesso"), orderBy("criado_em", "desc"), limit(10));
+export function assinarCodigosAcesso(callback, onError, filial) {
+  const q = consultaDaFilial("codigos_acesso", filial, orderBy("criado_em", "desc"), limit(10));
   return onSnapshot(q, (snap) => {
-    const lista = [];
+    let lista = [];
     snap.forEach((d) => lista.push({ codigo: d.id, ...d.data() }));
+    if (filial !== undefined) {
+      const ms = (c) => (c.criado_em && c.criado_em.toMillis ? c.criado_em.toMillis() : new Date(c.criado_em || 0).getTime());
+      lista = lista.sort((a, b) => ms(b) - ms(a)).slice(0, 10);
+    }
     callback(lista);
   }, (err) => { console.error("assinarCodigosAcesso:", err); if (onError) onError(err); });
 }
@@ -302,6 +327,7 @@ export function assinarNumeroWhatsapp(callback, onError) {
 export async function definirEtapaPipeline(chave, etapa, nome, avaliador) {
   const id = chave.replace(/[/]/g, "_");
   await setDoc(doc(db, "pipeline", id), {
+    ...carimboFilial(chave),
     etapa,
     nome: nome || null,
     atualizado_por: avaliador || null,
@@ -328,6 +354,7 @@ export async function registrarComentario(chave, texto, nome, por, por_perfil) {
     em: serverTimestamp()
   });
   await setDoc(doc(db, "pipeline", id), {
+    ...carimboFilial(chave),
     nome: nome || null,
     comentarios_count: increment(1)
   }, { merge: true });
@@ -487,6 +514,7 @@ export async function registrarAvisoWhatsapp(chave, etapa, nome, quem, perfilQue
 export async function salvarFotoColaborador(chave, dataUrl, quem) {
   const id = chave.replace(/[/]/g, "_");
   await setDoc(doc(db, "pipeline", id), {
+    ...carimboFilial(chave),
     foto_colaborador: dataUrl || null,
     foto_por: quem || null,
     foto_em: serverTimestamp()
@@ -496,6 +524,7 @@ export async function salvarFotoColaborador(chave, dataUrl, quem) {
 export async function registrarDecisaoFinal(chave, decisao, nome, quem, perfilQuem) {
   const id = chave.replace(/[/]/g, "_");
   await setDoc(doc(db, "pipeline", id), {
+    ...carimboFilial(chave),
     decisao_final: decisao,
     decisao_final_por: quem || null,
     decisao_final_por_perfil: perfilQuem || null,
@@ -531,6 +560,7 @@ export async function registrarDecisaoFinal(chave, decisao, nome, quem, perfilQu
 export async function registrarEntrevista(chave, dados, nome, quem, perfilQuem) {
   const id = chave.replace(/[/]/g, "_");
   await setDoc(doc(db, "pipeline", id), {
+    ...carimboFilial(chave),
     entrevista: {
       decisao: dados.decisao,
       disponibilidade_escala: dados.disponibilidadeEscala,
@@ -564,8 +594,8 @@ export async function registrarEntrevista(chave, dados, nome, quem, perfilQuem) 
   }
 }
 
-export function assinarPipeline(callback, onError) {
-  return onSnapshot(collection(db, "pipeline"), (snap) => {
+export function assinarPipeline(callback, onError, filial) {
+  return onSnapshot(consultaDaFilial("pipeline", filial), (snap) => {
     const mapa = {};
     snap.forEach((d) => { mapa[d.id] = d.data(); });
     callback(mapa);

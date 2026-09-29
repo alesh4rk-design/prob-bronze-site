@@ -1995,7 +1995,7 @@
   import { requireDashboardAccess, virtusLogout } from "./js/auth.js";
   import {
     assinarResultados, assinarViolacoes, excluirResultado,
-    assinarPendentes, assinarUsuarios, aprovarUsuario, removerUsuario, assinarFiliais, aprovarSolicitacaoGerente,
+    assinarPendentes, assinarUsuarios, aprovarUsuario, removerUsuario, assinarFiliais, aprovarSolicitacaoGerente, definirResolverFilial,
     assinarModulos, definirModuloAtivo,
     gerarCodigoAcesso, assinarCodigosAcesso, cancelarCodigoAcesso, excluirCodigoAcesso, VALIDADE_CODIGO_MS,
     definirNumeroWhatsapp, assinarNumeroWhatsapp,
@@ -2115,6 +2115,10 @@
   // definida (candidato/código/vaga/usuário de antes desta funcionalidade
   // existir, ou de quem não tinha filial na hora) continua visível pra
   // todo mundo, pra não sumir dado nenhum de uma hora pra outra.
+  // Filtro de consulta ao Firestore: Admin vê tudo (undefined); os demais
+  // pedem só a própria filial (null = conta sem filial, vê só o que também
+  // não tem filial).
+  const FILTRO_FILIAL = (me && me.perfil === 'admin') ? undefined : ((me && me.filial) || null);
   function mesmaFilial(filialDoRegistro) {
     if (me && me.perfil === 'admin') return true;
     if (!filialDoRegistro) return true;
@@ -2129,6 +2133,8 @@
     const r = ALL_RESULTADOS.find(x => chaveDe(x) === chave && x.filial);
     return r ? { filial: r.filial, filial_nome: r.filial_nome || null } : { filial: null, filial_nome: null };
   }
+  definirResolverFilial(filialDoCandidato);
+
 
   // ── Hierarquia de perfis ────────────────────────────────────────────
   // admin/gerência: acesso total, únicos que cadastram gente (Usuários) e
@@ -6299,11 +6305,13 @@
         () => {
           statusDot(false, 'Conexão perdida — reconectando...');
           document.getElementById('loadingOverlay').classList.add('hide');
-        }
+        },
+        FILTRO_FILIAL
       ));
       unsubs.push(assinarViolacoes(
         (lista) => { ALL_VIOLACOES = lista.filter(v => mesmaFilial(v.filial)); renderViolacoes(); },
-        () => statusDot(false, 'Conexão perdida — reconectando...')
+        () => statusDot(false, 'Conexão perdida — reconectando...'),
+        FILTRO_FILIAL
       ));
       // Usuários e Perguntas: só admin/gerência (únicos que cadastram gente
       // e mexem no banco de perguntas nas rules).
@@ -6317,7 +6325,8 @@
       // mesmo acesso que avaliador, então também precisa desses dados.
       unsubs.push(assinarCodigosAcesso(
         lista => { renderCodigos(lista.filter(c => mesmaFilial(c.filial))); },
-        () => statusDot(false, 'Reconectando...')
+        () => statusDot(false, 'Reconectando...'),
+        FILTRO_FILIAL
       ));
       unsubs.push(assinarNumeroWhatsapp(
         numero => { document.getElementById('inWhatsappRH').value = numero || ''; },
@@ -6338,7 +6347,8 @@
           for (const [id, dados] of Object.entries(mapa)) if (mesmaFilial(dados.filial)) PIPELINE_MAP[id] = dados;
           renderAll();
         },
-        () => statusDot(false, 'Reconectando...')
+        () => statusDot(false, 'Reconectando...'),
+        FILTRO_FILIAL
       ));
       // Pesos do Score Virtus: sem onSnapshot (não muda com frequência) —
       // carrega uma vez na conexão e de novo sempre que a aba Pesos é salva.
