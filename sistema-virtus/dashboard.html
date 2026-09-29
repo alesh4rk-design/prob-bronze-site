@@ -160,6 +160,10 @@
     margin-left:auto; background:var(--amber); color:#1a1300; font-family:'Share Tech Mono',monospace; font-size:10px;
     font-weight:700; border-radius:9px; min-width:18px; height:18px; display:flex; align-items:center; justify-content:center; padding:0 5px;
   }
+  .sidebar-item .sb-badge.alerta { background:var(--red); color:#fff; animation:pulsoBadge 1.6s ease-in-out infinite; }
+  @keyframes pulsoBadge { 0%,100% { box-shadow:0 0 0 0 rgba(255,74,64,.55); } 50% { box-shadow:0 0 0 6px rgba(255,74,64,0); } }
+  .hamburger-btn { position:relative; }
+  .hamburger-btn.tem-alerta::after { content:''; position:absolute; top:4px; right:4px; width:9px; height:9px; border-radius:50%; background:var(--red); box-shadow:0 0 0 2px var(--ink2); }
   .theme-toggle:hover { border-color:var(--amber); color:var(--amber); background:var(--amberdim); }
 
   .hud-foot { position:fixed; bottom:0; left:0; right:0; height:32px; display:flex; align-items:center; padding:0 20px; background:var(--ink2); border-top:1px solid var(--line2); z-index:100; gap:16px; }
@@ -1008,10 +1012,10 @@
     <div class="sidebar-item" data-view="dashboard" id="sidebarItemDashboard" onclick="switchView('dashboard')"><span class="si-icon">📊</span> Dashboard</div>
     <div class="sidebar-item" data-view="vagas" id="sidebarItemVagas" onclick="switchView('vagas')"><span class="si-icon">📌</span> Vagas</div>
     <div class="sidebar-item" data-view="pendencias" id="sidebarItemPendencias" onclick="switchView('pendencias')"><span class="si-icon">🔔</span> Pendências</div>
-    <div class="sidebar-item active" data-view="pipeline" id="sidebarItemPipeline" onclick="switchView('pipeline')"><span class="si-icon">1️⃣</span> Etapa 1 · Candidatos</div>
+    <div class="sidebar-item active" data-view="pipeline" id="sidebarItemPipeline" onclick="switchView('pipeline')"><span class="si-icon">1️⃣</span> Etapa 1 · Candidatos<span class="sb-badge" id="badgeEtapa1" style="display:none;">0</span></div>
     <div class="sidebar-item" data-view="banco" id="sidebarItemBanco" onclick="switchView('banco')"><span class="si-icon">2️⃣</span> Etapa 2 · Entrevista<span class="sb-badge" id="badgeAptosEntrevista" style="display:none;">0</span></div>
     <div class="sidebar-item" data-view="etapa3" id="sidebarItemEtapa3" onclick="switchView('etapa3')"><span class="si-icon">3️⃣</span> Etapa 3 · Aprovados na entrevista<span class="sb-badge" id="badgeEtapa3" style="display:none;">0</span></div>
-    <div class="sidebar-item" data-view="contratados" id="sidebarItemContratados" onclick="switchView('contratados')"><span class="si-icon">4️⃣</span> Etapa 4 · Resultado final</div>
+    <div class="sidebar-item" data-view="contratados" id="sidebarItemContratados" onclick="switchView('contratados')"><span class="si-icon">4️⃣</span> Etapa 4 · Resultado final<span class="sb-badge" id="badgeEtapa4" style="display:none;">0</span></div>
     <div class="sidebar-item" data-view="bancoreserva" id="sidebarItemBancoReserva" onclick="switchView('bancoreserva')"><span class="si-icon">🏦</span> Banco de Reserva</div>
     <div class="sidebar-item" data-view="ranking" id="sidebarItemRanking" onclick="switchView('ranking')"><span class="si-icon">🏅</span> Ranking</div>
     <div class="sidebar-item" data-view="violacoes" id="sidebarItemViolacoes" onclick="switchView('violacoes')"><span class="si-icon">🚨</span> Violações</div>
@@ -3488,9 +3492,6 @@
     const sino = document.getElementById('sinoPendenciasBadge');
     if (sino) { sino.textContent = total > 99 ? '99+' : String(total); sino.style.display = total > 0 ? 'flex' : 'none'; }
 
-    const aptos = grupos.aguardando_entrevista.length;
-    const badgeEntrevista = document.getElementById('badgeAptosEntrevista');
-    if (badgeEntrevista) { badgeEntrevista.textContent = aptos > 99 ? '99+' : String(aptos); badgeEntrevista.style.display = aptos > 0 ? 'flex' : 'none'; }
 
     // Se o painel de notificações já estiver aberto, atualiza a lista junto
     // (ex: outra pessoa decidiu um candidato enquanto o painel estava aberto).
@@ -4473,6 +4474,38 @@
     fecharWhatsappCandidato();
   };
 
+  // ══════════ CONTADORES DAS ETAPAS (menu lateral) ══════════
+  // Quantos candidatos pedem ação em cada etapa — pisca em vermelho pra
+  // chamar a atenção:
+  //   Etapa 1: fizeram o teste e ninguém decidiu nem avisou ainda
+  //   Etapa 2: marcados pra entrevista, ainda sem entrevista aprovada
+  //   Etapa 3: aprovados na entrevista, esperando a Gerência
+  //   Etapa 4: decididos que ainda não receberam o resultado no WhatsApp
+  function atualizarContadoresEtapas() {
+    const n = { 1: 0, 2: 0, 3: 0, 4: 0 };
+    for (const c of candidatosAgrupados()) {
+      const p = PIPELINE_MAP[c.chave.replace(/[/]/g, '_')] || {};
+      const av = p.avisos_whatsapp || {};
+      if (p.decisao_final) { if (!av[p.decisao_final]) n[4]++; }
+      else if (p.aprovado && p.entrevista && p.entrevista.decisao === 'aprovado') n[3]++;
+      else if (p.aprovado) n[2]++;
+      else if (!p.banco_reserva && !av.etapa1) n[1]++;
+    }
+    const ids = { 1: 'badgeEtapa1', 2: 'badgeAptosEntrevista', 3: 'badgeEtapa3', 4: 'badgeEtapa4' };
+    let total = 0;
+    for (const k of [1, 2, 3, 4]) {
+      const el = document.getElementById(ids[k]);
+      if (!el || el.closest('.sidebar-item').style.display === 'none') continue;
+      el.textContent = n[k] > 99 ? '99+' : String(n[k]);
+      el.style.display = n[k] ? 'flex' : 'none';
+      el.classList.toggle('alerta', n[k] > 0);
+      el.title = n[k] + ' candidato(s) aguardando ação';
+      total += n[k];
+    }
+    const ham = document.getElementById('btnHamburger');
+    if (ham) ham.classList.toggle('tem-alerta', total > 0);
+  }
+
   // ══════════ ETAPA 3 · APROVADOS NA ENTREVISTA ══════════
   // Passaram na entrevista e esperam a Gerência decidir contratar ou não.
   window.renderEtapa3 = function renderEtapa3() {
@@ -4489,8 +4522,6 @@
     });
     const badge = document.getElementById('etapa3CountBadge');
     if (badge) badge.textContent = lista.length + ' registro' + (lista.length !== 1 ? 's' : '');
-    const sb = document.getElementById('badgeEtapa3');
-    if (sb) { sb.textContent = lista.length > 99 ? '99+' : String(lista.length); sb.style.display = lista.length ? 'flex' : 'none'; }
     if (!lista.length) {
       tbody.innerHTML = '<tr><td colspan="6"><div class="empty-state"><div class="empty-icon">⏳</div>Ninguém aguardando decisão</div></td></tr>';
       return;
@@ -5443,6 +5474,7 @@
       renderViolacoes();
       renderBancoAprovados();
       renderEtapa3();
+      atualizarContadoresEtapas();
       renderPipeline();
       renderRanking();
       renderContratados();

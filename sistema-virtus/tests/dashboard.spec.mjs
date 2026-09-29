@@ -24,6 +24,30 @@ function diasAtras(n) { return new Date(Date.now() - n * 86400000).toISOString()
 export const tests = [
 
   {
+    name: 'Menu mostra contador piscando em cada etapa com candidatos aguardando ação',
+    async run({ browser, baseUrl }) {
+      const q = (id, nome, cpf) => ({ id, tipo: 'quiz', nome, cpf, modulo: 'CFTV', pct: 80, acertos: 8, total: 10, data_conclusao: hoje() });
+      const resultados = [q('1', 'Novo', '10000000001'), q('2', 'Marcado', '10000000002'), q('3', 'Passou', '10000000003'), q('4', 'Contratado Sem Aviso', '10000000004'), q('5', 'Ja Avisado', '10000000005')];
+      const pipeline = {
+        'cpf:10000000002': { aprovado: true, aprovado_em: hoje() },
+        'cpf:10000000003': { aprovado: true, aprovado_em: hoje(), entrevista: { decisao: 'aprovado' } },
+        'cpf:10000000004': { decisao_final: 'contratado' },
+        'cpf:10000000005': { decisao_final: 'recusado', avisos_whatsapp: { recusado: { por: 'Ana' } } }
+      };
+      const { page, erros } = await abrirDashboard(browser, baseUrl, { perfil: 'admin', resultados, pipeline });
+      const v = await page.evaluate(() => ['badgeEtapa1', 'badgeAptosEntrevista', 'badgeEtapa3', 'badgeEtapa4'].map(id => {
+        const el = document.getElementById(id); return el.style.display === 'none' ? '0' : el.textContent;
+      }));
+      assertEqual(v.join(','), '1,1,1,1', 'cada etapa deveria contar 1 candidato aguardando ação');
+      const pisca = await page.evaluate(() => document.getElementById('badgeAptosEntrevista').classList.contains('alerta'));
+      assert(pisca, 'contador deveria estar em destaque (alerta)');
+      assertEqual(erros.length, 0, 'erros de JS: ' + erros.join(' | '));
+      await page.close();
+    }
+  },
+
+
+  {
     name: 'Etapa 1 mostra também quem só fez a digitação (sem quiz ainda)',
     async run({ browser, baseUrl }) {
       const resultados = [{ id: 't1', tipo: 'typing', nome: 'So Digitou', cpf: '99988877766', pct: 72, wpm: 35, dispositivo: 'mobile', data_conclusao: hoje() }];
