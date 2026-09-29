@@ -452,7 +452,6 @@ body.modo-celular .btn-row .btn { padding:8px 14px; font-size:12px; }
     </div>
 
     <div class="result-btns">
-      <button class="btn" id="newTestBtn">+ Novo Teste</button>
       <button class="btn btn-ghost" id="closeBtn">✕ Fechar</button>
     </div>
   </div>
@@ -1030,10 +1029,6 @@ document.getElementById('cancelBtn').onclick = ()=>{
   if(active){clearInterval(timerInterval);active=false;}
   document.getElementById('testScreen').style.display='none';
   document.body.classList.remove('modo-celular');
-  document.getElementById('prepScreen').style.display='block';
-};
-document.getElementById('newTestBtn').onclick=()=>{
-  document.getElementById('resultScreen').style.display='none';
   document.getElementById('prepScreen').style.display='block';
 };
 document.getElementById('closeBtn').onclick=()=>window.location.href='./index.html';
