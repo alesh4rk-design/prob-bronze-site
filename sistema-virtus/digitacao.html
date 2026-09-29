@@ -300,7 +300,7 @@ textarea::placeholder { color:#4A6078; }
       <div class="hdr-icon">⌨️</div>
       <div>
         <h1>Teste de Digitação</h1>
-        <div class="hdr-sub">Sistema Virtus · Processo Seletivo</div>
+        <div class="hdr-sub">Sistema Virtus · Processo Seletivo<span id="versaoDigitacao"></span></div>
       </div>
     </div>
 
@@ -584,6 +584,12 @@ function getCategoria(f){
 // tablet, mesmo com teclado físico plugado o navegador reporta o ponteiro
 // primário do aparelho. Notebook com tela touch tem ponteiro fino (trackpad/
 // mouse) como primário, então cai como desktop, que é o esperado.
+// Mostra no topo qual versão foi aberta pela aba Testes do painel.
+document.addEventListener('DOMContentLoaded', () => {
+  const m = new URLSearchParams(location.search).get('modo');
+  const el = document.getElementById('versaoDigitacao');
+  if (el && (m === 'celular' || m === 'computador')) el.textContent = m === 'celular' ? ' · 📱 Versão celular' : ' · 💻 Versão computador';
+});
 function ehDispositivoMovel(){
   const temToque = ('ontouchstart' in window) || (navigator.maxTouchPoints || 0) > 0;
   const ponteiroGrosso = window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
@@ -945,7 +951,10 @@ async function conferirCandidatoEIniciar(){
 
 function iniciarTesteReal(){
   const nome=candidate.nome;
-  dispositivoAtual = ehDispositivoMovel() ? 'mobile' : 'desktop';
+  // A aba Testes do painel abre a versão escolhida (?modo=celular ou
+  // ?modo=computador). Sem isso, detecta sozinho pelo aparelho.
+  const modoUrl = new URLSearchParams(location.search).get('modo');
+  dispositivoAtual = modoUrl === 'celular' ? 'mobile' : modoUrl === 'computador' ? 'desktop' : (ehDispositivoMovel() ? 'mobile' : 'desktop');
   TEST_DURATION = dispositivoAtual === 'mobile' ? TEST_DURATION_MOBILE : TEST_DURATION_DESKTOP;
   const pool = dispositivoAtual === 'mobile'
     ? shuffle([...FRASES_MOBILE.lgpd, ...FRASES_MOBILE.acesso])
