@@ -2057,7 +2057,7 @@
     consolidarModulos, criadoEmDe, expiraEmDe as _expiraEmDe, statusCodigo as _statusCodigo,
     etapaDoPipeline, PESOS_PADRAO, calcularScore, pesosDoCargo, urlCurriculoSegura,
     CRITERIOS_ENTREVISTA, DESTAQUES_FORTES, DESTAQUES_ATENCAO, perguntasEntrevistaDoModulo,
-    mediaEntrevista, estrelasDe10, htmlEntrevistaRelatorio
+    mediaEntrevista, estrelasDe10, htmlEntrevistaRelatorio, entrevistaAprovada, entrevistaDaRodada
   } from "./js/dashboard-format.js";
 
   let ALL_RESULTADOS = [];
@@ -4364,6 +4364,11 @@
         ativo: aprovado,
         fn: () => { window.fecharAcoesModal(); window.alternarAprovadoParaEntrevista(chave, nome, !aprovado); }
       },
+      ...(!aprovado && !p.decisao_final ? [{
+        label: '❌ Reprovar (não passou no teste)',
+        perigo: true,
+        fn: () => { window.fecharAcoesModal(); window.decidirEntrevista(chave, nome, 'recusado'); }
+      }] : []),
       ...(aprovado && !p.decisao_final ? [{
         label: '🎤 ' + (p.entrevista ? 'Refazer entrevista' : 'Realizar entrevista'),
         fn: () => { window.fecharAcoesModal(); window.abrirEntrevista(chave, nome); }
@@ -4419,7 +4424,7 @@
     if (p.decisao_final === 'contratado') return 'contratado';
     if (p.decisao_final === 'recusado') return 'recusado';
     if (p.banco_reserva) return 'reserva';
-    if (p.aprovado && p.entrevista && p.entrevista.decisao === 'aprovado') return 'etapa3';
+    if (p.aprovado && entrevistaAprovada(p)) return 'etapa3';
     if (p.aprovado) return 'etapa2';
     return 'etapa1';
   }
@@ -4588,7 +4593,7 @@
       const p = PIPELINE_MAP[c.chave.replace(/[/]/g, '_')] || {};
       const av = p.avisos_whatsapp || {};
       if (p.decisao_final) { if (!av[p.decisao_final]) n[4]++; }
-      else if (p.aprovado && p.entrevista && p.entrevista.decisao === 'aprovado') n[3]++;
+      else if (p.aprovado && entrevistaAprovada(p)) n[3]++;
       else if (p.aprovado) n[2]++;
       else if (!p.banco_reserva && !av.etapa1) n[1]++;
     }
@@ -4615,7 +4620,7 @@
     ligarAcoesDelegadas('etapa3TableBody');
     const lista = candidatosAgrupados().filter(c => {
       const p = PIPELINE_MAP[c.chave.replace(/[/]/g, '_')];
-      return p && p.aprovado === true && !p.decisao_final && p.entrevista && p.entrevista.decisao === 'aprovado';
+      return p && p.aprovado === true && !p.decisao_final && entrevistaAprovada(p);
     }).sort((a, b) => {
       const ma = ((PIPELINE_MAP[a.chave.replace(/[/]/g, '_')] || {}).entrevista || {}).media ?? 0;
       const mb = ((PIPELINE_MAP[b.chave.replace(/[/]/g, '_')] || {}).entrevista || {}).media ?? 0;
@@ -4630,7 +4635,7 @@
     const podeDecidir = me && PODE_GERENCIAR_CANDIDATOS.includes(me.perfil);
     tbody.innerHTML = lista.map((c, i) => {
       const p = PIPELINE_MAP[c.chave.replace(/[/]/g, '_')] || {};
-      const ent = p.entrevista || {};
+      const ent = entrevistaDaRodada(p) || {};
       const dadosCand = `data-chave="${escapeHtml(c.chave)}" data-nome="${escapeHtml(c.nome)}"`;
       const nota = ent.versao === 2 && ent.media != null ? `${ent.media}/10` : (ent.avaliacao_media != null ? `${ent.avaliacao_media}/5` : '—');
       return `
@@ -5356,7 +5361,7 @@
     const marcadosParaEntrevista = todos.filter(c => {
       const chaveId = c.chave.replace(/[/]/g, '_');
       const p = PIPELINE_MAP[chaveId];
-      return p && p.aprovado === true && !p.decisao_final && !(p.entrevista && p.entrevista.decisao === 'aprovado');
+      return p && p.aprovado === true && !p.decisao_final && !entrevistaAprovada(p);
     });
 
     // O filtro de data usa QUANDO A PESSOA FOI MARCADA para entrevista
@@ -5415,7 +5420,7 @@
       const temViolacao = violacoesDe(c.nome).length > 0;
 
       const dadosCand = `data-chave="${escapeHtml(c.chave)}" data-nome="${escapeHtml(c.nome)}"`;
-      const entFeita = pipelineData.entrevista;
+      const entFeita = entrevistaDaRodada(pipelineData);
       if (!decisaoFinal && entFeita) {
         const m = entFeita.versao === 2 && entFeita.media != null ? ` · ${entFeita.media}/10` : '';
         statusTxt = { aprovado: '🎤 Entrevista: aprovado', reprovado: '🎤 Entrevista: reprovado', complementar: '🎤 Entrevista: complementar' }[entFeita.decisao] + m;

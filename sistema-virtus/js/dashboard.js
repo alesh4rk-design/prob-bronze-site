@@ -431,6 +431,8 @@ export async function definirAprovacaoManual(chave, aprovado, nome, avaliador, p
   // alguém decide algo sobre ele, pra isolar o pipeline por filial.
   if (filial) { dados.filial = filial; dados.filial_nome = filialNome || null; }
   if (aprovado) {
+    // Nova rodada: a entrevista de uma rodada anterior não vale mais.
+    dados.entrevista = deleteField();
     // Reabre o processo: uma decisão final ou uma marcação de banco de
     // reserva de uma rodada anterior não pode continuar valendo.
     dados.decisao_final = deleteField();

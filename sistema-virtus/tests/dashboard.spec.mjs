@@ -24,6 +24,29 @@ function diasAtras(n) { return new Date(Date.now() - n * 86400000).toISOString()
 export const tests = [
 
   {
+    name: 'Marcar pra entrevista um candidato com entrevista ANTIGA aprovada volta ele pra Etapa 2 (não pula pra Etapa 3)',
+    async run({ browser, baseUrl }) {
+      const resultados = [{ id: '1', tipo: 'quiz', nome: 'Candidato Repetido', cpf: '30000000001', modulo: 'CFTV', pct: 80, acertos: 8, total: 10, data_conclusao: hoje() }];
+      const pipeline = { 'cpf:30000000001': {
+        aprovado: true, aprovado_em: hoje(), etapa: 'aguardando_entrevista',
+        entrevista: { versao: 2, decisao: 'aprovado', media: 9, em: diasAtras(5) }
+      } };
+      const { page, erros } = await abrirDashboard(browser, baseUrl, { perfil: 'admin', resultados, pipeline });
+      await page.evaluate(() => { switchView('banco'); limparFiltrosBanco(); });
+      await page.waitForTimeout(300);
+      const e2 = await page.evaluate(() => document.getElementById('bancoTableBody').innerText);
+      assert(e2.includes('Candidato Repetido'), `deveria estar na Etapa 2. Conteúdo: ${e2}`);
+      await page.evaluate(() => switchView('etapa3'));
+      await page.waitForTimeout(200);
+      const e3 = await page.evaluate(() => document.getElementById('etapa3TableBody').innerText);
+      assert(!e3.includes('Candidato Repetido'), `NÃO deveria estar na Etapa 3. Conteúdo: ${e3}`);
+      assertEqual(erros.length, 0, 'erros de JS: ' + erros.join(' | '));
+      await page.close();
+    }
+  },
+
+
+  {
     name: 'Primeiro acesso da Gerência: guia abre, marca passos feitos e some ao dispensar',
     async run({ browser, baseUrl }) {
       const vagas = [{ id: 'v1', cargo: 'CFTV', status: 'aberta', filial: 'f1' }];

@@ -110,10 +110,33 @@ export const ETAPA_LABELS = {
 
 // `p` é o valor de PIPELINE_MAP[chaveId] (pode ser undefined — candidato
 // que ainda não teve nenhuma ação da equipe).
+function _ms(t) {
+  if (!t) return null;
+  const d = t.toDate ? t.toDate() : new Date(t);
+  const n = d.getTime();
+  return isNaN(n) ? null : n;
+}
+
+// A entrevista só vale pra rodada ATUAL: se o candidato foi marcado de novo
+// para entrevista DEPOIS da última entrevista feita (ex: candidato antigo,
+// de teste anterior), a entrevista velha não conta — ele volta pra Etapa 2.
+export function entrevistaDaRodada(p) {
+  const e = p && p.entrevista;
+  if (!e) return null;
+  const ent = _ms(e.em), apr = _ms(p.aprovado_em);
+  if (ent != null && apr != null && ent < apr) return null;
+  return e;
+}
+
+export function entrevistaAprovada(p) {
+  const e = entrevistaDaRodada(p);
+  return !!(e && e.decisao === 'aprovado');
+}
+
 export function etapaDoPipeline(p) {
   let chave = (p && p.etapa) || 'testes_concluidos';
   // Passou na entrevista e ainda sem decisão final: Etapa 3.
-  if (chave === 'aguardando_entrevista' && p && p.entrevista && p.entrevista.decisao === 'aprovado' && !p.decisao_final) chave = 'etapa_final';
+  if (chave === 'aguardando_entrevista' && entrevistaAprovada(p) && !p.decisao_final) chave = 'etapa_final';
   return { chave, ...(ETAPA_LABELS[chave] || ETAPA_LABELS.testes_concluidos) };
 }
 
