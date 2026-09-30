@@ -2531,7 +2531,7 @@
       <div style="display:flex;gap:10px;flex-wrap:wrap;margin:16px 0 20px;">
         <button class="btn-pdf" onclick="gerarPDF()">📄 Relatório completo</button>
         <button class="btn-pdf" style="background:linear-gradient(135deg,#0088B0,#00C8E8);color:#02222c;" onclick="gerarResumoSkills()">📊 Resumo de competências</button>
-        ${pInfo.entrevista ? `<button class="btn-pdf" style="background:linear-gradient(135deg,#6B3FA0,#9B6BD6);color:#fff;" onclick="gerarPDFEntrevista()">🎤 Resultado da entrevista</button>` : ''}
+        ${entrevistaDaRodada(pInfo) ? `<button class="btn-pdf" style="background:linear-gradient(135deg,#6B3FA0,#9B6BD6);color:#fff;" onclick="gerarPDFEntrevista()">🎤 Resultado da entrevista</button>` : ''}
         <button class="btn-act btn-neutral" style="background:#1F8A3B;color:#fff;" onclick="enviarWhatsappRelatorio('completo')">💬 Completo (WhatsApp)</button>
         <button class="btn-act btn-neutral" style="background:#1F8A3B;color:#fff;" onclick="enviarWhatsappRelatorio('resumo')">💬 Resumo (WhatsApp)</button>
       </div>`;
@@ -3387,11 +3387,13 @@
   // Resultado da entrevista em PDF separado — uso INTERNO. Os PDFs do
   // candidato (completo e resumo) não levam a entrevista, porque o resumo
   // vai para o cliente do contrato onde o colaborador vai trabalhar.
-  window.gerarPDFEntrevista = function () {
-    const tents = tentativasDe(CAND_ATUAL);
-    const ent = (PIPELINE_MAP[CAND_ATUAL.replace(/[/]/g, '_')] || {}).entrevista;
+  // `chave` opcional: as listas das Etapas 2 e 3 chamam direto, sem abrir a ficha.
+  window.gerarPDFEntrevista = function (chave) {
+    const ch = chave || CAND_ATUAL;
+    const tents = tentativasDe(ch);
+    const ent = entrevistaDaRodada(PIPELINE_MAP[ch.replace(/[/]/g, '_')] || {});
     if (!ent) { toast('Este candidato ainda não fez entrevista', 'err'); return; }
-    const nome = (tents[0] && tents[0].nome) || CAND_ATUAL;
+    const nome = (tents[0] && tents[0].nome) || ch;
     const f = fichaDe(tents);
     const agora = new Date().toLocaleString('pt-BR');
     let corpo = htmlEntrevistaRelatorio(ent, fmtDataHora);
@@ -4048,6 +4050,7 @@
     removerBancoReserva: el => window.alternarBancoReserva(el.dataset.chave, el.dataset.nome, false),
     decidirEntrevista: el => window.decidirEntrevista(el.dataset.chave, el.dataset.nome, el.dataset.decisao),
     whatsappEtapa: el => window.abrirWhatsappCandidato(el.dataset.chave, el.dataset.nome),
+    pdfEntrevista: el => window.gerarPDFEntrevista(el.dataset.chave),
     aprovarUsuario: el => window.aprovar(el.dataset.uid, el.dataset.perfil),
     recusarUsuario: el => window.recusar(el.dataset.uid, el.dataset.nome),
     alterarPerfil: el => window.alterarPerfil(el.dataset.uid, el.dataset.perfil),
@@ -4652,6 +4655,7 @@
         <td data-acao="ignorar" style="font-size:11px;">
           <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;">
             ${podeDecidir ? `
+            <button class="btn-act btn-neutral" style="font-size:11px;padding:6px 10px;background:#6B3FA0;color:#fff;border-color:#6B3FA0;" data-acao="pdfEntrevista" ${dadosCand}>📄 Resultado (PDF)</button>
             <button class="btn-act btn-neutral" style="font-size:11px;padding:6px 10px;background:#25D366;color:#052e16;border-color:#25D366;" data-acao="whatsappEtapa" ${dadosCand}>💬 Avisar</button>
             <button class="btn-act btn-approve-admin" style="font-size:11px;padding:6px 10px;" data-acao="decidirEntrevista" data-decisao="contratado" ${dadosCand}>🎉 Contratado</button>
             <button class="btn-act btn-neutral" style="font-size:11px;padding:6px 10px;" data-acao="decidirEntrevista" data-decisao="recusado" ${dadosCand}>❌ Recusado</button>` : ''}
@@ -5431,6 +5435,7 @@
       }
       const botoesAcao = (podeDecidir && !decisaoFinal) ? `
           <button class="btn-act btn-neutral" style="font-size:11px;padding:6px 10px;background:var(--cyandim);color:var(--cyan);border-color:var(--cyanmid);" data-acao="abrirEntrevista" ${dadosCand}>🎤 ${entFeita ? 'Refazer entrevista' : 'Realizar entrevista'}</button>
+          ${entFeita ? `<button class="btn-act btn-neutral" style="font-size:11px;padding:6px 10px;background:#6B3FA0;color:#fff;border-color:#6B3FA0;" data-acao="pdfEntrevista" ${dadosCand}>📄 Resultado (PDF)</button>` : ''}
           <button class="btn-act btn-neutral" style="font-size:11px;padding:6px 10px;background:#25D366;color:#052e16;border-color:#25D366;" data-acao="whatsappEtapa" ${dadosCand}>💬 Avisar</button>
           <button class="btn-act btn-neutral" style="font-size:11px;padding:6px 10px;" data-acao="decidirEntrevista" data-decisao="recusado" ${dadosCand}>❌ Recusado</button>
         ` : '';

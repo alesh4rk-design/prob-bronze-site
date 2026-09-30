@@ -150,8 +150,12 @@ export const tests = [
       const etapa2 = await page.evaluate(() => document.getElementById('bancoTableBody').innerText);
       assert(etapa2.includes('Na Etapa Dois') && !etapa2.includes('Na Etapa Tres'), `Etapa 2 deveria ter só quem ainda não passou na entrevista. Conteúdo: ${etapa2}`);
 
-      await page.evaluate(() => switchView('etapa3'));
+      await page.evaluate(() => { window.print = () => {}; switchView('etapa3'); });
       await page.waitForTimeout(300);
+      await page.click('#etapa3TableBody [data-acao="pdfEntrevista"]');
+      await page.waitForTimeout(300);
+      const pdfEnt = await page.evaluate(() => document.getElementById('printReport').innerHTML);
+      assert(pdfEnt.includes('Resultado da Entrevista'), 'botão da Etapa 3 deveria gerar o PDF só da entrevista');
       const etapa3 = await page.evaluate(() => document.getElementById('etapa3TableBody').innerText);
       assert(etapa3.includes('Na Etapa Tres') && !etapa3.includes('Na Etapa Dois'), `Etapa 3 deveria ter só quem passou na entrevista. Conteúdo: ${etapa3}`);
 
