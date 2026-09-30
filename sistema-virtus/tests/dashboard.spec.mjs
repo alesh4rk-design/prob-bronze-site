@@ -24,6 +24,22 @@ function diasAtras(n) { return new Date(Date.now() - n * 86400000).toISOString()
 export const tests = [
 
   {
+    name: 'Resumo de competências mostra a linha de Informática como "Não realizado" quando o candidato não tem esse teste',
+    async run({ browser, baseUrl }) {
+      const q = (id, mod, pct) => ({ id, tipo: 'quiz', nome: 'Sem Informatica', cpf: '50000000001', modulo: mod, pct, acertos: pct / 10, total: 10, data_conclusao: hoje() });
+      const { page, erros } = await abrirDashboard(browser, baseUrl, { perfil: 'admin', resultados: [q('1', 'Controle de Acesso', 100), q('2', 'Atendimento ao Cliente', 90)] });
+      await page.evaluate(() => { window.print = () => {}; abrirCandidato('cpf:50000000001'); });
+      await page.waitForTimeout(300);
+      await page.evaluate(() => gerarResumoSkills()); await page.waitForTimeout(300);
+      const html = await page.evaluate(() => document.getElementById('printReport').innerText);
+      assert(/Informática/.test(html) && /NÃO REALIZADO/i.test(html), `resumo deveria listar Informática como não realizado. Texto: ${html.slice(0, 600)}`);
+      assertEqual(erros.length, 0, 'erros de JS: ' + erros.join(' | '));
+      await page.close();
+    }
+  },
+
+
+  {
     name: 'Ficha do candidato: responder "Não" à disponibilidade total pede a preferência de horário',
     async run({ browser, baseUrl }) {
       const page = await browser.newPage();

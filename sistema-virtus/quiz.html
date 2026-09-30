@@ -993,7 +993,7 @@
 </div>
 
 <script type="module">
-  import { listarModulos, carregarPerguntasDoModulo, salvarResultadoQuiz, registrarViolacao, tempoLimiteParaModulo, montarTrilha, verificarCodigoAcesso, obterNumeroWhatsappRH, enviarCurriculo, registrarAcessoCodigo, listarVagasAbertas, moduloDoCargoPretendido } from "./js/quiz.js";
+  import { MODULOS_SEM_TRILHA, listarModulos, carregarPerguntasDoModulo, salvarResultadoQuiz, registrarViolacao, tempoLimiteParaModulo, montarTrilha, verificarCodigoAcesso, obterNumeroWhatsappRH, enviarCurriculo, registrarAcessoCodigo, listarVagasAbertas, moduloDoCargoPretendido } from "./js/quiz.js";
 
   let globalConsentGiven = false;
   let globalLgpdAccepted = false;
@@ -1576,6 +1576,20 @@
       toast(`✅ ${modulo} — etapa ${S.trilhaIdx + 1} de ${S.trilha.length}`, 'ok');
     } catch (err) {
       console.error(err);
+      // Um módulo da trilha que não carrega (desativado, sem perguntas...)
+      // não pode travar o candidato: pula pro próximo, ou encerra se for o
+      // último. O primeiro (o cargo escolhido) continua sendo obrigatório.
+      if (S.trilhaIdx > 0 && S.resultadosTrilha.length) {
+        toast(`⚠️ ${modulo} indisponível — seguindo para a próxima etapa`, 'err');
+        if (S.trilhaIdx < S.trilha.length - 1) {
+          S.trilhaIdx++;
+          mostrarTransicao(S.resultadosTrilha[S.resultadosTrilha.length - 1].pct);
+        } else {
+          renderResultadoFinal();
+          show('s-result-quiz');
+        }
+        return;
+      }
       toast(`❌ Falha ao iniciar ${modulo}: ${err.message}`, 'err'); playErr();
     }
   }
@@ -1771,9 +1785,12 @@
     // O teste de digitação só se aplica a alguns cargos — o aviso "procure
     // o avaliador" só aparece se o cargo pretendido (texto livre digitado
     // na ficha) combinar com algum destes.
-    const CARGOS_DIGITACAO = ['porteiro', 'vigia', 'vigilante', 'recepcionista', 'fiscal', 'supervisor'];
-    const cargoDigitado = ((S.candidato && S.candidato.cargo_pretendido) || '').toLowerCase();
-    const precisaDigitacao = CARGOS_DIGITACAO.some(c => cargoDigitado.includes(c));
+    // Todo candidato faz a digitação, menos os cargos que só têm o próprio
+    // módulo (ASG, Bombeiro Civil, Manutenção, Jardineiro). Antes dependia de
+    // bater o texto do cargo com uma lista fixa, e cargos como "Controle de
+    // Acesso" ou "CFTV" ficavam sem digitação.
+    const moduloEscolhido = (S.trilha && S.trilha[0]) || S.tema || '';
+    const precisaDigitacao = !MODULOS_SEM_TRILHA.includes(String(moduloEscolhido).trim());
 
     // No celular, o candidato faz tudo sozinho (autoatendimento): em vez de
     // pedir pra chamar o avaliador, já manda ele direto pro Teste de
@@ -1798,7 +1815,7 @@
           aviso.querySelector('.next-step-title').textContent = 'Quase lá!';
           aviso.querySelector('.next-step-text').innerHTML = 'Redirecionando você para o <strong>Teste de Digitação</strong>...';
         }
-        setTimeout(() => { window.location.href = './digitacao.html'; }, 1800);
+        setTimeout(() => { window.location.href = './digitacao.html?modo=celular'; }, 1800);
         return;
       }
     }

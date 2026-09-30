@@ -849,9 +849,10 @@ function finishTest(){
   // (que é só pra quem já concluiu tudo).
   if (veioDoQuizMobile) {
     document.getElementById('nextStepComputador').style.display = 'block';
-  } else {
-    montarBotaoWhatsapp(candidate.nome);
   }
+  // O botão de avisar o RH aparece sempre (antes sumia pra quem veio do quiz
+  // no celular, e o candidato não tinha como dizer que terminou).
+  montarBotaoWhatsapp(candidate.nome);
 }
 
 function renderHistory(){

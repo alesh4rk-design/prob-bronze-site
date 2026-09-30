@@ -141,6 +141,14 @@
     font-family:'Rajdhani',sans-serif; font-weight:700; font-size:14px; color:var(--text);
   }
   .notif-panel-body { max-height:360px; overflow-y:auto; }
+  .notif-texto { overflow-wrap:anywhere; min-width:0; }
+  .notif-item > div:not(.notif-icon) { min-width:0; flex:1; }
+  /* No celular o painel ocupa a largura da tela (antes saía cortado pela
+     esquerda, porque o sino não fica na borda direita do cabeçalho). */
+  @media (max-width: 700px) {
+    .notif-panel { position:fixed; top:62px; left:8px; right:8px; width:auto; max-width:none; }
+    .notif-panel-body { max-height:calc(100vh - 140px); }
+  }
   .notif-item {
     display:flex; gap:10px; padding:12px 14px; border-bottom:1px solid var(--line);
     cursor:pointer; transition:background .15s;
@@ -3261,6 +3269,22 @@
             <div class="sk-bar-track"><div class="sk-bar-fill" style="width:${m.pct}%;background:${c.cor};"></div></div>
           </div>`;
       }).join('');
+      // Informática faz parte do teste de todo cargo com trilha completa:
+      // se não há resultado, a linha aparece mesmo assim, como "Não realizado",
+      // em vez de simplesmente sumir do relatório.
+      const cargosSemTrilha = ['ASG', 'Bombeiro Civil', 'Manutenção', 'Jardineiro'];
+      const temTrilhaCompleta = !mods.some(m => cargosSemTrilha.includes(m.modulo)) || mods.length > 1;
+      if (temTrilhaCompleta && !mods.some(m => m.modulo === 'Informática')) {
+        h += `
+          <div class="sk-bar-row">
+            <div class="sk-bar-head">
+              <span class="sk-bar-nome">Informática</span>
+              <span class="sk-bar-tag" style="background:#EEF1F5;color:#5A6880;">NÃO REALIZADO</span>
+              <span class="sk-bar-pct" style="color:#7A8EA8">—</span>
+            </div>
+            <div class="sk-bar-track"></div>
+          </div>`;
+      }
 
       h += `
         <div class="sk-two" style="margin-top:14px;">
