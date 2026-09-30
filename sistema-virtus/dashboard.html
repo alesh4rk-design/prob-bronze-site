@@ -3446,6 +3446,11 @@
 
   // Dados do Dashboard (KPIs + gráficos), filtrados pelo campo de dia opcional
   // "dashData" — vazio mostra todos os dias.
+  function digitacoesDashboardFiltradas() {
+    const dataEl = document.getElementById('dashData');
+    const dataFiltro = dataEl ? dataEl.value : '';
+    return ALL_RESULTADOS.filter(r => r.tipo === 'typing' && (!dataFiltro || (r.data_conclusao && dataLocalYMD(r.data_conclusao) === dataFiltro)));
+  }
   function resultadosDashboardFiltrados() {
     const dataEl = document.getElementById('dashData');
     const dataFiltro = dataEl ? dataEl.value : '';
@@ -3466,7 +3471,10 @@
     const aprov = lista.filter(r => (r.pct || 0) >= 70).length;
     const reprov = total - aprov;
     const media = total ? Math.round(lista.reduce((a, r) => a + (r.pct || 0), 0) / total) : null;
-    kpiTotal.textContent = total;
+    const nDig = digitacoesDashboardFiltradas().length;
+    kpiTotal.textContent = total;  // só quiz: a digitação tem seção própria (abaixo)
+    const lblTotal = kpiTotal.parentElement.querySelector('.kpi-lbl');
+    if (lblTotal) lblTotal.innerHTML = `Testes Realizados<div style="font-size:9px;letter-spacing:0;text-transform:none;opacity:.75;margin-top:3px;">${nDig} de digitação na seção abaixo</div>`;
     document.getElementById('kpiAprov').textContent = aprov;
     document.getElementById('kpiReprov').textContent = reprov;
     document.getElementById('kpiMedia').textContent = media === null ? '—' : media + '%';
@@ -3748,13 +3756,20 @@
       if (!porCandidato[chave]) porCandidato[chave] = [];
       porCandidato[chave].push(r);
     }
+    // Quem só fez a digitação também é candidato (aparece na Etapa 1) —
+    // entra na contagem, mas só o quiz decide "aprovado no teste".
+    const soQuiz = new Set(Object.keys(porCandidato));
+    for (const r of digitacoesDashboardFiltradas()) {
+      const chave = chaveDe(r);
+      if (!porCandidato[chave]) porCandidato[chave] = [r];
+    }
     const chaves = Object.keys(porCandidato);
     if (!chaves.length) { el.innerHTML = '<div class="empty-state"><div class="empty-icon">🔻</div>Sem dados ainda</div>'; return; }
 
     let aprovados = 0, marcadosEntrevista = 0, entrevistaRealizada = 0, contratados = 0;
     for (const chave of chaves) {
       const media = Math.max(...porCandidato[chave].map(r => r.pct || 0));
-      if (media >= 70) aprovados++;
+      if (soQuiz.has(chave) && media >= 70) aprovados++;
       const chaveId = chave.replace(/[/]/g, '_');
       const p = PIPELINE_MAP[chaveId] || {};
       // "Marcado pra entrevista" conta quem está aprovado agora OU já

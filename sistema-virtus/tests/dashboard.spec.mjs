@@ -24,6 +24,27 @@ function diasAtras(n) { return new Date(Date.now() - n * 86400000).toISOString()
 export const tests = [
 
   {
+    name: 'Dashboard: KPI conta quiz, avisa das digitações e o funil inclui quem só fez a digitação',
+    async run({ browser, baseUrl }) {
+      const q = (id, nome, cpf, pct) => ({ id, tipo: 'quiz', nome, cpf, modulo: 'CFTV', pct, acertos: pct / 10, total: 10, data_conclusao: hoje() });
+      const t = (id, nome, cpf, pct, disp) => ({ id, tipo: 'typing', nome, cpf, pct, wpm: 30, dispositivo: disp, data_conclusao: hoje() });
+      const resultados = [q('1', 'Ana', '11111111111', 80), q('2', 'Bia', '22222222222', 50), t('3', 'Ana', '11111111111', 75, 'desktop'), t('4', 'Dan', '44444444444', 90, 'mobile')];
+      const { page, erros } = await abrirDashboard(browser, baseUrl, { perfil: 'admin', resultados });
+      await page.waitForTimeout(300);
+      const total = await page.evaluate(() => document.getElementById('kpiTotal').textContent);
+      assertEqual(total, '2', 'KPI de testes conta só os quizzes (digitação tem seção própria)');
+      const lbl = await page.evaluate(() => document.getElementById('kpiTotal').parentElement.innerText);
+      assert(lbl.includes('2 de digitação'), `legenda deveria avisar quantas digitações há. Veio: ${lbl}`);
+      const funil = await page.evaluate(() => document.getElementById('funilRecrutamento').innerText.replace(/\s+/g, ' '));
+      assert(/Candidatos 3/.test(funil), `funil deveria contar 3 candidatos (inclui quem só fez digitação). Veio: ${funil}`);
+      assert(/Aprovados no teste \(≥70%\) 1/.test(funil), `só o quiz decide aprovado. Veio: ${funil}`);
+      assertEqual(erros.length, 0, 'erros de JS: ' + erros.join(' | '));
+      await page.close();
+    }
+  },
+
+
+  {
     name: 'Marcar pra entrevista um candidato com entrevista ANTIGA aprovada volta ele pra Etapa 2 (não pula pra Etapa 3)',
     async run({ browser, baseUrl }) {
       const resultados = [{ id: '1', tipo: 'quiz', nome: 'Candidato Repetido', cpf: '30000000001', modulo: 'CFTV', pct: 80, acertos: 8, total: 10, data_conclusao: hoje() }];
