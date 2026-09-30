@@ -2278,7 +2278,7 @@
     toggleSidebar(false);
     if (view === 'qrcodes') gerarQRCodes();
     if (view === 'pipeline') renderPipeline();
-    if (view === 'contratados') renderContratados();
+    if (view === 'contratados') { try { localStorage.setItem(chaveVisitaE4(), String(Date.now())); } catch (_) {} renderContratados(); atualizarContadoresEtapas(); }
     if (view === 'etapa3') renderEtapa3();
     if (view === 'bancoreserva') renderBancoReserva();
     if (view === 'pendencias') renderPendencias();
@@ -4593,12 +4593,19 @@
   //   Etapa 2: marcados pra entrevista, ainda sem entrevista aprovada
   //   Etapa 3: aprovados na entrevista, esperando a Gerência
   //   Etapa 4: decididos que ainda não receberam o resultado no WhatsApp
+  const chaveVisitaE4 = () => 'virtus_etapa4_visto_' + (me && me.uid);
+  function ultimaVisitaEtapa4() { try { return Number(localStorage.getItem(chaveVisitaE4())) || 0; } catch (_) { return 0; } }
   function atualizarContadoresEtapas() {
     const n = { 1: 0, 2: 0, 3: 0, 4: 0 };
     for (const c of candidatosAgrupados()) {
       const p = PIPELINE_MAP[c.chave.replace(/[/]/g, '_')] || {};
       const av = p.avisos_whatsapp || {};
-      if (p.decisao_final) { if (!av[p.decisao_final]) n[4]++; }
+      if (p.decisao_final) {
+        // Etapa 4: conta só decisões NOVAS (depois da última vez que a aba
+        // foi aberta) que ainda não tiveram o WhatsApp enviado.
+        const quando = p.decisao_final_em ? (p.decisao_final_em.toMillis ? p.decisao_final_em.toMillis() : new Date(p.decisao_final_em).getTime()) : 1;
+        if (!av[p.decisao_final] && quando > ultimaVisitaEtapa4()) n[4]++;
+      }
       else if (p.aprovado && entrevistaAprovada(p)) n[3]++;
       else if (p.aprovado) n[2]++;
       else if (!p.banco_reserva && !av.etapa1) n[1]++;

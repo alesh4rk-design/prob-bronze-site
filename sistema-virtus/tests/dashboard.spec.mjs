@@ -108,6 +108,10 @@ export const tests = [
         const el = document.getElementById(id); return el.style.display === 'none' ? '0' : el.textContent;
       }));
       assertEqual(v.join(','), '1,1,1,1', 'cada etapa deveria contar 1 candidato aguardando ação');
+      await page.evaluate(() => switchView('contratados'));
+      await page.waitForTimeout(200);
+      const e4 = await page.evaluate(() => { const el = document.getElementById('badgeEtapa4'); return el.style.display === 'none' ? '0' : el.textContent; });
+      assertEqual(e4, '0', 'ao abrir a Etapa 4, o contador dela deveria zerar');
       const pisca = await page.evaluate(() => document.getElementById('badgeAptosEntrevista').classList.contains('alerta'));
       assert(pisca, 'contador deveria estar em destaque (alerta)');
       assertEqual(erros.length, 0, 'erros de JS: ' + erros.join(' | '));
