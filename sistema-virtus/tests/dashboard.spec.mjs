@@ -178,7 +178,7 @@ export const tests = [
 
 
   {
-    name: 'Entrevista fica fora dos PDFs do candidato e sai só no botão "Resultado da entrevista"',
+    name: 'Entrevista fica fora do resumo (vai pro cliente), aparece no relatório completo e no botão "Resultado da entrevista"',
     async run({ browser, baseUrl }) {
       const resultados = [{ id: '1', tipo: 'quiz', nome: 'Com Entrevista', cpf: '12312312312', modulo: 'CFTV', pct: 80, acertos: 8, total: 10, data_conclusao: hoje() }];
       const entrevista = { versao: 2, decisao: 'aprovado', criterios: { asseio: 8, postura: 8, comunicacao: 8, equipe: 8 }, perguntas: [{ pergunta: 'Pergunta X', nota: 7 }], media: 7.8, observacoes: 'OBSERVACAO-SIGILOSA', por: 'Ana', destaques_fortes: [], destaques_atencao: [] };
@@ -195,7 +195,7 @@ export const tests = [
 
       await page.evaluate(() => gerarPDF()); await page.waitForTimeout(300);
       html = await page.evaluate(() => document.getElementById('printReport').innerHTML);
-      assert(!html.includes('OBSERVACAO-SIGILOSA'), 'relatório completo NÃO deveria ter a entrevista');
+      assert(html.includes('OBSERVACAO-SIGILOSA'), 'relatório completo DEVE ter a entrevista');
 
       await page.evaluate(() => gerarPDFEntrevista()); await page.waitForTimeout(300);
       html = await page.evaluate(() => document.getElementById('printReport').innerHTML);
