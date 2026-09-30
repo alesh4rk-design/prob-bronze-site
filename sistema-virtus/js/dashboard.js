@@ -534,6 +534,23 @@ export async function salvarFotoColaborador(chave, dataUrl, quem) {
   }, { merge: true });
 }
 
+// Etapa 3 → Etapa 4: a entrevista aprovada NÃO contrata ninguém; só libera o
+// candidato pra decisão final (Contratado/Recusado), que fica na Etapa 4.
+export async function enviarParaEtapa4(chave, nome, quem, perfilQuem) {
+  const id = chave.replace(/[/]/g, "_");
+  await setDoc(doc(db, "pipeline", id), {
+    ...carimboFilial(chave),
+    etapa4: true,
+    etapa4_por: quem || null,
+    etapa4_por_perfil: perfilQuem || null,
+    etapa4_em: serverTimestamp(),
+    nome: nome || null,
+    etapa: "etapa_final",
+    atualizado_em: serverTimestamp()
+  }, { merge: true });
+  await registrarHistorico(chave, { etapa: "etapa_final", nome, por: quem, por_perfil: perfilQuem });
+}
+
 export async function registrarDecisaoFinal(chave, decisao, nome, quem, perfilQuem) {
   const id = chave.replace(/[/]/g, "_");
   await setDoc(doc(db, "pipeline", id), {

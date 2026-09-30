@@ -223,6 +223,34 @@ export const tests = [
 
 
   {
+    name: 'Etapa 3 não contrata (só envia pra Etapa 4); Etapa 4 decide e tem botão de mensagem de contratado',
+    async run({ browser, baseUrl }) {
+      const resultados = [
+        { id: '1', tipo: 'quiz', nome: 'Aprovada Tres', cpf: '31000000001', modulo: 'CFTV', pct: 85, acertos: 8, total: 10, data_conclusao: hoje(), candidato: { telefone: '21999990001', cargo_pretendido: 'CFTV' } },
+        { id: '2', tipo: 'quiz', nome: 'Aguarda Quatro', cpf: '31000000002', modulo: 'CFTV', pct: 85, acertos: 8, total: 10, data_conclusao: hoje(), candidato: { telefone: '21999990002', cargo_pretendido: 'CFTV' } },
+        { id: '3', tipo: 'quiz', nome: 'Ja Contratada', cpf: '31000000003', modulo: 'CFTV', pct: 85, acertos: 8, total: 10, data_conclusao: hoje(), candidato: { telefone: '21999990003', cargo_pretendido: 'CFTV' } }
+      ];
+      const ent = { versao: 2, decisao: 'aprovado', media: 8, por: 'Ana' };
+      const pipeline = {
+        'cpf:31000000001': { aprovado: true, aprovado_em: hoje(), etapa: 'aguardando_entrevista', entrevista: ent },
+        'cpf:31000000002': { aprovado: true, aprovado_em: hoje(), etapa: 'etapa_final', entrevista: ent, etapa4: true },
+        'cpf:31000000003': { aprovado: true, aprovado_em: hoje(), entrevista: ent, etapa4: true, decisao_final: 'contratado', decisao_final_em: hoje() }
+      };
+      const { page } = await abrirDashboard(browser, baseUrl, { perfil: 'admin', resultados, pipeline });
+      await page.evaluate(() => switchView('etapa3'));
+      await page.waitForTimeout(300);
+      const e3 = await page.evaluate(() => document.getElementById('etapa3TableBody').innerHTML);
+      assert(e3.includes('Aprovada Tres') && !e3.includes('Aguarda Quatro'), 'Etapa 3 deveria ter só quem ainda não foi enviado pra Etapa 4');
+      assert(e3.includes('irEtapa4') && !e3.includes('data-decisao="contratado"'), 'Etapa 3 não pode ter botão Contratado, só Enviar para Etapa 4');
+      await page.evaluate(() => switchView('contratados'));
+      await page.waitForTimeout(300);
+      const e4 = await page.evaluate(() => document.getElementById('contratadosTableBody').innerHTML);
+      assert(e4.includes('Aguarda Quatro') && e4.includes('data-decisao="contratado"'), 'Etapa 4 deveria mostrar quem aguarda decisão com botão Contratado');
+      assert(e4.includes('Enviar mensagem de contratado'), 'Etapa 4 deveria ter o botão de mensagem de contratado');
+      await page.close();
+    }
+  },
+  {
     name: 'Etapas: aprovado na entrevista sai da Etapa 2 e vai pra Etapa 3; WhatsApp já abre com a mensagem da etapa e registra o envio',
     async run({ browser, baseUrl }) {
       const resultados = [

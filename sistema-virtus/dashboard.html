@@ -2050,7 +2050,7 @@
     gerarCodigoAcesso, assinarCodigosAcesso, cancelarCodigoAcesso, excluirCodigoAcesso, VALIDADE_CODIGO_MS,
     definirNumeroWhatsapp, assinarNumeroWhatsapp,
     assinarPipeline, registrarComentario, buscarComentarios, definirAprovacaoManual, definirBancoReserva,
-    registrarDecisaoFinal, buscarHistorico, registrarEntrevista, salvarFotoColaborador, registrarAvisoWhatsapp, listarAcessosCodigo,
+    registrarDecisaoFinal, enviarParaEtapa4, buscarHistorico, registrarEntrevista, salvarFotoColaborador, registrarAvisoWhatsapp, listarAcessosCodigo,
     assinarVagas, criarVaga, encerrarVaga, reabrirVaga, excluirVaga,
     obterPesosScore, salvarPesosPadrao, salvarPesosCargo, removerPesosCargo
   } from "./js/dashboard.js";
@@ -2849,8 +2849,9 @@
               </button>
               ${!aprovadoAtual ? `<button class="btn-act btn-neutral" data-acao="editarObservacao" ${dadosDecisao}>💬 Comentários${pInfo.comentarios_count ? ` (${pInfo.comentarios_count})` : ''}</button>` : ''}
               ${aprovadoAtual ? `<button class="btn-act btn-neutral" style="background:var(--cyandim);color:var(--cyan);border-color:var(--cyanmid);" data-acao="abrirEntrevista" ${dadosDecisao}>🎤 ${pInfo.entrevista ? 'Refazer entrevista' : 'Realizar entrevista'}</button>` : ''}
+              ${aprovadoAtual && !pInfo.decisao_final && !pInfo.etapa4 && entrevistaAprovada(pInfo) ? `<button class="btn-act btn-approve-admin" data-acao="irEtapa4" ${dadosDecisao}>➡️ Enviar para Etapa 4</button>` : ''}
               ${aprovadoAtual && !pInfo.decisao_final ? `
-                <button class="btn-act btn-approve-admin" data-acao="decidirEntrevista" data-decisao="contratado" ${dadosDecisao}>🎉 Contratado</button>
+                ${pInfo.etapa4 ? `<button class="btn-act btn-approve-admin" data-acao="decidirEntrevista" data-decisao="contratado" ${dadosDecisao}>🎉 Contratado</button>` : ''}
                 <button class="btn-act btn-danger" data-acao="decidirEntrevista" data-decisao="recusado" ${dadosDecisao}>❌ Recusado</button>` : ''}
               ${podeExcluirModal ? `<button class="btn-act btn-danger" data-acao="excluirCandidato" ${dadosDecisao}>🗑 Excluir candidato</button>` : ''}
             </div>
@@ -4098,6 +4099,7 @@
     acoesCandidato: el => window.abrirAcoesCandidato(el.dataset.chave, el.dataset.nome),
     whatsappCandidato: el => window.abrirWhatsappCandidato(el.dataset.chave, el.dataset.nome),
     removerBancoReserva: el => window.alternarBancoReserva(el.dataset.chave, el.dataset.nome, false),
+    irEtapa4: el => window.enviarEtapa4(el.dataset.chave, el.dataset.nome),
     decidirEntrevista: el => window.decidirEntrevista(el.dataset.chave, el.dataset.nome, el.dataset.decisao),
     whatsappEtapa: el => window.abrirWhatsappCandidato(el.dataset.chave, el.dataset.nome),
     pdfEntrevista: el => window.gerarPDFEntrevista(el.dataset.chave),
@@ -4656,6 +4658,7 @@
         const quando = p.decisao_final_em ? (p.decisao_final_em.toMillis ? p.decisao_final_em.toMillis() : new Date(p.decisao_final_em).getTime()) : 1;
         if (!av[p.decisao_final] && quando > ultimaVisitaEtapa4()) n[4]++;
       }
+      else if (p.aprovado && p.etapa4) n[4]++;
       else if (p.aprovado && entrevistaAprovada(p)) n[3]++;
       else if (p.aprovado) n[2]++;
       else if (!p.banco_reserva && !av.etapa1) n[1]++;
@@ -4683,7 +4686,7 @@
     ligarAcoesDelegadas('etapa3TableBody');
     const lista = candidatosAgrupados().filter(c => {
       const p = PIPELINE_MAP[c.chave.replace(/[/]/g, '_')];
-      return p && p.aprovado === true && !p.decisao_final && entrevistaAprovada(p);
+      return p && p.aprovado === true && !p.decisao_final && !p.etapa4 && entrevistaAprovada(p);
     }).sort((a, b) => {
       const ma = ((PIPELINE_MAP[a.chave.replace(/[/]/g, '_')] || {}).entrevista || {}).media ?? 0;
       const mb = ((PIPELINE_MAP[b.chave.replace(/[/]/g, '_')] || {}).entrevista || {}).media ?? 0;
@@ -4714,7 +4717,7 @@
             ${podeDecidir ? `
             <button class="btn-act btn-neutral" style="font-size:11px;padding:6px 10px;background:#6B3FA0;color:#fff;border-color:#6B3FA0;" data-acao="pdfEntrevista" ${dadosCand}>📄 Resultado (PDF)</button>
             <button class="btn-act btn-neutral" style="font-size:11px;padding:6px 10px;background:#25D366;color:#052e16;border-color:#25D366;" data-acao="whatsappEtapa" ${dadosCand}>💬 Avisar</button>
-            <button class="btn-act btn-approve-admin" style="font-size:11px;padding:6px 10px;" data-acao="decidirEntrevista" data-decisao="contratado" ${dadosCand}>🎉 Contratado</button>
+            <button class="btn-act btn-approve-admin" style="font-size:11px;padding:6px 10px;" data-acao="irEtapa4" ${dadosCand}>➡️ Enviar para Etapa 4</button>
             <button class="btn-act btn-neutral" style="font-size:11px;padding:6px 10px;" data-acao="decidirEntrevista" data-decisao="recusado" ${dadosCand}>❌ Recusado</button>` : ''}
             <button class="btn-act btn-neutral" style="font-size:11px;padding:6px 10px;" data-acao="abrirCandidato" ${dadosCand} title="Ver detalhes completos">📋</button>
           </div>
@@ -4951,16 +4954,17 @@
       </ol>
       <p>Quem é aprovado na entrevista passa sozinho para a <b>Etapa 3</b>. Quem é reprovado vai para a <b>Etapa 4</b> como recusado.</p>`],
     'view-etapa3': ['Etapa 3 · Aprovados na entrevista', `
-      <p>Quem passou na entrevista e está aguardando a decisão da Gerência.</p>
+      <p>Quem foi aprovado na entrevista. Aqui ninguém é contratado ainda: a contratação é decidida na Etapa 4.</p>
       <ol>
         <li>Clique em <b>💬 Avisar</b> para contar ao candidato que o processo seguiu para a etapa final (sem prometer a vaga).</li>
         <li>Veja a nota e o resultado da entrevista na ficha (botão 📋).</li>
-        <li>Decida com <b>🎉 Contratado</b> ou <b>❌ Recusado</b>. O candidato vai para a Etapa 4.</li>
+        <li>Clique em <b>➡️ Enviar para Etapa 4</b> para liberar a decisão final (ou <b>❌ Recusado</b> para encerrar).</li>
       </ol>`],
     'view-contratados': ['Etapa 4 · Resultado final', `
-      <p>Quem foi contratado ou recusado, quando e por quem.</p>
+      <p>Decisão final: quem aguarda, foi contratado ou recusado.</p>
       <ol>
-        <li>Abra o candidato e use <b>💬 Falar no WhatsApp</b>: a mensagem de contratação ou de agradecimento já vem pronta.</li>
+        <li>Em <b>⏳ Aguardando decisão</b>, Gerência/Coordenador/Avaliador escolhe <b>🎉 Contratado</b> ou <b>❌ Recusado</b>.</li>
+        <li>Depois use <b>💬 Enviar mensagem de contratado</b> para avisar o candidato (a mensagem já vem pronta).</li>
         <li>Use os filtros de data para achar um candidato.</li>
       </ol>`],
     'view-bancoreserva': ['Banco de Reserva', `
@@ -5528,9 +5532,20 @@
     }).join('');
   }
 
+  window.enviarEtapa4 = async function (chave, nome) {
+    const ok = await abrirConfirmacao(`Enviar ${nome} para a Etapa 4 · Resultado final?\n\nLá a decisão de contratar (ou recusar) é registrada e você pode avisar o candidato.`, {
+      titulo: 'Enviar para Etapa 4', textoConfirmar: '➡️ Enviar', corConfirmar: 'btn-approve-admin', icone: '➡️'
+    });
+    if (!ok) return;
+    try {
+      await enviarParaEtapa4(chave, nome, me.usuario, me.perfil);
+      toast('➡️ Candidato enviado para a Etapa 4', 'ok');
+    } catch (e) { console.error(e); toast('❌ Falha: ' + e.message, 'err'); }
+  };
+
   window.decidirEntrevista = async function (chave, nome, decisao) {
     const label = decisao === 'contratado' ? 'CONTRATAR' : 'RECUSAR';
-    const ok = await abrirConfirmacao(`Confirma ${label} o candidato ${nome}?\n\nIsso vai para a aba "Etapa 4 · Resultado final".`, {
+    const ok = await abrirConfirmacao(`Confirma ${label} o candidato ${nome}?\n\nO resultado fica registrado na aba "Etapa 4 · Resultado final", onde você pode enviar a mensagem ao candidato.`, {
       titulo: decisao === 'contratado' ? 'Contratar candidato' : 'Recusar candidato',
       textoConfirmar: decisao === 'contratado' ? '🎉 Contratar' : '❌ Recusar',
       corConfirmar: decisao === 'contratado' ? 'btn-approve-admin' : 'btn-danger',
@@ -5577,6 +5592,10 @@
       const id = c.chave.replace(/[/]/g, '_');
       return PIPELINE_MAP[id] && PIPELINE_MAP[id].decisao_final;
     });
+    const aguardando = candidatosAgrupados().filter(c => {
+      const p = PIPELINE_MAP[c.chave.replace(/[/]/g, '_')];
+      return p && p.aprovado === true && p.etapa4 && !p.decisao_final;
+    });
     const filtrarPeriodo = (ini, fim) => decididosTodos.filter(c => {
       if (!ini && !fim) return true;
       const dataC = decisaoFinalYMD(c);
@@ -5606,8 +5625,25 @@
       return String(tb || '').localeCompare(String(ta || ''));
     });
     const badge = document.getElementById('contratadosBadge');
-    if (badge) badge.textContent = decididos.length + ' registro' + (decididos.length !== 1 ? 's' : '');
+    if (badge) badge.textContent = (decididos.length + aguardando.length) + ' registro' + ((decididos.length + aguardando.length) !== 1 ? 's' : '');
+    const podeDecidirE4 = me && PODE_GERENCIAR_CANDIDATOS.includes(me.perfil);
+    const linhasAguardando = aguardando.map(c => {
+      const p = PIPELINE_MAP[c.chave.replace(/[/]/g, '_')] || {};
+      const dadosCand = `data-chave="${escapeHtml(c.chave)}" data-nome="${escapeHtml(c.nome)}"`;
+      return `
+      <tr class="clickable" data-acao="abrirCandidato" ${dadosCand}>
+        <td style="text-align:center;color:var(--amber);">⏳</td>
+        <td class="td-nome">${escapeHtml(c.nome)} <span class="row-hint">▸ detalhes</span></td>
+        <td><span class="td-pct" style="color:${c.media >= 70 ? 'var(--green)' : 'var(--red)'}">${c.media}%</span></td>
+        <td style="text-align:center;" data-acao="ignorar">${badgeComentarios(p.comentarios_count, dadosCand)}</td>
+        <td style="font-weight:700;color:var(--amber);">⏳ Aguardando decisão</td>
+        <td data-acao="ignorar" colspan="2">${podeDecidirE4 ? `<div style="display:flex;gap:6px;flex-wrap:wrap;">
+          <button class="btn-act btn-approve-admin" style="font-size:11px;padding:6px 10px;" data-acao="decidirEntrevista" data-decisao="contratado" ${dadosCand}>🎉 Contratado</button>
+          <button class="btn-act btn-neutral" style="font-size:11px;padding:6px 10px;" data-acao="decidirEntrevista" data-decisao="recusado" ${dadosCand}>❌ Recusado</button></div>` : '—'}</td>
+      </tr>`;
+    }).join('');
     if (!decididos.length) {
+      if (aguardando.length) { tbody.innerHTML = linhasAguardando; return; }
       const msg = (dataIni || dataFim) ? 'Nenhuma decisão nesse período. Clique em "Ver tudo" para o histórico completo.' : 'Nenhuma decisão registrada ainda';
       tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state"><div class="empty-icon">🏆</div>${msg}</div></td></tr>`;
       return;
@@ -5624,10 +5660,13 @@
         <td><span class="td-pct" style="color:${c.media >= 70 ? 'var(--green)' : 'var(--red)'}">${c.media}%</span></td>
         <td style="text-align:center;" data-acao="ignorar">${badgeComentarios(p.comentarios_count, dadosCand)}</td>
         <td style="font-weight:700;color:${contratado ? 'var(--green)' : 'var(--red)'};">${contratado ? '🎉 Contratado' : '❌ Recusado'}</td>
-        <td>${escapeHtml(p.decisao_final_por || '—')}</td>
-        <td class="td-time">${p.decisao_final_em ? fmtDataHora(p.decisao_final_em) : '—'}</td>
+        <td>${escapeHtml(p.decisao_final_por || '—')}
+          ${avisoWhatsappHTML(p, p.decisao_final) || ''}</td>
+        <td class="td-time" data-acao="ignorar">${p.decisao_final_em ? fmtDataHora(p.decisao_final_em) : '—'}
+          ${podeDecidirE4 ? `<div><button class="btn-act btn-neutral" style="font-size:11px;padding:5px 9px;margin-top:4px;background:#25D366;color:#052e16;border-color:#25D366;" data-acao="whatsappEtapa" ${dadosCand}>💬 ${contratado ? 'Enviar mensagem de contratado' : 'Enviar mensagem'}</button></div>` : ''}</td>
       </tr>`;
     }).join('');
+    tbody.innerHTML = linhasAguardando + tbody.innerHTML;
   };
 
   function renderAll() {

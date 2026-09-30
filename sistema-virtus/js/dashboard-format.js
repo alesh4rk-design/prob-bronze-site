@@ -103,7 +103,7 @@ export const ETAPA_LABELS = {
   contratado: { txt: 'Contratado', cor: 'var(--green)', icone: '🏆' },
   recusado: { txt: 'Recusado', cor: 'var(--red)', icone: '❌' },
   banco_reserva: { txt: 'Banco de Reserva', cor: 'var(--cyan)', icone: '🏦' },
-  etapa_final: { txt: 'Etapa 3 · aguardando Gerência', cor: 'var(--green)', icone: '⏳' },
+  etapa_final: { txt: 'Etapa 3/4 · aguardando decisão final', cor: 'var(--green)', icone: '⏳' },
   entrevista_realizada: { txt: 'Entrevista realizada', cor: 'var(--cyan)', icone: '🎤' },
   aviso_whatsapp: { txt: 'Aviso por WhatsApp', cor: 'var(--green)', icone: '💬' }
 };
