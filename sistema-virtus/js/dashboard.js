@@ -289,6 +289,14 @@ export function assinarCodigosAcesso(callback, onError, filial) {
   }, (err) => { console.error("assinarCodigosAcesso:", err); if (onError) onError(err); });
 }
 
+// Quem entrou com o código (registrado pelo Worker ao começar o teste).
+export async function listarAcessosCodigo(codigo) {
+  const snap = await getDocs(collection(db, "codigos_acesso", codigo, "acessos"));
+  const lista = [];
+  snap.forEach((d) => lista.push({ id: d.id, ...d.data() }));
+  return lista;
+}
+
 // Desativa um código antes da expiração natural (ex: entrevista encerrou
 // mais cedo, ou o código vazou). Admin ou viewer.
 export async function cancelarCodigoAcesso(codigo) {

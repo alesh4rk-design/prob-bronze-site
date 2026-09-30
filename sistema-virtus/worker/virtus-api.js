@@ -589,6 +589,25 @@ async function handleBuscarCandidato(request, env, cors) {
   return json({ ok: true, encontrado }, cors);
 }
 
+// Registra QUEM entrou com o código assim que o candidato começa o teste —
+// antes só aparecia quem chegava a concluir algum módulo. Um documento por
+// pessoa (id = CPF, ou o nome se não houver CPF), então reenvios não duplicam.
+async function handleRegistrarAcesso(request, env, cors) {
+  const ip = request.headers.get("CF-Connecting-IP") || "desconhecido";
+  if (await passouDoLimite(env, `acesso:${ip}`, 300)) return json({ ok: false, erro: "muitas_tentativas" }, cors, 429);
+  const a = await request.json();
+  const token = await getAccessToken(env);
+  const conf = await conferirCodigo(env, token, a.codigoAcesso, TOLERANCIA_ENVIO_MS);
+  if (!conf.ok) return json({ ok: false, erro: "codigo_invalido", motivo: conf.motivo }, cors, 403);
+  const nome = texto(a.nome, 120);
+  const cpf = texto(String(a.cpf || "").replace(/\D/g, ""), 11) || null;
+  if (!nome) return json({ ok: false, erro: "dados_invalidos" }, cors, 400);
+  const id = cpf || "nome_" + normNome(nome).replace(/[^a-z0-9]+/g, "-").slice(0, 60);
+  const campos = { nome, cpf, em: new Date().toISOString(), modulo: texto(a.modulo, 80) || "" };
+  await firestorePatch(env, token, `codigos_acesso/${encodeURIComponent(conf.codigo)}/acessos/${encodeURIComponent(id)}`, campos, Object.keys(campos));
+  return json({ ok: true }, cors);
+}
+
 // Violação durante o teste (perda de foco, tentativa de cópia etc.). Antes
 // qualquer pessoa, sem login, podia gravar uma violação no nome de
 // qualquer candidato (só o tamanho dos campos era checado) — dava pra
@@ -762,6 +781,9 @@ export default {
       }
       if (url.pathname === "/registrar-violacao" && request.method === "POST") {
         return await handleRegistrarViolacao(request, env, cors);
+      }
+      if (url.pathname === "/registrar-acesso" && request.method === "POST") {
+        return await handleRegistrarAcesso(request, env, cors);
       }
       if (url.pathname === "/buscar-candidato" && request.method === "POST") {
         return await handleBuscarCandidato(request, env, cors);

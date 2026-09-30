@@ -133,6 +133,15 @@ service cloud.firestore {
                        (isAdmin() || request.resource.data.get('filial', null) == minhaFilial());
       allow get, list: if request.auth != null && isOperacional() && mesmaFilialOuSemFilial(resource.data);
       allow update, delete: if request.auth != null && isOperacional() && mesmaFilialOuSemFilial(resource.data);
+
+      // codigos_acesso/{codigo}/acessos/{id}: quem entrou com o código e
+      // começou o teste (gravado pelo Worker). Só leitura pra equipe, e só
+      // da própria filial (a filial é a do código pai).
+      match /acessos/{id} {
+        allow read: if request.auth != null && isOperacional() &&
+                       mesmaFilialOuSemFilial(get(/databases/$(database)/documents/codigos_acesso/$(codigo)).data);
+        allow write: if false;
+      }
     }
 
     // config/{doc}: configurações gerais do sistema (ex: número de WhatsApp

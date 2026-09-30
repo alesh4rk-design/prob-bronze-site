@@ -820,6 +820,20 @@
         </div>
       </div>
 
+      <div class="field-group" id="grupoPrefHorario" style="display:none;">
+        <span class="field-label">Qual a sua preferência de horário? *</span>
+        <select class="field-input" id="inPrefHorario">
+          <option value="">— Selecionar —</option>
+          <option value="Manhã">Manhã</option>
+          <option value="Tarde">Tarde</option>
+          <option value="Noite">Noite</option>
+          <option value="Diurno">Diurno (manhã e tarde)</option>
+          <option value="Noturno">Noturno</option>
+          <option value="12x36 Diurno">12x36 — Diurno</option>
+          <option value="12x36 Noturno">12x36 — Noturno</option>
+        </select>
+      </div>
+
       <div class="field-group">
         <span class="field-label">Cursos e certificações <span style="color:var(--text4);">(marque os que possui)</span></span>
         <div class="cert-list" id="inCerts">
@@ -981,7 +995,7 @@
 </div>
 
 <script type="module">
-  import { listarModulos, carregarPerguntasDoModulo, salvarResultadoQuiz, registrarViolacao, tempoLimiteParaModulo, montarTrilha, verificarCodigoAcesso, obterNumeroWhatsappRH, enviarCurriculo, listarVagasAbertas, moduloDoCargoPretendido } from "./js/quiz.js";
+  import { listarModulos, carregarPerguntasDoModulo, salvarResultadoQuiz, registrarViolacao, tempoLimiteParaModulo, montarTrilha, verificarCodigoAcesso, obterNumeroWhatsappRH, enviarCurriculo, registrarAcessoCodigo, listarVagasAbertas, moduloDoCargoPretendido } from "./js/quiz.js";
 
   let globalConsentGiven = false;
   let globalLgpdAccepted = false;
@@ -1347,6 +1361,9 @@
       p.onclick = () => {
         document.querySelectorAll('#inDispTotal .pill').forEach(x => x.classList.remove('sel'));
         p.classList.add('sel');
+        // Sem disponibilidade total: pergunta a preferência de horário.
+        document.getElementById('grupoPrefHorario').style.display = p.dataset.val === 'nao' ? '' : 'none';
+        if (p.dataset.val !== 'nao') document.getElementById('inPrefHorario').value = '';
       };
     });
 
@@ -1434,6 +1451,9 @@
     const pillDispTotal = document.querySelector('#inDispTotal .pill.sel');
     if (!pillDispTotal) return falha('Informe se possui disponibilidade total de horário', 'inDispTotal');
 
+    const prefHorario = pillDispTotal.dataset.val === 'nao' ? document.getElementById('inPrefHorario').value : '';
+    if (pillDispTotal.dataset.val === 'nao' && !prefHorario) return falha('Informe sua preferência de horário', 'inPrefHorario');
+
     const pillPendenciaJudicial = document.querySelector('#inPendenciaJudicial .pill.sel');
     if (!pillPendenciaJudicial) return falha('Informe se possui pendência ou processo em andamento na Justiça', 'inPendenciaJudicial');
 
@@ -1456,6 +1476,7 @@
       experiencia: pillSel.dataset.val === 'sim',
       experiencia_texto: experienciaTexto || null,
       disponibilidade_total: pillDispTotal.dataset.val === 'sim',
+      turno: prefHorario || null,
       pendencia_judicial: pillPendenciaJudicial.dataset.val === 'sim',
       origem,
       certificacoes,
@@ -1525,6 +1546,7 @@
 
     S.nome = ficha.nome; S.dataPref = dataPref;
     S.candidato = ficha;
+    registrarAcessoCodigo({ codigoAcesso: globalCodigoAcesso, nome: ficha.nome, cpf: ficha.cpf, modulo: tema });
 
     // Todo candidato percorre uma trilha: o módulo que escolheu e, em
     // seguida, Informática, Linguagem Positiva e Atendimento ao Cliente.

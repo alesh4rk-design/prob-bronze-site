@@ -24,6 +24,32 @@ function diasAtras(n) { return new Date(Date.now() - n * 86400000).toISOString()
 export const tests = [
 
   {
+    name: 'Ficha do candidato: responder "Não" à disponibilidade total pede a preferência de horário',
+    async run({ browser, baseUrl }) {
+      const page = await browser.newPage();
+      const { APP, AUTH, FS } = buildMocks({});
+      const map = { 'firebase-app.js': APP, 'firebase-auth.js': AUTH, 'firebase-firestore.js': FS };
+      await page.route('**/firebasejs/**', route => { const k = Object.keys(map).find(k => route.request().url().endsWith(k)); return k ? route.fulfill({ status: 200, contentType: 'application/javascript', body: map[k] }) : route.abort(); });
+      await page.route('**/fonts.googleapis.com/**', r => r.fulfill({ status: 200, contentType: 'text/css', body: '' }));
+      await page.route('**/virtus-api.ale-sh4rk.workers.dev/**', r => r.fulfill({ status: 200, contentType: 'application/json', body: '{"ok":true,"modulos":[],"total_perguntas":0}' }));
+      const erros = []; page.on('pageerror', e => erros.push(e.message));
+      await page.goto(`${baseUrl}/quiz.html`, { waitUntil: 'load' });
+      await page.waitForTimeout(600);
+      const inicio = await page.evaluate(() => getComputedStyle(document.getElementById('grupoPrefHorario')).display);
+      assertEqual(inicio, 'none', 'preferência de horário começa escondida');
+      await page.evaluate(() => document.querySelector('#inDispTotal .pill[data-val="nao"]').click());
+      const aoNao = await page.evaluate(() => getComputedStyle(document.getElementById('grupoPrefHorario')).display);
+      assert(aoNao !== 'none', 'ao clicar em Não, deveria aparecer a preferência de horário');
+      await page.evaluate(() => document.querySelector('#inDispTotal .pill[data-val="sim"]').click());
+      const aoSim = await page.evaluate(() => getComputedStyle(document.getElementById('grupoPrefHorario')).display);
+      assertEqual(aoSim, 'none', 'ao voltar pra Sim, a preferência some');
+      assertEqual(erros.length, 0, 'erros de JS: ' + erros.join(' | '));
+      await page.close();
+    }
+  },
+
+
+  {
     name: 'Dashboard: KPI conta quiz, avisa das digitações e o funil inclui quem só fez a digitação',
     async run({ browser, baseUrl }) {
       const q = (id, nome, cpf, pct) => ({ id, tipo: 'quiz', nome, cpf, modulo: 'CFTV', pct, acertos: pct / 10, total: 10, data_conclusao: hoje() });
@@ -2308,6 +2334,14 @@ export const tests = [
       assert(listaTexto.includes('Ana Usou Código'), `deveria listar quem usou o código 384720. Conteúdo: ${listaTexto}`);
       assert(listaTexto.includes('Beto Usou Código'), `deveria listar quem usou o código 384720. Conteúdo: ${listaTexto}`);
       assert(!listaTexto.includes('Cida Sem Código'), `NÃO deveria listar quem usou outro código. Conteúdo: ${listaTexto}`);
+
+      // Quem entrou e começou o teste (registrado pelo Worker) também aparece,
+      // mesmo sem ter concluído nenhum módulo.
+      await page.evaluate(() => { window.__SUBCOLECOES['codigos_acesso/384720/acessos'] = [{ id: 'x1', data: { nome: 'Davi Entrou e Saiu', cpf: '40404040409', em: new Date().toISOString() } }]; });
+      await page.evaluate(() => document.querySelector('#codigosTableBody [data-acao="verUsosCodigo"]').click());
+      await page.waitForTimeout(300);
+      const listaTexto2 = await page.evaluate(() => document.getElementById('codigoUsosLista').textContent);
+      assert(listaTexto2.includes('Davi Entrou e Saiu') && listaTexto2.includes('não concluiu'), `deveria listar quem só começou o teste. Conteúdo: ${listaTexto2}`);
 
       assertEqual(erros.length, 0, 'erros de JS: ' + erros.join(' | '));
       await page.close();

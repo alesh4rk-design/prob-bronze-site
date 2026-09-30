@@ -511,7 +511,7 @@ async function montarBotaoWhatsapp(nome) {
   document.getElementById('linkWhatsappRH').href = `https://wa.me/${numero}?text=${encodeURIComponent(msg)}`;
   notice.style.display = 'block';
 }
-import { verificarCodigoAcesso } from "./js/quiz.js";
+import { verificarCodigoAcesso, registrarAcessoCodigo } from "./js/quiz.js";
 import { db } from "./js/firebase-config.js";
 import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
 
@@ -982,6 +982,7 @@ async function conferirCandidatoEIniciar(){
 }
 
 function iniciarTesteReal(){
+  registrarAcessoCodigo({ codigoAcesso: codigoAcessoAtual, nome: candidate.nome, cpf: candidate.cpf, modulo: 'Digitação' });
   const nome=candidate.nome;
   // A aba Testes do painel abre a versão escolhida (?modo=celular ou
   // ?modo=computador). Sem isso, detecta sozinho pelo aparelho.

@@ -106,6 +106,19 @@ export async function verificarCodigoAcesso(codigoDigitado) {
 // (client SDK); agora passa pelo Worker, que valida tipo/tamanho no
 // servidor e grava com uma conta de serviço (storage.rules fecha a escrita
 // pública). `arquivo` é o File escolhido no <input type="file">.
+// Avisa o servidor QUEM entrou com o código (nome + CPF), pra aparecer em
+// "Quem usou este código" mesmo antes de o candidato concluir o teste.
+// Falha aqui nunca pode atrapalhar o teste.
+export async function registrarAcessoCodigo({ codigoAcesso, nome, cpf, modulo }) {
+  try {
+    await fetch(`${API_BASE}/registrar-acesso`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ codigoAcesso, nome, cpf, modulo })
+    });
+  } catch (e) { /* silencioso */ }
+}
+
 export async function enviarCurriculo(arquivo) {
   const form = new FormData();
   form.append("arquivo", arquivo);

@@ -2042,7 +2042,7 @@
     gerarCodigoAcesso, assinarCodigosAcesso, cancelarCodigoAcesso, excluirCodigoAcesso, VALIDADE_CODIGO_MS,
     definirNumeroWhatsapp, assinarNumeroWhatsapp,
     assinarPipeline, registrarComentario, buscarComentarios, definirAprovacaoManual, definirBancoReserva,
-    registrarDecisaoFinal, buscarHistorico, registrarEntrevista, salvarFotoColaborador, registrarAvisoWhatsapp,
+    registrarDecisaoFinal, buscarHistorico, registrarEntrevista, salvarFotoColaborador, registrarAvisoWhatsapp, listarAcessosCodigo,
     assinarVagas, criarVaga, encerrarVaga, reabrirVaga, excluirVaga,
     obterPesosScore, salvarPesosPadrao, salvarPesosCargo, removerPesosCargo
   } from "./js/dashboard.js";
@@ -2475,7 +2475,7 @@
         ['Bairro / Região', f.bairro],
         ['Cargo pretendido', f.cargo_pretendido],
         ['Experiência na área', f.experiencia ? '✓ Sim' : '✕ Não'],
-        ...(f.turno ? [['Turno disponível', f.turno]] : []),
+        ...(f.turno ? [['Preferência de horário', f.turno]] : []),
         ['Disponibilidade total', f.disponibilidade_total == null ? '—' : (f.disponibilidade_total ? '✓ Sim' : '✕ Não')],
         ['Pendência judicial', f.pendencia_judicial == null ? '—' : (f.pendencia_judicial ? '⚠️ Sim' : '✓ Não'), f.pendencia_judicial ? 'var(--red)' : null],
         ['Como conheceu a vaga', f.origem]
@@ -2974,7 +2974,7 @@
         ['Bairro / Região', f.bairro],
         ['Cargo pretendido', f.cargo_pretendido],
         ['Experiência na área', f.experiencia ? 'Sim' : 'Não'],
-        ...(f.turno ? [['Disponibilidade de turno', f.turno]] : []),
+        ...(f.turno ? [['Preferência de horário', f.turno]] : []),
         ['Disponibilidade total', f.disponibilidade_total == null ? '—' : (f.disponibilidade_total ? 'Sim' : 'Não')],
         ['Pendência judicial', f.pendencia_judicial == null ? '—' : (f.pendencia_judicial ? 'Sim' : 'Não'), f.pendencia_judicial ? '#B32218' : null],
         ['Como conheceu a vaga', f.origem]
@@ -3224,7 +3224,7 @@
       h += `
         <div class="pr-sec-title">Perfil operacional</div>
         <div class="sk-perfil">
-          ${f.turno ? `<div class="sk-p-cell"><div class="sk-p-lbl">Disponibilidade</div><div class="sk-p-val">${escapeHtml(f.turno)}</div></div>` : ''}
+          ${f.turno ? `<div class="sk-p-cell"><div class="sk-p-lbl">Preferência de horário</div><div class="sk-p-val">${escapeHtml(f.turno)}</div></div>` : ''}
           <div class="sk-p-cell"><div class="sk-p-lbl">Disponibilidade total</div><div class="sk-p-val">${f.disponibilidade_total == null ? '—' : (f.disponibilidade_total ? 'Sim' : 'Não')}</div></div>
           <div class="sk-p-cell"><div class="sk-p-lbl">Experiência na área</div><div class="sk-p-val">${f.experiencia ? 'Sim' : 'Não'}</div></div>
           <div class="sk-p-cell"><div class="sk-p-lbl">Idade</div><div class="sk-p-val">${f.idade != null ? f.idade + ' anos' : '—'}</div></div>
@@ -6291,30 +6291,44 @@
   // candidato); aqui agrupamos por candidato de verdade (chaveDe) pra mostrar
   // quem de fato usou o código — o jeito de perceber um vazamento é ver um
   // nome que não deveria estar ali, ou muita gente a mais do que a turma real.
-  window.verUsosCodigo = function (codigo) {
+  window.verUsosCodigo = async function (codigo) {
     const porCandidato = new Map();
+    // 1) Quem concluiu algo (resultado com este código).
     for (const r of ALL_RESULTADOS) {
-      // codigoAcesso vem de dentro da ficha (r.candidato), não de um campo
-      // solto no resultado — é o mesmo objeto salvo em cada tentativa de
-      // quiz do candidato (ver coletarFicha em quiz.html). Testes de
-      // digitação não carregam ficha própria, por isso não têm esse campo.
+      // codigoAcesso vem de dentro da ficha (r.candidato) — é o mesmo objeto
+      // salvo em cada tentativa de quiz (ver coletarFicha em quiz.html).
       if (!r.candidato || r.candidato.codigoAcesso !== codigo) continue;
       const chave = chaveDe(r);
       const atual = porCandidato.get(chave);
-      if (!atual || (r.data_conclusao || '') < (atual.data_conclusao || '')) {
-        porCandidato.set(chave, r);
+      if (!atual || (r.data_conclusao || '') < (atual.quando || '')) {
+        porCandidato.set(chave, { nome: r.nome, quando: r.data_conclusao, concluiu: true });
       }
     }
-    const lista = [...porCandidato.values()].sort((a, b) => (a.data_conclusao || '').localeCompare(b.data_conclusao || ''));
-    document.getElementById('codigoUsosSub').textContent = `Código ${codigo} · ${lista.length} candidato(s)`;
     const el = document.getElementById('codigoUsosLista');
+    const sub = document.getElementById('codigoUsosSub');
+    sub.textContent = `Código ${codigo} · carregando…`;
+    el.innerHTML = '';
+    document.getElementById('codigoUsosModal').style.display = 'flex';
+    // 2) Quem entrou e começou o teste (registrado pelo Worker), terminando
+    //    ou não — é o que faltava aparecer.
+    try {
+      const acessos = await listarAcessosCodigo(codigo);
+      for (const a of acessos) {
+        const chave = chaveDe({ cpf: a.cpf, nome: a.nome });
+        const ja = porCandidato.get(chave);
+        if (ja) { if (a.em && (!ja.quando || a.em < ja.quando)) ja.quando = a.em; continue; }
+        porCandidato.set(chave, { nome: a.nome, quando: a.em, concluiu: false });
+      }
+    } catch (e) { console.error('Falha ao listar acessos do código:', e); }
+    const lista = [...porCandidato.values()].sort((a, b) => (a.quando || '').localeCompare(b.quando || ''));
+    const quantosTerminaram = lista.filter(x => x.concluiu).length;
+    sub.textContent = `Código ${codigo} · ${lista.length} candidato(s)` + (lista.length !== quantosTerminaram ? ` · ${lista.length - quantosTerminaram} ainda sem concluir` : '');
     el.innerHTML = lista.length
       ? lista.map(r => `<div style="display:flex;justify-content:space-between;gap:12px;padding:9px 0;border-bottom:1px solid var(--border);">
-          <span style="font-weight:600;">${escapeHtml(r.nome || '—')}</span>
-          <span style="color:var(--text3);font-family:'Share Tech Mono',monospace;font-size:12px;">${fmtDataHora(r.data_conclusao)}</span>
+          <span style="font-weight:600;">${escapeHtml(r.nome || '—')}${r.concluiu ? '' : ' <span style="font-weight:400;font-size:11px;color:var(--amber);">· não concluiu</span>'}</span>
+          <span style="color:var(--text3);font-family:'Share Tech Mono',monospace;font-size:12px;">${r.quando ? fmtDataHora(r.quando) : '—'}</span>
         </div>`).join('')
       : '<div class="empty-state"><div class="empty-icon">🔑</div>Ninguém usou este código ainda</div>';
-    document.getElementById('codigoUsosModal').style.display = 'flex';
   };
   window.fecharUsosCodigo = function () { document.getElementById('codigoUsosModal').style.display = 'none'; };
 
