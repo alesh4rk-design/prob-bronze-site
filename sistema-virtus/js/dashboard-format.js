@@ -227,6 +227,44 @@ export function consolidarModulos(quizzes) {
   return Object.values(porMod).sort((a, b) => b.pct - a.pct);
 }
 
+// Detalhes de COMO o candidato fez o teste de digitação. Registros antigos
+// não têm alguns campos (digitados, maior pausa...) — o que faltar vira '—'.
+export function detalhesDigitacao(t) {
+  const n = (v) => (v == null ? null : Number(v));
+  const digitados = n(t.digitados);
+  const total = n(t.total);
+  const erros = n(t.erros) ?? (digitados != null && t.acertos != null ? Math.max(0, digitados - t.acertos) : null);
+  const apag = n(t.deleteCount);
+  const tempoTotal = n(t.duracaoTotalSec);
+  const itens = [
+    ['Precisão', (t.pct ?? '—') + '%'],
+    ['Erros', erros ?? '—'],
+    ['Apagamentos', apag ?? '—'],
+    ['Texto concluído', digitados != null && total ? Math.min(100, Math.round((digitados / total) * 100)) + '% (' + digitados + ' de ' + total + ' caracteres)' : '—'],
+    ['Tempo usado', t.elapsedSec != null ? t.elapsedSec + 's' + (tempoTotal ? ' de ' + tempoTotal + 's' : '') : '—'],
+    ['Maior pausa', t.maiorPausaSeg != null ? t.maiorPausaSeg + 's' : '—'],
+    ['Começou após', t.primeiraTeclaSeg != null ? t.primeiraTeclaSeg + 's' : '—'],
+    ['Saiu da tela', t.trocasDeFoco != null ? (t.trocasDeFoco === 0 ? 'Nenhuma vez' : t.trocasDeFoco + ' vez(es)') : '—'],
+    ['Aparelho', t.dispositivo === 'mobile' ? 'Celular' : 'Computador']
+  ];
+  return itens;
+}
+
+// Frase curta interpretando o desempenho (precisão, correções, pausas).
+export function leituraDigitacao(t) {
+  const partes = [];
+  const pct = t.pct || 0;
+  partes.push(pct >= 95 ? 'Precisão muito alta' : pct >= 85 ? 'Boa precisão' : pct >= 70 ? 'Precisão regular' : 'Precisão baixa');
+  const dig = Number(t.digitados);
+  if (dig > 0 && t.deleteCount != null) {
+    const taxa = t.deleteCount / dig;
+    partes.push(taxa > 0.25 ? 'muitas correções durante a digitação' : taxa > 0.08 ? 'algumas correções' : 'poucas correções');
+  }
+  if (t.maiorPausaSeg != null && t.maiorPausaSeg >= 10) partes.push('com pausas longas (até ' + t.maiorPausaSeg + 's)');
+  if (t.trocasDeFoco > 0) partes.push('saiu da tela durante o teste');
+  return partes.join(', ') + '.';
+}
+
 export function criadoEmDe(c) {
   if (!c.criado_em) return null;
   const d = c.criado_em.toDate ? c.criado_em.toDate() : new Date(c.criado_em);

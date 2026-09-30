@@ -24,6 +24,30 @@ function diasAtras(n) { return new Date(Date.now() - n * 86400000).toISOString()
 export const tests = [
 
   {
+    name: 'Digitação: ficha e PDFs mostram como a pessoa digitou (erros, pausas, saídas da tela...)',
+    async run({ browser, baseUrl }) {
+      const resultados = [
+        { id: 'q1', tipo: 'quiz', nome: 'Digitador', cpf: '60000000001', modulo: 'CFTV', pct: 80, acertos: 8, total: 10, data_conclusao: hoje() },
+        { id: 't1', tipo: 'typing', nome: 'Digitador', cpf: '60000000001', pct: 88, wpm: 31, cpm: 155, acertos: 210, total: 240, digitados: 232, erros: 22, deleteCount: 9, elapsedSec: 90, duracaoTotalSec: 90, maiorPausaSeg: 12, primeiraTeclaSeg: 4, trocasDeFoco: 2, dispositivo: 'desktop', data_conclusao: hoje() }
+      ];
+      const { page, erros } = await abrirDashboard(browser, baseUrl, { perfil: 'admin', resultados });
+      await page.evaluate(() => { window.print = () => {}; abrirCandidato('cpf:60000000001'); });
+      await page.waitForTimeout(300);
+      const ficha = await page.evaluate(() => document.getElementById('cmConteudo').textContent);
+      assert(ficha.includes('Maior pausa') && ficha.includes('Saiu da tela') && ficha.includes('2 vez(es)'), `ficha deveria mostrar os detalhes. Texto: ${ficha.slice(-600)}`);
+      await page.evaluate(() => gerarResumoSkills()); await page.waitForTimeout(300);
+      const resumo = await page.evaluate(() => document.getElementById('printReport').innerText);
+      assert(resumo.includes('Como digitou') && /Maior pausa/i.test(resumo), 'resumo deveria ter os detalhes da digitação');
+      await page.evaluate(() => gerarPDF()); await page.waitForTimeout(300);
+      const completo = await page.evaluate(() => document.getElementById('printReport').innerText);
+      assert(/Leitura:/.test(completo) && /Maior pausa/i.test(completo), 'relatório completo deveria ter os detalhes da digitação');
+      assertEqual(erros.length, 0, 'erros de JS: ' + erros.join(' | '));
+      await page.close();
+    }
+  },
+
+
+  {
     name: 'Resumo de competências mostra a linha de Informática como "Não realizado" quando o candidato não tem esse teste',
     async run({ browser, baseUrl }) {
       const q = (id, mod, pct) => ({ id, tipo: 'quiz', nome: 'Sem Informatica', cpf: '50000000001', modulo: mod, pct, acertos: pct / 10, total: 10, data_conclusao: hoje() });

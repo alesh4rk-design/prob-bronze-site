@@ -811,7 +811,9 @@ function finishTest(){
   const cpm=elapsedSec>0?Math.round((typed.length/elapsedSec)*60):0;
   const wpm=Math.round(cpm/5);
 
-  lastResult={nome:candidate.nome,cpf:candidate.cpf,categoria:textoCategoria,dispositivo:dispositivoAtual,acertos:correct,total:totalChars,pct:prec,wpm,cpm,deleteCount,elapsedSec,data:new Date().toLocaleString('pt-BR')};
+  let errosDigitados=0;
+  for(let i=0;i<typed.length;i++){ if(i>=originalText.length||typed[i]!==originalText[i]) errosDigitados++; }
+  lastResult={nome:candidate.nome,cpf:candidate.cpf,categoria:textoCategoria,dispositivo:dispositivoAtual,acertos:correct,total:totalChars,pct:prec,wpm,cpm,deleteCount,elapsedSec,digitados:typed.length,erros:errosDigitados,duracaoTotalSec:TEST_DURATION,maiorPausaSeg:Math.round(maiorPausaMs/1000),primeiraTeclaSeg:primeiroToqueMs===null?null:Math.round(primeiroToqueMs/1000),trocasDeFoco,data:new Date().toLocaleString('pt-BR')};
   sessionHistory.unshift(lastResult);
   renderHistory();
 
@@ -870,7 +872,21 @@ function renderHistory(){
   ).join('');
 }
 
+// Detalhes de COMO a pessoa digitou (vão pro relatório): maior pausa entre
+// teclas, quantas vezes saiu da tela e quanto tempo levou pra começar.
+let ultimoToque=0,maiorPausaMs=0,trocasDeFoco=0,primeiroToqueMs=null;
+function zerarMetricas(){ultimoToque=0;maiorPausaMs=0;trocasDeFoco=0;primeiroToqueMs=null;}
+document.addEventListener('visibilitychange',()=>{ if(active&&document.hidden) trocasDeFoco++; });
+window.addEventListener('blur',()=>{ if(active&&!document.hidden) trocasDeFoco++; });
+function registrarToque(){
+  const agora=Date.now();
+  if(primeiroToqueMs===null) primeiroToqueMs=agora-startTime;
+  if(ultimoToque) maiorPausaMs=Math.max(maiorPausaMs,agora-ultimoToque);
+  ultimoToque=agora;
+}
+
 function beginTiming(){
+  zerarMetricas();
   timeLeft=TEST_DURATION;startTime=Date.now();active=true;
   const bar=document.getElementById('timerBar');
   bar.style.width='100%';bar.className='timer-bar';
@@ -1036,7 +1052,7 @@ document.getElementById('cancelBtn').onclick = ()=>{
   document.getElementById('prepScreen').style.display='block';
 };
 document.getElementById('closeBtn').onclick=()=>window.location.href='./index.html';
-document.getElementById('typeArea').addEventListener('input',updateStats);
+document.getElementById('typeArea').addEventListener('input',()=>{ if(active) registrarToque(); updateStats(); });
 document.getElementById('typeArea').addEventListener('paste',e=>{e.preventDefault();toast('Cola não permitida no teste','err');});
 // No celular, o teclado some com boa parte da tela — rola o texto de
 // referência pra cima do teclado assim que o candidato toca no campo,

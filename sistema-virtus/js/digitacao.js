@@ -71,6 +71,12 @@ export async function salvarResultadoDigitacao(resultado) {
       dispositivo: resultado.dispositivo || "desktop",
       deleteCount: resultado.deleteCount,
       elapsedSec: resultado.elapsedSec,
+      digitados: resultado.digitados,
+      erros: resultado.erros,
+      duracaoTotalSec: resultado.duracaoTotalSec,
+      maiorPausaSeg: resultado.maiorPausaSeg,
+      primeiraTeclaSeg: resultado.primeiraTeclaSeg,
+      trocasDeFoco: resultado.trocasDeFoco,
       codigoAcesso: resultado.codigoAcesso || "",
       horaLocal: new Date().toTimeString().slice(0, 8)
     })

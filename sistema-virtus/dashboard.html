@@ -2064,7 +2064,7 @@
     VIOLACAO_LABELS, tipoViolacaoLabel, descricaoViolacao,
     consolidarModulos, criadoEmDe, expiraEmDe as _expiraEmDe, statusCodigo as _statusCodigo,
     etapaDoPipeline, PESOS_PADRAO, calcularScore, pesosDoCargo, urlCurriculoSegura,
-    CRITERIOS_ENTREVISTA, DESTAQUES_FORTES, DESTAQUES_ATENCAO, perguntasEntrevistaDoModulo,
+    detalhesDigitacao, leituraDigitacao, CRITERIOS_ENTREVISTA, DESTAQUES_FORTES, DESTAQUES_ATENCAO, perguntasEntrevistaDoModulo,
     mediaEntrevista, estrelasDe10, htmlEntrevistaRelatorio, entrevistaAprovada, entrevistaDaRodada
   } from "./js/dashboard-format.js";
 
@@ -2729,6 +2729,11 @@
                     <div style="font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--text3);letter-spacing:1px;margin-top:2px;">${l}</div>
                   </div>`).join('')}
             </div>
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin-top:10px;">
+              ${detalhesDigitacao(t).map(([l, v]) => `
+                <div class="ficha-item"><div class="ficha-lbl">${l}</div><div class="ficha-val" style="font-size:13px;">${escapeHtml(String(v))}</div></div>`).join('')}
+            </div>
+            <div class="ficha-item" style="margin-top:10px;"><div class="ficha-lbl">Como digitou</div><div class="ficha-val" style="font-size:13px;">${escapeHtml(leituraDigitacao(t))}</div></div>
           </div>
         </div>`;
     }
@@ -3087,6 +3092,10 @@
                 <div class="pr-t-cell"><div class="pr-t-val">${t.deleteCount ?? '—'}</div><div class="pr-t-lbl">Apagamentos</div></div>
                 <div class="pr-t-cell"><div class="pr-t-val">${t.elapsedSec ?? '—'}s</div><div class="pr-t-lbl">Tempo usado</div></div>
               </div>
+              <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-top:8px;">
+                ${detalhesDigitacao(t).map(([l, v]) => `<div class="pr-t-cell" style="text-align:left;"><div class="pr-t-lbl" style="margin:0 0 2px;">${l}</div><div style="font-size:11px;font-weight:700;color:#12141c;">${escapeHtml(String(v))}</div></div>`).join('')}
+              </div>
+              <div style="margin-top:8px;font-size:11px;color:#3E4756;"><b>Leitura:</b> ${escapeHtml(leituraDigitacao(t))}</div>
             </div>
           </div>`;
       }
@@ -3322,6 +3331,8 @@
         <div class="sk-perfil">
           <div class="sk-p-cell"><div class="sk-p-lbl">Velocidade</div><div class="sk-p-val">${melhorWpm} WPM — ${dig.txt}</div></div>
           <div class="sk-p-cell" style="grid-column:2/-1;"><div class="sk-p-lbl">Leitura</div><div class="sk-p-val" style="font-size:12px;font-weight:600;">${dig.obs}</div></div>
+          ${detalhesDigitacao(melhorTyping).map(([l, v]) => `<div class="sk-p-cell"><div class="sk-p-lbl">${l}</div><div class="sk-p-val" style="font-size:12px;">${escapeHtml(String(v))}</div></div>`).join('')}
+          <div class="sk-p-cell" style="grid-column:1/-1;"><div class="sk-p-lbl">Como digitou</div><div class="sk-p-val" style="font-size:12px;font-weight:600;">${escapeHtml(leituraDigitacao(melhorTyping))}</div></div>
         </div>`;
     }
 
