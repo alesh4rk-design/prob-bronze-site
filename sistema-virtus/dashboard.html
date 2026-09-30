@@ -5427,7 +5427,7 @@
         corStatus = entFeita.decisao === 'aprovado' ? 'var(--green)' : entFeita.decisao === 'reprovado' ? 'var(--red)' : 'var(--amber)';
       }
       const botoesAcao = (podeDecidir && !decisaoFinal) ? `
-          <button class="btn-act btn-neutral" style="font-size:11px;padding:6px 10px;background:var(--cyandim);color:var(--cyan);border-color:var(--cyanmid);" data-acao="abrirEntrevista" ${dadosCand}>🎤 ${entFeita ? 'Refazer entrevista' : 'Entrevista'}</button>
+          <button class="btn-act btn-neutral" style="font-size:11px;padding:6px 10px;background:var(--cyandim);color:var(--cyan);border-color:var(--cyanmid);" data-acao="abrirEntrevista" ${dadosCand}>🎤 ${entFeita ? 'Refazer entrevista' : 'Realizar entrevista'}</button>
           <button class="btn-act btn-neutral" style="font-size:11px;padding:6px 10px;background:#25D366;color:#052e16;border-color:#25D366;" data-acao="whatsappEtapa" ${dadosCand}>💬 Avisar</button>
           <button class="btn-act btn-neutral" style="font-size:11px;padding:6px 10px;" data-acao="decidirEntrevista" data-decisao="recusado" ${dadosCand}>❌ Recusado</button>
         ` : '';

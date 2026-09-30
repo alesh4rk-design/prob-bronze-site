@@ -145,6 +145,8 @@ export const tests = [
       const { page, erros } = await abrirDashboard(browser, baseUrl, { perfil: 'admin', resultados, pipeline });
       await page.evaluate(() => { window.open = () => {}; switchView('banco'); limparFiltrosBanco(); });
       await page.waitForTimeout(300);
+      const btnReal = await page.evaluate(() => [...document.querySelectorAll('#bancoTableBody [data-acao="abrirEntrevista"]')].map(b => b.textContent.trim()));
+      assert(btnReal.some(t => t.includes('Realizar entrevista')), `Etapa 2 deveria ter o botão "Realizar entrevista". Botões: ${btnReal}`);
       const etapa2 = await page.evaluate(() => document.getElementById('bancoTableBody').innerText);
       assert(etapa2.includes('Na Etapa Dois') && !etapa2.includes('Na Etapa Tres'), `Etapa 2 deveria ter só quem ainda não passou na entrevista. Conteúdo: ${etapa2}`);
 
