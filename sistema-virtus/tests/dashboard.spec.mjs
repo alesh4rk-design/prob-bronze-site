@@ -241,12 +241,20 @@ export const tests = [
       await page.waitForTimeout(300);
       const e3 = await page.evaluate(() => document.getElementById('etapa3TableBody').innerHTML);
       assert(e3.includes('Aprovada Tres') && !e3.includes('Aguarda Quatro'), 'Etapa 3 deveria ter só quem ainda não foi enviado pra Etapa 4');
-      assert(e3.includes('irEtapa4') && !e3.includes('data-decisao="contratado"'), 'Etapa 3 não pode ter botão Contratado, só Enviar para Etapa 4');
+      await page.evaluate(() => abrirAcoesEtapa('cpf:31000000001', 'Aprovada Tres', 'etapa3'));
+      const it3 = await page.evaluate(() => document.getElementById('acoesCandLista').innerText);
+      assert(it3.includes('Enviar para Etapa 4') && !it3.includes('Contratado'), `Etapa 3 não pode ter Contratado, só Enviar para Etapa 4. Itens: ${it3}`);
+      await page.evaluate(() => fecharAcoesModal());
       await page.evaluate(() => switchView('contratados'));
       await page.waitForTimeout(300);
       const e4 = await page.evaluate(() => document.getElementById('contratadosTableBody').innerHTML);
-      assert(e4.includes('Aguarda Quatro') && e4.includes('data-decisao="contratado"'), 'Etapa 4 deveria mostrar quem aguarda decisão com botão Contratado');
-      assert(e4.includes('Enviar mensagem de contratado'), 'Etapa 4 deveria ter o botão de mensagem de contratado');
+      assert(e4.includes('Aguarda Quatro') && e4.includes('Aguardando decisão'), 'Etapa 4 deveria mostrar quem aguarda decisão');
+      await page.evaluate(() => abrirAcoesEtapa('cpf:31000000002', 'Aguarda Quatro', 'etapa4pend'));
+      const it4 = await page.evaluate(() => document.getElementById('acoesCandLista').innerText);
+      assert(it4.includes('Contratado'), `Etapa 4 pendente deveria ter Contratado. Itens: ${it4}`);
+      await page.evaluate(() => abrirAcoesEtapa('cpf:31000000003', 'Ja Contratada', 'etapa4dec'));
+      const it4d = await page.evaluate(() => document.getElementById('acoesCandLista').innerText);
+      assert(it4d.includes('Enviar mensagem de contratado'), `Etapa 4 deveria ter mensagem de contratado. Itens: ${it4d}`);
       await page.close();
     }
   },
@@ -264,14 +272,17 @@ export const tests = [
       const { page, erros } = await abrirDashboard(browser, baseUrl, { perfil: 'admin', resultados, pipeline });
       await page.evaluate(() => { window.open = () => {}; switchView('banco'); limparFiltrosBanco(); });
       await page.waitForTimeout(300);
-      const btnReal = await page.evaluate(() => [...document.querySelectorAll('#bancoTableBody [data-acao="abrirEntrevista"]')].map(b => b.textContent.trim()));
-      assert(btnReal.some(t => t.includes('Realizar entrevista')), `Etapa 2 deveria ter o botão "Realizar entrevista". Botões: ${btnReal}`);
+      await page.evaluate(() => abrirAcoesEtapa('cpf:11122233344', 'Na Etapa Dois', 'etapa2'));
+      const btnReal = await page.evaluate(() => document.getElementById('acoesCandLista').innerText);
+      assert(btnReal.includes('Realizar entrevista'), `Etapa 2 deveria ter "Realizar entrevista" no menu Ações. Itens: ${btnReal}`);
+      await page.evaluate(() => fecharAcoesModal());
       const etapa2 = await page.evaluate(() => document.getElementById('bancoTableBody').innerText);
       assert(etapa2.includes('Na Etapa Dois') && !etapa2.includes('Na Etapa Tres'), `Etapa 2 deveria ter só quem ainda não passou na entrevista. Conteúdo: ${etapa2}`);
 
       await page.evaluate(() => { window.print = () => {}; switchView('etapa3'); });
       await page.waitForTimeout(300);
-      await page.click('#etapa3TableBody [data-acao="pdfEntrevista"]');
+      await page.click('#etapa3TableBody [data-acao="acoesEtapa"]');
+      await page.click('#acoesCandLista .acao-item:first-child');
       await page.waitForTimeout(300);
       const pdfEnt = await page.evaluate(() => document.getElementById('printReport').innerHTML);
       assert(pdfEnt.includes('Resultado da Entrevista'), 'botão da Etapa 3 deveria gerar o PDF só da entrevista');

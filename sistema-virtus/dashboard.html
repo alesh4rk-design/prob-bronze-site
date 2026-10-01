@@ -2758,7 +2758,7 @@
     // ── Entrevista — resumo de quando já foi realizada (visível pra
     // qualquer um que veja a ficha, não só quem gerencia).
     if (pInfo.entrevista && pInfo.entrevista.versao === 2) {
-      html += `<div class="ficha-entrevista-v2" style="background:#fff;color:#12141c;border-radius:10px;padding:12px 14px;margin:12px 0;">${htmlEntrevistaRelatorio(pInfo.entrevista, fmtDataHora).replace('class="pr-sec-title"', 'style="font-weight:700;font-size:13px;margin-bottom:8px;color:#12141c;"')}</div>`;
+      html += `<div class="ficha-entrevista-v2" style="max-width:100%;box-sizing:border-box;overflow:hidden;background:#fff;color:#12141c;border-radius:10px;padding:12px 14px;margin:12px 0;">${htmlEntrevistaRelatorio(pInfo.entrevista, fmtDataHora).replace('class="pr-sec-title"', 'style="font-weight:700;font-size:13px;margin-bottom:8px;color:#12141c;"')}</div>`;
     } else if (pInfo.entrevista) {
       const ent = pInfo.entrevista;
       const decLabel = { aprovado: { txt: '🟢 Aprovado', cor: 'var(--green)' }, reprovado: { txt: '🔴 Reprovado', cor: 'var(--red)' }, complementar: { txt: '🟡 Avaliação complementar', cor: 'var(--amber)' } }[ent.decisao] || { txt: ent.decisao, cor: 'var(--text2)' };
@@ -4099,6 +4099,7 @@
     acoesCandidato: el => window.abrirAcoesCandidato(el.dataset.chave, el.dataset.nome),
     whatsappCandidato: el => window.abrirWhatsappCandidato(el.dataset.chave, el.dataset.nome),
     removerBancoReserva: el => window.alternarBancoReserva(el.dataset.chave, el.dataset.nome, false),
+    acoesEtapa: el => window.abrirAcoesEtapa(el.dataset.chave, el.dataset.nome, el.dataset.etapa),
     irEtapa4: el => window.enviarEtapa4(el.dataset.chave, el.dataset.nome),
     decidirEntrevista: el => window.decidirEntrevista(el.dataset.chave, el.dataset.nome, el.dataset.decisao),
     whatsappEtapa: el => window.abrirWhatsappCandidato(el.dataset.chave, el.dataset.nome),
@@ -4462,6 +4463,30 @@
     document.getElementById('acoesCandModal').classList.add('show');
   };
 
+  // Mesmo menu único de ações da Etapa 1, para as Etapas 2, 3 e 4.
+  window.abrirAcoesEtapa = function (chave, nome, etapa) {
+    const p = PIPELINE_MAP[chave.replace(/[/]/g, '_')] || {};
+    const ent = entrevistaDaRodada(p);
+    const fechar = f => () => { window.fecharAcoesModal(); f(); };
+    const entrevista = { label: '🎤 ' + (ent ? 'Refazer entrevista' : 'Realizar entrevista'), fn: fechar(() => window.abrirEntrevista(chave, nome)) };
+    const pdf = { label: '📄 Resultado da entrevista (PDF)', fn: fechar(() => window.gerarPDFEntrevista(chave)) };
+    const zap = (rot) => ({ label: rot || '💬 Avisar no WhatsApp', fn: fechar(() => window.abrirWhatsappCandidato(chave, nome)) });
+    const contratar = { label: '🎉 Contratado', fn: fechar(() => window.decidirEntrevista(chave, nome, 'contratado')) };
+    const recusar = { label: '❌ Recusado', perigo: true, fn: fechar(() => window.decidirEntrevista(chave, nome, 'recusado')) };
+    const itens = {
+      etapa2: [entrevista, ...(ent ? [pdf] : []), zap(), recusar],
+      etapa3: [pdf, zap(), { label: '➡️ Enviar para Etapa 4', fn: fechar(() => window.enviarEtapa4(chave, nome)) }, recusar],
+      etapa4pend: [contratar, recusar, zap()],
+      etapa4dec: [zap(p.decisao_final === 'contratado' ? '💬 Enviar mensagem de contratado' : '💬 Enviar mensagem')]
+    }[etapa] || [];
+    document.getElementById('acoesCandNome').textContent = nome;
+    const lista = document.getElementById('acoesCandLista');
+    lista.innerHTML = itens.map((it, i) =>
+      `<button type="button" class="acao-item ${it.perigo ? 'perigo' : ''}" data-item="${i}">${it.label}</button>`).join('');
+    lista.querySelectorAll('[data-item]').forEach(b => b.addEventListener('click', itens[Number(b.dataset.item)].fn));
+    document.getElementById('acoesCandModal').classList.add('show');
+  };
+
   window.fecharAcoesModal = function () {
     document.getElementById('acoesCandModal').classList.remove('show');
   };
@@ -4714,11 +4739,7 @@
         <td style="font-size:12px;">${avisoWhatsappHTML(p, 'etapa3') || '<span style="color:var(--text4);">Ainda não avisado</span>'}</td>
         <td data-acao="ignorar" style="font-size:11px;">
           <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;">
-            ${podeDecidir ? `
-            <button class="btn-act btn-neutral" style="font-size:11px;padding:6px 10px;background:#6B3FA0;color:#fff;border-color:#6B3FA0;" data-acao="pdfEntrevista" ${dadosCand}>📄 Resultado (PDF)</button>
-            <button class="btn-act btn-neutral" style="font-size:11px;padding:6px 10px;background:#25D366;color:#052e16;border-color:#25D366;" data-acao="whatsappEtapa" ${dadosCand}>💬 Avisar</button>
-            <button class="btn-act btn-approve-admin" style="font-size:11px;padding:6px 10px;" data-acao="irEtapa4" ${dadosCand}>➡️ Enviar para Etapa 4</button>
-            <button class="btn-act btn-neutral" style="font-size:11px;padding:6px 10px;" data-acao="decidirEntrevista" data-decisao="recusado" ${dadosCand}>❌ Recusado</button>` : ''}
+            ${podeDecidir ? `<button class="btn-act btn-neutral" style="font-size:11px;padding:6px 10px;" data-acao="acoesEtapa" data-etapa="etapa3" ${dadosCand}>⚙️ Ações</button>` : ''}
             <button class="btn-act btn-neutral" style="font-size:11px;padding:6px 10px;" data-acao="abrirCandidato" ${dadosCand} title="Ver detalhes completos">📋</button>
           </div>
         </td>
@@ -5494,12 +5515,7 @@
         statusTxt = { aprovado: '🎤 Entrevista: aprovado', reprovado: '🎤 Entrevista: reprovado', complementar: '🎤 Entrevista: complementar' }[entFeita.decisao] + m;
         corStatus = entFeita.decisao === 'aprovado' ? 'var(--green)' : entFeita.decisao === 'reprovado' ? 'var(--red)' : 'var(--amber)';
       }
-      const botoesAcao = (podeDecidir && !decisaoFinal) ? `
-          <button class="btn-act btn-neutral" style="font-size:11px;padding:6px 10px;background:var(--cyandim);color:var(--cyan);border-color:var(--cyanmid);" data-acao="abrirEntrevista" ${dadosCand}>🎤 ${entFeita ? 'Refazer entrevista' : 'Realizar entrevista'}</button>
-          ${entFeita ? `<button class="btn-act btn-neutral" style="font-size:11px;padding:6px 10px;background:#6B3FA0;color:#fff;border-color:#6B3FA0;" data-acao="pdfEntrevista" ${dadosCand}>📄 Resultado (PDF)</button>` : ''}
-          <button class="btn-act btn-neutral" style="font-size:11px;padding:6px 10px;background:#25D366;color:#052e16;border-color:#25D366;" data-acao="whatsappEtapa" ${dadosCand}>💬 Avisar</button>
-          <button class="btn-act btn-neutral" style="font-size:11px;padding:6px 10px;" data-acao="decidirEntrevista" data-decisao="recusado" ${dadosCand}>❌ Recusado</button>
-        ` : '';
+      const botoesAcao = (podeDecidir && !decisaoFinal) ? `<button class="btn-act btn-neutral" style="font-size:11px;padding:6px 10px;" data-acao="acoesEtapa" data-etapa="etapa2" ${dadosCand}>⚙️ Ações</button>` : '';
 
       return `
       <tr class="row-aprovado">
@@ -5637,9 +5653,7 @@
         <td><span class="td-pct" style="color:${c.media >= 70 ? 'var(--green)' : 'var(--red)'}">${c.media}%</span></td>
         <td style="text-align:center;" data-acao="ignorar">${badgeComentarios(p.comentarios_count, dadosCand)}</td>
         <td style="font-weight:700;color:var(--amber);">⏳ Aguardando decisão</td>
-        <td data-acao="ignorar" colspan="2">${podeDecidirE4 ? `<div style="display:flex;gap:6px;flex-wrap:wrap;">
-          <button class="btn-act btn-approve-admin" style="font-size:11px;padding:6px 10px;" data-acao="decidirEntrevista" data-decisao="contratado" ${dadosCand}>🎉 Contratado</button>
-          <button class="btn-act btn-neutral" style="font-size:11px;padding:6px 10px;" data-acao="decidirEntrevista" data-decisao="recusado" ${dadosCand}>❌ Recusado</button></div>` : '—'}</td>
+        <td data-acao="ignorar" colspan="2">${podeDecidirE4 ? `<button class="btn-act btn-neutral" style="font-size:11px;padding:6px 10px;" data-acao="acoesEtapa" data-etapa="etapa4pend" ${dadosCand}>⚙️ Ações</button>` : '—'}</td>
       </tr>`;
     }).join('');
     if (!decididos.length) {
@@ -5663,7 +5677,7 @@
         <td>${escapeHtml(p.decisao_final_por || '—')}
           ${avisoWhatsappHTML(p, p.decisao_final) || ''}</td>
         <td class="td-time" data-acao="ignorar">${p.decisao_final_em ? fmtDataHora(p.decisao_final_em) : '—'}
-          ${podeDecidirE4 ? `<div><button class="btn-act btn-neutral" style="font-size:11px;padding:5px 9px;margin-top:4px;background:#25D366;color:#052e16;border-color:#25D366;" data-acao="whatsappEtapa" ${dadosCand}>💬 ${contratado ? 'Enviar mensagem de contratado' : 'Enviar mensagem'}</button></div>` : ''}</td>
+          ${podeDecidirE4 ? `<div style="margin-top:4px;"><button class="btn-act btn-neutral" style="font-size:11px;padding:6px 10px;" data-acao="acoesEtapa" data-etapa="etapa4dec" ${dadosCand}>⚙️ Ações</button></div>` : ''}</td>
       </tr>`;
     }).join('');
     tbody.innerHTML = linhasAguardando + tbody.innerHTML;

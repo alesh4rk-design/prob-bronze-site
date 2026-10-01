@@ -420,11 +420,11 @@ export function htmlEntrevistaRelatorio(ent, fmtDataHoraFn) {
   const cor = n => n >= 7 ? '#00713C' : n >= 5 ? '#8A6100' : '#B32218';
   const linha = (label, nota) => `
     <tr>
-      <td style="padding:6px 8px;border-bottom:1px solid #E4E8EE;font-size:13px;color:#12141c;">${escapeHtml(label)}</td>
-      <td style="padding:6px 8px;border-bottom:1px solid #E4E8EE;width:34%;">
+      <td style="padding:6px 8px;border-bottom:1px solid #E4E8EE;font-size:13px;color:#12141c;overflow-wrap:anywhere;word-break:break-word;">${escapeHtml(label)}</td>
+      <td style="padding:6px 8px;border-bottom:1px solid #E4E8EE;">
         <div style="height:8px;background:#E4E8EE;border-radius:4px;overflow:hidden;"><div style="height:100%;width:${(nota || 0) * 10}%;background:${cor(nota)};"></div></div>
       </td>
-      <td style="padding:6px 8px;border-bottom:1px solid #E4E8EE;font-weight:700;font-size:13px;color:${cor(nota)};text-align:right;width:40px;">${nota ?? '—'}</td>
+      <td style="padding:6px 8px;border-bottom:1px solid #E4E8EE;font-weight:700;font-size:13px;color:${cor(nota)};text-align:right;">${nota ?? '—'}</td>
     </tr>`;
   const chips = (lista, fundo, texto) => (lista || []).map(t =>
     `<span style="display:inline-block;margin:0 4px 4px 0;padding:3px 9px;border-radius:10px;font-size:12px;background:${fundo};color:${texto};">${escapeHtml(t)}</span>`).join('');
@@ -432,13 +432,14 @@ export function htmlEntrevistaRelatorio(ent, fmtDataHoraFn) {
   const perguntas = (ent.perguntas || []).map((p, i) => linha(`${i + 1}. ${p.pergunta}`, p.nota)).join('');
   return `
     <div class="pr-sec-title">🎤 Avaliação da Entrevista</div>
-    <div style="border:1px solid #E4E8EE;border-radius:6px;padding:10px 12px;margin-bottom:10px;">
+    <div style="border:1px solid #E4E8EE;border-radius:6px;padding:10px 12px;margin-bottom:10px;max-width:100%;box-sizing:border-box;overflow-wrap:anywhere;">
       <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:8px;">
         <div style="font-size:13px;color:#5A6880;">Entrevistador: <b style="color:#12141c;">${escapeHtml(ent.por || '—')}</b>${ent.por_perfil ? ' · ' + escapeHtml(ent.por_perfil) : ''} · ${fmtDataHoraFn ? fmtDataHoraFn(ent.em) : ''}</div>
         <div style="font-size:13px;font-weight:700;color:${dec[1]};">${dec[0]}</div>
       </div>
       <div style="font-size:12px;color:#5A6880;margin-bottom:8px;">Escalas — 5x2: <b>${ent.escala_5x2 == null ? '—' : ent.escala_5x2 ? 'Sim' : 'Não'}</b> · 12x36: <b>${ent.disponibilidade_escala ? 'Sim' : 'Não'}</b> · 6x1: <b>${ent.escala_6x1 == null ? '—' : ent.escala_6x1 ? 'Sim' : 'Não'}</b> · Experiência anterior: <b>${ent.experiencia_anterior ? 'Sim' : 'Não'}</b></div>
-      <table style="width:100%;border-collapse:collapse;">
+      <table style="width:100%;table-layout:fixed;border-collapse:collapse;">
+        <colgroup><col><col style="width:30%"><col style="width:38px"></colgroup>
         <tr><td colspan="3" style="padding:4px 8px;font-size:11px;font-weight:700;color:#5A6880;text-transform:uppercase;letter-spacing:1px;">Critérios gerais</td></tr>
         ${criterios}
         <tr><td colspan="3" style="padding:8px 8px 4px;font-size:11px;font-weight:700;color:#5A6880;text-transform:uppercase;letter-spacing:1px;">Perguntas de situação do cargo</td></tr>
