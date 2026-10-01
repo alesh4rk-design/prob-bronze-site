@@ -13,7 +13,7 @@
 // Rotas:
 //   POST /verificar-codigo  { codigo }
 //     -> { ok: true } ou { ok: false, motivo }
-//     Com limite de 10 tentativas a cada 10 minutos por IP (KV), pra
+//     Com limite de 60 tentativas a cada 10 minutos por IP (KV), pra
 //     impedir um script de tentar adivinhar o código por força bruta.
 //
 //   POST /submeter-quiz  { modulo, perguntaTextos, respostas, nome, candidato, dataPreferencia, codigoAcesso }
@@ -366,7 +366,7 @@ async function handleVerificarCodigo(request, env, cors) {
 
   const tentativasRaw = await env.RATE_LIMIT_KV.get(rlKey);
   const tentativas = tentativasRaw ? parseInt(tentativasRaw, 10) : 0;
-  if (tentativas >= 10) return json({ ok: false, motivo: "muitas_tentativas" }, cors);
+  if (tentativas >= 60) return json({ ok: false, motivo: "muitas_tentativas" }, cors);
   await env.RATE_LIMIT_KV.put(rlKey, String(tentativas + 1), { expirationTtl: 600 });
 
   const token = await getAccessToken(env);
