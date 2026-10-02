@@ -287,15 +287,15 @@ export const PERGUNTAS_SEED = {
       "resposta": ".jpg"
     },
     {
-      "q": "Qual das funções abaixo não pertence ao Microsoft powerpoint?",
+      "q": "Qual das tarefas abaixo NÃO é feita no Microsoft PowerPoint?",
       "o": [
         "Criar apresentações com slides",
-        "Editar textos com formatação avançada",
         "Inserir animações e transições",
-        "Exportar arquivos para PDF"
+        "Exportar a apresentação para PDF",
+        "Criar planilhas com fórmulas e tabelas dinâmicas"
       ],
       "n": "dificil",
-      "resposta": "Editar textos com formatação avançada"
+      "resposta": "Criar planilhas com fórmulas e tabelas dinâmicas"
     },
     {
       "q": "Qual desses dispositivos é considerado um hardware de entrada?",
