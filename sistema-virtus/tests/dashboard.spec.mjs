@@ -223,6 +223,25 @@ export const tests = [
 
 
   {
+    name: 'Tabela de candidatos avisa quando a Informática não foi realizada',
+    async run({ browser, baseUrl }) {
+      const resultados = [
+        { id: '1', tipo: 'quiz', nome: 'Sem Info', cpf: '32000000001', modulo: 'Controle de Acesso', pct: 100, acertos: 15, total: 15, data_conclusao: hoje(), candidato: { cargo_pretendido: 'Controle de Acesso' } },
+        { id: '2', tipo: 'quiz', nome: 'Com Info', cpf: '32000000002', modulo: 'Controle de Acesso', pct: 100, acertos: 15, total: 15, data_conclusao: hoje(), candidato: { cargo_pretendido: 'Controle de Acesso' } },
+        { id: '3', tipo: 'quiz', nome: 'Com Info', cpf: '32000000002', modulo: 'Informática', pct: 90, acertos: 14, total: 15, data_conclusao: hoje(), candidato: { cargo_pretendido: 'Controle de Acesso' } }
+      ];
+      const { page } = await abrirDashboard(browser, baseUrl, { perfil: 'admin', resultados, pipeline: {} });
+      await page.evaluate(() => switchView('pipeline'));
+      await page.waitForTimeout(300);
+      const linhas = await page.evaluate(() => [...document.querySelectorAll('#pipelineTableBody tr')].map(r => r.innerText));
+      const sem = linhas.find(l => l.includes('Sem Info')) || '';
+      const com = linhas.find(l => l.includes('Com Info')) || '';
+      assert(/Informática: n[ãa]o realizado/i.test(sem), `deveria avisar Informática não realizada. Linha: ${sem}`);
+      assert(!/n[ãa]o realizado/i.test(com), `quem fez Informática não deve ter aviso. Linha: ${com}`);
+      await page.close();
+    }
+  },
+  {
     name: 'Etapa 3 não contrata (só envia pra Etapa 4); Etapa 4 decide e tem botão de mensagem de contratado',
     async run({ browser, baseUrl }) {
       const resultados = [

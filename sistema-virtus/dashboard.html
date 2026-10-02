@@ -4211,6 +4211,7 @@
         <td style="max-width:280px;white-space:normal;">
           <div style="display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--text2);white-space:nowrap;">
             ${c.modulos.map(m => `<div title="${m.modulo === c.moduloEscolhido ? 'Módulo escolhido pelo candidato' : 'Módulo automático da trilha'}">${m.modulo === c.moduloEscolhido ? '★ ' : ''}${escapeHtml(m.modulo)}: <b style="color:${m.pct >= 70 ? 'var(--green)' : m.pct >= 50 ? 'var(--amber)' : 'var(--red)'}">${m.pct}%</b></div>`).join('')}
+            ${semInformatica(c) ? `<div title="A Informática não foi feita (módulo indisponível, desativado ou pulado). Verifique o Banco de Perguntas." style="color:var(--amber);">⚠️ Informática: <b>não realizado</b></div>` : ''}
             ${c.digitacao != null ? `<div title="Teste de digitação feito ${c.digitacaoDispositivo === 'mobile' ? 'pelo CELULAR' : 'no COMPUTADOR'}">${c.digitacaoDispositivo === 'mobile' ? '📱' : '💻'} Digitação: <b style="color:${c.digitacao >= 70 ? 'var(--green)' : c.digitacao >= 50 ? 'var(--amber)' : 'var(--red)'}">${c.digitacao}%</b></div>` : ''}
           </div>
         </td>
@@ -4464,6 +4465,14 @@
   };
 
   // Mesmo menu único de ações da Etapa 1, para as Etapas 2, 3 e 4.
+  // Cargo com trilha completa que não tem resultado de Informática.
+  function semInformatica(c) {
+    const semTrilha = ['ASG', 'Bombeiro Civil', 'Manutenção', 'Jardineiro'];
+    const mods = c.modulos || [];
+    if (!mods.length || mods.some(m => m.modulo === 'Informática')) return false;
+    return !mods.some(m => semTrilha.includes(m.modulo)) || mods.length > 1;
+  }
+
   window.abrirAcoesEtapa = function (chave, nome, etapa) {
     const p = PIPELINE_MAP[chave.replace(/[/]/g, '_')] || {};
     const ent = entrevistaDaRodada(p);
