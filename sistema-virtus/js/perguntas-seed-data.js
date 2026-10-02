@@ -421,15 +421,15 @@ export const PERGUNTAS_SEED = {
       "resposta": "192"
     },
     {
-      "q": "Quais são os 4 pilares básicos para liberação de acesso?",
+      "q": "Qual é a sequência correta de atendimento do controle de acesso em uma portaria?",
       "o": [
-        "Identificação, autorização, registro e confirmação de documento",
-        "Rapidez, agilidade, facilidade e confiança",
-        "Documento, uniforme, veículo e horário",
-        "Conhecimento, reconhecimento, aviso e autorização"
+        "Identificar o visitante, pedir autorização ao morador, pedir o documento e cadastrar no sistema",
+        "Liberar a entrada, avisar o morador depois, cadastrar no fim do plantão e guardar o documento sem conferir",
+        "Abrir o portão, pedir o documento só se desconfiar, anotar no caderno e avisar o morador depois",
+        "Confiar na palavra do visitante, liberar a entrada, avisar a ronda e pedir o documento na saída"
       ],
       "n": "medio",
-      "resposta": "Identificação, autorização, registro e confirmação de documento"
+      "resposta": "Identificar o visitante, pedir autorização ao morador, pedir o documento e cadastrar no sistema"
     },
     {
       "q": "É permitido liberar veículo apenas por reconhecimento de voz?",
