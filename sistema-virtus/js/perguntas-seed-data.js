@@ -78,10 +78,10 @@ export const PERGUNTAS_SEED = {
       "resposta": "Google Chrome"
     },
     {
-      "q": "Qual desses abre o sistema de CFTV?",
+      "q": "Que tipo de programa é usado para acompanhar as câmeras do CFTV?",
       "o": [
         "Software de monitoramento",
-        "Navegador de internet",
+        "Editor de textos",
         "Editor de planilhas",
         "Programa de e-mail"
       ],
@@ -135,13 +135,13 @@ export const PERGUNTAS_SEED = {
     {
       "q": "Onde ficam os arquivos salvos no computador?",
       "o": [
-        "No disco rígido",
+        "No disco de armazenamento (HD ou SSD)",
         "Na memória RAM",
         "No processador",
         "Na placa de vídeo"
       ],
       "n": "medio",
-      "resposta": "No disco rígido"
+      "resposta": "No disco de armazenamento (HD ou SSD)"
     },
     {
       "q": "Qual das tarefas abaixo não pode ser realizada diretamente no Microsoft Excel?",
@@ -201,24 +201,24 @@ export const PERGUNTAS_SEED = {
     {
       "q": "O que significa 'RAM' em um computador?",
       "o": [
-        "Memória de acesso rápido",
+        "Memória de acesso aleatório, usada temporariamente",
         "Memória de armazenamento fixo",
         "Unidade de processamento central",
         "Registro de arquivos do sistema"
       ],
       "n": "dificil",
-      "resposta": "Memória de acesso rápido"
+      "resposta": "Memória de acesso aleatório, usada temporariamente"
     },
     {
-      "q": "Para salvar um documento no Windows, qual atalho usar?",
+      "q": "Qual atalho fecha a janela ou o programa aberto no Windows?",
       "o": [
-        "Ctrl + S",
+        "Alt + F4",
         "Ctrl + P",
         "Ctrl + O",
         "Ctrl + N"
       ],
       "n": "dificil",
-      "resposta": "Ctrl + S"
+      "resposta": "Alt + F4"
     },
     {
       "q": "Qual programa é usado para compactar arquivos?",
@@ -235,7 +235,7 @@ export const PERGUNTAS_SEED = {
       "q": "Para selecionar todo texto de um documento, qual atalho usar?",
       "o": [
         "Ctrl + A",
-        "Ctrl + T",
+        "Ctrl + P",
         "Ctrl + S",
         "Ctrl + D"
       ],
@@ -556,9 +556,9 @@ export const PERGUNTAS_SEED = {
       "q": "Uma autorização de acesso individual permite a entrada de quantas pessoas?",
       "o": [
         "Somente o indivíduo autorizado",
-        "Demais acompanhantes identificados",
+        "A pessoa autorizada e quem estiver com ela",
         "Quantidade definida pelo morador",
-        "Desde que haja registro na portaria"
+        "Até 3 pessoas, se forem da mesma família"
       ],
       "n": "dificil",
       "resposta": "Somente o indivíduo autorizado"
@@ -568,8 +568,8 @@ export const PERGUNTAS_SEED = {
       "o": [
         "Assegurar registro contínuo e rastreável do plantão",
         "Documentar apenas situações fora da rotina",
-        "Formalizar informações conforme demanda",
-        "Controlar atividades operacionais diárias"
+        "Anotar recados pessoais dos moradores",
+        "Controlar o ponto dos funcionários"
       ],
       "n": "dificil",
       "resposta": "Assegurar registro contínuo e rastreável do plantão"
@@ -701,7 +701,7 @@ export const PERGUNTAS_SEED = {
       "q": "Ao assumir o plantão, qual a primeira ação do operador de CFTV?",
       "o": [
         "Verificar o funcionamento de todas as câmeras",
-        "Ler o relatório do turno anterior",
+        "Mudar as câmeras de posição",
         "Fazer café",
         "Ajustar a cadeira"
       ],
@@ -789,7 +789,7 @@ export const PERGUNTAS_SEED = {
       "q": "Câmera essencial com imagem escura. O que fazer imediatamente?",
       "o": [
         "Registrar e acionar manutenção",
-        "Tentar ajustar o contraste",
+        "Reiniciar o gravador várias vezes",
         "Ignorar até o próximo turno",
         "Desligar a câmera"
       ],
@@ -819,15 +819,15 @@ export const PERGUNTAS_SEED = {
       "resposta": "Comunicar imediatamente a segurança e registrar"
     },
     {
-      "q": "Qual o tempo mínimo de armazenamento das gravações?",
+      "q": "Por quanto tempo as gravações do CFTV devem ser guardadas?",
       "o": [
-        "Mínimo de 30 dias conforme legislação",
-        "Mínimo de 7 dias, depois pode apagar",
-        "Apenas enquanto houver espaço no disco",
-        "Mínimo de 24 horas após a gravação"
+        "Pelo prazo definido pela empresa ou norma do local, geralmente 30 dias",
+        "Apenas 24 horas, depois o sistema apaga",
+        "Só enquanto houver espaço no disco",
+        "Não precisa guardar, basta ver ao vivo"
       ],
       "n": "dificil",
-      "resposta": "Mínimo de 30 dias conforme legislação"
+      "resposta": "Pelo prazo definido pela empresa ou norma do local, geralmente 30 dias"
     },
     {
       "q": "Qual a diferença entre câmera analógica e IP?",
@@ -1252,7 +1252,7 @@ export const PERGUNTAS_SEED = {
   ],
   "Manutenção": [
     {
-      "q": "Qual procedimento deve ser adotado antes de realizar manutenção em circuito elétrico energizado?",
+      "q": "Qual procedimento deve ser adotado antes de realizar manutenção em um circuito elétrico?",
       "o": [
         "Usar apenas luvas isolantes e trabalhar com cuidado",
         "Aplicar procedimento de bloqueio e sinalização do circuito",
@@ -1267,7 +1267,7 @@ export const PERGUNTAS_SEED = {
       "o": [
         "Transformador",
         "Disjuntor",
-        "Relé térmico",
+        "Interruptor",
         "Tomada"
       ],
       "n": "facil",
@@ -1288,7 +1288,7 @@ export const PERGUNTAS_SEED = {
       "q": "O aquecimento excessivo de um motor elétrico pode ser causado por:",
       "o": [
         "Falta de ventilação ou sobrecarga",
-        "Baixa tensão constante",
+        "Cabos de alimentação novos",
         "Falta de lubrificação externa",
         "Excesso de iluminação"
       ],
@@ -1329,7 +1329,7 @@ export const PERGUNTAS_SEED = {
       "resposta": "Impedir o retorno do fluxo de água na tubulação"
     },
     {
-      "q": "Qual instrumento é utilizado para medir tensão, corrente e resistência elétrica simultaneamente?",
+      "q": "Qual instrumento mede tensão, corrente e resistência elétrica em um único aparelho?",
       "o": [
         "Amperímetro",
         "Multímetro",
@@ -1475,12 +1475,12 @@ export const PERGUNTAS_SEED = {
       "q": "O que deve ser feito ao identificar fissuras estruturais em paredes ou vigas?",
       "o": [
         "Fechar as fissuras com massa e pintar o local",
-        "Comunicar imediatamente a avaliação técnica especializada",
+        "Comunicar imediatamente e pedir avaliação técnica especializada",
         "Monitorar por alguns meses antes de avisar",
         "Ignorar enquanto não houver infiltração"
       ],
       "n": "dificil",
-      "resposta": "Comunicar imediatamente a avaliação técnica especializada"
+      "resposta": "Comunicar imediatamente e pedir avaliação técnica especializada"
     },
     {
       "q": "Qual é a principal função de um gerador em edificações?",
@@ -1918,24 +1918,24 @@ export const PERGUNTAS_SEED = {
     {
       "q": "Qual é o significado da sigla VSPP?",
       "o": [
-        "Vigilância e Segurança Patrimonial Privada",
+        "Vigilante de Segurança Pessoal Privada",
         "Vigilância de Sistemas de Proteção Predial",
         "Vigilância e Serviços de Portaria Privada",
-        "Vigilância de Segurança Pessoal e Patrimonial"
+        "Vigilância de Serviço Público e Privado"
       ],
       "n": "facil",
-      "resposta": "Vigilância e Segurança Patrimonial Privada"
+      "resposta": "Vigilante de Segurança Pessoal Privada"
     },
     {
       "q": "Qual é o principal objetivo do VSPP?",
       "o": [
-        "Proteger apenas os funcionários da empresa",
-        "Proteger o patrimônio e as pessoas no ambiente corporativo",
+        "Proteger a integridade física da pessoa sob sua responsabilidade",
+        "Proteger apenas os bens materiais da empresa",
         "Fiscalizar a produtividade dos colaboradores",
         "Controlar a entrada e saída de mercadorias"
       ],
       "n": "facil",
-      "resposta": "Proteger o patrimônio e as pessoas no ambiente corporativo"
+      "resposta": "Proteger a integridade física da pessoa sob sua responsabilidade"
     },
     {
       "q": "Em uma ronda VSPP, qual equipamento é fundamental para registrar pontos de verificação?",
@@ -2180,15 +2180,15 @@ export const PERGUNTAS_SEED = {
       "resposta": "Orientar as pessoas a sair em ordem e pelos caminhos seguros"
     },
     {
-      "q": "Qual a frequência recomendada para treinamentos da equipe VSPP?",
+      "q": "Com que frequência o vigilante deve fazer a reciclagem obrigatória?",
       "o": [
-        "Anual, com reciclagens periódicas",
+        "A cada 2 anos, conforme exigência da Polícia Federal",
         "Apenas na admissão",
         "A cada 5 anos",
         "Somente quando ocorre incidente"
       ],
       "n": "dificil",
-      "resposta": "Anual, com reciclagens periódicas"
+      "resposta": "A cada 2 anos, conforme exigência da Polícia Federal"
     }
   ],
   "Recepcionista": [
@@ -2406,7 +2406,7 @@ export const PERGUNTAS_SEED = {
       "o": [
         "Evitar uso pessoal para não prejudicar o atendimento",
         "Usar livremente",
-        "Atender apenas chamadas importantes com discrição",
+        "Usar as redes sociais quando não houver visitantes",
         "Deixar o celular sempre à vista"
       ],
       "n": "dificil",
@@ -2497,7 +2497,7 @@ export const PERGUNTAS_SEED = {
         "CO2 ou Pó Químico Seco (Classe C)",
         "Água",
         "Espuma",
-        "Pó Químico Seco (Classe B)"
+        "Areia molhada"
       ],
       "n": "facil",
       "resposta": "CO2 ou Pó Químico Seco (Classe C)"
@@ -2602,15 +2602,15 @@ export const PERGUNTAS_SEED = {
       "resposta": "Metais combustíveis"
     },
     {
-      "q": "Qual a distância mínima que os extintores devem ser instalados do chão?",
+      "q": "Qual a altura máxima da alça do extintor fixado na parede, em relação ao piso?",
       "o": [
-        "Entre 0,20m e 1,20m do piso",
-        "Apoiados direto no chão",
-        "Acima de 2 metros do piso",
-        "Entre 1,50m e 2,00m do piso"
+        "1,60 m",
+        "2,20 m",
+        "3,00 m",
+        "Apoiado direto no chão"
       ],
       "n": "medio",
-      "resposta": "Entre 0,20m e 1,20m do piso"
+      "resposta": "1,60 m"
     },
     {
       "q": "Qual o procedimento correto em caso de primeiros socorros para queimadura?",
@@ -2659,13 +2659,13 @@ export const PERGUNTAS_SEED = {
     {
       "q": "Como agir em caso de incêndio em uma panela com óleo (cozinha)?",
       "o": [
-        "Abrafar com uma tampa ou pano molhado, nunca jogar água",
+        "Abafar com uma tampa ou pano molhado, nunca jogar água",
         "Jogar água aos poucos para esfriar o óleo",
         "Usar extintor de água pressurizada",
         "Tirar a panela do fogo e levar até a pia"
       ],
       "n": "dificil",
-      "resposta": "Abrafar com uma tampa ou pano molhado, nunca jogar água"
+      "resposta": "Abafar com uma tampa ou pano molhado, nunca jogar água"
     },
     {
       "q": "Qual a função do chuveiro automático (sprinkler) em um edifício?",
@@ -2980,15 +2980,15 @@ export const PERGUNTAS_SEED = {
       "resposta": "Garantir segurança e acolhimento, controlando o acesso com cordialidade"
     },
     {
-      "q": "Um prestador de serviço chega sem autorização prévia. O procedimento correto é:",
+      "q": "Um morador liga reclamando do barulho do vizinho. O que fazer?",
       "o": [
-        "Confirmar com o morador ou responsável antes de liberar o acesso",
-        "Liberar, pois prestador de serviço já é esperado",
-        "Barrar a entrada sem consultar ninguém",
-        "Pedir que ele volte outro dia com autorização"
+        "Ouvir, registrar a reclamação e encaminhar conforme o regulamento",
+        "Ir até o apartamento do vizinho e mandar abaixar o som",
+        "Dizer que isso não é problema da portaria",
+        "Pedir que o morador resolva direto com o vizinho"
       ],
       "n": "facil",
-      "resposta": "Confirmar com o morador ou responsável antes de liberar o acesso"
+      "resposta": "Ouvir, registrar a reclamação e encaminhar conforme o regulamento"
     },
     {
       "q": "Dois atendimentos chegam ao mesmo tempo. O correto é:",
@@ -3057,15 +3057,15 @@ export const PERGUNTAS_SEED = {
       "resposta": "Perceber que alguém está perdido e oferecer ajuda antes de ser solicitado"
     },
     {
-      "q": "Ao atender uma pessoa com deficiência, o correto é:",
+      "q": "Uma pessoa com deficiência visual chega à recepção. Qual a melhor forma de ajudar?",
       "o": [
-        "Falar diretamente com ela e perguntar como pode ajudar, sem presumir",
-        "Falar com o acompanhante, que conhece melhor a situação",
-        "Ajudar logo, conduzindo a pessoa pelo braço sem perguntar",
-        "Evitar contato direto para não causar constrangimento"
+        "Se apresentar, perguntar se precisa de ajuda e, se aceitar, oferecer o braço para guiá-la",
+        "Puxar a pessoa pela mão até o destino sem falar nada",
+        "Falar mais alto para ela entender melhor",
+        "Conversar só com o acompanhante dela"
       ],
       "n": "medio",
-      "resposta": "Falar diretamente com ela e perguntar como pode ajudar, sem presumir"
+      "resposta": "Se apresentar, perguntar se precisa de ajuda e, se aceitar, oferecer o braço para guiá-la"
     },
     {
       "q": "Uma reclamação recorrente sobre o mesmo assunto indica que:",
@@ -3112,15 +3112,15 @@ export const PERGUNTAS_SEED = {
       "resposta": "Repassar pendências e ocorrências relevantes ao colega que assume"
     },
     {
-      "q": "Um entregador insiste em subir até o apartamento. O correto é:",
+      "q": "Um morador pede que você guarde a chave do apartamento para a diarista. Como agir?",
       "o": [
-        "Manter o procedimento, receber na portaria e comunicar o morador",
-        "Liberar a subida para agilizar a entrega do pedido",
-        "Liberar se ele estiver uniformizado e com crachá",
-        "Deixar subir acompanhado de outro morador do prédio"
+        "Seguir a regra do condomínio sobre guarda de chaves e registrar quem retirou",
+        "Guardar na gaveta e entregar a quem pedir pela chave",
+        "Recusar sem explicar, pois não é sua função",
+        "Deixar a chave embaixo do tapete do apartamento"
       ],
       "n": "medio",
-      "resposta": "Manter o procedimento, receber na portaria e comunicar o morador"
+      "resposta": "Seguir a regra do condomínio sobre guarda de chaves e registrar quem retirou"
     },
     {
       "q": "O que significa personalizar o atendimento?",
@@ -3238,7 +3238,7 @@ export const PERGUNTAS_SEED = {
       "q": "Dois membros da equipe entram em conflito direto. O líder deve:",
       "o": [
         "Mediar e buscar um entendimento",
-        "Escolher logo um lado no dia a dia da equipe",
+        "Escolher logo um lado",
         "Deixar que resolvam sozinhos",
         "Transferir os dois de setor"
       ],
@@ -3260,8 +3260,8 @@ export const PERGUNTAS_SEED = {
       "q": "Por que a escuta ativa é importante na liderança?",
       "o": [
         "Ajuda a entender o real problema",
-        "Torna a reunião mais longa independente da situação",
-        "É exigida só em entrevista logo no início do processo",
+        "Torna a reunião mais longa",
+        "É exigida só em entrevista",
         "Serve só para agradar a equipe"
       ],
       "n": "facil",
@@ -3315,7 +3315,7 @@ export const PERGUNTAS_SEED = {
       "q": "Qual é o papel do líder ao definir metas para a equipe?",
       "o": [
         "Tornar a meta clara e possível",
-        "Definir meta bem alta sempre no local de trabalho",
+        "Definir meta bem alta sempre",
         "Deixar cada um definir a sua",
         "Copiar meta de outra equipe"
       ],
@@ -3326,7 +3326,7 @@ export const PERGUNTAS_SEED = {
       "q": "Um novo colaborador entra na equipe. Qual conduta ajuda na integração?",
       "o": [
         "Apresentar a rotina e acompanhar",
-        "Deixar que aprenda sozinho no dia a dia da equipe",
+        "Deixar que aprenda sozinho",
         "Cobrar o mesmo ritmo desde já",
         "Explicar tudo uma vez só, por escrito"
       ],
@@ -3349,8 +3349,8 @@ export const PERGUNTAS_SEED = {
       "o": [
         "Explicar o motivo e manter a decisão",
         "Recuar com a primeira reclamação",
-        "Aplicar sem explicar nada independente da situação",
-        "Esperar a equipe se acostumar logo no início do processo"
+        "Aplicar sem explicar nada",
+        "Esperar a equipe se acostumar sozinha"
       ],
       "n": "dificil",
       "resposta": "Explicar o motivo e manter a decisão"
@@ -3394,7 +3394,7 @@ export const PERGUNTAS_SEED = {
         "Reconhecer a própria emoção antes de reagir",
         "Não mostrar emoção nenhuma",
         "Reagir forte para mostrar firmeza",
-        "Ignorar como a equipe está no dia a dia da equipe"
+        "Ignorar como a equipe está"
       ],
       "n": "dificil",
       "resposta": "Reconhecer a própria emoção antes de reagir"
@@ -3415,8 +3415,8 @@ export const PERGUNTAS_SEED = {
       "o": [
         "Apoiar e indicar oportunidades reais",
         "Segurar para não perder o funcionário",
-        "Prometer promoção sem previsão independente da situação",
-        "Ignorar até que surja uma vaga logo no início do processo"
+        "Prometer promoção sem previsão",
+        "Ignorar até que surja uma vaga"
       ],
       "n": "medio",
       "resposta": "Apoiar e indicar oportunidades reais"
@@ -3436,7 +3436,7 @@ export const PERGUNTAS_SEED = {
       "q": "Como o líder deve reagir a uma crítica justa da equipe?",
       "o": [
         "Ouvir e considerar mudar a conduta",
-        "Justificar a atitude sem refletir com atenção redobrada",
+        "Justificar a atitude sem refletir",
         "Diminuir a importância da crítica",
         "Evitar aquele colaborador depois"
       ],
@@ -3459,7 +3459,7 @@ export const PERGUNTAS_SEED = {
       "o": [
         "Respeitar as diferenças de cada um",
         "Padronizar o comportamento de todos",
-        "Formar grupo por afinidade só no dia a dia da equipe",
+        "Formar grupinhos só por afinidade",
         "Evitar falar sobre as diferenças"
       ],
       "n": "medio",
@@ -3482,8 +3482,8 @@ export const PERGUNTAS_SEED = {
       "q": "Qual é a principal função do encarregado de facilities?",
       "o": [
         "Garantir o funcionamento das instalações",
-        "Contratar novos funcionários independente da situação",
-        "Fazer vendas para o prédio logo no início do processo",
+        "Contratar novos funcionários",
+        "Fazer vendas para o prédio",
         "Cuidar só da parte financeira"
       ],
       "n": "facil",
@@ -3494,7 +3494,7 @@ export const PERGUNTAS_SEED = {
       "o": [
         "Intervenções programadas antes da falha",
         "Reparo feito só quando quebra",
-        "Troca de equipe a cada mês no dia a dia da equipe",
+        "Troca de equipe a cada mês",
         "Substituição sem nenhum critério"
       ],
       "n": "medio",
@@ -3504,8 +3504,8 @@ export const PERGUNTAS_SEED = {
       "q": "Um ar-condicionado apresenta vazamento constante. O procedimento correto é:",
       "o": [
         "Registrar, isolar e acionar manutenção",
-        "Ignorar até parar de funcionar independente da situação",
-        "Desligar o prédio inteiro logo no início do processo",
+        "Ignorar até parar de funcionar",
+        "Desligar o prédio inteiro",
         "Trocar o equipamento na hora"
       ],
       "n": "medio",
@@ -3516,7 +3516,7 @@ export const PERGUNTAS_SEED = {
       "o": [
         "Preditiva antecipa; corretiva conserta depois",
         "São exatamente a mesma coisa",
-        "Corretiva é sempre mais barata no dia a dia da equipe",
+        "Corretiva é sempre mais barata",
         "Preditiva só serve para elevador"
       ],
       "n": "dificil",
@@ -3527,7 +3527,7 @@ export const PERGUNTAS_SEED = {
       "o": [
         "Avaliar prazo, qualidade e custo",
         "Escolher sempre o mais barato",
-        "Manter só um fornecedor fixo independente da situação",
+        "Manter só um fornecedor fixo",
         "Trocar de fornecedor todo mês"
       ],
       "n": "medio",
@@ -3539,7 +3539,7 @@ export const PERGUNTAS_SEED = {
         "Lista de pontos a inspecionar",
         "Registro só de reclamações",
         "Relatório de gastos do mês",
-        "Escala dos funcionários logo no início do processo"
+        "Escala dos funcionários"
       ],
       "n": "facil",
       "resposta": "Lista de pontos a inspecionar"
@@ -3559,7 +3559,7 @@ export const PERGUNTAS_SEED = {
       "q": "O que fazer ao identificar um risco de incêndio em uma área comum?",
       "o": [
         "Isolar, comunicar e corrigir logo",
-        "Anotar para resolver depois no dia a dia da equipe",
+        "Anotar para resolver depois",
         "Avisar só o síndico por e-mail",
         "Aguardar a próxima vistoria"
       ],
@@ -3570,8 +3570,8 @@ export const PERGUNTAS_SEED = {
       "q": "Qual é a importância de manter as saídas de emergência desobstruídas?",
       "o": [
         "Garante evacuação segura em crise",
-        "É só uma exigência estética independente da situação",
-        "Facilita a limpeza do local logo no início do processo",
+        "É só uma exigência estética",
+        "Facilita a limpeza do local",
         "Não tem impacto na segurança"
       ],
       "n": "facil",
@@ -3582,7 +3582,7 @@ export const PERGUNTAS_SEED = {
       "o": [
         "Priorizar risco à segurança primeiro",
         "Atender por ordem de chegada só",
-        "Atender o mais fácil primeiro no dia a dia da equipe",
+        "Atender o mais fácil primeiro",
         "Deixar para decidir no fim do dia"
       ],
       "n": "dificil",
@@ -3594,7 +3594,7 @@ export const PERGUNTAS_SEED = {
         "Fato, data, local e providência",
         "Só a opinião de quem registrou",
         "Apenas o nome do responsável",
-        "Somente o valor do reparo independente da situação"
+        "Somente o valor do reparo"
       ],
       "n": "medio",
       "resposta": "Fato, data, local e providência"
@@ -3603,7 +3603,7 @@ export const PERGUNTAS_SEED = {
       "q": "Qual é o objetivo de um contrato de SLA com fornecedor?",
       "o": [
         "Definir prazo e padrão de serviço",
-        "Reduzir o preço a qualquer custo segundo o protocolo",
+        "Reduzir o preço a qualquer custo",
         "Evitar assinar contrato formal",
         "Trocar de fornecedor toda hora"
       ],
@@ -3614,7 +3614,7 @@ export const PERGUNTAS_SEED = {
       "q": "Como deve ser feita a gestão de estoque de materiais de limpeza?",
       "o": [
         "Controlar entrada, saída e validade",
-        "Comprar tudo de uma vez no ano logo no início do processo",
+        "Comprar tudo de uma vez no ano",
         "Deixar sem controle nenhum",
         "Repor só quando acabar tudo"
       ],
@@ -3636,9 +3636,9 @@ export const PERGUNTAS_SEED = {
       "q": "O que fazer diante de uma reclamação recorrente de um mesmo setor?",
       "o": [
         "Investigar a causa raiz do problema",
-        "Ignorar por ser repetitiva no dia a dia da equipe",
+        "Ignorar por ser repetitiva",
         "Responder sempre a mesma coisa",
-        "Repassar direto sem analisar independente da situação"
+        "Repassar direto sem analisar"
       ],
       "n": "medio",
       "resposta": "Investigar a causa raiz do problema"
@@ -3658,7 +3658,7 @@ export const PERGUNTAS_SEED = {
       "q": "Como agir ao identificar uma infiltração em andamento?",
       "o": [
         "Isolar a área e acionar manutenção",
-        "Cobrir com um pano e seguir logo no início do processo",
+        "Cobrir com um pano e seguir",
         "Esperar secar naturalmente",
         "Registrar só no fim do mês"
       ],
@@ -3669,9 +3669,9 @@ export const PERGUNTAS_SEED = {
       "q": "Qual é o papel do encarregado durante uma auditoria predial?",
       "o": [
         "Apresentar registros e corrigir falhas",
-        "Esconder problemas encontrados no dia a dia da equipe",
+        "Esconder problemas encontrados",
         "Delegar tudo para o auditor",
-        "Cancelar a rotina normal do prédio independente da situação"
+        "Cancelar a rotina normal do prédio"
       ],
       "n": "dificil",
       "resposta": "Apresentar registros e corrigir falhas"
@@ -3680,7 +3680,7 @@ export const PERGUNTAS_SEED = {
       "q": "O que caracteriza um bom indicador de desempenho (KPI) predial?",
       "o": [
         "Ser mensurável e ligado à meta",
-        "Ser difícil de entender logo no início do processo",
+        "Ser difícil de entender",
         "Mudar de critério todo mês",
         "Não ter meta definida"
       ],
@@ -3691,9 +3691,9 @@ export const PERGUNTAS_SEED = {
       "q": "Como deve ser tratada uma solicitação urgente fora do horário comercial?",
       "o": [
         "Seguir o protocolo de emergência definido",
-        "Esperar o próximo dia útil sempre no dia a dia da equipe",
+        "Esperar sempre o próximo dia útil",
         "Resolver sem registrar depois",
-        "Ignorar se não for urgente para todos independente da situação"
+        "Ignorar se não for urgente para todos"
       ],
       "n": "medio",
       "resposta": "Seguir o protocolo de emergência definido"
@@ -3702,7 +3702,7 @@ export const PERGUNTAS_SEED = {
       "q": "Qual é a vantagem de padronizar processos de manutenção?",
       "o": [
         "Reduz erro e melhora a previsibilidade",
-        "Torna tudo mais lento logo no início do processo",
+        "Torna tudo mais lento",
         "Elimina a necessidade de registro",
         "Serve só para prédios grandes"
       ],
@@ -3713,9 +3713,9 @@ export const PERGUNTAS_SEED = {
       "q": "O que fazer quando um fornecedor não cumpre o prazo combinado?",
       "o": [
         "Cobrar formalmente e reavaliar o contrato",
-        "Aceitar sem nenhuma cobrança no dia a dia da equipe",
+        "Aceitar sem nenhuma cobrança",
         "Trocar de fornecedor na mesma hora",
-        "Ignorar se o atraso for pequeno independente da situação"
+        "Ignorar se o atraso for pequeno"
       ],
       "n": "medio",
       "resposta": "Cobrar formalmente e reavaliar o contrato"
@@ -3725,7 +3725,7 @@ export const PERGUNTAS_SEED = {
       "o": [
         "Mantém o padrão e reduz acidentes",
         "É opcional se a equipe é experiente",
-        "Só serve para equipe nova logo no início do processo",
+        "Só serve para equipe nova",
         "Atrapalha a rotina do prédio"
       ],
       "n": "facil",
@@ -3747,7 +3747,7 @@ export const PERGUNTAS_SEED = {
       "o": [
         "Usar equipamento adequado e treinamento",
         "Trabalhar rápido para reduzir o risco",
-        "Evitar o uso de EPI se for rápido no dia a dia da equipe",
+        "Evitar o uso de EPI se for rápido",
         "Fazer sozinho para não atrasar"
       ],
       "n": "medio",
@@ -3760,8 +3760,8 @@ export const PERGUNTAS_SEED = {
       "o": [
         "No início da manhã ou no fim da tarde",
         "No horário de maior calor do dia",
-        "Sempre ao meio-dia,",
-        "Apenas durante a noite,"
+        "Sempre ao meio-dia",
+        "Apenas durante a noite"
       ],
       "n": "facil",
       "resposta": "No início da manhã ou no fim da tarde"
@@ -3770,8 +3770,8 @@ export const PERGUNTAS_SEED = {
       "q": "Qual equipamento de proteção é essencial ao usar roçadeira?",
       "o": [
         "Óculos de proteção e protetor auricular",
-        "Apenas luvas de proteção,",
-        "Apenas boné,",
+        "Apenas luvas de proteção",
+        "Apenas boné",
         "Nenhum equipamento é necessário"
       ],
       "n": "facil",
@@ -3858,9 +3858,9 @@ export const PERGUNTAS_SEED = {
       "q": "Qual é a recomendação de segurança ao manusear produtos como herbicidas e inseticidas?",
       "o": [
         "Usar luvas, máscara e seguir as instruções do rótulo",
-        "Aplicar sem qualquer proteção,",
+        "Aplicar sem qualquer proteção",
         "Misturar diferentes produtos livremente",
-        "Guardar junto com alimentos,"
+        "Guardar junto com alimentos"
       ],
       "n": "medio",
       "resposta": "Usar luvas, máscara e seguir as instruções do rótulo"
@@ -3899,7 +3899,7 @@ export const PERGUNTAS_SEED = {
       "resposta": "Verificar a área por objetos e usar calçado fechado"
     },
     {
-      "q": "Por que é recomendado rodar as culturas em uma horta ao longo do ano?",
+      "q": "Por que é recomendado fazer rotação de culturas em uma horta?",
       "o": [
         "Para evitar o esgotamento de nutrientes específicos do solo",
         "Apenas para variar a aparência da horta",
@@ -3910,15 +3910,15 @@ export const PERGUNTAS_SEED = {
       "resposta": "Para evitar o esgotamento de nutrientes específicos do solo"
     },
     {
-      "q": "Qual é a melhor prática ao aplicar fertilizante em excesso de nitrogênio?",
+      "q": "O que pode acontecer ao aplicar fertilizante nitrogenado em excesso?",
       "o": [
-        "Evitar, pois pode queimar as raízes e folhas da planta",
-        "Aplicar sempre em dobro para acelerar o crescimento",
-        "Aplicar apenas à noite,",
-        "Misturar com água do mar antes de aplicar"
+        "Queimar as raízes e as folhas da planta",
+        "A planta passa a precisar de menos água",
+        "O solo fica mais fértil para sempre",
+        "Nada, o excesso é eliminado pela chuva"
       ],
       "n": "dificil",
-      "resposta": "Evitar, pois pode queimar as raízes e folhas da planta"
+      "resposta": "Queimar as raízes e as folhas da planta"
     },
     {
       "q": "Qual é a função da irrigação por gotejamento em jardins?",
@@ -3968,7 +3968,7 @@ export const PERGUNTAS_SEED = {
       "q": "Qual é a postura correta ao levantar sacos pesados de adubo ou terra?",
       "o": [
         "Dobrar os joelhos e manter a coluna reta",
-        "Dobrar apenas a coluna,",
+        "Dobrar apenas a coluna",
         "Levantar o peso com um braço só, de qualquer forma",
         "Não existe cuidado necessário ao levantar peso"
       ],
@@ -4012,7 +4012,7 @@ export const PERGUNTAS_SEED = {
       "q": "Como deve ser armazenada uma escada usada para podar árvores altas?",
       "o": [
         "Em local seco, apoiada de forma estável e segura",
-        "Deitada no meio do caminho,",
+        "Deitada no meio do caminho",
         "Molhada, próxima a produtos químicos",
         "Não há necessidade de cuidado no armazenamento"
       ],
@@ -4057,7 +4057,7 @@ export const PERGUNTAS_SEED = {
       "o": [
         "Folhas alongadas e caule fraco em locais sombreados",
         "Flores com cores mais escuras que o normal",
-        "Crescimento acelerado das raízes em qualquer local seguindo as boas práticas",
+        "Crescimento acelerado das raízes",
         "Redução do tamanho das folhas em pleno sol"
       ],
       "n": "dificil",
@@ -4075,15 +4075,15 @@ export const PERGUNTAS_SEED = {
       "resposta": "Produz adubo natural e reduz o descarte de lixo"
     },
     {
-      "q": "Qual é o efeito de regar plantas diretamente sob sol forte ao meio-dia?",
+      "q": "Por que não é recomendado regar as plantas sob sol forte ao meio-dia?",
       "o": [
-        "As gotas de água podem queimar as folhas como lentes",
+        "Boa parte da água evapora antes de chegar às raízes",
         "A planta cresce mais rápido do que o normal",
-        "Não existe nenhum efeito negativo nesse horário",
-        "As raízes absorvem a água com mais eficiência"
+        "As raízes absorvem a água com mais eficiência",
+        "A água fica mais nutritiva com o calor"
       ],
       "n": "dificil",
-      "resposta": "As gotas de água podem queimar as folhas como lentes"
+      "resposta": "Boa parte da água evapora antes de chegar às raízes"
     }
   ]
 };
