@@ -232,6 +232,14 @@
         op.textContent = (d.data() || {}).nome || d.id;
         sel.appendChild(op);
       });
+      // Link de convite do gerente (?filial=ID): já deixa a filial escolhida
+      const filialConvite = new URLSearchParams(location.search).get('filial');
+      if (filialConvite && [...sel.options].some(o => o.value === filialConvite)) {
+        sel.value = filialConvite;
+        sel.disabled = true;
+        const chk = $('inp_solicita_gerente');
+        if (chk) { chk.checked = false; chk.closest('.field') && (chk.closest('.field').style.display = 'none'); }
+      }
     } catch (e) { console.error('Falha ao carregar filiais:', e); }
   })();
 
