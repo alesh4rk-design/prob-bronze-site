@@ -796,7 +796,7 @@
       </div>
 
       <div class="field-group">
-        <span class="field-label">Currículo <span style="color:var(--text4);">(opcional — PDF ou foto, até 5 MB)</span></span>
+        <span class="field-label">Anexar currículo * <span style="color:var(--text4);">(PDF ou foto, até 5 MB)</span></span>
         <label class="file-drop" id="curriculoDrop" for="inCurriculo">
           <span id="curriculoDropTxt">📎 Toque para anexar o currículo</span>
         </label>
@@ -829,8 +829,17 @@
         <div class="cert-list" id="inCerts">
           <label class="cert-item"><input type="checkbox" value="Curso de Formação de Vigilante"><span>Curso de Formação de Vigilante</span></label>
           <label class="cert-item"><input type="checkbox" value="Reciclagem em dia"><span>Reciclagem em dia</span></label>
-          <label class="cert-item"><input type="checkbox" value="CNH"><span>CNH</span></label>
           <label class="cert-item"><input type="checkbox" value="NR-35 (trabalho em altura)"><span>NR-35 (trabalho em altura)</span></label>
+        </div>
+      </div>
+
+      <div class="field-group">
+        <span class="field-label">Possui CNH?</span>
+        <div class="opt-pills" id="inCnh" style="flex-wrap:wrap;">
+          <div class="pill" data-val="A">Sim — Categoria A</div>
+          <div class="pill" data-val="B">Sim — Categoria B</div>
+          <div class="pill" data-val="AB">Sim — Categoria A e B</div>
+          <div class="pill" data-val="nao">✕ Não</div>
         </div>
       </div>
 
@@ -846,6 +855,19 @@
           <option value="Recrutador">Recrutador/RH entrou em contato</option>
           <option value="Outro">Outro</option>
         </select>
+      </div>
+
+      <div class="field-group">
+        <span class="field-label">Você foi indicado por algum colaborador da Haganá? *</span>
+        <div class="opt-pills" id="inIndicado">
+          <div class="pill" data-val="sim">✓ Sim</div>
+          <div class="pill" data-val="nao">✕ Não</div>
+        </div>
+      </div>
+
+      <div class="field-group" id="campoIndicadoPor" style="display:none;">
+        <span class="field-label">Nome completo da pessoa que indicou *</span>
+        <input class="field-input" type="text" id="inIndicadoPor" maxlength="120" placeholder="Nome e sobrenome do colaborador">
       </div>
 
       <div class="form-sec">▸ Avaliação</div>
@@ -1346,6 +1368,21 @@
       };
     });
 
+    // Pills de CNH (uma opção) e de indicação por colaborador
+    document.querySelectorAll('#inCnh .pill').forEach(p => {
+      p.onclick = () => {
+        document.querySelectorAll('#inCnh .pill').forEach(x => x.classList.remove('sel'));
+        p.classList.add('sel');
+      };
+    });
+    document.querySelectorAll('#inIndicado .pill').forEach(p => {
+      p.onclick = () => {
+        document.querySelectorAll('#inIndicado .pill').forEach(x => x.classList.remove('sel'));
+        p.classList.add('sel');
+        document.getElementById('campoIndicadoPor').style.display = p.dataset.val === 'sim' ? 'block' : 'none';
+      };
+    });
+
     // Pills de disponibilidade total de horário (sim/não)
     document.querySelectorAll('#inDispTotal .pill').forEach(p => {
       p.onclick = () => {
@@ -1438,7 +1475,23 @@
     const origem = document.getElementById('inOrigem').value;
     if (!origem) return falha('Informe como você ficou sabendo dessa vaga', 'inOrigem');
 
+    const pillIndicado = document.querySelector('#inIndicado .pill.sel');
+    if (!pillIndicado) return falha('Informe se foi indicado por algum colaborador da Haganá', 'inIndicado');
+    const indicado = pillIndicado.dataset.val === 'sim';
+    const indicadoPor = indicado ? document.getElementById('inIndicadoPor').value.trim() : '';
+    if (indicado && indicadoPor.length < 3) return falha('Informe o nome completo de quem indicou', 'inIndicadoPor');
+
+    const inCurr = document.getElementById('inCurriculo');
+    if (!inCurr.files || !inCurr.files[0]) return falha('Anexe o seu currículo', 'curriculoDrop');
+
+    const pillCnh = document.querySelector('#inCnh .pill.sel');
+    const cnh = pillCnh ? pillCnh.dataset.val : null;
+    const ROTULO_CNH = { A: 'CNH categoria A', B: 'CNH categoria B', AB: 'CNH categorias A e B' };
+
     const certificacoes = [...document.querySelectorAll('#inCerts input:checked')].map(c => c.value);
+    // Também vai na lista de certificações, para aparecer no painel mesmo
+    // antes de o Worker ser atualizado com o campo próprio "cnh".
+    if (cnh && ROTULO_CNH[cnh]) certificacoes.push(ROTULO_CNH[cnh]);
     const experienciaTexto = document.getElementById('inExperienciaTexto').value.trim();
 
     return {
@@ -1457,6 +1510,9 @@
       turno: prefHorario || null,
       origem,
       certificacoes,
+      cnh: cnh || null,
+      indicado,
+      indicado_por: indicadoPor || null,
       // Guardado na própria ficha (não só numa variável solta) pra sobreviver
       // junto do candidato em `resultados.candidato` — é o que permite ao
       // Dashboard mostrar "quem usou este código" (ver dashboard.html,

@@ -2519,7 +2519,9 @@
         ['Experiência na área', f.experiencia ? '✓ Sim' : '✕ Não'],
         ...(f.turno ? [['Preferência de horário', f.turno]] : []),
         ['Disponibilidade total', f.disponibilidade_total == null ? '—' : (f.disponibilidade_total ? '✓ Sim' : '✕ Não')],
-        ['Como conheceu a vaga', f.origem]
+        ['Como conheceu a vaga', f.origem],
+        ...(f.cnh ? [['CNH', ({A:'Categoria A',B:'Categoria B',AB:'Categorias A e B',nao:'Não'})[f.cnh] || f.cnh]] : []),
+        ...(f.indicado != null ? [['Indicado por colaborador', f.indicado ? ('Sim' + (f.indicado_por ? ' — ' + f.indicado_por : '')) : 'Não']] : [])
       ];
       html += `
         <div class="tent-card" style="border-color:var(--ambermid);">
@@ -3010,7 +3012,9 @@
         ['Experiência na área', f.experiencia ? 'Sim' : 'Não'],
         ...(f.turno ? [['Preferência de horário', f.turno]] : []),
         ['Disponibilidade total', f.disponibilidade_total == null ? '—' : (f.disponibilidade_total ? 'Sim' : 'Não')],
-        ['Como conheceu a vaga', f.origem]
+        ['Como conheceu a vaga', f.origem],
+        ...(f.cnh ? [['CNH', ({A:'Categoria A',B:'Categoria B',AB:'Categorias A e B',nao:'Não'})[f.cnh] || f.cnh]] : []),
+        ...(f.indicado != null ? [['Indicado por colaborador', f.indicado ? ('Sim' + (f.indicado_por ? ' — ' + f.indicado_por : '')) : 'Não']] : [])
       ];
       h += `
         <div class="pr-sec-title">Ficha do candidato</div>
