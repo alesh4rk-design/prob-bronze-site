@@ -252,9 +252,14 @@ export async function gerarCodigoAcesso(avaliador, filial, filialNome) {
   for (let tentativa = 0; tentativa < 5; tentativa++) {
     codigo = String(Math.floor(100000 + Math.random() * 900000));
     const ref = doc(db, "codigos_acesso", codigo);
-    const snap = await getDoc(ref);
-    if (!snap.exists()) {
-      await setDoc(ref, {
+    // Para a Gerência/equipe de filial, as regras negam ler um código que
+    // ainda não existe (ou de outra filial) — isso não é erro: só significa
+    // "pode tentar criar". Se já existir em outra filial, o setDoc abaixo é
+    // negado e tentamos outro número.
+    let existe = false;
+    try { existe = (await getDoc(ref)).exists(); } catch (e) { existe = false; }
+    if (!existe) {
+      try { await setDoc(ref, {
         ativo: true,
         usos: 0,
         criado_por: nomeAvaliador,
@@ -266,7 +271,10 @@ export async function gerarCodigoAcesso(avaliador, filial, filialNome) {
         // pra todo mundo, igual era antes desta funcionalidade existir.
         filial: filial || null,
         filial_nome: filialNome || null
-      });
+      }); } catch (e) {
+        if (tentativa === 4) throw e;
+        continue;
+      }
       return codigo;
     }
   }
