@@ -366,14 +366,22 @@ async function handleVerificarCodigo(request, env, cors) {
   const ip = request.headers.get("CF-Connecting-IP") || "desconhecido";
   const rlKey = `codigo:${ip}`;
 
-  const tentativasRaw = await env.RATE_LIMIT_KV.get(rlKey);
-  const tentativas = tentativasRaw ? parseInt(tentativasRaw, 10) : 0;
+  // Dia de muito movimento: só tentativa ERRADA gasta gravação no KV (a cota
+  // grátis é de 1.000 gravações/dia). E se o KV falhar/estourar a cota, deixa
+  // passar — o candidato não pode ficar travado por causa do contador.
+  let tentativas = 0;
+  try {
+    const tentativasRaw = await env.RATE_LIMIT_KV.get(rlKey);
+    tentativas = tentativasRaw ? parseInt(tentativasRaw, 10) : 0;
+  } catch (e) { tentativas = 0; }
   if (tentativas >= 60) return json({ ok: false, motivo: "muitas_tentativas" }, cors);
-  await env.RATE_LIMIT_KV.put(rlKey, String(tentativas + 1), { expirationTtl: 600 });
+  const contarErro = async () => {
+    try { await env.RATE_LIMIT_KV.put(rlKey, String(tentativas + 1), { expirationTtl: 600 }); } catch (e) {}
+  };
 
   const token = await getAccessToken(env);
   const conf = await conferirCodigo(env, token, codigo);
-  if (!conf.ok) return json({ ok: false, motivo: conf.motivo }, cors);
+  if (!conf.ok) { await contarErro(); return json({ ok: false, motivo: conf.motivo }, cors); }
   const cod = conf.codigo;
   const doc = conf.doc;
 
@@ -385,7 +393,6 @@ async function handleVerificarCodigo(request, env, cors) {
     ["usos", "ultimo_uso_em"]
   );
 
-  await env.RATE_LIMIT_KV.delete(rlKey);
   // Devolve a filial deste código pro site já filtrar a lista de vagas —
   // o candidato só deve ver vagas da filial que gerou o código dele.
   return json({ ok: true, filial: doc.filial || null, filialNome: doc.filial_nome || null }, cors);
@@ -448,7 +455,8 @@ async function handleCarregarPerguntas(request, env, cors) {
 
 async function handleSubmeterQuiz(request, env, cors) {
   const ip = request.headers.get("CF-Connecting-IP") || "desconhecido";
-  if (await passouDoLimite(env, `envio:${ip}`, 300)) return json({ ok: false, erro: "muitas_tentativas" }, cors, 429);
+  // Sem contador por IP aqui: a rota já exige código de acesso válido, e no
+  // dia de prova cada contador gastava 1 das 1.000 gravações grátis/dia do KV.
 
   const body = await request.json();
   const { modulo, respostas, perguntaTextos, nome, candidato, dataPreferencia } = body;
@@ -507,7 +515,8 @@ async function handleSubmeterQuiz(request, env, cors) {
 // exige código de acesso válido e só grava os campos esperados.
 async function handleSubmeterDigitacao(request, env, cors) {
   const ip = request.headers.get("CF-Connecting-IP") || "desconhecido";
-  if (await passouDoLimite(env, `envio:${ip}`, 300)) return json({ ok: false, erro: "muitas_tentativas" }, cors, 429);
+  // Sem contador por IP aqui: a rota já exige código de acesso válido, e no
+  // dia de prova cada contador gastava 1 das 1.000 gravações grátis/dia do KV.
 
   const r = await request.json();
   const token = await getAccessToken(env);
@@ -580,7 +589,8 @@ async function firestoreBuscarIn(env, token, colecao, campo, valores, limite) {
 // acesso e com limite de consultas por IP.
 async function handleBuscarCandidato(request, env, cors) {
   const ip = request.headers.get("CF-Connecting-IP") || "desconhecido";
-  if (await passouDoLimite(env, `busca:${ip}`, 200)) return json({ ok: false, erro: "muitas_tentativas" }, cors, 429);
+  // Sem contador por IP aqui: a rota já exige código de acesso válido, e no
+  // dia de prova cada contador gastava 1 das 1.000 gravações grátis/dia do KV.
 
   const { cpf, codigoAcesso } = await request.json();
   const token = await getAccessToken(env);
@@ -602,7 +612,8 @@ async function handleBuscarCandidato(request, env, cors) {
 // pessoa (id = CPF, ou o nome se não houver CPF), então reenvios não duplicam.
 async function handleRegistrarAcesso(request, env, cors) {
   const ip = request.headers.get("CF-Connecting-IP") || "desconhecido";
-  if (await passouDoLimite(env, `acesso:${ip}`, 300)) return json({ ok: false, erro: "muitas_tentativas" }, cors, 429);
+  // Sem contador por IP aqui: a rota já exige código de acesso válido, e no
+  // dia de prova cada contador gastava 1 das 1.000 gravações grátis/dia do KV.
   const a = await request.json();
   const token = await getAccessToken(env);
   const conf = await conferirCodigo(env, token, a.codigoAcesso, TOLERANCIA_ENVIO_MS);
@@ -724,10 +735,10 @@ const EXPIRACAO_CURRICULO_SEGUNDOS = 60 * 60 * 24 * 60;
 async function handleEnviarCurriculo(request, env, cors) {
   const ip = request.headers.get("CF-Connecting-IP") || "desconhecido";
   const rlKey = `curriculo:${ip}`;
-  const tentativasRaw = await env.RATE_LIMIT_KV.get(rlKey);
-  const tentativas = tentativasRaw ? parseInt(tentativasRaw, 10) : 0;
-  if (tentativas >= 5) return json({ ok: false, erro: "muitas_tentativas" }, cors, 429);
-  await env.RATE_LIMIT_KV.put(rlKey, String(tentativas + 1), { expirationTtl: 600 });
+  // Antes eram só 5 envios por IP a cada 10 min — num dia de prova, com todo
+  // mundo no mesmo Wi-Fi, o 6º candidato perdia o currículo. Agora 300, e se
+  // o KV falhar deixa passar.
+  if (await passouDoLimite(env, rlKey, 300)) return json({ ok: false, erro: "muitas_tentativas" }, cors, 429);
 
   const form = await request.formData();
   const arquivo = form.get("arquivo");
