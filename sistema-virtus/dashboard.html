@@ -2006,6 +2006,7 @@
         <div id="linkCadastroBox" style="display:none;margin-bottom:12px;padding:12px 14px;border:1px solid var(--border, #333);border-radius:10px;">
           <div style="font-weight:700;margin-bottom:6px;">🔗 Link de cadastro da sua equipe</div>
           <div style="font-size:.85em;opacity:.8;margin-bottom:8px;">Envie este link para a pessoa se cadastrar. Ela já entra na sua filial e aparece aqui embaixo para você aprovar.</div>
+          <select id="linkCadastroFilial" style="display:none;width:100%;padding:8px;border-radius:8px;margin-bottom:8px;box-sizing:border-box;"></select>
           <input type="text" id="linkCadastroInput" readonly style="width:100%;padding:8px;border-radius:8px;margin-bottom:8px;box-sizing:border-box;">
           <div style="display:flex;gap:8px;flex-wrap:wrap;">
             <button class="btn-act btn-neutral" type="button" id="btnCopiarLinkCadastro">📋 Copiar link</button>
@@ -2181,17 +2182,39 @@
   (function montarLinkCadastro() {
     const box = document.getElementById('linkCadastroBox');
     if (!box || !me || !['admin', 'gerencia'].includes(me.perfil)) return;
-    const url = new URL('cadastro.html', location.href);
-    if (me.filial) url.searchParams.set('filial', me.filial);
-    const link = url.toString();
-    document.getElementById('linkCadastroInput').value = link;
+    const inp = document.getElementById('linkCadastroInput');
+    const sel = document.getElementById('linkCadastroFilial');
+    let link = '', nomeFilial = me.filial_nome || '';
+    function gerar(filialId) {
+      const url = new URL('cadastro.html', location.href);
+      if (filialId) url.searchParams.set('filial', filialId);
+      link = url.toString();
+      inp.value = filialId ? link : 'Escolha a filial acima para gerar o link';
+    }
+    if (me.perfil === 'admin') {
+      // Admin: um link diferente para cada filial
+      sel.style.display = 'block';
+      assinarFiliais(lista => {
+        const atual = sel.value;
+        sel.innerHTML = '<option value="">— Escolha a filial —</option>' +
+          lista.map(f => `<option value="${f.id}">${(f.nome || f.id).replace(/</g, '&lt;')}</option>`).join('');
+        sel.value = atual;
+      });
+      sel.onchange = () => { nomeFilial = sel.selectedOptions[0]?.textContent || ''; gerar(sel.value); };
+      gerar('');
+    } else {
+      gerar(me.filial);
+    }
     box.style.display = 'block';
+    const pronto = () => { if (!inp.value.startsWith('http')) { toast('❌ Escolha a filial primeiro', 'err'); return false; } return true; };
     document.getElementById('btnCopiarLinkCadastro').onclick = async () => {
+      if (!pronto()) return;
       try { await navigator.clipboard.writeText(link); toast('✅ Link copiado'); }
-      catch (e) { const i = document.getElementById('linkCadastroInput'); i.select(); document.execCommand('copy'); toast('✅ Link copiado'); }
+      catch (e) { inp.select(); document.execCommand('copy'); toast('✅ Link copiado'); }
     };
     document.getElementById('btnWhatsLinkCadastro').onclick = () => {
-      const txt = 'Olá! Faça seu cadastro no sistema Virtus' + (me.filial_nome ? ' (' + me.filial_nome + ')' : '') + ' por este link: ' + link;
+      if (!pronto()) return;
+      const txt = 'Olá! Faça seu cadastro no sistema Virtus' + (nomeFilial ? ' (' + nomeFilial + ')' : '') + ' por este link: ' + link;
       window.open('https://wa.me/?text=' + encodeURIComponent(txt), '_blank');
     };
   })();
