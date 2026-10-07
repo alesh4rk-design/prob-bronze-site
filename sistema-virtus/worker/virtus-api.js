@@ -91,22 +91,7 @@ function json(obj, cors, status = 200) {
 }
 
 // ── Autenticação com o Firebase via conta de serviço (JWT assinado) ────────
-// O token do Google vale 1 hora. Antes cada pedido assinava um JWT novo (RSA)
-// e pedia outro token — pesado demais com muitos candidatos ao mesmo tempo
-// (estourava o limite de CPU do Worker e dava "erro ao carregar módulo").
-// Agora o token fica guardado na memória do Worker e é reaproveitado.
-// Guarda só o VALOR pronto (texto do token). Nunca guarda uma busca em
-// andamento: a Cloudflare não deixa um pedido esperar uma busca começada
-// por outro pedido ("Cannot perform I/O on behalf of a different request").
-let __tokenCache = { valor: null, expira: 0 };
 async function getAccessToken(env) {
-  if (__tokenCache.valor && Date.now() < __tokenCache.expira) return __tokenCache.valor;
-  const t = await gerarAccessToken(env);
-  __tokenCache = { valor: t, expira: Date.now() + 50 * 60 * 1000 };
-  return t;
-}
-
-async function gerarAccessToken(env) {
   const sa = JSON.parse(env.FIREBASE_SERVICE_ACCOUNT);
   const now = Math.floor(Date.now() / 1000);
   const header = { alg: "RS256", typ: "JWT" };
@@ -469,24 +454,7 @@ function embaralhar(arr) {
   return a;
 }
 
-// Cache de 2 minutos (memória do Worker): centenas de candidatos pedem a mesma
-// lista/perguntas — sem isso cada pedido lia o Firestore de novo.
-const __cachePerguntas = new Map();
-async function perguntaDoModuloCache(env, token, modulo) {
-  const c = __cachePerguntas.get(modulo);
-  if (c && Date.now() - c.em < 2 * 60 * 1000) return c.doc;
-  const doc = await firestoreGet(env, token, `perguntas/${encodeURIComponent(modulo)}`);
-  if (doc) __cachePerguntas.set(modulo, { doc, em: Date.now() });
-  return doc;
-}
-let __cacheModulos = { dados: null, em: 0 };
-
 async function handleListarModulos(env, cors) {
-  if (__cacheModulos.dados && Date.now() - __cacheModulos.em < 60 * 1000) return json(__cacheModulos.dados, cors);
-  return json(await calcularModulos(env), cors);
-}
-
-async function calcularModulos(env) {
   const token = await getAccessToken(env);
   const resp = await fetch(`${FIRESTORE_BASE(env.FIREBASE_PROJECT_ID)}/perguntas`, {
     headers: { Authorization: `Bearer ${token}` },
@@ -503,9 +471,7 @@ async function calcularModulos(env) {
     modulos.push({ nome, total: qtd });
     total += qtd;
   }
-  const resposta = { modulos, total_perguntas: total };
-  __cacheModulos = { dados: resposta, em: Date.now() };
-  return resposta;
+  return json({ modulos, total_perguntas: total }, cors);
 }
 
 async function handleCarregarPerguntas(request, env, cors) {
@@ -513,7 +479,7 @@ async function handleCarregarPerguntas(request, env, cors) {
   if (!modulo) return json({ ok: false, erro: "modulo_invalido" }, cors, 400);
 
   const token = await getAccessToken(env);
-  const doc = await perguntaDoModuloCache(env, token, modulo);
+  const doc = await firestoreGet(env, token, `perguntas/${encodeURIComponent(modulo)}`);
   // Módulos da trilha obrigatória (Informática, Linguagem Positiva,
   // Atendimento) carregam mesmo se alguém desligou no painel — todo candidato
   // precisa fazer.

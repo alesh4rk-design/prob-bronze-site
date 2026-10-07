@@ -81,6 +81,16 @@ export async function obterNumeroWhatsappRH(filial, soDaFilial = false) {
 // código por força bruta (o Worker aplica um limite de tentativas por IP).
 const API_BASE = "https://virtus-api.ale-sh4rk.workers.dev";
 
+// Nenhum pedido ao servidor pode ficar esperando para sempre (a tela ficava
+// presa em "Carregando perguntas..."): depois de 15s desiste e tenta de novo.
+const _fetchOriginal = window.fetch.bind(window);
+function fetchComTempo(url, opcoes = {}, ms = 15000) {
+  if (!String(url).startsWith(API_BASE)) return _fetchOriginal(url, opcoes);
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), ms);
+  return _fetchOriginal(url, { ...opcoes, signal: ctrl.signal }).finally(() => clearTimeout(t));
+}
+
 // ── Código de acesso presencial ─────────────────────────────────────────
 // Confere o código digitado pelo candidato. É um código COMPARTILHADO — o
 // mesmo serve para todos os candidatos da entrevista (não é de uso único),
@@ -93,7 +103,7 @@ export async function verificarCodigoAcesso(codigoDigitado) {
   if (!codigo) return { ok: false, motivo: "vazio" };
 
   try {
-    const resp = await fetch(`${API_BASE}/verificar-codigo`, {
+    const resp = await fetchComTempo(`${API_BASE}/verificar-codigo`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ codigo })
@@ -113,7 +123,7 @@ export async function verificarCodigoAcesso(codigoDigitado) {
 // Falha aqui nunca pode atrapalhar o teste.
 export async function registrarAcessoCodigo({ codigoAcesso, nome, cpf, modulo }) {
   try {
-    await fetch(`${API_BASE}/registrar-acesso`, {
+    await fetchComTempo(`${API_BASE}/registrar-acesso`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ codigoAcesso, nome, cpf, modulo })
@@ -125,7 +135,7 @@ export async function enviarCurriculo(arquivo) {
   const form = new FormData();
   form.append("arquivo", arquivo);
   try {
-    const resp = await fetch(`${API_BASE}/enviar-curriculo`, { method: "POST", body: form });
+    const resp = await fetchComTempo(`${API_BASE}/enviar-curriculo`, { method: "POST", body: form });
     return await resp.json();
   } catch (e) {
     return { ok: false, erro: "erro_conexao" };
@@ -249,7 +259,7 @@ function embaralhar(arr) {
 // candidato): essa coleção guarda o gabarito de cada questão, então só
 // avaliadores logados podem lê-la diretamente (ver firestore.rules).
 export async function listarModulos() {
-  const resp = await fetch(`${API_BASE}/listar-modulos`, { method: "POST" });
+  const resp = await fetchComTempo(`${API_BASE}/listar-modulos`, { method: "POST" });
   if (!resp.ok) throw new Error("Não foi possível carregar os módulos.");
   return resp.json();
 }
@@ -259,7 +269,7 @@ export async function listarModulos() {
 // manda pro navegador do candidato o que ele pode ver (q/o/n). O gabarito
 // nunca trafega até aqui, então não tem como ler pelo DevTools.
 export async function carregarPerguntasDoModulo(modulo) {
-  const resp = await fetch(`${API_BASE}/carregar-perguntas`, {
+  const resp = await fetchComTempo(`${API_BASE}/carregar-perguntas`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ modulo })
@@ -281,7 +291,7 @@ export async function carregarPerguntasDoModulo(modulo) {
 // tem como fabricar uma nota fake, porque as regras do Firestore bloqueiam
 // escrita direta de resultado tipo "quiz" (ver firestore.rules).
 export async function salvarResultadoQuiz({ nome, modulo, dataPreferencia, perguntas, respostas, candidato }) {
-  const resp = await fetch(`${API_BASE}/submeter-quiz`, {
+  const resp = await fetchComTempo(`${API_BASE}/submeter-quiz`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -310,7 +320,7 @@ export async function registrarViolacao({ nome, modulo, tipo, detalhe, contagem,
   // UTC-3, isso fazia violações de fim de tarde/noite gravarem com a data
   // de amanhã, e sumirem do filtro "Hoje" do dashboard).
   const dataLocal = `${agora.getFullYear()}-${String(agora.getMonth() + 1).padStart(2, '0')}-${String(agora.getDate()).padStart(2, '0')}`;
-  const resp = await fetch(`${API_BASE}/registrar-violacao`, {
+  const resp = await fetchComTempo(`${API_BASE}/registrar-violacao`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
