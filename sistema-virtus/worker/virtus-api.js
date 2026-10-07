@@ -440,7 +440,11 @@ async function handleCarregarPerguntas(request, env, cors) {
 
   const token = await getAccessToken(env);
   const doc = await firestoreGet(env, token, `perguntas/${encodeURIComponent(modulo)}`);
-  if (!doc || doc.ativo === false) return json({ ok: false, erro: "modulo_nao_encontrado" }, cors, 404);
+  // Módulos da trilha obrigatória (Informática, Linguagem Positiva,
+  // Atendimento) carregam mesmo se alguém desligou no painel — todo candidato
+  // precisa fazer.
+  const TRILHA_OBRIGATORIA = ["Informática", "Linguagem Positiva", "Atendimento ao Cliente"];
+  if (!doc || (doc.ativo === false && !TRILHA_OBRIGATORIA.includes(modulo))) return json({ ok: false, erro: "modulo_nao_encontrado" }, cors, 404);
   const banco = doc.questoes || [];
   if (!banco.length) return json({ ok: false, erro: "modulo_sem_perguntas" }, cors, 404);
 

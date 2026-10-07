@@ -940,7 +940,7 @@
         <span>Continuar</span>
         <span style="opacity:.7;">→</span>
       </button>
-      <div class="tz-auto">Avança automaticamente em <span id="tzCount">8</span>s</div>
+      <div class="tz-auto" id="tzAuto">Avança automaticamente em <span id="tzCount">8</span>s</div>
     </div>
   </div>
 </div>
@@ -1007,7 +1007,7 @@
 </div>
 
 <script type="module">
-  import { MODULOS_SEM_TRILHA, listarModulos, carregarPerguntasDoModulo, salvarResultadoQuiz, registrarViolacao, tempoLimiteParaModulo, montarTrilha, verificarCodigoAcesso, obterNumeroWhatsappRH, enviarCurriculo, registrarAcessoCodigo, listarVagasAbertas, moduloDoCargoPretendido } from "./js/quiz.js";
+  import { MODULOS_SEM_TRILHA, listarModulos, carregarPerguntasDoModulo, salvarResultadoQuiz, registrarViolacao, tempoLimiteParaModulo, montarTrilha, verificarCodigoAcesso, obterNumeroWhatsappRH, enviarCurriculo, registrarAcessoCodigo, listarVagasAbertas, moduloDoCargoPretendido } from "./js/quiz.js?v=20261007";
 
   let globalConsentGiven = false;
   let globalLgpdAccepted = false;
@@ -1592,12 +1592,28 @@
   };
 
   // Carrega e inicia o módulo atual da trilha.
+  // Tenta de novo algumas vezes antes de desistir — em dia de prova lotado o
+  // Wi-Fi do local oscila, e uma falha de rede não pode fazer o candidato
+  // perder uma etapa (antes a Informática era pulada na primeira falha).
+  async function tentarVariasVezes(fn, tentativas = 4) {
+    let ultimoErro;
+    for (let i = 0; i < tentativas; i++) {
+      try { return await fn(); }
+      catch (e) {
+        ultimoErro = e;
+        if (e && e.moduloIndisponivel) break; // desligado/sem perguntas: não adianta insistir
+        if (i < tentativas - 1) await new Promise(r => setTimeout(r, 1500 * (i + 1)));
+      }
+    }
+    throw ultimoErro;
+  }
+
   async function iniciarModulo() {
     const modulo = S.trilha[S.trilhaIdx];
     S.tema = modulo;
     toast(`🔄 Carregando ${modulo}...`, '');
     try {
-      const perguntas = await carregarPerguntasDoModulo(modulo);
+      const perguntas = await tentarVariasVezes(() => carregarPerguntasDoModulo(modulo));
       S.perguntas = perguntas;
       S.respostas = new Array(perguntas.length).fill(null);
       S.idx = 0;
@@ -1611,10 +1627,8 @@
       toast(`✅ ${modulo} — etapa ${S.trilhaIdx + 1} de ${S.trilha.length}`, 'ok');
     } catch (err) {
       console.error(err);
-      // Um módulo da trilha que não carrega (desativado, sem perguntas...)
-      // não pode travar o candidato: pula pro próximo, ou encerra se for o
-      // último. O primeiro (o cargo escolhido) continua sendo obrigatório.
-      if (S.trilhaIdx > 0 && S.resultadosTrilha.length) {
+      if (S.trilhaIdx > 0 && S.resultadosTrilha.length && err && err.moduloIndisponivel) {
+        // Módulo desligado ou sem perguntas no banco: segue pra próxima etapa
         toast(`⚠️ ${modulo} indisponível — seguindo para a próxima etapa`, 'err');
         if (S.trilhaIdx < S.trilha.length - 1) {
           S.trilhaIdx++;
@@ -1623,6 +1637,15 @@
           renderResultadoFinal();
           show('s-result-quiz');
         }
+        return;
+      }
+      if (S.trilhaIdx > 0 && S.resultadosTrilha.length) {
+        // Falha de internet: não pula a etapa: fica na tela de transição pro candidato tentar de novo
+        clearInterval(S._tzInterval);
+        const auto = document.getElementById('tzAuto');
+        if (auto) auto.textContent = `⚠️ Não foi possível carregar ${modulo}. Verifique a internet e toque em "Continuar" para tentar de novo.`;
+        show('s-transicao');
+        toast(`⚠️ Falha ao carregar ${modulo} — toque em "Continuar" para tentar de novo`, 'err'); playErr();
         return;
       }
       toast(`❌ Falha ao iniciar ${modulo}: ${err.message}`, 'err'); playErr();
@@ -1720,11 +1743,11 @@
     stopMonitoring();
     toast('📤 Enviando respostas e calculando resultado...', '');
     try {
-      const { acertos, total, pct } = await salvarResultadoQuiz({
+      const { acertos, total, pct } = await tentarVariasVezes(() => salvarResultadoQuiz({
         nome: S.nome, modulo: S.tema, dataPreferencia: S.dataPref,
         perguntas: S.perguntas, respostas: S.respostas,
         candidato: S.candidato
-      });
+      }));
       playDone();
       S.resultadosTrilha.push({ modulo: S.tema, acertos, total, pct });
 
@@ -1740,7 +1763,7 @@
       show('s-result-quiz');
     } catch (err) {
       console.error(err);
-      toast(`❌ Falha ao finalizar: ${err.message}`, 'err'); playErr();
+      toast(`❌ Falha ao enviar (${err.message}). Verifique a internet e toque em Finalizar de novo — suas respostas continuam aqui.`, 'err'); playErr();
     }
   }
 
@@ -1762,6 +1785,8 @@
     // Auto-avança em 8s, mas o candidato pode seguir antes pelo botão.
     clearTimeout(S._tzTimer);
     let restante = 8;
+    const autoEl = document.getElementById('tzAuto');
+    if (autoEl) autoEl.innerHTML = 'Avança automaticamente em <span id="tzCount">8</span>s';
     const cd = document.getElementById('tzCount');
     cd.textContent = restante;
     clearInterval(S._tzInterval);

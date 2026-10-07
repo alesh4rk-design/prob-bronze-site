@@ -239,9 +239,12 @@ export async function carregarPerguntasDoModulo(modulo) {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ modulo })
   });
-  const data = await resp.json();
+  const data = await resp.json().catch(() => ({}));
   if (!resp.ok || !data.ok) {
-    throw new Error(`Módulo "${modulo}" não encontrado ou sem perguntas cadastradas.`);
+    const e = new Error(`Módulo "${modulo}" não encontrado ou sem perguntas cadastradas.`);
+    // 404 = módulo desligado/sem perguntas (não adianta tentar de novo)
+    e.moduloIndisponivel = resp.status === 404;
+    throw e;
   }
   return data.perguntas;
 }
