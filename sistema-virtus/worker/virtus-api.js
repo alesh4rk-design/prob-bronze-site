@@ -285,6 +285,19 @@ async function conferirCodigo(env, token, codigo, toleranciaMs = 0) {
   // em celular Android) faça o código nascer já expirado. O relógio usado
   // aqui (Date.now()) é o do próprio Worker, sempre correto.
   const criadoEm = doc.criado_em ? new Date(doc.criado_em).getTime() : null;
+  // Código individual (enviado pelo painel pra fazer os testes que faltaram):
+  // pode ser usado em até 2 dias e, depois do primeiro uso, vale 30 minutos
+  // (+ uma folga curta pro envio das respostas).
+  if (doc.validade_apos_uso_min) {
+    const primeiroUso = doc.primeiro_uso_em ? Date.parse(doc.primeiro_uso_em) : null;
+    if (primeiroUso) {
+      const limite = primeiroUso + Number(doc.validade_apos_uso_min) * 60 * 1000 + (toleranciaMs ? 15 * 60 * 1000 : 0);
+      if (Date.now() > limite) return { ok: false, motivo: "expirado" };
+    } else if (criadoEm && Date.now() - criadoEm > 2 * 24 * 60 * 60 * 1000) {
+      return { ok: false, motivo: "expirado" };
+    }
+    return { ok: true, doc, codigo: cod };
+  }
   if (criadoEm && (Date.now() - criadoEm) >= VALIDADE_CODIGO_MS + toleranciaMs) return { ok: false, motivo: "expirado" };
   return { ok: true, doc, codigo: cod };
 }
@@ -389,8 +402,11 @@ async function handleVerificarCodigo(request, env, cors) {
     env,
     token,
     `codigos_acesso/${encodeURIComponent(cod)}`,
-    { usos: (doc.usos || 0) + 1, ultimo_uso_em: new Date().toISOString() },
-    ["usos", "ultimo_uso_em"]
+    {
+      usos: (doc.usos || 0) + 1, ultimo_uso_em: new Date().toISOString(),
+      ...(doc.validade_apos_uso_min && !doc.primeiro_uso_em ? { primeiro_uso_em: new Date().toISOString() } : {}),
+    },
+    doc.validade_apos_uso_min && !doc.primeiro_uso_em ? ["usos", "ultimo_uso_em", "primeiro_uso_em"] : ["usos", "ultimo_uso_em"]
   );
 
   // Devolve a filial deste código pro site já filtrar a lista de vagas —

@@ -1012,6 +1012,20 @@
   let globalConsentGiven = false;
   let globalLgpdAccepted = false;
   let globalCodigoAcesso = '';
+  // Link individual enviado pelo painel (ex: quiz.html?modulo=Informática&codigo=123456):
+  // já preenche o código e faz SÓ aquele módulo (candidato que ficou sem a etapa).
+  const PARAMS_LINK = new URLSearchParams(location.search);
+  const CODIGO_DO_LINK = (PARAMS_LINK.get('codigo') || '').replace(/\D/g, '').slice(0, 8);
+  // modulos=Informática,Linguagem Positiva (vários) ou modulo=Informática (um só)
+  const MODULOS_LINK = (PARAMS_LINK.get('modulos') || PARAMS_LINK.get('modulo') || '').split(',').map(x => x.trim()).filter(Boolean);
+  const MODULO_UNICO = MODULOS_LINK.join(', ');
+  if (MODULO_UNICO) {
+    const aviso = document.createElement('div');
+    aviso.style.cssText = 'margin:0 auto 14px;max-width:560px;padding:12px 14px;border:1px solid rgba(232,160,0,.5);background:rgba(232,160,0,.08);border-radius:6px;font-size:13px;line-height:1.5;';
+    aviso.textContent = `📌 Você vai fazer somente ${MODULOS_LINK.length > 1 ? 'os testes' : 'o teste'} de ${MODULO_UNICO}, até o fim. Preencha a ficha com os MESMOS dados (principalmente o CPF) que usou no primeiro teste.`;
+    const home = document.getElementById('s-home');
+    if (home) home.prepend(aviso);
+  }
   let globalCodigoFilial = null;
 
   // Mesma detecção usada em digitacao.html (toque + ponteiro grosso) — usada
@@ -1102,7 +1116,7 @@
   });
 
   function showCodigoModal() {
-    inCodigoAcesso.value = '';
+    inCodigoAcesso.value = CODIGO_DO_LINK;
     msgCodigoAcesso.textContent = '';
     msgCodigoAcesso.className = 'field-msg';
     codigoConfirmBtn.disabled = false;
@@ -1482,7 +1496,7 @@
     if (indicado && indicadoPor.length < 3) return falha('Informe o nome completo de quem indicou', 'inIndicadoPor');
 
     const inCurr = document.getElementById('inCurriculo');
-    if (!inCurr.files || !inCurr.files[0]) return falha('Anexe o seu currículo', 'curriculoDrop');
+    if (!MODULO_UNICO && (!inCurr.files || !inCurr.files[0])) return falha('Anexe o seu currículo', 'curriculoDrop');
 
     const pillCnh = document.querySelector('#inCnh .pill.sel');
     const cnh = pillCnh ? pillCnh.dataset.val : null;
@@ -1584,7 +1598,7 @@
     // Todo candidato percorre uma trilha: o módulo que escolheu e, em
     // seguida, Informática, Linguagem Positiva e Atendimento ao Cliente.
     // A trilha vai até o fim independentemente das notas.
-    S.trilha = montarTrilha(tema);
+    S.trilha = MODULOS_LINK.length ? [...MODULOS_LINK] : montarTrilha(tema);
     S.trilhaIdx = 0;
     S.resultadosTrilha = [];
 
@@ -1786,7 +1800,8 @@
     clearTimeout(S._tzTimer);
     let restante = 8;
     const autoEl = document.getElementById('tzAuto');
-    if (autoEl) autoEl.innerHTML = 'Avança automaticamente em <span id="tzCount">8</span>s';
+    const faltam = S.trilha.length - S.trilhaIdx;
+    if (autoEl) autoEl.innerHTML = `<b style="color:var(--amber,#E8A000);">⚠️ Ainda ${faltam > 1 ? 'faltam ' + faltam + ' testes' : 'falta 1 teste'} — NÃO feche a página.</b><br>Avança automaticamente em <span id="tzCount">8</span>s`;
     const cd = document.getElementById('tzCount');
     cd.textContent = restante;
     clearInterval(S._tzInterval);
@@ -1963,7 +1978,9 @@
   // pelo próprio navegador (por segurança, sites não podem customizar essa
   // mensagem), então o preventDefault()/returnValue aqui só liga o aviso.
   window.addEventListener('beforeunload', (e) => {
-    if (!S.testActive) return;
+    // Também avisa entre um teste e outro (ainda faltam etapas da trilha)
+    const trilhaPelaMetade = S.trilha && S.resultadosTrilha && S.resultadosTrilha.length > 0 && S.resultadosTrilha.length < S.trilha.length;
+    if (!S.testActive && !trilhaPelaMetade) return;
     e.preventDefault();
     e.returnValue = '';
   });

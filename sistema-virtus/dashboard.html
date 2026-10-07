@@ -2064,7 +2064,7 @@
     registrarDecisaoFinal, enviarParaEtapa4, buscarHistorico, registrarEntrevista, salvarFotoColaborador, registrarAvisoWhatsapp, listarAcessosCodigo,
     assinarVagas, criarVaga, encerrarVaga, reabrirVaga, excluirVaga,
     obterPesosScore, salvarPesosPadrao, salvarPesosCargo, removerPesosCargo
-  } from "./js/dashboard.js?v=20261007";
+  } from "./js/dashboard.js?v=20261007b";
   import { db } from "./js/firebase-config.js";
   import { doc, setDoc } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
   import { PERGUNTAS_SEED } from "./js/perguntas-seed-data.js";
@@ -4112,6 +4112,7 @@
     abrirCandidato: el => window.abrirCandidato(el.dataset.chave),
     abrirCandidatoNotif: el => { window.abrirCandidato(el.dataset.chave); window.fecharNotificacoes(); },
     acoesCandidato: el => window.abrirAcoesCandidato(el.dataset.chave, el.dataset.nome),
+    enviarTesteInformatica: (el, ev) => { if (ev) ev.stopPropagation(); window.enviarTesteInformatica(el.dataset.chave, el.dataset.nome); },
     whatsappCandidato: el => window.abrirWhatsappCandidato(el.dataset.chave, el.dataset.nome),
     removerBancoReserva: el => window.alternarBancoReserva(el.dataset.chave, el.dataset.nome, false),
     acoesEtapa: el => window.abrirAcoesEtapa(el.dataset.chave, el.dataset.nome, el.dataset.etapa),
@@ -4226,7 +4227,7 @@
         <td style="max-width:280px;white-space:normal;">
           <div style="display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--text2);white-space:nowrap;">
             ${c.modulos.map(m => `<div title="${m.modulo === c.moduloEscolhido ? 'Módulo escolhido pelo candidato' : 'Módulo automático da trilha'}">${m.modulo === c.moduloEscolhido ? '★ ' : ''}${escapeHtml(m.modulo)}: <b style="color:${m.pct >= 70 ? 'var(--green)' : m.pct >= 50 ? 'var(--amber)' : 'var(--red)'}">${m.pct}%</b></div>`).join('')}
-            ${semInformatica(c) ? `<div title="A Informática não foi feita (módulo indisponível, desativado ou pulado). Verifique o Banco de Perguntas." style="color:var(--amber);">⚠️ Informática: <b>não realizado</b></div>` : ''}
+            ${testesFaltando(c).length ? `<div title="Etapas obrigatórias da trilha que o candidato não fez (parou no meio, módulo indisponível ou falha de internet)." style="color:var(--amber);white-space:normal;">⚠️ Faltou: <b>${testesFaltando(c).map(escapeHtml).join(', ')}</b>${PODE_ENVIAR_INFORMATICA.includes(me.perfil) ? ` <button class="btn-act-mini" data-acao="enviarTesteInformatica" ${dadosCand} title="Gera um código individual (vale 30 min depois de usado) e abre o WhatsApp do candidato com o link dos testes que faltam">📱 Enviar testes</button>` : ''}</div>` : ''}
             ${c.digitacao != null ? `<div title="Teste de digitação feito ${c.digitacaoDispositivo === 'mobile' ? 'pelo CELULAR' : 'no COMPUTADOR'}">${c.digitacaoDispositivo === 'mobile' ? '📱' : '💻'} Digitação: <b style="color:${c.digitacao >= 70 ? 'var(--green)' : c.digitacao >= 50 ? 'var(--amber)' : 'var(--red)'}">${c.digitacao}%</b></div>` : ''}
           </div>
         </td>
@@ -4481,6 +4482,56 @@
 
   // Mesmo menu único de ações da Etapa 1, para as Etapas 2, 3 e 4.
   // Cargo com trilha completa que não tem resultado de Informática.
+  // Gerência, Avaliador e Admin mandam pro candidato o link de refazer só a
+  // Informática, com um código individual que vale 30 min depois de usado.
+  const PODE_ENVIAR_INFORMATICA = ['admin', 'gerencia', 'avaliador'];
+  // Etapas da trilha obrigatória que o candidato ainda não fez
+  const TRILHA_OBRIGATORIA = ['Informática', 'Linguagem Positiva', 'Atendimento ao Cliente'];
+  function testesFaltando(c) {
+    const semTrilha = ['ASG', 'Bombeiro Civil', 'Manutenção', 'Jardineiro'];
+    const mods = c.modulos || [];
+    if (!mods.length) return [];
+    if (mods.length === 1 && semTrilha.includes(mods[0].modulo)) return [];
+    if (c.moduloEscolhido && semTrilha.includes(c.moduloEscolhido)) return [];
+    return TRILHA_OBRIGATORIA.filter(m => !mods.some(x => x.modulo === m));
+  }
+  window.enviarTesteInformatica = async (chave, nome) => {
+    const tents = tentativasDe(chave);
+    const cand = (typeof candidatosAgrupados === 'function' ? candidatosAgrupados() : []).find(x => x.chave === chave);
+    const faltando = cand ? testesFaltando(cand) : ['Informática'];
+    if (!faltando.length) { toast('Esse candidato já fez todos os testes', 'ok'); return; }
+    const f = fichaDe(tents) || {};
+    const tel = String(f.telefone || '').replace(/\D/g, '');
+    if (!tel) { toast('❌ Esse candidato não tem telefone na ficha', 'err'); return; }
+    // Abre a janela já (antes de esperar o código) pro celular não bloquear o pop-up
+    const janela = window.open('', '_blank');
+    try {
+      const filialCand = (tents.find(t => t.filial) || {}).filial || null;
+      const filialNomeCand = (tents.find(t => t.filial_nome) || {}).filial_nome || null;
+      const filial = me.perfil === 'admin' ? filialCand : me.filial;
+      const filialNome = me.perfil === 'admin' ? filialNomeCand : me.filial_nome;
+      const codigo = await gerarCodigoAcesso(me.usuario, filial, filialNome, {
+        tipo: 'individual', modulos_pendentes: faltando, validade_apos_uso_min: 30,
+        candidato_nome: nome || f.nome || null, candidato_cpf: f.cpf || null
+      });
+      const link = new URL('quiz.html', location.href);
+      link.searchParams.set('modulos', faltando.join(','));
+      link.searchParams.set('codigo', codigo);
+      const primeiro = String(nome || f.nome || '').trim().split(/\s+/)[0] || '';
+      const msg = `Olá${primeiro ? ', ' + primeiro : ''}! Faltou você fazer ${faltando.length > 1 ? 'os testes' : 'o teste'} de ${faltando.join(', ')} do processo seletivo. ` +
+        `Acesse este link e faça ${faltando.length > 1 ? 'essas etapas' : 'essa etapa'} (são obrigatórias):\n${link.toString()}\n\n` +
+        `Seu código de acesso: *${codigo}*\n` +
+        `⏱️ Depois que você usar o código, ele vale por 30 minutos — faça tudo de uma vez, até o fim. Use os mesmos dados (CPF) do primeiro teste.`;
+      const destino = `https://wa.me/${tel.length <= 11 ? '55' + tel : tel}?text=${encodeURIComponent(msg)}`;
+      if (janela) janela.location.href = destino; else window.location.href = destino;
+      toast(`✅ Código ${codigo} gerado — confira e envie no WhatsApp`, 'ok');
+    } catch (e) {
+      if (janela) janela.close();
+      console.error(e);
+      toast('❌ Falha ao gerar o código: ' + e.message, 'err');
+    }
+  };
+
   function semInformatica(c) {
     const semTrilha = ['ASG', 'Bombeiro Civil', 'Manutenção', 'Jardineiro'];
     const mods = c.modulos || [];

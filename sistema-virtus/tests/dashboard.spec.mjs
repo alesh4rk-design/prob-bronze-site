@@ -223,7 +223,7 @@ export const tests = [
 
 
   {
-    name: 'Tabela de candidatos avisa quando a Informática não foi realizada',
+    name: 'Tabela de candidatos avisa quais testes obrigatórios faltaram (e oferece Enviar testes)',
     async run({ browser, baseUrl }) {
       const resultados = [
         { id: '1', tipo: 'quiz', nome: 'Sem Info', cpf: '32000000001', modulo: 'Controle de Acesso', pct: 100, acertos: 15, total: 15, data_conclusao: hoje(), candidato: { cargo_pretendido: 'Controle de Acesso' } },
@@ -236,8 +236,9 @@ export const tests = [
       const linhas = await page.evaluate(() => [...document.querySelectorAll('#pipelineTableBody tr')].map(r => r.innerText));
       const sem = linhas.find(l => l.includes('Sem Info')) || '';
       const com = linhas.find(l => l.includes('Com Info')) || '';
-      assert(/Informática: n[ãa]o realizado/i.test(sem), `deveria avisar Informática não realizada. Linha: ${sem}`);
-      assert(!/n[ãa]o realizado/i.test(com), `quem fez Informática não deve ter aviso. Linha: ${com}`);
+      assert(/Faltou:.*Informática.*Linguagem Positiva.*Atendimento/i.test(sem), `deveria avisar os 3 testes que faltaram. Linha: ${sem}`);
+      assert(/Enviar testes/i.test(sem), `admin deveria ver o botão Enviar testes. Linha: ${sem}`);
+      assert(/Faltou:/.test(com) && !/Faltou:.*Informática/i.test(com), `quem fez Informática não deve ter Informática na lista do que falta. Linha: ${com}`);
       await page.close();
     }
   },

@@ -244,7 +244,7 @@ export async function excluirVaga(id) {
 export const VALIDADE_CODIGO_MS = 4 * 60 * 60 * 1000; // 4 horas
 
 // Gera um código novo de 6 dígitos, válido por 4 horas a partir de agora.
-export async function gerarCodigoAcesso(avaliador, filial, filialNome) {
+export async function gerarCodigoAcesso(avaliador, filial, filialNome, extra = null) {
   // Firestore rejeita setDoc/updateDoc com campo undefined — mesma causa do
   // bug de "Falha ao salvar decisão" (conta sem o campo "usuario" salvo).
   const nomeAvaliador = avaliador || null;
@@ -270,7 +270,9 @@ export async function gerarCodigoAcesso(avaliador, filial, filialNome) {
         // (avaliador/admin sem filial própria), fica "sem filial" — visível
         // pra todo mundo, igual era antes desta funcionalidade existir.
         filial: filial || null,
-        filial_nome: filialNome || null
+        filial_nome: filialNome || null,
+        // Código individual (ex: refazer só a Informática) — ver worker/conferirCodigo
+        ...(extra || {})
       }); } catch (e) {
         if (tentativa === 4) throw e;
         continue;
