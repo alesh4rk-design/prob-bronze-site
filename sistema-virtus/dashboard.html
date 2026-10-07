@@ -4134,7 +4134,7 @@
     verUsosCodigo: el => window.verUsosCodigo(el.dataset.codigo),
     encerrarVagaAcao: el => window.encerrarVagaAcao(el.dataset.id, el.dataset.nome),
     reabrirVagaAcao: el => window.reabrirVagaAcao(el.dataset.id, el.dataset.nome),
-    excluirVagaAcao: el => window.excluirVagaAcao(el.dataset.id, el.dataset.nome)
+    excluirVagaAcao: el => window.excluirVagaAcao(el.dataset.id, el.dataset.nome, Number(el.dataset.part) || 0)
   };
 
   function ligarAcoesDelegadas(id) {
@@ -6183,7 +6183,7 @@
             ${aberta
               ? `<button class="btn-act-mini" data-acao="encerrarVagaAcao" ${dadosVaga}>🔴 Encerrar</button>`
               : `<button class="btn-act-mini" data-acao="reabrirVagaAcao" ${dadosVaga}>🟢 Reabrir</button>`}
-            ${stats.participaram === 0 ? `<button class="btn-act-mini" data-acao="excluirVagaAcao" ${dadosVaga}>🗑 Excluir</button>` : ''}
+            <button class="btn-act-mini" data-acao="excluirVagaAcao" ${dadosVaga} data-part="${stats.participaram}">🗑 Excluir</button>
           </div>
         </td>
       </tr>`;
@@ -6211,8 +6211,11 @@
     try { await reabrirVaga(id, me.usuario); toast(`✅ Vaga de "${nome}" reaberta`, 'ok'); }
     catch (e) { console.error(e); toast('❌ Falha: ' + e.message, 'err'); }
   };
-  window.excluirVagaAcao = async (id, nome) => {
-    const ok = await abrirConfirmacao(`Excluir a vaga de "${nome}"? Essa ação não pode ser desfeita.`, { titulo: 'Excluir vaga', textoConfirmar: '🗑 Excluir', corConfirmar: 'btn-danger', icone: '🗑' });
+  window.excluirVagaAcao = async (id, nome, participantes = 0) => {
+    const aviso = participantes > 0
+      ? `Excluir a vaga de "${nome}"?\n\n${participantes} candidato(s) já participaram dela. Eles e os resultados continuam no sistema, mas a vaga some da lista e das estatísticas. Essa ação não pode ser desfeita.`
+      : `Excluir a vaga de "${nome}"? Essa ação não pode ser desfeita.`;
+    const ok = await abrirConfirmacao(aviso, { titulo: 'Excluir vaga', textoConfirmar: '🗑 Excluir', corConfirmar: 'btn-danger', icone: '🗑' });
     if (!ok) return;
     try { await excluirVaga(id); toast('✅ Vaga excluída', 'ok'); }
     catch (e) { console.error(e); toast('❌ Falha: ' + e.message, 'err'); }

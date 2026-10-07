@@ -2071,7 +2071,7 @@ export const tests = [
   },
 
   {
-    name: 'Vagas: excluir só é permitido sem candidatos, e as estatísticas por vaga batem certo',
+    name: 'Vagas: sempre dá pra excluir (com aviso se já teve candidatos), e as estatísticas por vaga batem certo',
     async run({ browser, baseUrl }) {
       const resultados = [
         { id: '1', tipo: 'quiz', nome: 'Candidato Vaga A', candidato: { cpf: '70707070707', cargo_pretendido: 'ASG', vaga_id: 'v1' }, modulo: 'ASG', pct: 85, acertos: 8, total: 10, data_conclusao: hoje() },
@@ -2092,12 +2092,12 @@ export const tests = [
       const texto = await page.evaluate(() => document.getElementById('vagasTableBody').textContent);
       assert(texto.includes('Barra') && texto.includes('Centro'), `deveria listar as duas vagas. Conteúdo: ${texto}`);
 
-      // A vaga v1 (Candidato Vaga A: aprovado 85%, entrevistado, contratado) não pode ser excluída (tem 1 participante).
+      // A vaga v1 (1 participante) também pode ser excluída — a confirmação avisa dos candidatos.
       const botoesV1 = await page.evaluate(() => {
         const linha = [...document.querySelectorAll('#vagasTableBody tr')].find(tr => tr.textContent.includes('Barra'));
         return [...linha.querySelectorAll('button')].map(b => b.textContent.trim());
       });
-      assert(!botoesV1.some(t => t.includes('Excluir')), `vaga com candidato não deveria ter botão Excluir. Botões: ${botoesV1}`);
+      assert(botoesV1.some(t => t.includes('Excluir')), `toda vaga deveria ter botão Excluir. Botões: ${botoesV1}`);
 
       const numerosV1 = await page.evaluate(() => {
         const linha = [...document.querySelectorAll('#vagasTableBody tr')].find(tr => tr.textContent.includes('Barra'));
@@ -2116,12 +2116,12 @@ export const tests = [
       assertEqual(numerosV2[4], '1', `Participaram da vaga B deveria ser 1. Linha: ${numerosV2}`);
       assertEqual(numerosV2[5], '0', `Aprovados da vaga B deveria ser 0 (40% < 70%). Linha: ${numerosV2}`);
 
-      // A vaga v2 não tem entrevista/contratação — deveria continuar excluível? Não, tem 1 participante também.
+      // A vaga v2 também tem o botão Excluir.
       const botoesV2 = await page.evaluate(() => {
         const linha = [...document.querySelectorAll('#vagasTableBody tr')].find(tr => tr.textContent.includes('Centro'));
         return [...linha.querySelectorAll('button')].map(b => b.textContent.trim());
       });
-      assert(!botoesV2.some(t => t.includes('Excluir')), `vaga com candidato não deveria ter botão Excluir. Botões: ${botoesV2}`);
+      assert(botoesV2.some(t => t.includes('Excluir')), `toda vaga deveria ter botão Excluir. Botões: ${botoesV2}`);
 
       assertEqual(erros.length, 0, 'erros de JS: ' + erros.join(' | '));
       await page.close();
