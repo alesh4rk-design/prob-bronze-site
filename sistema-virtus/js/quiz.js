@@ -58,14 +58,16 @@ export async function listarVagasAbertas(filial) {
 // Número de WhatsApp do RH (configurado no dashboard, coleção `config`),
 // usado pra montar o link "avisar que terminei" no fim da avaliação.
 // Leitura pública — não é dado sensível, só um número de telefone.
-export async function obterNumeroWhatsappRH(filial) {
-  // Cada filial tem o próprio número (config/whatsapp_rh_<filial>); sem
-  // número da filial, cai no número geral (config/whatsapp_rh).
+export async function obterNumeroWhatsappRH(filial, soDaFilial = false) {
+  // Cada filial tem o próprio número (config/whatsapp_rh_<filial>). Quando
+  // `soDaFilial` é verdadeiro, não cai no número geral (config/whatsapp_rh),
+  // que costuma ser o do administrador.
   try {
     if (filial) {
       const f = await getDoc(doc(db, "config", "whatsapp_rh_" + filial));
       if (f.exists() && f.data().numero) return f.data().numero;
     }
+    if (soDaFilial) return "";
     const snap = await getDoc(doc(db, "config", "whatsapp_rh"));
     return snap.exists() ? (snap.data().numero || "") : "";
   } catch (e) {

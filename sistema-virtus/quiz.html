@@ -528,6 +528,9 @@
       <p style="font-size:13px;color:var(--text2);line-height:1.6;margin-bottom:16px;">
         Este teste só pode ser realizado presencialmente. Digite o código informado pelo avaliador para continuar.
       </p>
+      <p style="font-size:12px;color:var(--text3);line-height:1.5;margin:-6px 0 14px;">
+        Não consegue entrar? Procure o avaliador ou o RH presente no local.
+      </p>
       <div class="field-group">
         <span class="field-label">Código de acesso</span>
         <input class="field-input" type="tel" id="inCodigoAcesso" placeholder="000000" inputmode="numeric" maxlength="8" style="text-align:center;font-size:22px;letter-spacing:6px;font-family:'Share Tech Mono',monospace;">
@@ -1003,7 +1006,7 @@
 </div>
 
 <script type="module">
-  import { MODULOS_SEM_TRILHA, listarModulos, carregarPerguntasDoModulo, salvarResultadoQuiz, registrarViolacao, tempoLimiteParaModulo, montarTrilha, verificarCodigoAcesso, obterNumeroWhatsappRH, obterTemposTestes, enviarCurriculo, registrarAcessoCodigo, listarVagasAbertas, moduloDoCargoPretendido } from "./js/quiz.js?v=20261007b";
+  import { MODULOS_SEM_TRILHA, listarModulos, carregarPerguntasDoModulo, salvarResultadoQuiz, registrarViolacao, tempoLimiteParaModulo, montarTrilha, verificarCodigoAcesso, obterNumeroWhatsappRH, obterTemposTestes, enviarCurriculo, registrarAcessoCodigo, listarVagasAbertas, moduloDoCargoPretendido } from "./js/quiz.js?v=20261008a";
 
   let globalConsentGiven = false;
   let globalLgpdAccepted = false;
@@ -1021,13 +1024,17 @@
   async function atualizarBotaoWhatsRH(filial) {
     const btn = document.getElementById('btnWhatsRH');
     if (!btn) return;
-    const numero = String(await obterNumeroWhatsappRH(filial) || '').replace(/\D/g, '');
+    // Sem filial (código ainda não validado) não mostra nada: o número geral
+    // costuma ser o do administrador, e os candidatos acabavam mandando
+    // mensagem para ele em vez de para o RH da unidade.
+    if (!filial) { btn.style.display = 'none'; return; }
+    const numero = String(await obterNumeroWhatsappRH(filial, true) || '').replace(/\D/g, '');
     if (!numero) { btn.style.display = 'none'; return; }
     const msg = 'Olá! Sou candidato(a) no processo seletivo e preciso de ajuda com o teste do Sistema Virtus.';
     btn.href = `https://wa.me/${numero}?text=${encodeURIComponent(msg)}`;
     btn.style.display = 'flex';
   }
-  atualizarBotaoWhatsRH(null);
+
   if (MODULO_UNICO) {
     const aviso = document.createElement('div');
     aviso.style.cssText = 'margin:12px 16px;padding:12px 14px;border:1px solid rgba(232,160,0,.5);background:rgba(232,160,0,.08);border-radius:6px;font-size:13px;line-height:1.5;';
