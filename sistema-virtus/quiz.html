@@ -1024,10 +1024,13 @@
   atualizarBotaoWhatsRH(null);
   if (MODULO_UNICO) {
     const aviso = document.createElement('div');
-    aviso.style.cssText = 'margin:0 auto 14px;max-width:560px;padding:12px 14px;border:1px solid rgba(232,160,0,.5);background:rgba(232,160,0,.08);border-radius:6px;font-size:13px;line-height:1.5;';
+    aviso.style.cssText = 'margin:12px 16px;padding:12px 14px;border:1px solid rgba(232,160,0,.5);background:rgba(232,160,0,.08);border-radius:6px;font-size:13px;line-height:1.5;';
     aviso.textContent = `📌 Você vai fazer somente ${MODULOS_LINK.length > 1 ? 'os testes' : 'o teste'} de ${MODULO_UNICO}, até o fim. Preencha a ficha com os MESMOS dados (principalmente o CPF) que usou no primeiro teste.`;
-    const home = document.getElementById('s-home');
-    if (home) home.prepend(aviso);
+    // Dentro do painel da ficha (a tela é flex em linha: fora dele o aviso
+    // virava uma coluna e espremia o formulário)
+    const painel = document.querySelector('#s-home .panel');
+    const divisor = painel && painel.querySelector('.panel-divider');
+    if (divisor) divisor.after(aviso); else if (painel) painel.prepend(aviso);
   }
   let globalCodigoFilial = null;
 
