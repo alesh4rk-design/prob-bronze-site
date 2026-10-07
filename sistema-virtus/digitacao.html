@@ -498,7 +498,7 @@ body.modo-celular .btn-row .btn { padding:8px 14px; font-size:12px; }
 // Original usava POST /api/digitacao e GET /api/ping (server.pyw, contrato
 // inferido). Agora grava direto na coleção `resultados` via js/digitacao.js
 // e "status online" reflete apenas se a config do Firebase está OK.
-import { salvarResultadoDigitacao, obterNumeroWhatsappRH, buscarCandidatoPorCpf } from "./js/digitacao.js";
+import { salvarResultadoDigitacao, obterNumeroWhatsappRH, buscarCandidatoPorCpf } from "./js/digitacao.js?v=20261008b";
 
 // Monta o link wa.me com uma mensagem pronta, se o RH tiver configurado um
 // número de WhatsApp no dashboard. O candidato ainda precisa apertar
