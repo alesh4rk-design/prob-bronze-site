@@ -2130,6 +2130,35 @@ export const tests = [
   },
 
   {
+    name: 'Código de acesso: o número mostra candidatos de verdade (não as vezes que o código foi digitado) e o modal explica a diferença',
+    async run({ browser, baseUrl }) {
+      const hojeIso = new Date().toISOString();
+      const resultados = [
+        { id: '1', tipo: 'quiz', nome: 'Maria Teste', cpf: '11111111111', modulo: 'ASG', pct: 80, acertos: 8, total: 10, data_conclusao: hojeIso, candidato: { cpf: '11111111111', codigoAcesso: '111111' } },
+        { id: '2', tipo: 'quiz', nome: 'Maria Teste', cpf: '11111111111', modulo: 'Informática', pct: 70, acertos: 7, total: 10, data_conclusao: hojeIso, candidato: { cpf: '11111111111', codigoAcesso: '111111' } }
+      ];
+      const codigosAcesso = [
+        { codigo: '111111', ativo: true, usos: 4, criado_por: 'teste', criado_em: hojeIso },
+        { codigo: '222222', ativo: true, usos: 3, criado_por: 'teste', criado_em: hojeIso }
+      ];
+      const { page, erros } = await abrirDashboard(browser, baseUrl, { perfil: 'admin', resultados, pipeline: {}, codigosAcesso });
+      await page.evaluate(() => switchView('codigos'));
+      await page.waitForTimeout(400);
+      const linhas = await page.evaluate(() => [...document.querySelectorAll('#codigosTableBody tr')].map(tr => tr.textContent.replace(/\s+/g, ' ').trim()));
+      const l1 = linhas.find(l => l.includes('111111')) || '';
+      const l2 = linhas.find(l => l.includes('222222')) || '';
+      assert(/1 👁/.test(l1) && /4 entrada/.test(l1), 'código com 1 candidato real e 4 entradas deveria mostrar "1 👁" e "4 entrada(s)". Linha: ' + l1);
+      assert(/0 👁/.test(l2) && /3 entrada/.test(l2), 'código sem candidato deveria mostrar "0 👁" e "3 entrada(s)". Linha: ' + l2);
+      await page.evaluate(() => verUsosCodigo('222222'));
+      await page.waitForTimeout(400);
+      const modal = await page.evaluate(() => document.getElementById('codigoUsosModal').textContent.replace(/\s+/g, ' '));
+      assert(/digitado 3 vez/.test(modal) && /ninguém começou o teste/i.test(modal), 'modal deveria explicar que o código foi digitado 3 vezes sem ninguém começar. Texto: ' + modal);
+      assertEqual(erros.length, 0, 'erros de JS: ' + erros.join(' | '));
+      await page.close();
+    }
+  },
+
+  {
     name: 'Tempo dos testes: Gerência vê o painel (5 a 10 min, padrão 7) e salva por módulo',
     async run({ browser, baseUrl }) {
       const { page, erros } = await abrirDashboard(browser, baseUrl, { perfil: 'admin', resultados: [], pipeline: {} });
@@ -2415,8 +2444,8 @@ export const tests = [
       await page.evaluate(() => switchView('codigos'));
       await page.waitForTimeout(300);
 
-      const linkUsos = await page.evaluate(() => document.querySelector('#codigosTableBody [data-acao="verUsosCodigo"]').textContent);
-      assert(linkUsos.includes('3'), `deveria mostrar a contagem de usos (3). Veio: ${linkUsos}`);
+      const linkUsos = await page.evaluate(() => document.querySelector('#codigosTableBody [data-acao="verUsosCodigo"]').closest('td').textContent);
+      assert(linkUsos.includes('2') && linkUsos.includes('3 entrada'), `deveria mostrar 2 candidatos e 3 entradas. Veio: ${linkUsos}`);
 
       await page.evaluate(() => document.querySelector('#codigosTableBody [data-acao="verUsosCodigo"]').click());
       await page.waitForTimeout(200);

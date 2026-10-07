@@ -1877,7 +1877,7 @@
         </div>
         <div class="results-table-wrap" style="margin-top:12px;">
           <table>
-            <thead><tr><th>Código</th><th>Status</th><th>Usos</th><th>Gerado por</th><th>Expira em</th><th></th></tr></thead>
+            <thead><tr><th>Código</th><th>Status</th><th>Candidatos</th><th>Gerado por</th><th>Expira em</th><th></th></tr></thead>
             <tbody id="codigosTableBody"><tr><td colspan="6"><div class="empty-state"><div class="empty-icon">🔑</div>Nenhum código gerado ainda</div></td></tr></tbody>
           </table>
         </div>
@@ -5796,6 +5796,7 @@
       renderEtapa3();
       atualizarContadoresEtapas();
       atualizarGuia();
+      if (typeof renderCodigos === 'function' && GUIA_CODIGOS.length) renderCodigos(GUIA_CODIGOS);
       renderPipeline();
       renderRanking();
       renderContratados();
@@ -6489,6 +6490,17 @@
   function expiraEmDe(c) { return _expiraEmDe(c, VALIDADE_CODIGO_MS); }
   function statusCodigo(c) { return _statusCodigo(c, VALIDADE_CODIGO_MS); }
 
+  // Quantas PESSOAS diferentes concluíram algo com este código (o campo `usos`
+  // do código conta cada vez que alguém digitou o código, mesmo sem começar o
+  // teste — por isso o número antigo não batia com a lista de candidatos).
+  function candidatosDoCodigo(codigo) {
+    const chaves = new Set();
+    for (const r of ALL_RESULTADOS) {
+      if (r.candidato && r.candidato.codigoAcesso === codigo) chaves.add(chaveDe(r));
+    }
+    return chaves.size;
+  }
+
   function renderCodigos(lista) {
     const ativos = lista.filter(c => statusCodigo(c).ok);
     document.getElementById('cntCodigosDisp').textContent = ativos.length;
@@ -6507,7 +6519,7 @@
       return `<tr>
         <td style="font-family:'Share Tech Mono',monospace;font-weight:700;letter-spacing:2px;">${escapeHtml(c.codigo)}</td>
         <td style="color:${st.cor};font-weight:700;">${st.txt}</td>
-        <td><button class="btn-act btn-neutral" data-acao="verUsosCodigo" data-codigo="${escapeHtml(c.codigo)}" title="Ver quem usou este código">${c.usos ?? 0} 👁</button></td>
+        <td><button class="btn-act btn-neutral" data-acao="verUsosCodigo" data-codigo="${escapeHtml(c.codigo)}" title="Ver quem usou este código">${candidatosDoCodigo(c.codigo)} 👁</button>${(c.usos ?? 0) > 0 ? `<div style="font-size:10px;color:var(--text3);margin-top:3px;" title="Quantas vezes o código foi digitado (inclui quem só entrou e não começou o teste)">${c.usos} entrada(s)</div>` : ''}</td>
         <td>${escapeHtml(c.criado_por || '—')}</td>
         <td>${fmtDataHora(expiraEmDe(c))}</td>
         <td style="white-space:nowrap;">${acao}</td>
@@ -6564,13 +6576,15 @@
     } catch (e) { console.error('Falha ao listar acessos do código:', e); }
     const lista = [...porCandidato.values()].sort((a, b) => (a.quando || '').localeCompare(b.quando || ''));
     const quantosTerminaram = lista.filter(x => x.concluiu).length;
-    sub.textContent = `Código ${codigo} · ${lista.length} candidato(s)` + (lista.length !== quantosTerminaram ? ` · ${lista.length - quantosTerminaram} ainda sem concluir` : '');
+    const entradas = (((GUIA_CODIGOS || []).find(c => c.codigo === codigo) || {}).usos) || 0;
+    sub.textContent = `Código ${codigo} · ${lista.length} candidato(s)` + (lista.length !== quantosTerminaram ? ` · ${lista.length - quantosTerminaram} ainda sem concluir` : '') +
+      (entradas > lista.length ? ` · digitado ${entradas} vez(es) — quem não aparece só entrou com o código e não começou o teste` : '');
     el.innerHTML = lista.length
       ? lista.map(r => `<div style="display:flex;justify-content:space-between;gap:12px;padding:9px 0;border-bottom:1px solid var(--border);">
           <span style="font-weight:600;">${escapeHtml(r.nome || '—')}${r.concluiu ? '' : ' <span style="font-weight:400;font-size:11px;color:var(--amber);">· não concluiu</span>'}</span>
           <span style="color:var(--text3);font-family:'Share Tech Mono',monospace;font-size:12px;">${r.quando ? fmtDataHora(r.quando) : '—'}</span>
         </div>`).join('')
-      : '<div class="empty-state"><div class="empty-icon">🔑</div>Ninguém usou este código ainda</div>';
+      : `<div class="empty-state"><div class="empty-icon">🔑</div>${entradas > 0 ? `O código foi digitado ${entradas} vez(es), mas ninguém começou o teste` : 'Ninguém usou este código ainda'}</div>`;
   };
   window.fecharUsosCodigo = function () { document.getElementById('codigoUsosModal').style.display = 'none'; };
 
