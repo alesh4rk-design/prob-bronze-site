@@ -13,9 +13,10 @@ const browser = await chromium.launch({ executablePath: '/opt/pw-browsers/chromi
 let falhas = 0;
 const ok = (c, m) => { console.log((c ? '  ✓ ' : '  ✗ ') + m); if (!c) falhas++; };
 
-async function rodar(nome, query, esperado, viewport) {
+async function rodar(nome, query, esperado, viewport, colorScheme = 'light') {
   console.log(`\n▶ ${nome} (${viewport.width}x${viewport.height})`);
-  const page = await browser.newPage({ viewport, isMobile: true, hasTouch: true });
+  const page = await browser.newPage({ viewport, isMobile: true, hasTouch: true, colorScheme });
+  await page.addInitScript(t => { try { localStorage.setItem('virtus_theme', t); } catch (e) {} }, colorScheme);
   const { APP, AUTH, FS } = buildMocks({ vagas: [{ id: 'v1', cargo: 'Vigilante Patrimonial', local: 'Barra', numero_vagas: 3, status: 'aberta' }] });
   const map = { 'firebase-app.js': APP, 'firebase-auth.js': AUTH, 'firebase-firestore.js': FS };
   await page.route('**/firebasejs/**', r => { const k = Object.keys(map).find(x => r.request().url().endsWith(x)); return k ? r.fulfill({ status: 200, contentType: 'application/javascript', body: map[k] }) : r.abort(); });
@@ -47,7 +48,7 @@ async function rodar(nome, query, esperado, viewport) {
     });
     const largo = m.painelW >= m.vw * 0.85 || m.painelW >= 500;
     ok(largo && !m.estouro, `${rotulo} [${m.id}]: painel ${m.painelW}px de ${m.vw}px${m.estouro ? ' — ESTOURA A LARGURA' : ''}`);
-    if (SHOTS) await page.screenshot({ path: `${SHOTS}/${viewport.width}-${nome.replace(/\W+/g, '_')}-${rotulo.replace(/\W+/g, '_')}.png` });
+    if (SHOTS) await page.screenshot({ path: `${SHOTS}/${colorScheme}-${viewport.width}-${nome.replace(/\W+/g, '_')}-${rotulo.replace(/\W+/g, '_')}.png` });
   }
 
   await conferirTela('Início');
@@ -109,6 +110,7 @@ for (const vp of [{ width: 360, height: 740 }, { width: 412, height: 915 }]) {
   await rodar('Link Enviar testes (3 pendentes)', '?modulos=Inform%C3%A1tica,Linguagem%20Positiva,Atendimento%20ao%20Cliente&codigo=123456', TRILHA.slice(1), vp);
   await rodar('Link Enviar testes (1 pendente)', '?modulos=Atendimento%20ao%20Cliente&codigo=654321', ['Atendimento ao Cliente'], vp);
 }
+await rodar('Teste normal no MODO ESCURO', '', TRILHA, { width: 390, height: 844 }, 'dark');
 await browser.close();
 server.close();
 console.log(`\n${falhas ? '❌ ' + falhas + ' falha(s)' : '✅ Tudo certo'}`);

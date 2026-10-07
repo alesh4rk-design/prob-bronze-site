@@ -30,26 +30,26 @@
     --line:     rgba(255,255,255,0.05);
     --line2:    rgba(255,255,255,0.10);
     --line3:    rgba(255,255,255,0.18);
-    --amber:    #E8A000;
-    --amber2:   #FFB800;
+    --amber:    #FFB31A;
+    --amber2:   #FFC233;
     --amber3:   #FFC93C;
     --amberdim: rgba(232,160,0,0.08);
     --ambermid: rgba(232,160,0,0.18);
     --amberglow:rgba(232,160,0,0.30);
-    --cyan:     #00C8E8;
+    --cyan:     #3DDCF5;
     --cyandim:  rgba(0,200,232,0.08);
     --cyanmid:  rgba(0,200,232,0.18);
-    --red:      #FF3B30;
+    --red:      #FF6B61;
     --reddim:   rgba(255,59,48,0.12);
-    --green:    #00E580;
+    --green:    #2BF29A;
     --greendim: rgba(0,229,128,0.10);
-    --purple:   #9B6DFF;
+    --purple:   #B794FF;
     --purpledim:rgba(155,109,255,0.10);
     --purplemid:rgba(155,109,255,0.20);
-    --text:     #C8D0E0;
-    --text2:    #8090A8;
-    --text3:    #4A5568;
-    --text4:    #2D3748;
+    --text:     #F5F7FB;
+    --text2:    #DCE3EE;
+    --text3:    #BAC6D6;
+    --text4:    #9AA8BC;
   }
 
   body.light-theme {
@@ -61,22 +61,24 @@
     --line:     rgba(0,0,0,0.05);
     --line2:    rgba(0,0,0,0.10);
     --line3:    rgba(0,0,0,0.18);
-    --amber:    #D48F00;
-    --amber2:   #E89C00;
+    --amber:    #9A6500;
+    --amber2:   #B07400;
     --amber3:   #F5B000;
     --amberdim: rgba(212,143,0,0.08);
     --ambermid: rgba(212,143,0,0.15);
     --amberglow:rgba(212,143,0,0.25);
-    --cyan:     #00A0B8;
+    --cyan:     #006B7D;
     --cyandim:  rgba(0,160,184,0.08);
     --cyanmid:  rgba(0,160,184,0.12);
-    --purple:   #7A4DE8;
+    --purple:   #5B2FC9;
     --purpledim:rgba(122,77,232,0.08);
     --purplemid:rgba(122,77,232,0.15);
-    --text:     #1A202C;
-    --text2:    #2D3748;
-    --text3:    #4A5568;
-    --text4:    #718096;
+    --text:     #05070D;
+    --text2:    #111827;
+    --text3:    #253247;
+    --text4:    #3D4B61;
+    --green:    #00733A;
+    --red:    #C01818;
   }
 
   *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
@@ -498,6 +500,9 @@
   .rd-mod { color:var(--text2); }
   .rd-pct { font-family:'Share Tech Mono',monospace; font-size:11px; color:var(--text3); }
   .rd-pct b { color:var(--amber); font-size:13px; }
+  /* Letras nítidas nos dois modos */
+  body { -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale; text-rendering:optimizeLegibility; }
+  ::placeholder { color:var(--text4) !important; opacity:1 !important; }
 </style>
 <!-- Cloudflare Web Analytics -->
 <script type="module" src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "96512a2f926542999ab1b562feeef09a"}'></script>
