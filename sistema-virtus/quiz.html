@@ -796,15 +796,6 @@
       </div>
 
       <div class="field-group">
-        <span class="field-label">Anexar currículo <span style="color:var(--text4);">(opcional — PDF ou foto, até 5 MB)</span></span>
-        <label class="file-drop" id="curriculoDrop" for="inCurriculo">
-          <span id="curriculoDropTxt">📎 Toque para anexar o currículo</span>
-        </label>
-        <input type="file" id="inCurriculo" accept="application/pdf,image/jpeg,image/png" style="display:none;">
-        <div class="field-msg" id="msgCurriculo"></div>
-      </div>
-
-      <div class="field-group">
         <span class="field-label">Disponibilidade total de horário? *</span>
         <div class="opt-pills" id="inDispTotal">
           <div class="pill" data-val="sim">✓ Sim</div>
@@ -1410,7 +1401,7 @@
 
     // Currículo — validação de tipo/tamanho no momento em que a pessoa
     // escolhe o arquivo (feedback imediato, antes de tentar enviar nada).
-    document.getElementById('inCurriculo').addEventListener('change', () => {
+    document.getElementById('inCurriculo')?.addEventListener('change', () => {
       const input = document.getElementById('inCurriculo');
       const drop = document.getElementById('curriculoDrop');
       const txt = document.getElementById('curriculoDropTxt');
@@ -1541,6 +1532,7 @@
   // { url, nomeArquivo } ou null se não houver arquivo selecionado.
   async function enviarCurriculoSeHouver() {
     const input = document.getElementById('inCurriculo');
+    if (!input) return null; // campo de currículo removido da ficha
     const file = input.files[0];
     if (!file) return null;
 
