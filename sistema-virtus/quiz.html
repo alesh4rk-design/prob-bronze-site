@@ -1008,6 +1008,7 @@
   let globalConsentGiven = false;
   let globalLgpdAccepted = false;
   let globalCodigoAcesso = '';
+  let CANDIDATO_DO_LINK = null; // nome do candidato do código individual (pula a ficha)
   let TEMPOS_TESTES = null; // tempos ajustados pela Gerência da filial do código
   // Link individual enviado pelo painel (ex: quiz.html?modulo=Informática&codigo=123456):
   // já preenche o código e faz SÓ aquele módulo (candidato que ficou sem a etapa).
@@ -1103,10 +1104,27 @@
   confirmBtn.addEventListener('click', () => {
     if (consentCheck.checked && lgpdCheck.checked) {
       globalConsentGiven = true; globalLgpdAccepted = true;
-      hideConsentModal(); show('s-home'); playOk();
+      hideConsentModal(); irParaFichaOuTestes(); playOk();
     }
   });
   cancelBtn.addEventListener('click', () => { hideConsentModal(); playErr(); });
+
+  // Link de testes pendentes com código individual: o servidor já sabe quem é
+  // o candidato, então não pede a ficha de novo (e não cria candidato novo
+  // se ele digitar o nome diferente) — vai direto para os testes que faltam.
+  function irParaFichaOuTestes() {
+    if (!CANDIDATO_DO_LINK) { show('s-home'); return; }
+    S.nome = CANDIDATO_DO_LINK;
+    S.dataPref = '';
+    S.candidato = { nome: CANDIDATO_DO_LINK, codigoAcesso: globalCodigoAcesso };
+    registrarAcessoCodigo({ codigoAcesso: globalCodigoAcesso, nome: CANDIDATO_DO_LINK, cpf: '', modulo: MODULOS_LINK[0] });
+    S.trilha = [...MODULOS_LINK];
+    S.trilhaIdx = 0;
+    S.resultadosTrilha = [];
+    const primeiro = String(CANDIDATO_DO_LINK).trim().split(/\s+/)[0];
+    toast(`👋 Olá, ${primeiro}! Vamos aos testes que faltaram.`, 'ok');
+    iniciarModulo();
+  }
 
   function showConsentModal() {
     consentCheck.checked = false; lgpdCheck.checked = false;
@@ -1152,6 +1170,7 @@
         globalCodigoValidado = true;
         globalCodigoAcesso = codigo;
         globalCodigoFilial = r.filial || null;
+        CANDIDATO_DO_LINK = (MODULOS_LINK.length && r.candidatoNome) ? r.candidatoNome : null;
         atualizarBotaoWhatsRH(globalCodigoFilial);
         obterTemposTestes(globalCodigoFilial).then(t => { TEMPOS_TESTES = t; });
         // A lista de vagas só é conhecida depois de validar o código — ele
@@ -1161,7 +1180,7 @@
         hideCodigoModal();
         playOk();
         if (!globalConsentGiven || !globalLgpdAccepted) showConsentModal();
-        else show('s-home');
+        else irParaFichaOuTestes();
       } else {
         const msgs = {
           nao_encontrado: '✕ Código não encontrado. Confira com o avaliador.',

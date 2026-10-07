@@ -13,7 +13,7 @@ const browser = await chromium.launch({ executablePath: '/opt/pw-browsers/chromi
 let falhas = 0;
 const ok = (c, m) => { console.log((c ? '  ✓ ' : '  ✗ ') + m); if (!c) falhas++; };
 
-async function rodar(nome, query, esperado, viewport, colorScheme = 'light') {
+async function rodar(nome, query, esperado, viewport, colorScheme = 'light', candidatoNome = null) {
   console.log(`\n▶ ${nome} (${viewport.width}x${viewport.height})`);
   const page = await browser.newPage({ viewport, isMobile: true, hasTouch: true, colorScheme });
   await page.addInitScript(t => { try { localStorage.setItem('virtus_theme', t); } catch (e) {} }, colorScheme);
@@ -22,14 +22,14 @@ async function rodar(nome, query, esperado, viewport, colorScheme = 'light') {
   await page.route('**/firebasejs/**', r => { const k = Object.keys(map).find(x => r.request().url().endsWith(x)); return k ? r.fulfill({ status: 200, contentType: 'application/javascript', body: map[k] }) : r.abort(); });
   await page.route('**/fonts.googleapis.com/**', r => r.fulfill({ status: 200, contentType: 'text/css', body: '' }));
   await page.route('**/cloudflareinsights.com/**', r => r.fulfill({ status: 200, contentType: 'application/javascript', body: '' }));
-  const carregados = [], enviados = [];
+  const carregados = [], enviados = [], nomesEnviados = [];
   await page.route('**/virtus-api.ale-sh4rk.workers.dev/**', async r => {
     const u = r.request().url(); const body = r.request().postDataJSON ? (() => { try { return r.request().postDataJSON(); } catch { return {}; } })() : {};
     const j = o => r.fulfill({ status: 200, contentType: 'application/json', headers: { 'Access-Control-Allow-Origin': '*' }, body: JSON.stringify(o) });
     if (u.endsWith('/listar-modulos')) return j({ modulos: [{ nome: 'Vigilante Patrimonial', total: 30 }, { nome: 'Informática', total: 29 }], total_perguntas: 59 });
-    if (u.endsWith('/verificar-codigo')) return j({ ok: true, filial: null });
+    if (u.endsWith('/verificar-codigo')) return j({ ok: true, filial: null, candidatoNome });
     if (u.endsWith('/carregar-perguntas')) { carregados.push(body.modulo); const comp = ['Linguagem Positiva', 'Atendimento ao Cliente'].includes(body.modulo); return j({ ok: true, perguntas: PERG(comp ? 10 : 15) }); }
-    if (u.endsWith('/submeter-quiz')) { enviados.push(body.modulo); return j({ ok: true, acertos: 5, total: 10, pct: 50, id: 'r' + enviados.length }); }
+    if (u.endsWith('/submeter-quiz')) { enviados.push(body.modulo); nomesEnviados.push(body.nome); return j({ ok: true, acertos: 5, total: 10, pct: 50, id: 'r' + enviados.length }); }
     return j({ ok: true });
   });
   const erros = [];
@@ -60,6 +60,12 @@ async function rodar(nome, query, esperado, viewport, colorScheme = 'light') {
   await page.check('#modalConsentCheck'); await page.check('#modalLgpdCheck');
   await page.click('#modalConfirmBtn');
   await page.waitForTimeout(500);
+  if (candidatoNome) {
+    // Código individual: pula a ficha e vai direto para a primeira prova
+    await page.waitForTimeout(800);
+    const tela = await page.evaluate(() => document.querySelector('.screen.active')?.id);
+    ok(tela === 's-quiz', `pulou a ficha e abriu a prova direto (${tela})`);
+  } else {
   await conferirTela('Ficha');
 
   await page.fill('#inNome', 'Fulano de Tal');
@@ -80,6 +86,7 @@ async function rodar(nome, query, esperado, viewport, colorScheme = 'light') {
   await page.evaluate(v => { const el = document.getElementById('inData'); el.value = v; el.dispatchEvent(new Event('change')); }, d);
   await page.click('#btnIniciarAvaliacao');
   await page.waitForTimeout(1200);
+  }
 
   for (let etapa = 0; etapa < esperado.length; etapa++) {
     const ativo = await page.evaluate(() => document.querySelector('.screen.active')?.id);
@@ -100,6 +107,7 @@ async function rodar(nome, query, esperado, viewport, colorScheme = 'light') {
   ok(final === 's-result-quiz', `terminou na tela de resultado (${final})`);
   ok(JSON.stringify(carregados) === JSON.stringify(esperado), `provas feitas na ordem certa: ${carregados.join(' → ')}`);
   ok(JSON.stringify(enviados) === JSON.stringify(esperado), `todas as provas enviadas (${enviados.length}/${esperado.length})`);
+  if (candidatoNome) ok(nomesEnviados.every(n => n === candidatoNome), `resultados enviados no nome do candidato original (${[...new Set(nomesEnviados)].join(', ')})`);
   ok(erros.length === 0, 'sem erros de JavaScript' + (erros.length ? ': ' + erros.join(' | ') : ''));
   await page.close();
 }
@@ -111,6 +119,7 @@ for (const vp of [{ width: 360, height: 740 }, { width: 412, height: 915 }]) {
   await rodar('Link Enviar testes (1 pendente)', '?modulos=Atendimento%20ao%20Cliente&codigo=654321', ['Atendimento ao Cliente'], vp);
 }
 await rodar('Teste normal no MODO ESCURO', '', TRILHA, { width: 390, height: 844 }, 'dark');
+await rodar('Link com código individual (pula a ficha)', '?modulos=Inform%C3%A1tica,Linguagem%20Positiva,Atendimento%20ao%20Cliente&codigo=777777', TRILHA.slice(1), { width: 390, height: 844 }, 'dark', 'Jones Freitas Ribeiro');
 await browser.close();
 server.close();
 console.log(`\n${falhas ? '❌ ' + falhas + ' falha(s)' : '✅ Tudo certo'}`);

@@ -374,6 +374,25 @@ function limparFicha(c, codigoConferido, origemWorker) {
 }
 
 // ── Rotas ───────────────────────────────────────────────────────────────
+// Código individual (botão "Enviar testes" do painel) já sabe de quem é:
+// o resultado vai SEMPRE para o candidato original (mesmo nome/CPF/ficha),
+// não importa o que for digitado — assim não nasce um candidato duplicado.
+async function identidadeDoCodigo(env, token, doc) {
+  if (!doc || (!doc.candidato_cpf && !doc.candidato_nome)) return null;
+  const cpf = doc.candidato_cpf ? String(doc.candidato_cpf).replace(/\D/g, "").slice(0, 11) : null;
+  let ficha = null;
+  if (cpf) {
+    try {
+      const comMascara = cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4");
+      const docs = await firestoreBuscarIn(env, token, "resultados", "cpf", [cpf, comMascara], 10);
+      const comFicha = docs.find((d) => d.fields.tipo === "quiz" && d.fields.candidato);
+      if (comFicha) ficha = comFicha.fields.candidato;
+    } catch (e) { ficha = null; }
+  }
+  const nome = texto(doc.candidato_nome, 120) || (ficha && ficha.nome) || null;
+  return { nome, cpf, ficha };
+}
+
 async function handleVerificarCodigo(request, env, cors) {
   const { codigo } = await request.json();
   const ip = request.headers.get("CF-Connecting-IP") || "desconhecido";
@@ -411,7 +430,12 @@ async function handleVerificarCodigo(request, env, cors) {
 
   // Devolve a filial deste código pro site já filtrar a lista de vagas —
   // o candidato só deve ver vagas da filial que gerou o código dele.
-  return json({ ok: true, filial: doc.filial || null, filialNome: doc.filial_nome || null }, cors);
+  return json({
+    ok: true, filial: doc.filial || null, filialNome: doc.filial_nome || null,
+    // Código individual: o site já sabe quem é e pula a ficha
+    candidatoNome: doc.candidato_nome || null,
+    modulosPendentes: Array.isArray(doc.modulos_pendentes) ? doc.modulos_pendentes : null,
+  }, cors);
 }
 
 // Mesma configuração usada no js/quiz.js do site — precisa ficar igual nos
@@ -505,9 +529,15 @@ async function handleSubmeterQuiz(request, env, cors) {
   const total = perguntas.length;
   const pct = total > 0 ? Math.round((acertos / total) * 100) : 0;
 
-  const ficha = limparFicha(candidato, conf.codigo, new URL(request.url).origin);
+  let ficha = limparFicha(candidato, conf.codigo, new URL(request.url).origin);
+  let nomeFinal = texto(nome, 120) || "";
+  const ident = await identidadeDoCodigo(env, token, conf.doc);
+  if (ident) {
+    nomeFinal = ident.nome || nomeFinal;
+    ficha = { ...(ident.ficha || ficha || {}), nome: nomeFinal, cpf: ident.cpf || (ficha && ficha.cpf) || null, codigoAcesso: conf.codigo };
+  }
   const resultadoDoc = {
-    nome: texto(nome, 120) || "",
+    nome: nomeFinal,
     candidato: ficha,
     cpf: ficha ? ficha.cpf || null : null,
     modulo,
@@ -543,8 +573,9 @@ async function handleSubmeterDigitacao(request, env, cors) {
   const conf = await conferirCodigo(env, token, r.codigoAcesso, TOLERANCIA_ENVIO_MS);
   if (!conf.ok) return json({ ok: false, erro: "codigo_invalido", motivo: conf.motivo }, cors, 403);
 
-  const nome = texto(r.nome, 120);
-  const cpf = texto(String(r.cpf || "").replace(/\D/g, ""), 11) || null;
+  const identD = await identidadeDoCodigo(env, token, conf.doc);
+  const nome = (identD && identD.nome) || texto(r.nome, 120);
+  const cpf = (identD && identD.cpf) || texto(String(r.cpf || "").replace(/\D/g, ""), 11) || null;
   if (!nome) return json({ ok: false, erro: "dados_invalidos" }, cors, 400);
 
   const agora = new Date();
@@ -638,8 +669,9 @@ async function handleRegistrarAcesso(request, env, cors) {
   const token = await getAccessToken(env);
   const conf = await conferirCodigo(env, token, a.codigoAcesso, TOLERANCIA_ENVIO_MS);
   if (!conf.ok) return json({ ok: false, erro: "codigo_invalido", motivo: conf.motivo }, cors, 403);
-  const nome = texto(a.nome, 120);
-  const cpf = texto(String(a.cpf || "").replace(/\D/g, ""), 11) || null;
+  const identA = await identidadeDoCodigo(env, token, conf.doc);
+  const nome = (identA && identA.nome) || texto(a.nome, 120);
+  const cpf = (identA && identA.cpf) || texto(String(a.cpf || "").replace(/\D/g, ""), 11) || null;
   if (!nome) return json({ ok: false, erro: "dados_invalidos" }, cors, 400);
   const id = cpf || "nome_" + normNome(nome).replace(/[^a-z0-9]+/g, "-").slice(0, 60);
   const campos = { nome, cpf, em: new Date().toISOString(), modulo: texto(a.modulo, 80) || "" };
@@ -657,7 +689,7 @@ async function handleRegistrarViolacao(request, env, cors) {
   const conf = await conferirCodigo(env, token, v.codigoAcesso, TOLERANCIA_ENVIO_MS);
   if (!conf.ok) return json({ ok: false, erro: "codigo_invalido", motivo: conf.motivo }, cors, 403);
 
-  const nome = texto(v.nome, 120);
+  const nome = (conf.doc && conf.doc.candidato_nome ? texto(conf.doc.candidato_nome, 120) : null) || texto(v.nome, 120);
   const tipo = texto(v.tipo, 60);
   if (!nome || !tipo) return json({ ok: false, erro: "dados_invalidos" }, cors, 400);
 
