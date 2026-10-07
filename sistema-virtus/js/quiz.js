@@ -260,7 +260,11 @@ function embaralhar(arr) {
 // avaliadores logados podem lê-la diretamente (ver firestore.rules).
 export async function listarModulos() {
   const resp = await fetchComTempo(`${API_BASE}/listar-modulos`, { method: "POST" });
-  if (!resp.ok) throw new Error("Não foi possível carregar os módulos.");
+  if (!resp.ok) {
+    let motivo = "";
+    try { motivo = (await resp.json()).erro || ""; } catch (e) {}
+    throw new Error("Não foi possível carregar os módulos. " + motivo);
+  }
   return resp.json();
 }
 
