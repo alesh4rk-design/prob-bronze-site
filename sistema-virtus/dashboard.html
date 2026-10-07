@@ -1339,6 +1339,10 @@
 </footer>
 
 <main class="main">
+<div id="periodoBarra" style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin:0 0 14px;padding:8px 12px;border:1px solid var(--line2);border-radius:6px;font-size:12px;color:var(--text2);">
+  <span id="periodoTexto">📅 Mostrando candidatos dos últimos 30 dias</span>
+  <button class="btn-act btn-neutral" id="btnPeriodo" type="button" style="height:30px;">Carregar todos (mais antigos)</button>
+</div>
 
 <!-- ══════════ VIEW: DASHBOARD ══════════ -->
 <section class="app-view active" id="view-dashboard">
@@ -2085,7 +2089,7 @@
     registrarDecisaoFinal, enviarParaEtapa4, buscarHistorico, registrarEntrevista, salvarFotoColaborador, registrarAvisoWhatsapp, listarAcessosCodigo,
     assinarVagas, criarVaga, encerrarVaga, reabrirVaga, excluirVaga,
     obterPesosScore, salvarPesosPadrao, salvarPesosCargo, removerPesosCargo
-  } from "./js/dashboard.js?v=20261007c";
+  } from "./js/dashboard.js?v=20261008a";
   import { db } from "./js/firebase-config.js";
   import { doc, setDoc } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
   import { PERGUNTAS_SEED } from "./js/perguntas-seed-data.js";
@@ -6733,6 +6737,21 @@
   // sempre que a aba volta ao foco (ou a rede volta).
   let unsubs = [];
 
+  // Por padrão o painel carrega só os últimos 30 dias — ler o histórico
+  // inteiro a cada abertura estourava o limite diário grátis do Firebase.
+  let CARREGAR_TUDO = false;
+  function desdePeriodo() {
+    if (CARREGAR_TUDO) return null;
+    const d = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  }
+  document.getElementById('btnPeriodo').onclick = () => {
+    CARREGAR_TUDO = !CARREGAR_TUDO;
+    document.getElementById('periodoTexto').textContent = CARREGAR_TUDO ? '📅 Mostrando TODOS os candidatos (gasta mais do limite do Firebase)' : '📅 Mostrando candidatos dos últimos 30 dias';
+    document.getElementById('btnPeriodo').textContent = CARREGAR_TUDO ? 'Voltar para os últimos 30 dias' : 'Carregar todos (mais antigos)';
+    conectar();
+  };
+
   function conectar() {
     unsubs.forEach(u => { try { u(); } catch (_) {} });
     unsubs = [];
@@ -6748,12 +6767,14 @@
           statusDot(false, 'Conexão perdida — reconectando...');
           document.getElementById('loadingOverlay').classList.add('hide');
         },
-        FILTRO_FILIAL
+        FILTRO_FILIAL,
+        desdePeriodo()
       ));
       unsubs.push(assinarViolacoes(
         (lista) => { ALL_VIOLACOES = lista.filter(v => mesmaFilial(v.filial)); renderViolacoes(); },
         () => statusDot(false, 'Conexão perdida — reconectando...'),
-        FILTRO_FILIAL
+        FILTRO_FILIAL,
+        desdePeriodo()
       ));
       // Usuários e Perguntas: só admin/gerência (únicos que cadastram gente
       // e mexem no banco de perguntas nas rules).

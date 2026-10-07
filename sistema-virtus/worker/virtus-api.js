@@ -91,7 +91,18 @@ function json(obj, cors, status = 200) {
 }
 
 // ── Autenticação com o Firebase via conta de serviço (JWT assinado) ────────
+// O token do Google vale 1 hora: guardamos só o TEXTO pronto e reaproveitamos.
+// Nunca guardar uma busca em andamento — a Cloudflare não deixa um pedido
+// esperar uma busca começada por outro pedido.
+let __tokenCache = { valor: null, expira: 0 };
 async function getAccessToken(env) {
+  if (__tokenCache.valor && Date.now() < __tokenCache.expira) return __tokenCache.valor;
+  const t = await gerarAccessToken(env);
+  __tokenCache = { valor: t, expira: Date.now() + 50 * 60 * 1000 };
+  return t;
+}
+
+async function gerarAccessToken(env) {
   const sa = JSON.parse(env.FIREBASE_SERVICE_ACCOUNT);
   const now = Math.floor(Date.now() / 1000);
   const header = { alg: "RS256", typ: "JWT" };
@@ -272,10 +283,17 @@ const VALIDADE_CODIGO_MS = 4 * 60 * 60 * 1000; // 4 horas
 // com o código aos 3h55 e termina a prova depois das 4h não pode perder o
 // resultado. A tela de entrada continua usando a validade exata (sem folga).
 const TOLERANCIA_ENVIO_MS = 2 * 60 * 60 * 1000; // 2 horas
+const __cacheCodigos = new Map();
 async function conferirCodigo(env, token, codigo, toleranciaMs = 0) {
   const cod = String(codigo || "").trim();
   if (!cod || !/^\d{1,12}$/.test(cod)) return { ok: false, motivo: cod ? "nao_encontrado" : "vazio" };
-  const doc = await firestoreGet(env, token, `codigos_acesso/${encodeURIComponent(cod)}`);
+  let doc;
+  const cc = __cacheCodigos.get(cod);
+  if (toleranciaMs && cc && Date.now() - cc.em < 60 * 1000) doc = cc.doc; // envios: mesma leitura por 1 min
+  else {
+    doc = await firestoreGet(env, token, `codigos_acesso/${encodeURIComponent(cod)}`);
+    if (doc) __cacheCodigos.set(cod, { doc, em: Date.now() });
+  }
   if (!doc) return { ok: false, motivo: "nao_encontrado" };
   if (doc.ativo === false) return { ok: false, motivo: "desativado" };
   // A validade sempre parte de `criado_em` (preenchido pelo relógio do
@@ -454,7 +472,21 @@ function embaralhar(arr) {
   return a;
 }
 
+// Caches curtos na memória do Worker (só valores prontos) — cada candidato
+// lia todos os módulos e as perguntas de novo, e isso estourava o limite
+// diário grátis do Firebase em dia de muita gente.
+const __cachePerguntas = new Map();
+async function perguntaDoModuloCache(env, token, modulo) {
+  const c = __cachePerguntas.get(modulo);
+  if (c && Date.now() - c.em < 5 * 60 * 1000) return c.doc;
+  const doc = await firestoreGet(env, token, `perguntas/${encodeURIComponent(modulo)}`);
+  if (doc) __cachePerguntas.set(modulo, { doc, em: Date.now() });
+  return doc;
+}
+let __cacheModulos = { dados: null, em: 0 };
+
 async function handleListarModulos(env, cors) {
+  if (__cacheModulos.dados && Date.now() - __cacheModulos.em < 5 * 60 * 1000) return json(__cacheModulos.dados, cors);
   const token = await getAccessToken(env);
   const resp = await fetch(`${FIRESTORE_BASE(env.FIREBASE_PROJECT_ID)}/perguntas`, {
     headers: { Authorization: `Bearer ${token}` },
@@ -471,7 +503,9 @@ async function handleListarModulos(env, cors) {
     modulos.push({ nome, total: qtd });
     total += qtd;
   }
-  return json({ modulos, total_perguntas: total }, cors);
+  const resposta = { modulos, total_perguntas: total };
+  __cacheModulos = { dados: resposta, em: Date.now() };
+  return json(resposta, cors);
 }
 
 async function handleCarregarPerguntas(request, env, cors) {
@@ -479,7 +513,7 @@ async function handleCarregarPerguntas(request, env, cors) {
   if (!modulo) return json({ ok: false, erro: "modulo_invalido" }, cors, 400);
 
   const token = await getAccessToken(env);
-  const doc = await firestoreGet(env, token, `perguntas/${encodeURIComponent(modulo)}`);
+  const doc = await perguntaDoModuloCache(env, token, modulo);
   // Módulos da trilha obrigatória (Informática, Linguagem Positiva,
   // Atendimento) carregam mesmo se alguém desligou no painel — todo candidato
   // precisa fazer.
@@ -513,7 +547,7 @@ async function handleSubmeterQuiz(request, env, cors) {
   const conf = await conferirCodigo(env, token, body.codigoAcesso || (candidato && candidato.codigoAcesso), TOLERANCIA_ENVIO_MS);
   if (!conf.ok) return json({ ok: false, erro: "codigo_invalido", motivo: conf.motivo }, cors, 403);
 
-  const doc = await firestoreGet(env, token, `perguntas/${encodeURIComponent(modulo)}`);
+  const doc = await perguntaDoModuloCache(env, token, modulo);
   if (!doc || !doc.questoes) return json({ ok: false, erro: "modulo_nao_encontrado" }, cors, 404);
 
   const banco = doc.questoes;

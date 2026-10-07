@@ -39,23 +39,45 @@ function carimboFilial(chave) {
 // Assina a coleção `resultados` em tempo real (substitui o polling de 10s do
 // dashboard original por atualização instantânea via onSnapshot).
 // callback recebe um array de { id, ...dados }.
-export function assinarResultados(callback, onError, filial) {
-  const q = consultaDaFilial("resultados", filial, orderBy("data_conclusao", "desc"));
-  return onSnapshot(q, (snap) => {
+// `desde` (texto de data, ex: "2026-09-08"): só busca o que é a partir dessa
+// data — economiza MUITAS leituras do Firebase (o painel lia o histórico
+// inteiro a cada abertura e estourava o limite diário grátis).
+// Para a Gerência (com filial) o Firestore precisa do índice composto
+// filial + data; se ele ainda não existir, cai sozinho na busca completa.
+function assinarComPeriodo(nomeColecao, campoData, callback, onError, filial, desde, rotulo) {
+  let unsub = () => {};
+  const entregar = (snap) => {
     const lista = [];
     snap.forEach((d) => lista.push({ id: d.id, ...d.data() }));
     callback(lista);
-  }, (err) => { console.error("assinarResultados:", err); if (onError) onError(err); });
+  };
+  const completa = () => {
+    unsub = onSnapshot(consultaDaFilial(nomeColecao, filial, orderBy(campoData, "desc")), entregar,
+      (err) => { console.error(rotulo + ":", err); if (onError) onError(err); });
+  };
+  if (!desde) { completa(); return () => unsub(); }
+  const ref = collection(db, nomeColecao);
+  const q = filial === undefined
+    ? query(ref, where(campoData, ">=", desde), orderBy(campoData, "desc"))
+    : query(ref, where("filial", "==", filial), where(campoData, ">=", desde));
+  unsub = onSnapshot(q, entregar, (err) => {
+    if (err && err.code === "failed-precondition") {
+      console.warn(rotulo + ": índice do período ainda não criado — usando a busca completa.", err.message);
+      completa();
+      return;
+    }
+    console.error(rotulo + ":", err); if (onError) onError(err);
+  });
+  return () => unsub();
+}
+
+export function assinarResultados(callback, onError, filial, desde = null) {
+  return assinarComPeriodo("resultados", "data_conclusao", callback, onError, filial, desde, "assinarResultados");
 }
 
 // Assina a coleção `violacoes` em tempo real.
-export function assinarViolacoes(callback, onError, filial) {
-  const q = consultaDaFilial("violacoes", filial, orderBy("data", "desc"));
-  return onSnapshot(q, (snap) => {
-    const lista = [];
-    snap.forEach((d) => lista.push({ id: d.id, ...d.data() }));
-    callback(lista);
-  }, (err) => { console.error("assinarViolacoes:", err); if (onError) onError(err); });
+export function assinarViolacoes(callback, onError, filial, desde = null) {
+  return assinarComPeriodo("violacoes", "data", callback, onError, filial, desde ? desde.slice(0, 10) : null, "assinarViolacoes");
 }
 
 // Exclui um resultado (uma tentativa de quiz ou digitação). Admin e viewer
