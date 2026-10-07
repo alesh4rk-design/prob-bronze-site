@@ -329,7 +329,18 @@ export async function excluirCodigoAcesso(codigo) {
 // número). Sem filial (Admin): o número geral, usado por quem não tem.
 const docWhatsapp = (filial) => doc(db, "config", filial ? "whatsapp_rh_" + filial : "whatsapp_rh");
 export async function definirNumeroWhatsapp(numero, filial) {
-  await setDoc(docWhatsapp(filial), { numero, atualizado_em: serverTimestamp() });
+  // merge: o mesmo documento guarda os tempos dos testes (não pode apagar)
+  await setDoc(docWhatsapp(filial), { numero, atualizado_em: serverTimestamp() }, { merge: true });
+}
+
+// Tempos das provas (em minutos, 5 a 10) ajustados pela Gerência da filial
+export async function definirTemposTestes(tempos, filial) {
+  await setDoc(docWhatsapp(filial), { tempos, tempos_atualizados_em: serverTimestamp() }, { merge: true });
+}
+export function assinarTemposTestes(callback, filial) {
+  return onSnapshot(docWhatsapp(filial), (snap) => {
+    callback(snap.exists() ? (snap.data().tempos || {}) : {});
+  }, (err) => console.error("assinarTemposTestes:", err));
 }
 
 export function assinarNumeroWhatsapp(callback, onError, filial) {

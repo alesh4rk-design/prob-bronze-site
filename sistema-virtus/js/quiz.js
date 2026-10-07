@@ -202,11 +202,34 @@ function totalQuestoesParaModulo(modulo) {
 }
 
 // Tempo limite em segundos.
-export function tempoLimiteParaModulo(modulo) {
+// Tempo de cada prova. Testes principais (técnicos e Informática): 7min por
+// padrão, e a Gerência pode ajustar cada um entre 5 e 10min no painel
+// (`tempos` = { "Vigilante Patrimonial": 8, ... } em minutos).
+export const TEMPO_MIN_MINUTOS = 5;
+export const TEMPO_MAX_MINUTOS = 10;
+export const TEMPO_PADRAO_MINUTOS = 7;
+export function tempoLimiteParaModulo(modulo, tempos = null) {
   const m = (modulo || "").trim();
   if (ehComportamental(m)) return 210;          // 3min30
+  const ajustado = tempos && Number(tempos[m]);
+  if (ajustado) return Math.min(TEMPO_MAX_MINUTOS, Math.max(TEMPO_MIN_MINUTOS, ajustado)) * 60;
   if (m.toLowerCase() === "asg") return 480;    // 8min (regra original)
-  return 300;                                   // 5min
+  return TEMPO_PADRAO_MINUTOS * 60;             // 7min
+}
+
+// Tempos ajustados pela Gerência (guardados junto do WhatsApp do RH da
+// filial — config/whatsapp_rh_<filial> — ou no geral, config/whatsapp_rh).
+export async function obterTemposTestes(filial) {
+  try {
+    if (filial) {
+      const f = await getDoc(doc(db, "config", "whatsapp_rh_" + filial));
+      if (f.exists() && f.data().tempos) return f.data().tempos;
+    }
+    const g = await getDoc(doc(db, "config", "whatsapp_rh"));
+    return g.exists() ? (g.data().tempos || null) : null;
+  } catch (e) {
+    return null;
+  }
 }
 
 // Embaralha uma cópia do array (Fisher-Yates).

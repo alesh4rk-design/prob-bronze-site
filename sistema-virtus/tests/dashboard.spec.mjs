@@ -2130,6 +2130,33 @@ export const tests = [
   },
 
   {
+    name: 'Tempo dos testes: Gerência vê o painel (5 a 10 min, padrão 7) e salva por módulo',
+    async run({ browser, baseUrl }) {
+      const { page, erros } = await abrirDashboard(browser, baseUrl, { perfil: 'admin', resultados: [], pipeline: {} });
+      await page.evaluate(() => switchView('codigos'));
+      await page.waitForTimeout(300);
+      const info = await page.evaluate(() => {
+        const painel = document.getElementById('painelTemposTestes');
+        const sel = document.querySelector('[data-tempo-modulo="Vigilante Patrimonial"]');
+        return { visivel: painel && painel.style.display !== 'none', valor: sel && sel.value, opcoes: sel ? [...sel.options].map(o => o.value) : [] };
+      });
+      assert(info.visivel, 'painel de tempos deveria aparecer para o admin');
+      assertEqual(info.valor, '7', 'padrão do Vigilante deveria ser 7 min');
+      assertEqual(info.opcoes.join(','), '5,6,7,8,9,10', 'opções deveriam ir de 5 a 10');
+      await page.evaluate(() => {
+        const sel = document.querySelector('[data-tempo-modulo="Vigilante Patrimonial"]');
+        sel.value = '9';
+        document.getElementById('btnSalvarTempos').click();
+      });
+      await page.waitForTimeout(300);
+      const escrita = await page.evaluate(() => window.__writes.find(w => w.data && w.data.tempos));
+      assert(escrita && escrita.data.tempos['Vigilante Patrimonial'] === 9, 'deveria salvar 9 min para o Vigilante. Escrita: ' + JSON.stringify(escrita));
+      assertEqual(erros.length, 0, 'erros de JS: ' + erros.join(' | '));
+      await page.close();
+    }
+  },
+
+  {
     name: 'Vagas: quiz.html lista as vagas abertas na ficha e bloqueia o início quando não há nenhuma',
     async run({ browser, baseUrl }) {
       const page2 = await browser.newPage();

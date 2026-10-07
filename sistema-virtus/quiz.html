@@ -895,7 +895,7 @@
   <div class="panel quiz-panel">
     <div class="panel-body">
       <div class="trilha-bar" id="trilhaBadge"></div>
-      <div class="quiz-header"><span id="qThemeTag">▸ MÓDULO</span><span style="display:flex;align-items:center;gap:8px;font-size:11px;letter-spacing:1px;">⏱ TEMPO<span id="quizTimerVal">05:00</span></span></div>
+      <div class="quiz-header"><span id="qThemeTag">▸ MÓDULO</span><span style="display:flex;align-items:center;gap:8px;font-size:11px;letter-spacing:1px;">⏱ TEMPO<span id="quizTimerVal">07:00</span></span></div>
       <div style="display:flex; justify-content:space-between; align-items:center;"><div><span class="q-nivel-tag" id="qNivelTag">● FÁCIL</span></div><div>Questão <span id="qN">1</span>/<span id="qTotal">0</span></div></div>
       <div class="quiz-question" id="qText">Carregando...</div>
       <div class="opts-grid" id="opts"></div>
@@ -998,11 +998,12 @@
 </div>
 
 <script type="module">
-  import { MODULOS_SEM_TRILHA, listarModulos, carregarPerguntasDoModulo, salvarResultadoQuiz, registrarViolacao, tempoLimiteParaModulo, montarTrilha, verificarCodigoAcesso, obterNumeroWhatsappRH, enviarCurriculo, registrarAcessoCodigo, listarVagasAbertas, moduloDoCargoPretendido } from "./js/quiz.js?v=20261007";
+  import { MODULOS_SEM_TRILHA, listarModulos, carregarPerguntasDoModulo, salvarResultadoQuiz, registrarViolacao, tempoLimiteParaModulo, montarTrilha, verificarCodigoAcesso, obterNumeroWhatsappRH, obterTemposTestes, enviarCurriculo, registrarAcessoCodigo, listarVagasAbertas, moduloDoCargoPretendido } from "./js/quiz.js?v=20261007b";
 
   let globalConsentGiven = false;
   let globalLgpdAccepted = false;
   let globalCodigoAcesso = '';
+  let TEMPOS_TESTES = null; // tempos ajustados pela Gerência da filial do código
   // Link individual enviado pelo painel (ex: quiz.html?modulo=Informática&codigo=123456):
   // já preenche o código e faz SÓ aquele módulo (candidato que ficou sem a etapa).
   const PARAMS_LINK = new URLSearchParams(location.search);
@@ -1144,6 +1145,7 @@
         globalCodigoAcesso = codigo;
         globalCodigoFilial = r.filial || null;
         atualizarBotaoWhatsRH(globalCodigoFilial);
+        obterTemposTestes(globalCodigoFilial).then(t => { TEMPOS_TESTES = t; });
         // A lista de vagas só é conhecida depois de validar o código — ele
         // diz de qual filial é (ver worker/virtus-api.js), e o candidato só
         // deve ver as vagas daquela filial.
@@ -1633,7 +1635,7 @@
       S.perguntas = perguntas;
       S.respostas = new Array(perguntas.length).fill(null);
       S.idx = 0;
-      S._tempoLimite = tempoLimiteParaModulo(modulo);
+      S._tempoLimite = tempoLimiteParaModulo(modulo, TEMPOS_TESTES);
 
       atualizarBadgeTrilha();
       startMonitoring();
@@ -1679,7 +1681,8 @@
 
   function beginQuizTimer() {
     const isASG = (S.tema || '').trim().toLowerCase() === 'asg';
-    S.qLeft = S._tempoLimite || (isASG ? 480 : 300);
+    S.qLeft = S._tempoLimite || (isASG ? 480 : 420);
+    renderQuizTimer();
     clearInterval(S.qTimer);
     S.qTimer = setInterval(() => {
       if (!S.testActive) return;

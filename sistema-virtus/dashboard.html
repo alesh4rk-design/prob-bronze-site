@@ -1897,6 +1897,24 @@
       </div>
     </div>
   </div>
+
+  <div class="panel" style="margin-top:16px;display:none;" id="painelTemposTestes">
+    <div class="panel-head">
+      <div class="panel-title-sm">⏱️ Tempo dos testes</div>
+    </div>
+    <div class="panel-body" style="padding:16px 20px;">
+      <div class="warn-note" style="margin-bottom:14px;">
+        Tempo de cada teste principal, de <b>5 a 10 minutos</b> (padrão: 7 min; ASG: 8 min).
+        Vale para os candidatos que usarem códigos da sua filial. Linguagem Positiva e Atendimento ao Cliente continuam com 3min30.
+      </div>
+      <div id="temposTestesGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:8px;margin-bottom:12px;"></div>
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+        <button class="btn-act btn-approve-admin" id="btnSalvarTempos" style="height:38px;">💾 Salvar tempos</button>
+        <button class="btn-act btn-neutral" id="btnTemposPadrao" style="height:38px;">↺ Voltar ao padrão</button>
+        <span id="temposSalvoTxt" style="font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--text3);"></span>
+      </div>
+    </div>
+  </div>
 </section>
 
 <!-- ══════════ VIEW: PERGUNTAS (admin only, de admin.html / sec-perguntas) ══════════ -->
@@ -2059,12 +2077,12 @@
     assinarPendentes, assinarUsuarios, aprovarUsuario, removerUsuario, assinarFiliais, aprovarSolicitacaoGerente, definirResolverFilial,
     assinarModulos, definirModuloAtivo,
     gerarCodigoAcesso, assinarCodigosAcesso, cancelarCodigoAcesso, excluirCodigoAcesso, VALIDADE_CODIGO_MS,
-    definirNumeroWhatsapp, assinarNumeroWhatsapp,
+    definirNumeroWhatsapp, assinarNumeroWhatsapp, definirTemposTestes, assinarTemposTestes,
     assinarPipeline, registrarComentario, buscarComentarios, definirAprovacaoManual, definirBancoReserva,
     registrarDecisaoFinal, enviarParaEtapa4, buscarHistorico, registrarEntrevista, salvarFotoColaborador, registrarAvisoWhatsapp, listarAcessosCodigo,
     assinarVagas, criarVaga, encerrarVaga, reabrirVaga, excluirVaga,
     obterPesosScore, salvarPesosPadrao, salvarPesosCargo, removerPesosCargo
-  } from "./js/dashboard.js?v=20261007b";
+  } from "./js/dashboard.js?v=20261007c";
   import { db } from "./js/firebase-config.js";
   import { doc, setDoc } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
   import { PERGUNTAS_SEED } from "./js/perguntas-seed-data.js";
@@ -6406,6 +6424,43 @@
     }
   };
 
+  // ── Tempo dos testes (Gerência/Admin, 5 a 10 min por teste) ──
+  const MODULOS_COM_TEMPO = [...new Set([...CARGO_PRETENDIDO_OPCOES.map(o => o.modulo), 'Informática'])];
+  const tempoPadraoDe = m => (m === 'ASG' ? 8 : 7);
+  let TEMPOS_ATUAIS = {};
+  function renderTemposTestes() {
+    const grid = document.getElementById('temposTestesGrid');
+    if (!grid) return;
+    grid.innerHTML = MODULOS_COM_TEMPO.map(m => {
+      const atual = Number(TEMPOS_ATUAIS[m]) || tempoPadraoDe(m);
+      const opcoes = [5, 6, 7, 8, 9, 10].map(n => `<option value="${n}" ${n === atual ? 'selected' : ''}>${n} min${n === tempoPadraoDe(m) ? ' (padrão)' : ''}</option>`).join('');
+      return `<label style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 10px;border:1px solid var(--line2);border-radius:6px;font-size:13px;">
+        <span>${escapeHtml(m)}</span>
+        <select class="field-input" data-tempo-modulo="${escapeHtml(m)}" style="height:32px;width:auto;padding:0 8px;">${opcoes}</select>
+      </label>`;
+    }).join('');
+  }
+  document.getElementById('btnSalvarTempos').onclick = async () => {
+    const tempos = {};
+    document.querySelectorAll('[data-tempo-modulo]').forEach(sel => {
+      const n = Math.min(10, Math.max(5, Number(sel.value) || 7));
+      tempos[sel.dataset.tempoModulo] = n;
+    });
+    const btn = document.getElementById('btnSalvarTempos');
+    btn.disabled = true;
+    try {
+      await definirTemposTestes(tempos, me.filial || null);
+      document.getElementById('temposSalvoTxt').textContent = '✓ Salvo';
+      toast('✅ Tempos dos testes salvos', 'ok');
+    } catch (e) { console.error(e); toast('❌ Falha ao salvar: ' + e.message, 'err'); }
+    finally { btn.disabled = false; }
+  };
+  document.getElementById('btnTemposPadrao').onclick = () => {
+    TEMPOS_ATUAIS = {};
+    renderTemposTestes();
+    toast('Tempos voltaram ao padrão — toque em Salvar para confirmar', 'ok');
+  };
+
   document.getElementById('btnSalvarWhatsapp').onclick = async () => {
     const btn = document.getElementById('btnSalvarWhatsapp');
     const numero = document.getElementById('inWhatsappRH').value.replace(/\D/g, '');
@@ -6698,6 +6753,11 @@
         () => statusDot(false, 'Reconectando...'),
         FILTRO_FILIAL
       ));
+      if (['admin', 'gerencia'].includes(me && me.perfil)) {
+        document.getElementById('painelTemposTestes').style.display = '';
+        renderTemposTestes();
+        unsubs.push(assinarTemposTestes(t => { TEMPOS_ATUAIS = t || {}; renderTemposTestes(); }, (me && me.filial) || null));
+      }
       unsubs.push(assinarNumeroWhatsapp(
         numero => { GUIA_WHATSAPP = numero || ''; document.getElementById('inWhatsappRH').value = numero || ''; atualizarGuia(); },
         () => statusDot(false, 'Reconectando...'),
