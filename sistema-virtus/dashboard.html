@@ -1450,7 +1450,8 @@
   </div>
 
   <div class="panel">
-    <div class="panel-head"><div class="panel-title-sm">📋 Vagas cadastradas <span class="badge" id="vagasBadge">0</span></div></div>
+    <div class="panel-head" style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;"><div class="panel-title-sm">📋 Vagas cadastradas <span class="badge" id="vagasBadge">0</span></div>
+      <button class="btn-act-mini" id="btnExcluirEncerradas" style="display:none;">🗑 Excluir vagas encerradas</button></div>
     <div class="results-table-wrap">
       <table>
         <thead>
@@ -6156,6 +6157,12 @@
 
     const badge = document.getElementById('vagasBadge');
     if (badge) badge.textContent = ALL_VAGAS.length;
+    const btnEnc = document.getElementById('btnExcluirEncerradas');
+    if (btnEnc) {
+      const qtdEnc = ALL_VAGAS.filter(v => v.status !== 'aberta').length;
+      btnEnc.style.display = qtdEnc ? '' : 'none';
+      btnEnc.textContent = `🗑 Excluir vagas encerradas (${qtdEnc})`;
+    }
 
     if (!ALL_VAGAS.length) {
       tbody.innerHTML = '<tr><td colspan="10"><div class="empty-state"><div class="empty-icon">📌</div>Nenhuma vaga cadastrada ainda.</div></td></tr>';
@@ -6201,6 +6208,18 @@
       document.getElementById('vagaQtdInput').value = '1';
       toast(`✅ Vaga de "${cargo}" criada`, 'ok');
     } catch (e) { console.error(e); toast('❌ Falha ao criar vaga: ' + e.message, 'err'); }
+  };
+
+  document.getElementById('btnExcluirEncerradas').onclick = async () => {
+    const encerradas = ALL_VAGAS.filter(v => v.status !== 'aberta');
+    if (!encerradas.length) return;
+    const ok = await abrirConfirmacao(`Excluir as ${encerradas.length} vaga(s) encerrada(s)?\n\nOs candidatos e resultados continuam no sistema, mas as vagas somem da lista e das estatísticas. Essa ação não pode ser desfeita. As vagas abertas não são afetadas.`, { titulo: 'Excluir vagas encerradas', textoConfirmar: '🗑 Excluir todas', corConfirmar: 'btn-danger', icone: '🗑' });
+    if (!ok) return;
+    let feitas = 0, falhas = 0;
+    for (const v of encerradas) {
+      try { await excluirVaga(v.id); feitas++; } catch (e) { console.error(e); falhas++; }
+    }
+    toast(falhas ? `⚠️ ${feitas} excluída(s), ${falhas} falharam` : `✅ ${feitas} vaga(s) encerrada(s) excluída(s)`, falhas ? 'err' : 'ok');
   };
 
   window.encerrarVagaAcao = async (id, nome) => {
