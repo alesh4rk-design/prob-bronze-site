@@ -91,7 +91,21 @@ function json(obj, cors, status = 200) {
 }
 
 // ── Autenticação com o Firebase via conta de serviço (JWT assinado) ────────
+// O token do Google vale 1 hora. Antes cada pedido assinava um JWT novo (RSA)
+// e pedia outro token — pesado demais com muitos candidatos ao mesmo tempo
+// (estourava o limite de CPU do Worker e dava "erro ao carregar módulo").
+// Agora o token fica guardado na memória do Worker e é reaproveitado.
+let __tokenCache = { valor: null, expira: 0, pendente: null };
 async function getAccessToken(env) {
+  if (__tokenCache.valor && Date.now() < __tokenCache.expira) return __tokenCache.valor;
+  if (__tokenCache.pendente) return __tokenCache.pendente; // pedidos simultâneos esperam o mesmo token
+  __tokenCache.pendente = gerarAccessToken(env)
+    .then((t) => { __tokenCache.valor = t; __tokenCache.expira = Date.now() + 50 * 60 * 1000; return t; })
+    .finally(() => { __tokenCache.pendente = null; });
+  return __tokenCache.pendente;
+}
+
+async function gerarAccessToken(env) {
   const sa = JSON.parse(env.FIREBASE_SERVICE_ACCOUNT);
   const now = Math.floor(Date.now() / 1000);
   const header = { alg: "RS256", typ: "JWT" };
@@ -454,7 +468,27 @@ function embaralhar(arr) {
   return a;
 }
 
+// Cache de 2 minutos (memória do Worker): centenas de candidatos pedem a mesma
+// lista/perguntas — sem isso cada pedido lia o Firestore de novo.
+const __cachePerguntas = new Map();
+function perguntaDoModuloCache(env, token, modulo) {
+  const c = __cachePerguntas.get(modulo);
+  if (c && Date.now() - c.em < 2 * 60 * 1000) return c.promessa; // pedidos simultâneos dividem a mesma leitura
+  const promessa = firestoreGet(env, token, `perguntas/${encodeURIComponent(modulo)}`);
+  __cachePerguntas.set(modulo, { promessa, em: Date.now() });
+  promessa.catch(() => { __cachePerguntas.delete(modulo); }); // falhou: não guarda o erro
+  return promessa;
+}
+let __cacheModulos = { dados: null, em: 0, pendente: null };
+
 async function handleListarModulos(env, cors) {
+  if (__cacheModulos.dados && Date.now() - __cacheModulos.em < 60 * 1000) return json(__cacheModulos.dados, cors);
+  if (__cacheModulos.pendente) { const d = await __cacheModulos.pendente; return json(d, cors); }
+  __cacheModulos.pendente = calcularModulos(env).finally(() => { __cacheModulos.pendente = null; });
+  return json(await __cacheModulos.pendente, cors);
+}
+
+async function calcularModulos(env) {
   const token = await getAccessToken(env);
   const resp = await fetch(`${FIRESTORE_BASE(env.FIREBASE_PROJECT_ID)}/perguntas`, {
     headers: { Authorization: `Bearer ${token}` },
@@ -471,7 +505,9 @@ async function handleListarModulos(env, cors) {
     modulos.push({ nome, total: qtd });
     total += qtd;
   }
-  return json({ modulos, total_perguntas: total }, cors);
+  const resposta = { modulos, total_perguntas: total };
+  __cacheModulos = { dados: resposta, em: Date.now(), pendente: null };
+  return resposta;
 }
 
 async function handleCarregarPerguntas(request, env, cors) {
@@ -479,7 +515,7 @@ async function handleCarregarPerguntas(request, env, cors) {
   if (!modulo) return json({ ok: false, erro: "modulo_invalido" }, cors, 400);
 
   const token = await getAccessToken(env);
-  const doc = await firestoreGet(env, token, `perguntas/${encodeURIComponent(modulo)}`);
+  const doc = await perguntaDoModuloCache(env, token, modulo);
   // Módulos da trilha obrigatória (Informática, Linguagem Positiva,
   // Atendimento) carregam mesmo se alguém desligou no painel — todo candidato
   // precisa fazer.

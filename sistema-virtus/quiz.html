@@ -1072,7 +1072,7 @@
 
   async function loadModules() {
     try {
-      const data = await listarModulos();
+      const data = await tentarVariasVezes(() => listarModulos(), 5);
       const sel = document.getElementById('inTema');
       // Apelidos exibidos ao candidato para deixar mais claro a que função o
       // módulo se aplica (o valor salvo/usado internamente continua sendo o
@@ -1095,7 +1095,8 @@
       console.error(e);
       document.getElementById('serverStatusBar').className = 'server-status-bar offline';
       document.getElementById('serverStatusText').textContent = 'Falha ao conectar ao servidor — verifique js/firebase-config.js';
-      document.querySelector('.loading-text').textContent = 'Erro ao carregar módulos.';
+      const txt = document.querySelector('.loading-text');
+      txt.innerHTML = 'Não foi possível carregar os testes.<br>Verifique a internet e toque no botão abaixo.<br><button class="btn btn-amber" style="margin-top:14px;" onclick="location.reload()">🔄 Tentar de novo</button>';
     }
   }
 
