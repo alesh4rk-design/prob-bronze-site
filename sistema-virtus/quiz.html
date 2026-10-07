@@ -796,7 +796,7 @@
       </div>
 
       <div class="field-group">
-        <span class="field-label">Anexar currículo * <span style="color:var(--text4);">(PDF ou foto, até 5 MB)</span></span>
+        <span class="field-label">Anexar currículo <span style="color:var(--text4);">(opcional — PDF ou foto, até 5 MB)</span></span>
         <label class="file-drop" id="curriculoDrop" for="inCurriculo">
           <span id="curriculoDropTxt">📎 Toque para anexar o currículo</span>
         </label>
@@ -1495,8 +1495,6 @@
     const indicadoPor = indicado ? document.getElementById('inIndicadoPor').value.trim() : '';
     if (indicado && indicadoPor.length < 3) return falha('Informe o nome completo de quem indicou', 'inIndicadoPor');
 
-    const inCurr = document.getElementById('inCurriculo');
-    if (!MODULO_UNICO && (!inCurr.files || !inCurr.files[0])) return falha('Anexe o seu currículo', 'curriculoDrop');
 
     const pillCnh = document.querySelector('#inCnh .pill.sel');
     const cnh = pillCnh ? pillCnh.dataset.val : null;
