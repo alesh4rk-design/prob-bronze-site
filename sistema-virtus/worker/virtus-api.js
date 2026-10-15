@@ -395,9 +395,15 @@ function limparFicha(c, codigoConferido, origemWorker) {
 // Código individual (botão "Enviar testes" do painel) já sabe de quem é:
 // o resultado vai SEMPRE para o candidato original (mesmo nome/CPF/ficha),
 // não importa o que for digitado — assim não nasce um candidato duplicado.
-async function identidadeDoCodigo(env, token, doc) {
+// `enviado` = o que o próprio candidato digitou ({ cpf, nome }). Se ele digitou
+// OUTRO CPF, é outra pessoa usando um código que não era dela (ex: um código
+// individual usado como código do dia): NÃO troca a identidade, senão o
+// resultado dele iria parar na ficha do candidato original.
+async function identidadeDoCodigo(env, token, doc, enviado = null) {
   if (!doc || (!doc.candidato_cpf && !doc.candidato_nome)) return null;
   const cpf = doc.candidato_cpf ? String(doc.candidato_cpf).replace(/\D/g, "").slice(0, 11) : null;
+  const cpfEnviado = enviado && enviado.cpf ? String(enviado.cpf).replace(/\D/g, "").slice(0, 11) : "";
+  if (cpfEnviado.length === 11 && cpf && cpfEnviado !== cpf) return null;
   let ficha = null;
   if (cpf) {
     try {
@@ -565,7 +571,7 @@ async function handleSubmeterQuiz(request, env, cors) {
 
   let ficha = limparFicha(candidato, conf.codigo, new URL(request.url).origin);
   let nomeFinal = texto(nome, 120) || "";
-  const ident = await identidadeDoCodigo(env, token, conf.doc);
+  const ident = await identidadeDoCodigo(env, token, conf.doc, { cpf: candidato && candidato.cpf });
   if (ident) {
     nomeFinal = ident.nome || nomeFinal;
     ficha = { ...(ident.ficha || ficha || {}), nome: nomeFinal, cpf: ident.cpf || (ficha && ficha.cpf) || null, codigoAcesso: conf.codigo };
@@ -607,7 +613,7 @@ async function handleSubmeterDigitacao(request, env, cors) {
   const conf = await conferirCodigo(env, token, r.codigoAcesso, TOLERANCIA_ENVIO_MS);
   if (!conf.ok) return json({ ok: false, erro: "codigo_invalido", motivo: conf.motivo }, cors, 403);
 
-  const identD = await identidadeDoCodigo(env, token, conf.doc);
+  const identD = await identidadeDoCodigo(env, token, conf.doc, { cpf: r.cpf });
   const nome = (identD && identD.nome) || texto(r.nome, 120);
   const cpf = (identD && identD.cpf) || texto(String(r.cpf || "").replace(/\D/g, ""), 11) || null;
   if (!nome) return json({ ok: false, erro: "dados_invalidos" }, cors, 400);
@@ -703,7 +709,7 @@ async function handleRegistrarAcesso(request, env, cors) {
   const token = await getAccessToken(env);
   const conf = await conferirCodigo(env, token, a.codigoAcesso, TOLERANCIA_ENVIO_MS);
   if (!conf.ok) return json({ ok: false, erro: "codigo_invalido", motivo: conf.motivo }, cors, 403);
-  const identA = await identidadeDoCodigo(env, token, conf.doc);
+  const identA = await identidadeDoCodigo(env, token, conf.doc, { cpf: a.cpf });
   const nome = (identA && identA.nome) || texto(a.nome, 120);
   const cpf = (identA && identA.cpf) || texto(String(a.cpf || "").replace(/\D/g, ""), 11) || null;
   if (!nome) return json({ ok: false, erro: "dados_invalidos" }, cors, 400);
@@ -723,7 +729,10 @@ async function handleRegistrarViolacao(request, env, cors) {
   const conf = await conferirCodigo(env, token, v.codigoAcesso, TOLERANCIA_ENVIO_MS);
   if (!conf.ok) return json({ ok: false, erro: "codigo_invalido", motivo: conf.motivo }, cors, 403);
 
-  const nome = (conf.doc && conf.doc.candidato_nome ? texto(conf.doc.candidato_nome, 120) : null) || texto(v.nome, 120);
+  const primeiro = (n) => normNome(n).split(/\s+/)[0] || "";
+  const nomeCodigo = conf.doc && conf.doc.candidato_nome ? texto(conf.doc.candidato_nome, 120) : null;
+  const mesmaPessoa = nomeCodigo && (!v.nome || primeiro(v.nome) === primeiro(nomeCodigo));
+  const nome = (mesmaPessoa ? nomeCodigo : null) || texto(v.nome, 120);
   const tipo = texto(v.tipo, 60);
   if (!nome || !tipo) return json({ ok: false, erro: "dados_invalidos" }, cors, 400);
 

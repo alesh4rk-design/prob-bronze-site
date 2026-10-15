@@ -2089,7 +2089,7 @@
     registrarDecisaoFinal, enviarParaEtapa4, buscarHistorico, registrarEntrevista, salvarFotoColaborador, registrarAvisoWhatsapp, listarAcessosCodigo,
     assinarVagas, criarVaga, encerrarVaga, reabrirVaga, excluirVaga,
     obterPesosScore, salvarPesosPadrao, salvarPesosCargo, removerPesosCargo
-  } from "./js/dashboard.js?v=20261008a";
+  } from "./js/dashboard.js?v=20261015a";
   import { db } from "./js/firebase-config.js";
   import { doc, setDoc } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
   import { PERGUNTAS_SEED } from "./js/perguntas-seed-data.js";
@@ -6417,6 +6417,13 @@
   // (bom para dias com 20+ pessoas), expira sozinho 4h depois de gerado.
   document.getElementById('btnGerarCodigo').onclick = async () => {
     const btn = document.getElementById('btnGerarCodigo');
+    // Já existe um código do dia ativo? Evita gerar vários sem querer (e a
+    // confusão de "qual código eu entrego?").
+    const jaAtivo = (GUIA_CODIGOS || []).find(c => c.tipo !== 'individual' && statusCodigo(c).ok);
+    if (jaAtivo) {
+      const ok = await abrirConfirmacao(`Já existe o código ${jaAtivo.codigo} ativo (vale por 4 horas).\n\nPode entregar o mesmo código para todos os candidatos. Gerar mais um código mesmo assim?`, { titulo: 'Já tem um código ativo', textoConfirmar: 'Gerar outro', corConfirmar: 'btn-approve-admin', icone: '🔑' });
+      if (!ok) return;
+    }
     btn.disabled = true;
     try {
       const codigo = await gerarCodigoAcesso(me.usuario, me.filial, me.filial_nome);
@@ -6506,7 +6513,7 @@
   }
 
   function renderCodigos(lista) {
-    const ativos = lista.filter(c => statusCodigo(c).ok);
+    const ativos = lista.filter(c => statusCodigo(c).ok && c.tipo !== 'individual');
     document.getElementById('cntCodigosDisp').textContent = ativos.length;
     const tbody = document.getElementById('codigosTableBody');
     ligarAcoesDelegadas('codigosTableBody');
@@ -6521,7 +6528,7 @@
         : '') +
         `<button class="btn-act btn-neutral" data-acao="excluirCodigo" data-codigo="${escapeHtml(c.codigo)}" title="Remove este código da lista">🗑 Excluir</button>`;
       return `<tr>
-        <td style="font-family:'Share Tech Mono',monospace;font-weight:700;letter-spacing:2px;">${escapeHtml(c.codigo)}</td>
+        <td style="font-family:'Share Tech Mono',monospace;font-weight:700;letter-spacing:2px;">${escapeHtml(c.codigo)}${c.tipo === 'individual' ? `<div style="font-family:Inter,sans-serif;font-size:10px;font-weight:600;letter-spacing:0;color:var(--amber);white-space:normal;max-width:150px;" title="Código gerado pelo botão Enviar testes. Vale só para esse candidato — não entregue aos outros.">🔒 Individual${c.candidato_nome ? ' · ' + escapeHtml(c.candidato_nome) : ''}</div>` : ''}</td>
         <td style="color:${st.cor};font-weight:700;">${st.txt}</td>
         <td><button class="btn-act btn-neutral" data-acao="verUsosCodigo" data-codigo="${escapeHtml(c.codigo)}" title="Ver quem usou este código">${candidatosDoCodigo(c.codigo)} 👁</button>${(c.usos ?? 0) > 0 ? `<div style="font-size:10px;color:var(--text3);margin-top:3px;" title="Quantas vezes o código foi digitado (inclui quem só entrou e não começou o teste)">${c.usos} entrada(s)</div>` : ''}</td>
         <td>${escapeHtml(c.criado_por || '—')}</td>

@@ -2159,6 +2159,35 @@ export const tests = [
   },
 
   {
+    name: 'Códigos individuais (Enviar testes) aparecem com selo, não contam como código do dia, e gerar um segundo código do dia pede confirmação',
+    async run({ browser, baseUrl }) {
+      const agora = new Date().toISOString();
+      const codigosAcesso = [
+        { codigo: '111111', ativo: true, usos: 0, criado_por: 'Gerente', criado_em: agora },
+        { codigo: '222222', ativo: true, usos: 0, criado_por: 'Admin', criado_em: agora, tipo: 'individual', candidato_nome: 'Jones Freitas', validade_apos_uso_min: 30 }
+      ];
+      const { page, erros } = await abrirDashboard(browser, baseUrl, { perfil: 'admin', resultados: [], pipeline: {}, codigosAcesso });
+      await page.evaluate(() => switchView('codigos'));
+      await page.waitForTimeout(400);
+      const info = await page.evaluate(() => ({
+        ativos: document.getElementById('cntCodigosDisp').textContent,
+        linhas: [...document.querySelectorAll('#codigosTableBody tr')].map(tr => tr.textContent.replace(/\s+/g, ' ').trim())
+      }));
+      assertEqual(info.ativos, '1', 'só o código do dia deve contar como ativo. Veio: ' + info.ativos);
+      const ind = info.linhas.find(l => l.includes('222222')) || '';
+      assert(/Individual/.test(ind) && /Jones Freitas/.test(ind), 'código individual deveria ter o selo e o nome. Linha: ' + ind);
+      assert(!/Individual/.test(info.linhas.find(l => l.includes('111111')) || ''), 'código do dia não deve ter selo de individual');
+      // já existe código do dia ativo: pede confirmação antes de gerar outro
+      await page.evaluate(() => document.getElementById('btnGerarCodigo').click());
+      await page.waitForTimeout(400);
+      const modal = await page.evaluate(() => document.body.innerText);
+      assert(/Já tem um código ativo/.test(modal) && /111111/.test(modal), 'deveria avisar que já existe o código 111111 ativo');
+      assertEqual(erros.length, 0, 'erros de JS: ' + erros.join(' | '));
+      await page.close();
+    }
+  },
+
+  {
     name: 'Tempo dos testes: Gerência vê o painel (5 a 10 min, padrão 7) e salva por módulo',
     async run({ browser, baseUrl }) {
       const { page, erros } = await abrirDashboard(browser, baseUrl, { perfil: 'admin', resultados: [], pipeline: {} });
