@@ -1076,6 +1076,7 @@
     </div>
     <div class="modal-actions">
       <button class="btn-act btn-neutral" style="padding:12px 20px;border-radius:6px;" onclick="fecharCandidato()">Fechar</button>
+      <button class="btn-act btn-neutral" id="btnRemoverDuplicados" style="display:none;padding:12px 20px;border-radius:6px;" onclick="removerDuplicadosCandidatoAtual()">🧹 Remover testes duplicados</button>
       <button class="btn-act btn-danger" id="btnExcluirCandidato" style="padding:12px 20px;border-radius:6px;margin-left:auto;" onclick="excluirCandidatoAtual()">🗑 Excluir candidato</button>
     </div>
   </div>
@@ -2089,7 +2090,7 @@
     registrarDecisaoFinal, enviarParaEtapa4, buscarHistorico, registrarEntrevista, salvarFotoColaborador, registrarAvisoWhatsapp, listarAcessosCodigo,
     assinarVagas, criarVaga, encerrarVaga, reabrirVaga, excluirVaga,
     obterPesosScore, salvarPesosPadrao, salvarPesosCargo, removerPesosCargo
-  } from "./js/dashboard.js?v=20261015a";
+  } from "./js/dashboard.js?v=20261015b";
   import { db } from "./js/firebase-config.js";
   import { doc, setDoc } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
   import { PERGUNTAS_SEED } from "./js/perguntas-seed-data.js";
@@ -2426,6 +2427,41 @@
     return { score, cargoPretendido, temOverride };
   }
 
+  // Testes de quiz repetidos por engano (mesmo módulo, mesma nota, enviados com
+  // poucos minutos de diferença — o reenvio automático quando a internet falha
+  // podia gravar duas vezes). Mantém o primeiro e marca os outros como sobra.
+  function duplicadosDoCandidato(chave) {
+    const quizzes = tentativasDe(chave).filter(t => t.tipo === 'quiz' && t.data_conclusao);
+    const porModulo = {};
+    quizzes.forEach(t => { (porModulo[t.modulo] = porModulo[t.modulo] || []).push(t); });
+    const sobras = [];
+    for (const lista of Object.values(porModulo)) {
+      lista.sort((a, b) => String(a.data_conclusao).localeCompare(String(b.data_conclusao)));
+      let anterior = null;
+      for (const t of lista) {
+        if (anterior && t.acertos === anterior.acertos && t.total === anterior.total &&
+            Math.abs(new Date(t.data_conclusao) - new Date(anterior.data_conclusao)) <= 3 * 60 * 1000) {
+          sobras.push(t); // igual ao anterior: duplicado
+        } else {
+          anterior = t;
+        }
+      }
+    }
+    return sobras;
+  }
+  window.removerDuplicadosCandidatoAtual = async function () {
+    const sobras = duplicadosDoCandidato(CAND_ATUAL);
+    if (!sobras.length) { toast('Nenhum teste duplicado encontrado', 'ok'); return; }
+    const mods = [...new Set(sobras.map(t => t.modulo))].join(', ');
+    const ok = await abrirConfirmacao(`Remover ${sobras.length} teste(s) duplicado(s)?\n\nMódulo(s): ${mods}.\nSão testes com a mesma nota, feitos com poucos minutos de diferença. O primeiro de cada um é mantido.`, { titulo: 'Remover duplicados', textoConfirmar: '🧹 Remover', corConfirmar: 'btn-danger', icone: '🧹' });
+    if (!ok) return;
+    try {
+      for (const t of sobras) await excluirResultado(t.id);
+      toast(`🧹 ${sobras.length} teste(s) duplicado(s) removido(s)`, 'ok');
+      renderModalCandidato();
+    } catch (e) { console.error(e); toast('❌ Falha ao remover: ' + e.message, 'err'); }
+  };
+
   window.abrirCandidato = function (chave) {
     CAND_ATUAL = chave;
     FILTRO_Q = 'todas';
@@ -2433,6 +2469,12 @@
     document.getElementById('fqErros').classList.remove('active');
     document.getElementById('fqAcertos').classList.remove('active');
     renderModalCandidato();
+    const btnDup = document.getElementById('btnRemoverDuplicados');
+    if (btnDup) {
+      const n = duplicadosDoCandidato(chave).length;
+      btnDup.style.display = n ? '' : 'none';
+      btnDup.textContent = `🧹 Remover ${n} teste(s) duplicado(s)`;
+    }
     document.getElementById('candModal').classList.add('show');
     document.body.style.overflow = 'hidden';
   };

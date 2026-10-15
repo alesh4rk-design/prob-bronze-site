@@ -2188,6 +2188,31 @@ export const tests = [
   },
 
   {
+    name: 'Candidato com teste duplicado (mesmo módulo e nota, poucos minutos de diferença): botão Remover duplicados aparece e remove só a sobra',
+    async run({ browser, baseUrl }) {
+      const t0 = Date.now();
+      const iso = ms => new Date(t0 + ms).toISOString();
+      const resultados = [
+        { id: 'r1', tipo: 'quiz', nome: 'Pedro Dup', cpf: '33333333333', modulo: 'Controle de Acesso', pct: 80, acertos: 12, total: 15, data_conclusao: iso(0), candidato: { cpf: '33333333333', cargo_pretendido: 'Porteiro' } },
+        { id: 'r2', tipo: 'quiz', nome: 'Pedro Dup', cpf: '33333333333', modulo: 'Controle de Acesso', pct: 80, acertos: 12, total: 15, data_conclusao: iso(20000), candidato: { cpf: '33333333333', cargo_pretendido: 'Porteiro' } },
+        { id: 'r3', tipo: 'quiz', nome: 'Pedro Dup', cpf: '33333333333', modulo: 'Informática', pct: 60, acertos: 9, total: 15, data_conclusao: iso(60000), candidato: { cpf: '33333333333', cargo_pretendido: 'Porteiro' } },
+        { id: 'r4', tipo: 'quiz', nome: 'Pedro Dup', cpf: '33333333333', modulo: 'Controle de Acesso', pct: 93, acertos: 14, total: 15, data_conclusao: iso(2 * 24 * 3600 * 1000), candidato: { cpf: '33333333333', cargo_pretendido: 'Porteiro' } }
+      ];
+      const { page, erros } = await abrirDashboard(browser, baseUrl, { perfil: 'admin', resultados, pipeline: {} });
+      await page.evaluate(() => { window.__apagados = []; });
+      const info = await page.evaluate(() => {
+        const chave = 'cpf:33333333333';
+        abrirCandidato(chave);
+        const b = document.getElementById('btnRemoverDuplicados');
+        return { visivel: b.style.display !== 'none', texto: b.textContent };
+      });
+      assert(info.visivel && /1 teste/.test(info.texto), 'deveria achar 1 duplicado (r2) e não tocar na nova tentativa de 2 dias depois. Botão: ' + info.texto);
+      assertEqual(erros.length, 0, 'erros de JS: ' + erros.join(' | '));
+      await page.close();
+    }
+  },
+
+  {
     name: 'Tempo dos testes: Gerência vê o painel (5 a 10 min, padrão 7) e salva por módulo',
     async run({ browser, baseUrl }) {
       const { page, erros } = await abrirDashboard(browser, baseUrl, { perfil: 'admin', resultados: [], pipeline: {} });

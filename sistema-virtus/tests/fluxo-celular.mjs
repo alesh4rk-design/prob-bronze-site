@@ -22,14 +22,18 @@ async function rodar(nome, query, esperado, viewport, colorScheme = 'light', can
   await page.route('**/firebasejs/**', r => { const k = Object.keys(map).find(x => r.request().url().endsWith(x)); return k ? r.fulfill({ status: 200, contentType: 'application/javascript', body: map[k] }) : r.abort(); });
   await page.route('**/fonts.googleapis.com/**', r => r.fulfill({ status: 200, contentType: 'text/css', body: '' }));
   await page.route('**/cloudflareinsights.com/**', r => r.fulfill({ status: 200, contentType: 'application/javascript', body: '' }));
-  const carregados = [], enviados = [], nomesEnviados = [];
+  const carregados = [], enviados = [], nomesEnviados = [], idsPorModulo = {}, jaFalhou = new Set();
   await page.route('**/virtus-api.ale-sh4rk.workers.dev/**', async r => {
     const u = r.request().url(); const body = r.request().postDataJSON ? (() => { try { return r.request().postDataJSON(); } catch { return {}; } })() : {};
     const j = o => r.fulfill({ status: 200, contentType: 'application/json', headers: { 'Access-Control-Allow-Origin': '*' }, body: JSON.stringify(o) });
     if (u.endsWith('/listar-modulos')) return j({ modulos: [{ nome: 'Vigilante Patrimonial', total: 30 }, { nome: 'Informática', total: 29 }], total_perguntas: 59 });
     if (u.endsWith('/verificar-codigo')) return j({ ok: true, filial: null, candidatoNome });
     if (u.endsWith('/carregar-perguntas')) { carregados.push(body.modulo); const comp = ['Linguagem Positiva', 'Atendimento ao Cliente'].includes(body.modulo); return j({ ok: true, perguntas: PERG(comp ? 10 : 15) }); }
-    if (u.endsWith('/submeter-quiz')) { enviados.push(body.modulo); nomesEnviados.push(body.nome); return j({ ok: true, acertos: 5, total: 10, pct: 50, id: 'r' + enviados.length }); }
+    if (u.endsWith('/submeter-quiz')) {
+      // Simula internet que cai na 1ª tentativa de envio de cada prova (depois do servidor já ter recebido)
+      (idsPorModulo[body.modulo] = idsPorModulo[body.modulo] || []).push(body.envioId);
+      if (!jaFalhou.has(body.modulo)) { jaFalhou.add(body.modulo); return r.abort('failed'); }
+      enviados.push(body.modulo); nomesEnviados.push(body.nome); return j({ ok: true, acertos: 5, total: 10, pct: 50, id: 'r' + enviados.length }); }
     return j({ ok: true });
   });
   const erros = [];
@@ -99,14 +103,19 @@ async function rodar(nome, query, esperado, viewport, colorScheme = 'light', can
     }
     await page.click('#btnFinish');
     await page.click('#finishConfirmBtn');
-    await page.waitForTimeout(900);
+    // espera o envio terminar (inclui o reenvio após a falha simulada) sem esperar o redirecionamento
+    await page.waitForFunction(() => { const a = document.querySelector('.screen.active'); return a && (a.id === 's-transicao' || a.id === 's-result-quiz'); }, null, { timeout: 15000 });
+    await page.waitForTimeout(300);
   }
   await page.waitForTimeout(500);
+  if (process.env.DEPURAR) console.log('DEPURAÇÃO telas:', JSON.stringify(await page.evaluate(() => [...document.querySelectorAll('.screen')].map(x => x.id + ':' + (x.classList.contains('active') ? 'ATIVA' : '-') + ':' + getComputedStyle(x).opacity))), 'erros:', JSON.stringify(erros));
   await conferirTela('Resultado');
   const final = await page.evaluate(() => document.querySelector('.screen.active')?.id);
   ok(final === 's-result-quiz', `terminou na tela de resultado (${final})`);
   ok(JSON.stringify(carregados) === JSON.stringify(esperado), `provas feitas na ordem certa: ${carregados.join(' → ')}`);
   ok(JSON.stringify(enviados) === JSON.stringify(esperado), `todas as provas enviadas (${enviados.length}/${esperado.length})`);
+  const todosComId = Object.values(idsPorModulo).every(ids => ids.length >= 2 && ids.every(i => i && i === ids[0]));
+  ok(todosComId, 'reenvio após falha usa o MESMO identificador (não duplica): ' + Object.entries(idsPorModulo).map(([m, ids]) => m + '×' + ids.length).join(', '));
   if (candidatoNome) ok(nomesEnviados.every(n => n === candidatoNome), `resultados enviados no nome do candidato original (${[...new Set(nomesEnviados)].join(', ')})`);
   ok(erros.length === 0, 'sem erros de JavaScript' + (erros.length ? ': ' + erros.join(' | ') : ''));
   await page.close();

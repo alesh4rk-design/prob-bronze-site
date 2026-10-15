@@ -207,12 +207,18 @@ async function firestoreGet(env, token, path) {
   return fromFirestoreFields(data.fields);
 }
 
-async function firestoreCreate(env, token, collection, data) {
-  const resp = await fetch(`${FIRESTORE_BASE(env.FIREBASE_PROJECT_ID)}/${collection}`, {
+// `docId` (opcional): grava com um id fixo. Se o mesmo envio chegar de novo
+// (a tela repete o envio quando a internet falha), o Firestore responde 409
+// "já existe" e tratamos como sucesso — assim o reenvio nunca duplica.
+async function firestoreCreate(env, token, collection, data, docId = null) {
+  const resp = await fetch(`${FIRESTORE_BASE(env.FIREBASE_PROJECT_ID)}/${collection}${docId ? `?documentId=${encodeURIComponent(docId)}` : ""}`, {
     method: "POST",
     headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
     body: JSON.stringify({ fields: toFirestoreFields(data) }),
   });
+  if (resp.status === 409 && docId) {
+    return { name: `${collection}/${docId}`, jaExistia: true };
+  }
   if (!resp.ok) throw new Error(`Firestore CREATE falhou (${resp.status}): ${await resp.text()}`);
   return resp.json();
 }
@@ -594,7 +600,8 @@ async function handleSubmeterQuiz(request, env, cors) {
     filial: conf.doc.filial || null,
     filial_nome: conf.doc.filial_nome || null,
   };
-  const created = await firestoreCreate(env, token, "resultados", resultadoDoc);
+  const envioId = typeof body.envioId === "string" && /^[A-Za-z0-9_-]{8,64}$/.test(body.envioId) ? "q_" + body.envioId : null;
+  const created = await firestoreCreate(env, token, "resultados", resultadoDoc, envioId);
   const id = created.name.split("/").pop();
   return json({ ok: true, acertos, total, pct, id }, cors);
 }

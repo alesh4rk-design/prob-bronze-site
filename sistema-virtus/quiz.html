@@ -1006,7 +1006,7 @@
 </div>
 
 <script type="module">
-  import { MODULOS_SEM_TRILHA, listarModulos, carregarPerguntasDoModulo, salvarResultadoQuiz, registrarViolacao, tempoLimiteParaModulo, montarTrilha, verificarCodigoAcesso, obterNumeroWhatsappRH, obterTemposTestes, enviarCurriculo, registrarAcessoCodigo, listarVagasAbertas, moduloDoCargoPretendido } from "./js/quiz.js?v=20261008d";
+  import { MODULOS_SEM_TRILHA, listarModulos, carregarPerguntasDoModulo, salvarResultadoQuiz, registrarViolacao, tempoLimiteParaModulo, montarTrilha, verificarCodigoAcesso, obterNumeroWhatsappRH, obterTemposTestes, enviarCurriculo, registrarAcessoCodigo, listarVagasAbertas, moduloDoCargoPretendido } from "./js/quiz.js?v=20261015a";
 
   let globalConsentGiven = false;
   let globalLgpdAccepted = false;
@@ -1667,6 +1667,7 @@
     S.tema = modulo;
     toast(`🔄 Carregando ${modulo}...`, '');
     try {
+      S.envioId = (window.crypto && crypto.randomUUID ? crypto.randomUUID() : (Date.now().toString(36) + Math.random().toString(36).slice(2))).replace(/[^A-Za-z0-9_-]/g, '');
       const perguntas = await tentarVariasVezes(() => carregarPerguntasDoModulo(modulo));
       S.perguntas = perguntas;
       S.respostas = new Array(perguntas.length).fill(null);
@@ -1794,6 +1795,9 @@
   };
 
   async function endQuiz() {
+    // Evita enviar duas vezes por toque duplo em "Finalizar"
+    if (S._enviandoProva) return;
+    S._enviandoProva = true;
     clearInterval(S.qTimer);
     stopMonitoring();
     toast('📤 Enviando respostas e calculando resultado...', '');
@@ -1801,7 +1805,7 @@
       const { acertos, total, pct } = await tentarVariasVezes(() => salvarResultadoQuiz({
         nome: S.nome, modulo: S.tema, dataPreferencia: S.dataPref,
         perguntas: S.perguntas, respostas: S.respostas,
-        candidato: S.candidato
+        candidato: S.candidato, envioId: S.envioId
       }));
       playDone();
       S.resultadosTrilha.push({ modulo: S.tema, acertos, total, pct });
@@ -1819,6 +1823,8 @@
     } catch (err) {
       console.error(err);
       toast(`❌ Falha ao enviar (${err.message}). Verifique a internet e toque em Finalizar de novo — suas respostas continuam aqui.`, 'err'); playErr();
+    } finally {
+      S._enviandoProva = false; // libera pra próxima prova (ou pra tentar de novo se falhou)
     }
   }
 

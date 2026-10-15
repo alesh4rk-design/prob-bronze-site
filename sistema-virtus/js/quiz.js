@@ -294,7 +294,7 @@ export async function carregarPerguntasDoModulo(modulo) {
 // corrige e grava o resultado usando uma conta de serviço — o candidato não
 // tem como fabricar uma nota fake, porque as regras do Firestore bloqueiam
 // escrita direta de resultado tipo "quiz" (ver firestore.rules).
-export async function salvarResultadoQuiz({ nome, modulo, dataPreferencia, perguntas, respostas, candidato }) {
+export async function salvarResultadoQuiz({ nome, modulo, dataPreferencia, perguntas, respostas, candidato, envioId }) {
   const resp = await fetchComTempo(`${API_BASE}/submeter-quiz`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -304,6 +304,9 @@ export async function salvarResultadoQuiz({ nome, modulo, dataPreferencia, pergu
       respostas,
       nome,
       candidato: candidato || null,
+      // Identificador único DESTE envio: se a tela repetir o envio (internet
+      // falhou), o servidor reconhece e não grava o resultado duas vezes.
+      envioId: envioId || null,
       dataPreferencia: dataPreferencia || "",
       // O Worker confere o código de novo no envio (não só na tela de
       // entrada) — sem ele, o resultado é recusado.
