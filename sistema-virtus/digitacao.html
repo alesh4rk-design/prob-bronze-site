@@ -470,6 +470,17 @@ body.modo-celular .btn-row .btn { padding:8px 14px; font-size:12px; }
   </div>
 </div>
 
+<!-- Quem chega do quiz no celular só libera a digitação depois de tocar em OK -->
+<div class="ready-overlay" id="gateCelular" style="z-index:650">
+  <div class="ready-box" style="text-align:center">
+    <div class="ready-title">✅ Questões concluídas</div>
+    <div class="ready-name" style="font-size:22px">Agora é a digitação</div>
+    <div class="ready-label" style="margin:14px 0 4px;text-transform:none;letter-spacing:0;font-size:14px;line-height:1.5">O teste de digitação é cronometrado e feito aqui no celular. Quando estiver pronto(a), toque em <b>OK</b> para liberar a digitação.</div>
+    <button class="ready-btn" id="gateCelularOk" disabled>Preparando…</button>
+    <div class="ready-tip">Nada começa antes do seu OK.</div>
+  </div>
+</div>
+
 <div class="countdown-overlay" id="countdownOverlay">
   <div class="countdown-num" id="countdownNum">3</div>
   <div class="countdown-lbl">Prepare-se para digitar</div>
@@ -1103,6 +1114,15 @@ validateForm();
   setToday();
   validateForm();
 
+  // Não inicia nada sozinho: mostra o aviso e espera o candidato tocar em OK.
+  const gate = document.getElementById('gateCelular');
+  const gateOk = document.getElementById('gateCelularOk');
+  gate.classList.add('show');
+  gateOk.onclick = () => {
+    gate.classList.remove('show');
+    startTest(); // segue o fluxo normal: mostra o texto e o "ESTOU PRONTO"
+  };
+
   // Revalida o código no servidor (não confia cegamente no que veio da
   // outra página) — se passar, pula direto pro teste sem mostrar o modal;
   // se falhar (ex: expirou nesse meio-tempo), cai no fluxo manual normal.
@@ -1112,6 +1132,8 @@ validateForm();
       if (r.ok) { codigoValidado = true; codigoAcessoAtual = dados.codigoAcesso; codigoFilialAtual = r.filial || null; }
     } catch (e) { /* mantém codigoValidado = false, pede o código na hora de iniciar */ }
   }
+  gateOk.disabled = false;
+  gateOk.textContent = 'OK — liberar a digitação';
 })();
 
 // ── Status: "online" = conseguimos consultar o Firestore ──────────────
