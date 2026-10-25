@@ -151,6 +151,10 @@ export async function deleteDoc(ref){
     delete window.__VAGAS[id];
     if (window.__notifyVagas) window.__notifyVagas();
   }
+  if (ref.__doc && ref.__doc.startsWith('pipeline/')) {
+    delete window.__PIPE[ref.__doc.split('/')[1]];
+    if (window.__notifyPipeline) window.__notifyPipeline();
+  }
 }
 
 // Subcoleções (ex: pipeline/{id}/historico) — guardadas à parte de

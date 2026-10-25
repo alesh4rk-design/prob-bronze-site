@@ -556,6 +556,117 @@ export const tests = [
   },
 
   {
+    name: 'Excluir candidato apaga também o andamento no processo (não sobra nome solto); Efetivo não tem botão de excluir e a exclusão é bloqueada',
+    async run({ browser, baseUrl }) {
+      const resultados = [
+        { id: '1', tipo: 'quiz', nome: 'Vai Excluir', cpf: '86000000001', modulo: 'CFTV', pct: 80, acertos: 8, total: 10, data_conclusao: hoje() },
+        { id: '2', tipo: 'quiz', nome: 'Efetivo Fixo', cpf: '86000000002', modulo: 'CFTV', pct: 80, acertos: 8, total: 10, data_conclusao: hoje() }
+      ];
+      const pipeline = {
+        'cpf:86000000001': { nome: 'Vai Excluir', aprovado: true, aprovado_em: hoje() },
+        'cpf:86000000002': { nome: 'Efetivo Fixo', decisao_final: 'contratado', decisao_final_em: hoje() }
+      };
+      const { page, erros } = await abrirDashboard(browser, baseUrl, { perfil: 'gerencia', resultados, pipeline });
+      // Ficha do efetivo: sem botão de excluir (nem no rodapé nem na Decisão)
+      await page.evaluate(() => abrirCandidato('cpf:86000000002'));
+      await page.waitForTimeout(300);
+      const rodape = await page.evaluate(() => getComputedStyle(document.getElementById('btnExcluirCandidato')).display);
+      assertEqual(rodape, 'none', 'ficha de Efetivo não pode ter o botão Excluir candidato');
+      const naDecisao = await page.evaluate(() => !!document.querySelector('#cmConteudo [data-acao="excluirCandidato"]'));
+      assert(!naDecisao, 'Decisão do Efetivo não pode ter Excluir');
+      await page.evaluate(() => fecharCandidato());
+      await page.evaluate(() => excluirCandidatoDireto('cpf:86000000002', 'Efetivo Fixo'));
+      await page.waitForTimeout(200);
+      const confirmou = await page.evaluate(() => document.getElementById('confirmModal').classList.contains('show'));
+      assert(!confirou(confirmou), 'a exclusão de Efetivo nem deveria pedir confirmação');
+      assert(await page.evaluate(() => !!window.__PIPE['cpf:86000000002']), 'Efetivo continua no sistema');
+
+      // Em entrevista: exclui testes + andamento e some da aba
+      page.evaluate(() => excluirCandidatoDireto('cpf:86000000001', 'Vai Excluir'));
+      await page.waitForTimeout(200);
+      await page.click('#confirmBtnOk');
+      await page.waitForTimeout(400);
+      assert(await page.evaluate(() => !window.__PIPE['cpf:86000000001']), 'o andamento no processo deveria ter sido apagado');
+      await page.evaluate(() => switchView('banco'));
+      await page.waitForTimeout(200);
+      const ent = await page.evaluate(() => document.getElementById('bancoTableBody').innerText);
+      assert(!ent.includes('Vai Excluir'), `não deveria sobrar o nome na aba Entrevista. Conteúdo: ${ent}`);
+      assertEqual(erros.length, 0, 'erros de JS: ' + erros.join(' | '));
+      await page.close();
+      function confirou(x) { return x; }
+    }
+  },
+
+  {
+    name: 'Candidato antigo (sem testes carregados): aparece pelo nome nas abas, acha pelo CPF e abrir a ficha não quebra',
+    async run({ browser, baseUrl }) {
+      const pipeline = {
+        'cpf:87000000001': { nome: 'Efetivo Antigo', decisao_final: 'contratado', decisao_final_em: diasAtras(200), contratado_vaga_cargo: 'Porteiro' },
+        'cpf:87000000002': { nome: 'Banco Antigo', banco_reserva: true, banco_reserva_em: diasAtras(90) },
+        'cpf:87000000003': { nome: 'Aprovado Antigo', aprovado: true, aprovado_contratacao: true, aprovado_em: diasAtras(40) },
+        'cpf:87000000004': { nome: 'Entrevista Antiga', aprovado: true, aprovado_em: diasAtras(35) }
+      };
+      const { page, erros } = await abrirDashboard(browser, baseUrl, { perfil: 'gerencia', pipeline });
+      for (const [view, corpo, nome] of [['contratados', 'contratadosTableBody', 'Efetivo Antigo'], ['bancoreserva', 'bancoReservaTableBody', 'Banco Antigo'], ['etapa3', 'etapa3TableBody', 'Aprovado Antigo'], ['banco', 'bancoTableBody', 'Entrevista Antiga']]) {
+        await page.evaluate(v => switchView(v), view);
+        await page.waitForTimeout(200);
+        const txt = await page.evaluate(id => document.getElementById(id).innerText, corpo);
+        assert(txt.includes(nome), `${nome} deveria aparecer na aba ${view}. Conteúdo: ${txt}`);
+      }
+      await page.evaluate(() => switchView('contratados'));
+      await page.fill('#efetivosBusca', '87000000001');
+      await page.waitForTimeout(150);
+      const achou = await page.evaluate(() => document.getElementById('contratadosTableBody').innerText);
+      assert(achou.includes('Efetivo Antigo'), `busca por CPF deveria achar o efetivo antigo. Conteúdo: ${achou}`);
+      await page.fill('#efetivosBusca', 'porteiro');
+      await page.waitForTimeout(150);
+      assert((await page.evaluate(() => document.getElementById('contratadosTableBody').innerText)).includes('Efetivo Antigo'), 'busca pela vaga deveria achar');
+      // Abrir a ficha sem testes: avisa, não quebra
+      await page.evaluate(() => abrirCandidato('cpf:87000000001'));
+      await page.waitForTimeout(500);
+      assertEqual(erros.length, 0, 'erros de JS: ' + erros.join(' | '));
+      await page.close();
+    }
+  },
+
+  {
+    name: 'Varredura: todas as abas abrem sem erro de JS para todos os perfis, com dados de todas as fases',
+    async run({ browser, baseUrl }) {
+      const q = (id, nome, cpf, pct, extra = {}) => ({ id, tipo: 'quiz', nome, cpf, modulo: 'CFTV', pct, acertos: pct / 10, total: 10, data_conclusao: hoje(), filial: 'f1', filial_nome: 'Unidade 1', candidato: { telefone: '21977770000', cargo_pretendido: 'CFTV' }, ...extra });
+      const resultados = [q('1', 'Fase Candidato', '88000000001', 70), q('2', 'Fase Entrevista', '88000000002', 80), q('3', 'Fase Aprovado', '88000000003', 90), q('4', 'Fase Efetivo', '88000000004', 85), q('5', 'Fase Banco', '88000000005', 75), q('6', 'Fase Recusado', '88000000006', 30),
+        { id: '7', tipo: 'typing', nome: 'Fase Candidato', cpf: '88000000001', pct: 70, wpm: 30, dispositivo: 'desktop', data_conclusao: hoje(), filial: 'f1' }];
+      const ent = { versao: 2, decisao: 'aprovado', media: 8, por: 'Ana', em: hoje(), criterios: { asseio: 8, postura: 8, comunicacao: 8, equipe: 8 }, perguntas: [{ pergunta: 'P', nota: 7 }], destaques_fortes: [], destaques_atencao: [] };
+      const pipeline = {
+        'cpf:88000000002': { nome: 'Fase Entrevista', aprovado: true, aprovado_em: hoje(), etapa: 'aguardando_entrevista', filial: 'f1' },
+        'cpf:88000000003': { nome: 'Fase Aprovado', aprovado: true, aprovado_contratacao: true, aprovado_em: hoje(), entrevistas: [ent], entrevista: ent, filial: 'f1' },
+        'cpf:88000000004': { nome: 'Fase Efetivo', decisao_final: 'contratado', decisao_final_em: hoje(), entrevistas: [ent], entrevista: ent, contratado_vaga_cargo: 'CFTV', filial: 'f1' },
+        'cpf:88000000005': { nome: 'Fase Banco', banco_reserva: true, banco_reserva_em: hoje(), filial: 'f1' },
+        'cpf:88000000006': { nome: 'Fase Recusado', decisao_final: 'recusado', decisao_final_em: hoje(), filial: 'f1' }
+      };
+      const vagas = [{ id: 'v1', cargo: 'CFTV', status: 'aberta', numero_vagas: 3, filial: 'f1' }];
+      const views = ['dashboard', 'vagas', 'pendencias', 'pipeline', 'banco', 'etapa3', 'contratados', 'bancoreserva', 'ranking', 'violacoes', 'testes', 'qrcodes', 'codigos', 'perguntas', 'pesos', 'usuarios'];
+      for (const perfil of ['admin', 'gerencia', 'avaliador', 'coordenador', 'viewer']) {
+        const { page, erros } = await abrirDashboard(browser, baseUrl, { perfil, filial: perfil === 'admin' ? null : 'f1', filialNome: 'Unidade 1', resultados, pipeline, vagas });
+        for (const v of views) {
+          await page.evaluate(x => { try { switchView(x); } catch (e) { console.error('switchView ' + x + ': ' + e.message); } }, v);
+          await page.waitForTimeout(80);
+        }
+        // abre cada ficha e cada menu de ações
+        for (const ch of ['88000000001', '88000000002', '88000000003', '88000000004', '88000000005', '88000000006']) {
+          await page.evaluate(c => { abrirCandidato('cpf:' + c); }, ch);
+          await page.waitForTimeout(250);
+          await page.evaluate(() => fecharCandidato());
+          await page.evaluate(c => { try { abrirAcoesCandidato('cpf:' + c, 'x'); fecharAcoesModal(); } catch (e) { console.error('acoes: ' + e.message); } }, ch);
+        }
+        // QR Code vem de site externo (sem internet no teste) — não é erro do sistema.
+        const reais = erros.filter(e => !/QR|quickchart|qrserver/i.test(e));
+        assertEqual(reais.length, 0, `perfil ${perfil} teve erro(s) de JS: ` + reais.join(' | '));
+        await page.close();
+      }
+    }
+  },
+
+  {
     name: 'Baixar backup gera um arquivo .json com testes e processo seletivo, e o aviso fica pequeno depois',
     async run({ browser, baseUrl }) {
       const resultados = [{ id: 'r1', tipo: 'quiz', nome: 'Backup Um', cpf: '85000000001', modulo: 'CFTV', pct: 80, acertos: 8, total: 10, data_conclusao: hoje() }];

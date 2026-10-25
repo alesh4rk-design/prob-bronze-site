@@ -797,7 +797,13 @@ async function limparDadosAntigos(env) {
   // própria, sem prazo) e quem ainda está em andamento (entrevista ou
   // aprovado para contratação, sem decisão final).
   const pipeline = new Map();
-  for (const d of await firestoreListAll(env, token, "pipeline")) pipeline.set(d.name.split("/").pop(), d.fields || {});
+  for (const d of await firestoreListAll(env, token, "pipeline")) {
+    // O nome do documento volta da API com acento/espaço codificado
+    // (ex: "nome:jo%C3%A3o%20silva") — decodifica pra bater com a chave.
+    let id = d.name.split("/").pop();
+    try { id = decodeURIComponent(id); } catch (_) { /* mantém como veio */ }
+    pipeline.set(id, d.fields || {});
+  }
   const protegido = (p) => !!p && (
     p.decisao_final === "contratado" ||
     p.banco_reserva === true ||

@@ -89,6 +89,15 @@ export async function excluirResultado(id) {
   await deleteDoc(doc(db, "resultados", id));
 }
 
+// Remove o registro do candidato no processo seletivo (aba em que ele está).
+// Usado junto com a exclusão dos testes — senão ele continuaria aparecendo
+// pelo nome em Entrevista/Aprovados/Banco mesmo sem nenhum teste.
+// (O histórico e os comentários dele não são apagáveis pelo painel de
+// propósito — são trilha de auditoria; ficam órfãos e sem aparecer.)
+export async function excluirRegistroPipeline(chave) {
+  await deleteDoc(doc(db, "pipeline", chave.replace(/[/]/g, "_")));
+}
+
 // ── Gerenciamento de acesso de avaliadores (usuarios/{uid}) ────────────────
 // Autocadastro cria contas com perfil "pendente" (cadastro.html); estas
 // funções permitem que um admin veja a fila e aprove (definindo admin ou
@@ -709,7 +718,9 @@ export async function registrarContratacao(chave, nome, quem, perfilQuem, vaga) 
   if (vaga && vaga.id) {
     const atual = Number(vaga.numero_vagas) || 0;
     const restantes = Math.max(0, atual - 1);
-    const upd = { numero_vagas: restantes, contratados: increment(1) };
+    // increment: duas contratações quase juntas somam certo (não sobrescrevem
+    // o número uma da outra).
+    const upd = { numero_vagas: increment(-1), contratados: increment(1) };
     if (vaga.numero_vagas_inicial == null) upd.numero_vagas_inicial = atual;
     if (restantes === 0) {
       upd.status = "encerrada";
@@ -748,7 +759,7 @@ export async function desfazerContratacao(chave, nome, quem, perfilQuem, vaga) {
     atualizado_em: serverTimestamp()
   }, { merge: true });
   if (vaga && vaga.id) {
-    const upd = { numero_vagas: (Number(vaga.numero_vagas) || 0) + 1, contratados: increment(-1) };
+    const upd = { numero_vagas: increment(1), contratados: increment(-1) };
     if (vaga.status !== "aberta" && vaga.encerrada_auto) {
       upd.status = "aberta";
       upd.encerrada_auto = deleteField();
