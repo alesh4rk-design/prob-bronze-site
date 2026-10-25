@@ -99,11 +99,12 @@ export function melhorDigitacao(typings) {
 // teste mas ninguém tomou nenhuma decisão), o padrão é "testes_concluidos".
 export const ETAPA_LABELS = {
   testes_concluidos: { txt: 'Testes concluídos', cor: 'var(--text3)', icone: '🟣' },
-  aguardando_entrevista: { txt: 'Aguardando entrevista', cor: 'var(--amber)', icone: '🟠' },
-  contratado: { txt: 'Contratado', cor: 'var(--green)', icone: '🏆' },
+  aguardando_entrevista: { txt: 'Em entrevista', cor: 'var(--amber)', icone: '🟠' },
+  contratado: { txt: 'Efetivo (contratado)', cor: 'var(--green)', icone: '🏆' },
   recusado: { txt: 'Recusado', cor: 'var(--red)', icone: '❌' },
   banco_reserva: { txt: 'Banco de Reserva', cor: 'var(--cyan)', icone: '🏦' },
-  etapa_final: { txt: 'Etapa 3/4 · aguardando decisão final', cor: 'var(--green)', icone: '⏳' },
+  etapa_final: { txt: 'Aprovado para contratação', cor: 'var(--green)', icone: '⏳' },
+  contratacao_desfeita: { txt: 'Contratação desfeita', cor: 'var(--amber)', icone: '↩️' },
   entrevista_realizada: { txt: 'Entrevista realizada', cor: 'var(--cyan)', icone: '🎤' },
   aviso_whatsapp: { txt: 'Aviso por WhatsApp', cor: 'var(--green)', icone: '💬' }
 };
@@ -135,9 +136,40 @@ export function entrevistaAprovada(p) {
 
 export function etapaDoPipeline(p) {
   let chave = (p && p.etapa) || 'testes_concluidos';
-  // Passou na entrevista e ainda sem decisão final: Etapa 3.
-  if (chave === 'aguardando_entrevista' && entrevistaAprovada(p) && !p.decisao_final) chave = 'etapa_final';
+  // Passou na entrevista (ou foi enviado direto) e ainda sem decisão final:
+  // "Aprovado para contratação".
+  if (chave === 'aguardando_entrevista' && faseDoCandidato(p) === 'aprovado') chave = 'etapa_final';
   return { chave, ...(ETAPA_LABELS[chave] || ETAPA_LABELS.testes_concluidos) };
+}
+
+// Em qual aba o candidato está — calculado a partir dos campos que já
+// existem no pipeline (inclusive de recrutamentos anteriores, sem precisar
+// migrar nada):
+//   candidato  → aba Candidatos (ninguém decidiu ainda)
+//   entrevista → aba Entrevista (aprovado para entrevista)
+//   aprovado   → aba Aprovados para contratação (entrevista aprovada, ou o
+//                antigo "enviado para a Etapa 4" ainda sem decisão)
+//   efetivo    → aba Efetivos da Haganá (contratado)
+//   banco      → Banco de Reserva
+//   recusado   → não seguiu / reprovado (só aparece com "Exibir recusados")
+export function faseDoCandidato(p) {
+  if (!p) return 'candidato';
+  if (p.decisao_final === 'contratado') return 'efetivo';
+  if (p.decisao_final === 'recusado') return 'recusado';
+  if (p.banco_reserva === true) return 'banco';
+  if (p.aprovado === true && (p.aprovado_contratacao === true || p.etapa4 === true || entrevistaAprovada(p))) return 'aprovado';
+  if (p.aprovado === true) return 'entrevista';
+  return 'candidato';
+}
+
+// Todas as entrevistas do candidato, da mais antiga pra mais nova. Registros
+// de antes do histórico de entrevistas existir só têm `entrevista` (uma só).
+export function entrevistasDe(p) {
+  if (!p) return [];
+  const lista = Array.isArray(p.entrevistas) ? [...p.entrevistas] : [];
+  if (!lista.length && p.entrevista) lista.push(p.entrevista);
+  const ms = (e) => _ms(e.em_iso || e.em) || 0;
+  return lista.sort((a, b) => ms(a) - ms(b));
 }
 
 // Score Virtus — nota única ponderada, no lugar de olhar cada módulo

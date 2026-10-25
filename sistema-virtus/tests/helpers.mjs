@@ -59,6 +59,11 @@ export async function abrirDashboard(browser, baseUrl, mockConfig = {}, viewport
 
   await page.goto(`${baseUrl}/dashboard.html`, { waitUntil: 'load' });
   await page.waitForTimeout(1200);
+  // A janela de "Primeiros passos" abre sozinha pra Gerência e fica por cima
+  // dos botões — fecha, a não ser que o teste seja justamente sobre ela.
+  if (mockConfig.perfil === 'gerencia' && !mockConfig.manterGuia) {
+    await page.evaluate(() => { const m = document.getElementById('guiaModal'); if (m) m.classList.remove('show'); });
+  }
 
   return { page, erros };
 }

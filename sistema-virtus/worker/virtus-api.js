@@ -52,7 +52,8 @@
 //     (todo dia às 3h da manhã). Chama limparDadosAntigos(): candidato sem
 //     NENHUMA atividade nova há 60 dias tem nome, CPF, resultados, registro
 //     no processo seletivo e violações apagados por completo (retenção
-//     mínima de dados, LGPD).
+//     mínima de dados, LGPD). NÃO apaga Efetivos (contratados), Banco de
+//     Reserva nem quem ainda está em entrevista/aprovado para contratação.
 //
 // Variáveis/segredos necessários no Worker (Settings → Variables):
 //   FIREBASE_PROJECT_ID       (texto)   ex: projeto-virtus-f608a
@@ -790,6 +791,18 @@ async function limparDadosAntigos(env) {
 
   const resultados = await firestoreListAll(env, token, "resultados");
   const violacoes = await firestoreListAll(env, token, "violacoes");
+  // Situação de cada candidato no processo seletivo (pipeline/{chave}) —
+  // quem está protegido NUNCA é apagado, por mais antigo que seja o teste:
+  // Efetivos (contratados, histórico pra sempre), Banco de Reserva (regra
+  // própria, sem prazo) e quem ainda está em andamento (entrevista ou
+  // aprovado para contratação, sem decisão final).
+  const pipeline = new Map();
+  for (const d of await firestoreListAll(env, token, "pipeline")) pipeline.set(d.name.split("/").pop(), d.fields || {});
+  const protegido = (p) => !!p && (
+    p.decisao_final === "contratado" ||
+    p.banco_reserva === true ||
+    (p.aprovado === true && !p.decisao_final)
+  );
 
   // Agrupa os resultados por candidato — precisamos da tentativa MAIS
   // RECENTE de cada um pra saber se ele já passou dos 60 dias sem atividade.
@@ -803,15 +816,19 @@ async function limparDadosAntigos(env) {
     if (dataMs > info.maisRecente) { info.maisRecente = dataMs; info.nome = doc.fields.nome || info.nome; }
   }
 
-  let candidatosApagados = 0;
+  let candidatosApagados = 0, candidatosProtegidos = 0;
   for (const [chave, info] of porCandidato) {
     if (!info.maisRecente || (agora - info.maisRecente) < RETENCAO_DADOS_MS) continue; // ainda dentro do prazo
 
+    const chaveId = chave.replace(/\//g, "_");
+    if (protegido(pipeline.get(chaveId))) { candidatosProtegidos++; continue; }
+
     for (const nomeCompleto of info.docs) await firestoreDeleteByFullName(token, nomeCompleto);
 
-    const chaveId = chave.replace(/\//g, "_");
-    const historico = await firestoreListAll(env, token, `pipeline/${chaveId}/historico`);
-    for (const h of historico) await firestoreDeleteByFullName(token, h.name);
+    for (const sub of ["historico", "comentarios"]) {
+      const docsSub = await firestoreListAll(env, token, `pipeline/${chaveId}/${sub}`);
+      for (const h of docsSub) await firestoreDeleteByFullName(token, h.name);
+    }
     await firestoreDelete(env, token, `pipeline/${chaveId}`);
 
     const nomeNorm = normNome(info.nome);
@@ -822,7 +839,7 @@ async function limparDadosAntigos(env) {
     }
     candidatosApagados++;
   }
-  return { candidatosApagados, candidatosVerificados: porCandidato.size };
+  return { candidatosApagados, candidatosProtegidos, candidatosVerificados: porCandidato.size };
 }
 
 // ── Upload/leitura de currículo (Cloudflare KV) ────────────────────────────
@@ -934,7 +951,7 @@ export default {
   async scheduled(event, env, ctx) {
     ctx.waitUntil(
       limparDadosAntigos(env).then((r) =>
-        console.log(`Limpeza de dados: ${r.candidatosApagados} candidato(s) apagado(s) de ${r.candidatosVerificados} verificado(s).`)
+        console.log(`Limpeza de dados: ${r.candidatosApagados} candidato(s) apagado(s), ${r.candidatosProtegidos} protegido(s) (efetivo/banco/em andamento), de ${r.candidatosVerificados} verificado(s).`)
       )
     );
   },

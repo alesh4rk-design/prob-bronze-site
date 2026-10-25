@@ -137,7 +137,7 @@ export const tests = [
     name: 'Primeiro acesso da Gerência: guia abre, marca passos feitos e some ao dispensar',
     async run({ browser, baseUrl }) {
       const vagas = [{ id: 'v1', cargo: 'CFTV', status: 'aberta', filial: 'f1' }];
-      const { page, erros } = await abrirDashboard(browser, baseUrl, { perfil: 'gerencia', filial: 'f1', filialNome: 'Unidade 1', vagas });
+      const { page, erros } = await abrirDashboard(browser, baseUrl, { perfil: 'gerencia', filial: 'f1', filialNome: 'Unidade 1', vagas, manterGuia: true });
       await page.waitForTimeout(300);
       const abriu = await page.evaluate(() => document.getElementById('guiaModal').classList.contains('show'));
       assert(abriu, 'janela de boas-vindas deveria abrir no primeiro acesso da Gerência');
@@ -159,10 +159,10 @@ export const tests = [
 
 
   {
-    name: 'Etapa 1: botão Reprovado recusa o candidato e manda pra Etapa 4',
+    name: 'Candidatos: botão Não segue recusa o candidato e ele sai da lista',
     async run({ browser, baseUrl }) {
       const resultados = [{ id: '1', tipo: 'quiz', nome: 'Nao Passou', cpf: '20000000001', modulo: 'CFTV', pct: 30, acertos: 3, total: 10, data_conclusao: hoje() }];
-      const { page, erros } = await abrirDashboard(browser, baseUrl, { perfil: 'admin', resultados });
+      const { page, erros } = await abrirDashboard(browser, baseUrl, { perfil: 'gerencia', resultados });
       await page.evaluate(() => switchView('pipeline'));
       await page.waitForTimeout(300);
       await page.click('#pipelineTableBody [data-decisao="recusado"]');
@@ -230,106 +230,366 @@ export const tests = [
         { id: '2', tipo: 'quiz', nome: 'Com Info', cpf: '32000000002', modulo: 'Controle de Acesso', pct: 100, acertos: 15, total: 15, data_conclusao: hoje(), candidato: { cargo_pretendido: 'Controle de Acesso' } },
         { id: '3', tipo: 'quiz', nome: 'Com Info', cpf: '32000000002', modulo: 'Informática', pct: 90, acertos: 14, total: 15, data_conclusao: hoje(), candidato: { cargo_pretendido: 'Controle de Acesso' } }
       ];
-      const { page } = await abrirDashboard(browser, baseUrl, { perfil: 'admin', resultados, pipeline: {} });
+      const { page } = await abrirDashboard(browser, baseUrl, { perfil: 'gerencia', resultados, pipeline: {} });
       await page.evaluate(() => switchView('pipeline'));
       await page.waitForTimeout(300);
       const linhas = await page.evaluate(() => [...document.querySelectorAll('#pipelineTableBody tr')].map(r => r.innerText));
       const sem = linhas.find(l => l.includes('Sem Info')) || '';
       const com = linhas.find(l => l.includes('Com Info')) || '';
       assert(/Faltou:.*Informática.*Linguagem Positiva.*Atendimento/i.test(sem), `deveria avisar os 3 testes que faltaram. Linha: ${sem}`);
-      assert(/Enviar testes/i.test(sem), `admin deveria ver o botão Enviar testes. Linha: ${sem}`);
+      assert(/Enviar testes/i.test(sem), `gerência deveria ver o botão Enviar testes. Linha: ${sem}`);
       assert(/Faltou:/.test(com) && !/Faltou:.*Informática/i.test(com), `quem fez Informática não deve ter Informática na lista do que falta. Linha: ${com}`);
       await page.close();
     }
   },
   {
-    name: 'Etapa 3 não contrata (só envia pra Etapa 4); Etapa 4 decide e tem botão de mensagem de contratado',
+    name: 'Aprovados para contratação: só a Gerência contrata, escolhendo a vaga (que diminui e fecha em 0); Efetivos mostram o contratado e Desfazer devolve a vaga',
     async run({ browser, baseUrl }) {
       const resultados = [
-        { id: '1', tipo: 'quiz', nome: 'Aprovada Tres', cpf: '31000000001', modulo: 'CFTV', pct: 85, acertos: 8, total: 10, data_conclusao: hoje(), candidato: { telefone: '21999990001', cargo_pretendido: 'CFTV' } },
-        { id: '2', tipo: 'quiz', nome: 'Aguarda Quatro', cpf: '31000000002', modulo: 'CFTV', pct: 85, acertos: 8, total: 10, data_conclusao: hoje(), candidato: { telefone: '21999990002', cargo_pretendido: 'CFTV' } },
-        { id: '3', tipo: 'quiz', nome: 'Ja Contratada', cpf: '31000000003', modulo: 'CFTV', pct: 85, acertos: 8, total: 10, data_conclusao: hoje(), candidato: { telefone: '21999990003', cargo_pretendido: 'CFTV' } }
+        { id: '1', tipo: 'quiz', nome: 'Aprovada Tres', cpf: '31000000001', modulo: 'CFTV', pct: 85, acertos: 8, total: 10, data_conclusao: hoje(), candidato: { telefone: '21999990001', cargo_pretendido: 'CFTV', vaga_id: 'v1' } },
+        { id: '2', tipo: 'quiz', nome: 'Antiga Etapa Quatro', cpf: '31000000002', modulo: 'CFTV', pct: 85, acertos: 8, total: 10, data_conclusao: hoje(), candidato: { telefone: '21999990002', cargo_pretendido: 'CFTV' } }
       ];
-      const ent = { versao: 2, decisao: 'aprovado', media: 8, por: 'Ana' };
+      const ent = { versao: 2, decisao: 'aprovado', media: 8, por: 'Ana', em: hoje() };
       const pipeline = {
-        'cpf:31000000001': { aprovado: true, aprovado_em: hoje(), etapa: 'aguardando_entrevista', entrevista: ent },
-        'cpf:31000000002': { aprovado: true, aprovado_em: hoje(), etapa: 'etapa_final', entrevista: ent, etapa4: true },
-        'cpf:31000000003': { aprovado: true, aprovado_em: hoje(), entrevista: ent, etapa4: true, decisao_final: 'contratado', decisao_final_em: hoje() }
+        // aprovado na entrevista (antigo "Etapa 3")
+        'cpf:31000000001': { aprovado: true, aprovado_em: diasAtras(1), etapa: 'aguardando_entrevista', entrevista: ent },
+        // enviado pra antiga "Etapa 4" sem decisão — também fica em Aprovados para contratação
+        'cpf:31000000002': { aprovado: true, aprovado_em: diasAtras(1), etapa: 'etapa_final', entrevista: ent, etapa4: true }
       };
-      const { page } = await abrirDashboard(browser, baseUrl, { perfil: 'admin', resultados, pipeline });
-      await page.evaluate(() => switchView('etapa3'));
+      const vagas = [{ id: 'v1', cargo: 'CFTV', status: 'aberta', numero_vagas: 1 }];
+
+      // Avaliador vê Aprovados, mas NÃO tem o botão Contratar (só a Gerência).
+      const av = await abrirDashboard(browser, baseUrl, { perfil: 'avaliador', resultados, pipeline, vagas });
+      await av.page.evaluate(() => switchView('etapa3'));
+      await av.page.waitForTimeout(300);
+      const e3av = await av.page.evaluate(() => document.getElementById('etapa3TableBody').innerHTML);
+      assert(e3av.includes('Aprovada Tres') && e3av.includes('Antiga Etapa Quatro'), 'Aprovados deveria juntar o antigo Etapa 3 e o antigo Etapa 4 pendente');
+      assert(!e3av.includes('data-acao="contratar"'), 'avaliador não deveria ter o botão Contratar');
+      assert(e3av.includes('data-acao="bancoReserva"'), 'avaliador pode mandar pro Banco');
+      await av.page.close();
+
+      const { page, erros } = await abrirDashboard(browser, baseUrl, { perfil: 'gerencia', resultados, pipeline, vagas });
+      await page.evaluate(() => { window.open = () => {}; switchView('etapa3'); });
       await page.waitForTimeout(300);
-      const e3 = await page.evaluate(() => document.getElementById('etapa3TableBody').innerHTML);
-      assert(e3.includes('Aprovada Tres') && !e3.includes('Aguarda Quatro'), 'Etapa 3 deveria ter só quem ainda não foi enviado pra Etapa 4');
-      await page.evaluate(() => abrirAcoesEtapa('cpf:31000000001', 'Aprovada Tres', 'etapa3'));
-      const it3 = await page.evaluate(() => document.getElementById('acoesCandLista').innerText);
-      assert(it3.includes('Enviar para Etapa 4') && !it3.includes('Contratado'), `Etapa 3 não pode ter Contratado, só Enviar para Etapa 4. Itens: ${it3}`);
-      await page.evaluate(() => fecharAcoesModal());
+      await page.click('#etapa3TableBody [data-acao="contratar"][data-chave="cpf:31000000001"]');
+      await page.waitForTimeout(200);
+      const vagaSel = await page.evaluate(() => document.getElementById('contratarVaga').value);
+      assertEqual(vagaSel, 'v1', 'a vaga da ficha do candidato deveria vir escolhida');
+      const info = await page.evaluate(() => document.getElementById('contratarInfo').innerText);
+      assert(/fecha sozinha/i.test(info), `deveria avisar que a vaga fecha (era a última). Veio: ${info}`);
+      await page.evaluate(() => confirmarContratar());
+      await page.waitForTimeout(400);
+      const v = await page.evaluate(() => window.__VAGAS.v1);
+      assertEqual(v.numero_vagas, 0, 'vaga deveria diminuir pra 0');
+      assertEqual(v.status, 'encerrada', 'vaga com 0 deveria fechar sozinha');
+      const pC = await page.evaluate(() => window.__PIPE['cpf:31000000001']);
+      assertEqual(pC.decisao_final, 'contratado', 'candidato deveria estar contratado');
+      assertEqual(pC.contratado_vaga_id, 'v1', 'deveria guardar a vaga preenchida');
+      const zap = await page.evaluate(() => document.getElementById('whatsappCandTextarea').value);
+      assert(/contratado\(a\) para a vaga de CFTV/.test(zap), `depois de contratar, já abre a mensagem de contratação. Veio: ${zap}`);
+      await page.evaluate(() => fecharWhatsappCandidato());
+
+      // Some de Aprovados e aparece em Efetivos
+      const e3 = await page.evaluate(() => document.getElementById('etapa3TableBody').innerText);
+      assert(!e3.includes('Aprovada Tres'), 'contratada deveria sair de Aprovados');
       await page.evaluate(() => switchView('contratados'));
       await page.waitForTimeout(300);
-      const e4 = await page.evaluate(() => document.getElementById('contratadosTableBody').innerHTML);
-      assert(e4.includes('Aguarda Quatro') && e4.includes('Aguardando decisão'), 'Etapa 4 deveria mostrar quem aguarda decisão');
-      await page.evaluate(() => abrirAcoesEtapa('cpf:31000000002', 'Aguarda Quatro', 'etapa4pend'));
-      const it4 = await page.evaluate(() => document.getElementById('acoesCandLista').innerText);
-      assert(it4.includes('Contratado'), `Etapa 4 pendente deveria ter Contratado. Itens: ${it4}`);
-      await page.evaluate(() => abrirAcoesEtapa('cpf:31000000003', 'Ja Contratada', 'etapa4dec'));
-      const it4d = await page.evaluate(() => document.getElementById('acoesCandLista').innerText);
-      assert(it4d.includes('Enviar mensagem de contratado'), `Etapa 4 deveria ter mensagem de contratado. Itens: ${it4d}`);
-      await page.close();
-    }
-  },
-  {
-    name: 'Etapas: aprovado na entrevista sai da Etapa 2 e vai pra Etapa 3; WhatsApp já abre com a mensagem da etapa e registra o envio',
-    async run({ browser, baseUrl }) {
-      const resultados = [
-        { id: '1', tipo: 'quiz', nome: 'Na Etapa Dois', cpf: '11122233344', modulo: 'CFTV', pct: 80, acertos: 8, total: 10, data_conclusao: hoje(), candidato: { telefone: '21999990000', cargo_pretendido: 'CFTV' } },
-        { id: '2', tipo: 'quiz', nome: 'Na Etapa Tres', cpf: '55566677788', modulo: 'CFTV', pct: 85, acertos: 8, total: 10, data_conclusao: hoje(), candidato: { telefone: '21988880000', cargo_pretendido: 'CFTV' } }
-      ];
-      const pipeline = {
-        'cpf:11122233344': { aprovado: true, aprovado_em: hoje(), etapa: 'aguardando_entrevista' },
-        'cpf:55566677788': { aprovado: true, aprovado_em: hoje(), etapa: 'aguardando_entrevista', entrevista: { versao: 2, decisao: 'aprovado', media: 8.5, por: 'Ana' } }
-      };
-      const { page, erros } = await abrirDashboard(browser, baseUrl, { perfil: 'admin', resultados, pipeline });
-      await page.evaluate(() => { window.open = () => {}; switchView('banco'); limparFiltrosBanco(); });
-      await page.waitForTimeout(300);
-      await page.evaluate(() => abrirAcoesEtapa('cpf:11122233344', 'Na Etapa Dois', 'etapa2'));
-      const btnReal = await page.evaluate(() => document.getElementById('acoesCandLista').innerText);
-      assert(btnReal.includes('Realizar entrevista'), `Etapa 2 deveria ter "Realizar entrevista" no menu Ações. Itens: ${btnReal}`);
-      await page.evaluate(() => fecharAcoesModal());
-      const etapa2 = await page.evaluate(() => document.getElementById('bancoTableBody').innerText);
-      assert(etapa2.includes('Na Etapa Dois') && !etapa2.includes('Na Etapa Tres'), `Etapa 2 deveria ter só quem ainda não passou na entrevista. Conteúdo: ${etapa2}`);
+      const ef = await page.evaluate(() => document.getElementById('contratadosTableBody').innerText);
+      assert(ef.includes('Aprovada Tres') && ef.includes('CFTV'), `deveria estar em Efetivos com a vaga. Conteúdo: ${ef}`);
 
-      await page.evaluate(() => { window.print = () => {}; switchView('etapa3'); });
-      await page.waitForTimeout(300);
-      await page.click('#etapa3TableBody [data-acao="acoesEtapa"]');
-      await page.click('#acoesCandLista .acao-item:first-child');
-      await page.waitForTimeout(300);
-      const pdfEnt = await page.evaluate(() => document.getElementById('printReport').innerHTML);
-      assert(pdfEnt.includes('Resultado da Entrevista'), 'botão da Etapa 3 deveria gerar o PDF só da entrevista');
-      const etapa3 = await page.evaluate(() => document.getElementById('etapa3TableBody').innerText);
-      assert(etapa3.includes('Na Etapa Tres') && !etapa3.includes('Na Etapa Dois'), `Etapa 3 deveria ter só quem passou na entrevista. Conteúdo: ${etapa3}`);
-
-      // WhatsApp da Etapa 3: já vem com a mensagem neutra (sem "aprovado").
-      await page.evaluate(() => abrirWhatsappCandidato('cpf:55566677788', 'Na Etapa Tres'));
+      // Desfazer devolve a vaga (e reabre) e volta pra Aprovados
+      page.evaluate(() => desfazerContratacaoUI('cpf:31000000001', 'Aprovada Tres'));
       await page.waitForTimeout(200);
-      const txt3 = await page.evaluate(() => document.getElementById('whatsappCandTextarea').value);
-      assert(txt3.includes('etapa final') && !/aprovad/i.test(txt3), `mensagem da Etapa 3 deveria ser neutra. Texto: ${txt3}`);
-      await page.evaluate(() => enviarWhatsappCandidatoDireto());
-      await page.waitForTimeout(300);
-      const registrou = await page.evaluate(() => window.__writes.some(w => w.path === 'pipeline/cpf:55566677788' && w.data && w.data.avisos_whatsapp && w.data.avisos_whatsapp.etapa3));
-      assert(registrou, 'envio do WhatsApp da Etapa 3 deveria ficar registrado');
-
-      // Etapa 2: mensagem avisa que passou para a entrevista, sem data/hora.
-      await page.evaluate(() => abrirWhatsappCandidato('cpf:11122233344', 'Na Etapa Dois'));
+      await page.click('#confirmBtnOk');
+      await page.waitForTimeout(400);
+      const v2 = await page.evaluate(() => window.__VAGAS.v1);
+      assertEqual(v2.numero_vagas, 1, 'desfazer deveria devolver a posição da vaga');
+      assertEqual(v2.status, 'aberta', 'vaga fechada pela contratação deveria reabrir');
+      const pD = await page.evaluate(() => window.__PIPE['cpf:31000000001']);
+      assert(!pD.decisao_final && pD.aprovado_contratacao === true, 'deveria voltar pra Aprovados para contratação');
+      await page.evaluate(() => switchView('etapa3'));
       await page.waitForTimeout(200);
-      const txt2 = await page.evaluate(() => document.getElementById('whatsappCandTextarea').value);
-      assert(txt2.includes('passou para a fase de entrevista'), `mensagem da Etapa 2 deveria avisar a passagem pra entrevista. Texto: ${txt2}`);
-
+      const e3b = await page.evaluate(() => document.getElementById('etapa3TableBody').innerText);
+      assert(e3b.includes('Aprovada Tres'), 'depois de desfazer, volta pra Aprovados');
+      const hist = await page.evaluate(() => (window.__SUBCOLECOES['pipeline/cpf:31000000001/historico'] || []).map(h => h.data.etapa));
+      assert(hist.includes('contratado') && hist.includes('contratacao_desfeita'), `histórico deveria registrar contratação e desfazer. Veio: ${hist}`);
       assertEqual(erros.length, 0, 'erros de JS: ' + erros.join(' | '));
       await page.close();
     }
   },
 
+  {
+    name: 'Entrevista: várias entrevistas por candidato ficam no histórico; aprovado vai pra Aprovados; mensagens prontas certas em cada aba',
+    async run({ browser, baseUrl }) {
+      const resultados = [
+        { id: '1', tipo: 'quiz', nome: 'joao da silva', cpf: '11122233344', modulo: 'CFTV', pct: 80, acertos: 8, total: 10, data_conclusao: hoje(), filial: 'f1', filial_nome: 'Unidade Centro', candidato: { telefone: '21999990000', cargo_pretendido: 'CFTV' } }
+      ];
+      // Entrevista ANTIGA (de antes do histórico existir) no campo `entrevista`
+      const antiga = { versao: 2, decisao: 'complementar', media: 6, por: 'Bia', em: diasAtras(1), observacoes: 'PRIMEIRA-ENTREVISTA' };
+      const pipeline = { 'cpf:11122233344': { aprovado: true, aprovado_em: diasAtras(2), etapa: 'aguardando_entrevista', entrevista: antiga, filial: 'f1' } };
+      const { page, erros } = await abrirDashboard(browser, baseUrl, { perfil: 'gerencia', filial: 'f1', filialNome: 'Unidade Centro', resultados, pipeline });
+      await page.evaluate(() => { window.open = () => {}; switchView('banco'); });
+      await page.waitForTimeout(300);
+      const linha = await page.evaluate(() => document.getElementById('bancoTableBody').innerText);
+      assert(/1 feita/.test(linha) && /2ª entrevista/i.test(linha), `deveria mostrar 1 entrevista feita e o botão da 2ª. Conteúdo: ${linha}`);
+      assert(/Falta digitação no teclado físico/i.test(linha), `deveria avisar que falta a digitação no teclado físico. Conteúdo: ${linha}`);
+
+      // Mensagem sugerida na aba Entrevista: lembrete (com data/hora)
+      await page.evaluate(() => abrirWhatsappCandidato('cpf:11122233344', 'joao da silva'));
+      await page.waitForTimeout(200);
+      const dataHoraVisivel = await page.evaluate(() => document.getElementById('whatsappConvite').style.display !== 'none');
+      assert(dataHoraVisivel, 'lembrete de entrevista deveria mostrar os campos de dia e hora');
+      await page.evaluate(() => { document.getElementById('wppData').value = '2026-11-03'; document.getElementById('wppHora').value = '14:30'; document.getElementById('wppData').dispatchEvent(new Event('input')); });
+      const lembrete = await page.evaluate(() => document.getElementById('whatsappCandTextarea').value);
+      assert(lembrete.includes('Olá, Joao!') && lembrete.includes('03/11 às 14:30') && lembrete.includes('Unidade Centro'), `lembrete deveria vir preenchido. Veio: ${lembrete}`);
+      await page.evaluate(() => fecharWhatsappCandidato());
+
+      // 2ª entrevista: aprovado
+      await page.click('#bancoTableBody [data-acao="abrirEntrevista"]');
+      await page.waitForTimeout(200);
+      const titulo = await page.evaluate(() => document.getElementById('entrevistaTitulo').textContent);
+      assertEqual(titulo, '2ª entrevista', 'título deveria indicar a 2ª entrevista');
+      await page.evaluate(() => {
+        document.querySelector('#entrevistaDisponibilidade .pill[data-val="sim"]').click();
+        document.querySelector('#entrevistaEscala5x2 .pill[data-val="sim"]').click();
+        document.querySelector('#entrevistaEscala6x1 .pill[data-val="sim"]').click();
+        document.querySelector('#entrevistaExperiencia .pill[data-val="sim"]').click();
+        document.querySelectorAll('#entrevistaModal .nota010').forEach(l => l.querySelector('[data-nota="9"]').click());
+        document.getElementById('entrevistaObservacoes').value = 'SEGUNDA-ENTREVISTA';
+      });
+      await page.evaluate(() => concluirEntrevista('aprovado'));
+      await page.waitForTimeout(400);
+      const p = await page.evaluate(() => window.__PIPE['cpf:11122233344']);
+      assertEqual(p.entrevistas.length, 2, 'histórico deveria ter as 2 entrevistas (a antiga + a nova)');
+      assertEqual(p.entrevistas[0].observacoes, 'PRIMEIRA-ENTREVISTA', 'a entrevista antiga não pode se perder');
+      assertEqual(p.entrevistas[1].numero, 2, 'a nova é a 2ª');
+      assertEqual(p.aprovado_contratacao, true, 'aprovado na entrevista vai pra Aprovados para contratação');
+      assert(!p.decisao_final, 'aprovar na entrevista não contrata sozinho');
+
+      const ent = await page.evaluate(() => document.getElementById('bancoTableBody').innerText);
+      assert(!ent.includes('joao da silva'), 'deveria sair da aba Entrevista');
+      await page.evaluate(() => switchView('etapa3'));
+      await page.waitForTimeout(200);
+      const ap = await page.evaluate(() => document.getElementById('etapa3TableBody').innerText);
+      assert(ap.includes('joao da silva') && /2 feitas/.test(ap), `deveria estar em Aprovados com 2 entrevistas. Conteúdo: ${ap}`);
+
+      // Ficha mostra as duas entrevistas
+      await page.evaluate(() => abrirCandidato('cpf:11122233344'));
+      await page.waitForTimeout(300);
+      const ficha = await page.evaluate(() => document.getElementById('cmConteudo').innerHTML);
+      assert(ficha.includes('1ª entrevista') && ficha.includes('2ª entrevista') && ficha.includes('PRIMEIRA-ENTREVISTA') && ficha.includes('SEGUNDA-ENTREVISTA'), 'ficha deveria listar as duas entrevistas');
+      await page.evaluate(() => fecharCandidato());
+
+      // Mensagem sugerida em Aprovados: "aprovado nas entrevistas" e registra o envio
+      await page.evaluate(() => abrirWhatsappCandidato('cpf:11122233344', 'joao da silva'));
+      await page.waitForTimeout(200);
+      const txtAp = await page.evaluate(() => document.getElementById('whatsappCandTextarea').value);
+      assert(txtAp.includes('aprovado(a) nas entrevistas para CFTV'), `mensagem de aprovado. Veio: ${txtAp}`);
+      await page.evaluate(() => enviarWhatsappCandidatoDireto());
+      await page.waitForTimeout(300);
+      const registrou = await page.evaluate(() => window.__writes.some(w => w.path === 'pipeline/cpf:11122233344' && w.data && w.data.avisos_whatsapp && w.data.avisos_whatsapp.etapa3));
+      assert(registrou, 'envio do WhatsApp deveria ficar registrado');
+
+      // Mais uma entrevista: volta pra aba Entrevista sem perder o histórico
+      page.evaluate(() => voltarParaEntrevistaUI('cpf:11122233344', 'joao da silva'));
+      await page.waitForTimeout(200);
+      await page.click('#confirmBtnOk');
+      await page.waitForTimeout(300);
+      const p2 = await page.evaluate(() => window.__PIPE['cpf:11122233344']);
+      assert(!p2.aprovado_contratacao && p2.entrevistas.length === 2, 'volta pra Entrevista mantendo as 2 entrevistas no histórico');
+      await page.evaluate(() => switchView('banco'));
+      await page.waitForTimeout(200);
+      const ent2 = await page.evaluate(() => document.getElementById('bancoTableBody').innerText);
+      assert(ent2.includes('joao da silva') && /3ª entrevista/i.test(ent2), `deveria voltar pra Entrevista com o botão da 3ª. Conteúdo: ${ent2}`);
+      assertEqual(erros.length, 0, 'erros de JS: ' + erros.join(' | '));
+      await page.close();
+    }
+  },
+
+  {
+    name: 'Candidatos: pergunta da digitação no teclado físico ao mandar pra entrevista e já abre o convite do WhatsApp',
+    async run({ browser, baseUrl }) {
+      const resultados = [
+        { id: '1', tipo: 'quiz', nome: 'Com Teclado', cpf: '81000000001', modulo: 'CFTV', pct: 80, acertos: 8, total: 10, data_conclusao: hoje(), candidato: { telefone: '21911110001', cargo_pretendido: 'CFTV' } },
+        { id: '2', tipo: 'typing', nome: 'Com Teclado', cpf: '81000000001', pct: 77, wpm: 40, dispositivo: 'desktop', data_conclusao: hoje() },
+        { id: '3', tipo: 'quiz', nome: 'So Celular', cpf: '81000000002', modulo: 'CFTV', pct: 80, acertos: 8, total: 10, data_conclusao: hoje(), candidato: { telefone: '21911110002', cargo_pretendido: 'CFTV' } },
+        { id: '4', tipo: 'typing', nome: 'So Celular', cpf: '81000000002', pct: 66, wpm: 22, dispositivo: 'mobile', data_conclusao: hoje() }
+      ];
+      const { page, erros } = await abrirDashboard(browser, baseUrl, { perfil: 'coordenador', resultados });
+      await page.evaluate(() => { window.open = () => {}; switchView('pipeline'); });
+      await page.waitForTimeout(300);
+      const tabela = await page.evaluate(() => document.getElementById('pipelineTableBody').innerText);
+      assert(/Digitação teclado físico: 77%/.test(tabela) && /Digitação celular: 66%/.test(tabela), `digitação deveria aparecer separada (teclado físico x celular). Conteúdo: ${tabela}`);
+
+      await page.click('#pipelineTableBody [data-acao="enviarEntrevista"][data-chave="cpf:81000000002"]');
+      await page.waitForTimeout(200);
+      const txt = await page.evaluate(() => document.getElementById('digitacaoCheckModal').innerText);
+      assert(/Ainda não/.test(txt) && /celular: 66%/i.test(txt), `deveria dizer que não fez no teclado físico, só no celular. Veio: ${txt}`);
+      await page.click('#digitacaoCheckOk');
+      await page.waitForTimeout(300);
+      const p = await page.evaluate(() => window.__PIPE['cpf:81000000002']);
+      assertEqual(p && p.aprovado, true, 'deveria ir pra entrevista');
+      const convite = await page.evaluate(() => document.getElementById('whatsappCandTextarea').value);
+      assert(convite.includes('Olá, So!') && convite.includes('selecionado(a) para a próxima etapa') && !/\[dia\]|\[hora\]/.test(convite), `convite (sem dia e horário) deveria abrir pronto. Veio: ${convite}`);
+      await page.evaluate(() => fecharWhatsappCandidato());
+
+      await page.click('#pipelineTableBody [data-acao="enviarEntrevista"][data-chave="cpf:81000000001"]');
+      await page.waitForTimeout(200);
+      const txt2 = await page.evaluate(() => document.getElementById('digitacaoCheckModal').innerText);
+      assert(/Sim\./.test(txt2) && /77%/.test(txt2), `deveria confirmar que fez no teclado físico. Veio: ${txt2}`);
+      await page.click('#digitacaoCheckModal .btn-neutral');
+      await page.waitForTimeout(200);
+      const p1 = await page.evaluate(() => window.__PIPE['cpf:81000000001']);
+      assert(!p1 || !p1.aprovado, 'cancelar não deveria mandar pra entrevista');
+      assertEqual(erros.length, 0, 'erros de JS: ' + erros.join(' | '));
+      await page.close();
+    }
+  },
+
+  {
+    name: 'Candidatos: busca por nome sem acento, CPF ou telefone, com os de HOJE primeiro; Hoje/Ontem filtram',
+    async run({ browser, baseUrl }) {
+      const resultados = [
+        { id: '1', tipo: 'quiz', nome: 'José Antigo', cpf: '82000000001', modulo: 'CFTV', pct: 80, acertos: 8, total: 10, data_conclusao: diasAtras(1), candidato: { telefone: '21955550001' } },
+        { id: '2', tipo: 'quiz', nome: 'Jose Novo', cpf: '82000000002', modulo: 'CFTV', pct: 80, acertos: 8, total: 10, data_conclusao: hoje(), candidato: { telefone: '21955550002' } },
+        { id: '3', tipo: 'quiz', nome: 'Maria Outra', cpf: '82000000003', modulo: 'CFTV', pct: 80, acertos: 8, total: 10, data_conclusao: diasAtras(5) }
+      ];
+      const { page, erros } = await abrirDashboard(browser, baseUrl, { perfil: 'gerencia', resultados });
+      await page.evaluate(() => switchView('pipeline'));
+      await page.waitForTimeout(300);
+      const nomes = () => page.evaluate(() => [...document.querySelectorAll('#pipelineTableBody .td-nome')].map(td => td.innerText.split('\n')[0]));
+      let n = await nomes();
+      assert(n[0].startsWith('Jose Novo'), `o candidato de hoje deveria vir primeiro. Ordem: ${n}`);
+      const sep = await page.evaluate(() => document.getElementById('pipelineTableBody').innerText);
+      assert(/Hoje — 1/.test(sep) && /Dias anteriores/.test(sep), 'deveria separar Hoje e Dias anteriores');
+
+      await page.fill('#pipelineSearchInput', 'jose');
+      await page.waitForTimeout(150);
+      n = await nomes();
+      assertEqual(n.length, 2, 'busca "jose" (sem acento) acha os dois José');
+      assert(n[0].startsWith('Jose Novo'), `na busca, hoje continua primeiro. Ordem: ${n}`);
+
+      await page.fill('#pipelineSearchInput', '82000000003');
+      await page.waitForTimeout(150);
+      n = await nomes();
+      assert(n.length === 1 && n[0].startsWith('Maria Outra'), `busca por CPF. Veio: ${n}`);
+
+      await page.fill('#pipelineSearchInput', '55550001');
+      await page.waitForTimeout(150);
+      n = await nomes();
+      assert(n.length === 1 && n[0].startsWith('José Antigo'), `busca por telefone. Veio: ${n}`);
+
+      await page.fill('#pipelineSearchInput', '');
+      await page.evaluate(() => definirPeriodoCandidatos('ontem'));
+      n = await nomes();
+      assert(n.length === 1 && n[0].startsWith('José Antigo'), `filtro Ontem. Veio: ${n}`);
+      await page.evaluate(() => definirPeriodoCandidatos('hoje'));
+      n = await nomes();
+      assert(n.length === 1 && n[0].startsWith('Jose Novo'), `filtro Hoje. Veio: ${n}`);
+      assertEqual(erros.length, 0, 'erros de JS: ' + erros.join(' | '));
+      await page.close();
+    }
+  },
+
+  {
+    name: 'Banco de Reserva aceita no máximo 30 candidatos',
+    async run({ browser, baseUrl }) {
+      const resultados = [{ id: '1', tipo: 'quiz', nome: 'Trigesimo Primeiro', cpf: '83000000099', modulo: 'CFTV', pct: 80, acertos: 8, total: 10, data_conclusao: hoje(), candidato: { cargo_pretendido: 'CFTV' } }];
+      const pipeline = {};
+      for (let i = 0; i < 30; i++) pipeline['cpf:830000000' + String(i).padStart(2, '0')] = { nome: 'Banco ' + i, banco_reserva: true, banco_reserva_em: hoje() };
+      pipeline['cpf:83000000099'] = { aprovado: true, aprovado_contratacao: true, aprovado_em: hoje() };
+      const { page, erros } = await abrirDashboard(browser, baseUrl, { perfil: 'gerencia', resultados, pipeline });
+      await page.evaluate(() => switchView('bancoreserva'));
+      await page.waitForTimeout(300);
+      const badge = await page.evaluate(() => document.getElementById('bancoReservaBadge').textContent);
+      assert(badge.startsWith('30 / 30'), `contador do banco deveria mostrar 30 / 30. Veio: ${badge}`);
+      const lista = await page.evaluate(() => document.getElementById('bancoReservaTableBody').innerText);
+      assert(lista.includes('Banco 0') && lista.includes('Banco 29'), 'candidatos do banco sem teste carregado ainda aparecem pelo nome');
+      page.evaluate(() => alternarBancoReserva('cpf:83000000099', 'Trigesimo Primeiro', true));
+      await page.waitForTimeout(200);
+      const msg = await page.evaluate(() => document.getElementById('confirmMensagem').textContent);
+      assert(/cheio/i.test(msg), `deveria avisar que o banco está cheio. Veio: ${msg}`);
+      await page.click('#confirmBtnOk');
+      await page.waitForTimeout(200);
+      const avalAberta = await page.evaluate(() => document.getElementById('avaliacaoBancoModal').classList.contains('show'));
+      assert(!avalAberta, 'não deveria abrir a avaliação do banco com o banco cheio');
+      const p = await page.evaluate(() => window.__PIPE['cpf:83000000099']);
+      assert(!p.banco_reserva, 'não deveria entrar no banco');
+      assertEqual(erros.length, 0, 'erros de JS: ' + erros.join(' | '));
+      await page.close();
+    }
+  },
+
+  {
+    name: 'Admin só visualiza as filiais de verdade; decide e contrata só na Filial Teste (códigos e vagas dele vão pra Filial Teste)',
+    async run({ browser, baseUrl }) {
+      const resultados = [
+        { id: '1', tipo: 'quiz', nome: 'Da Filial Real', cpf: '84000000001', modulo: 'CFTV', pct: 80, acertos: 8, total: 10, data_conclusao: hoje(), filial: 'f1', filial_nome: 'Unidade 1' },
+        { id: '2', tipo: 'quiz', nome: 'Da Filial Teste', cpf: '84000000002', modulo: 'CFTV', pct: 80, acertos: 8, total: 10, data_conclusao: hoje(), filial: 'filial-teste', filial_nome: 'Filial Teste' }
+      ];
+      const pipeline = { 'cpf:84000000003': { nome: 'Aprovado Real', aprovado: true, aprovado_contratacao: true, filial: 'f1' } };
+      const { page, erros } = await abrirDashboard(browser, baseUrl, { perfil: 'admin', resultados, pipeline });
+      await page.evaluate(() => switchView('pipeline'));
+      await page.waitForTimeout(300);
+      const linhas = await page.evaluate(() => [...document.querySelectorAll('#pipelineTableBody tr')].map(r => ({ t: r.innerText, entrevista: !!r.querySelector('[data-acao="enviarEntrevista"]') })));
+      const real = linhas.find(l => l.t.includes('Da Filial Real'));
+      const teste = linhas.find(l => l.t.includes('Da Filial Teste'));
+      assert(real && !real.entrevista && /só visualização/.test(real.t), `admin só visualiza candidato de filial real. Linha: ${real && real.t}`);
+      assert(teste && teste.entrevista, 'admin decide sobre candidato da Filial Teste');
+      const bloqueou = await page.evaluate(async () => await alternarAprovadoParaEntrevista('cpf:84000000001', 'Da Filial Real', true));
+      assertEqual(bloqueou, false, 'admin não consegue mandar candidato de filial real pra entrevista');
+      await page.evaluate(() => switchView('etapa3'));
+      await page.waitForTimeout(200);
+      const e3 = await page.evaluate(() => document.getElementById('etapa3TableBody').innerHTML);
+      assert(e3.includes('Aprovado Real') && !e3.includes('data-acao="contratar"'), 'admin vê Aprovados da filial real, mas sem Contratar');
+      const notaCodigo = await page.evaluate(() => document.getElementById('view-codigos').innerText);
+      assert(/Filial Teste/.test(notaCodigo), 'tela de código deveria avisar o Admin que o código é da Filial Teste');
+      await page.evaluate(() => document.getElementById('btnGerarCodigo').click());
+      await page.waitForTimeout(300);
+      const cod = await page.evaluate(() => window.__writes.find(w => w.path && w.path.startsWith('codigos_acesso/')));
+      assert(cod && cod.data.filial === 'filial-teste', `código gerado pelo Admin deveria ser da Filial Teste. Veio: ${JSON.stringify(cod && cod.data)}`);
+      const criouFilial = await page.evaluate(() => window.__writes.some(w => w.path === 'filiais/filial-teste'));
+      assert(criouFilial, 'a Filial Teste deveria ser criada pro Admin');
+      assertEqual(erros.length, 0, 'erros de JS: ' + erros.join(' | '));
+      await page.close();
+    }
+  },
+
+  {
+    name: 'Baixar backup gera um arquivo .json com testes e processo seletivo, e o aviso fica pequeno depois',
+    async run({ browser, baseUrl }) {
+      const resultados = [{ id: 'r1', tipo: 'quiz', nome: 'Backup Um', cpf: '85000000001', modulo: 'CFTV', pct: 80, acertos: 8, total: 10, data_conclusao: hoje() }];
+      const { page, erros } = await abrirDashboard(browser, baseUrl, { perfil: 'gerencia', filial: 'f1', filialNome: 'Unidade 1', resultados });
+      const [download] = await Promise.all([page.waitForEvent('download', { timeout: 5000 }), page.click('#btnBaixarBackup')]);
+      assert(/^virtus-backup-Unidade-1-\d{4}-\d{2}-\d{2}\.json$/.test(download.suggestedFilename()), `nome do arquivo. Veio: ${download.suggestedFilename()}`);
+      const caminho = await download.path();
+      const dados = JSON.parse((await import('node:fs')).readFileSync(caminho, 'utf8'));
+      assert(dados.sistema === 'Virtus' && Array.isArray(dados.resultados) && Array.isArray(dados.pipeline) && dados.totais, 'arquivo deveria ter as listas do backup');
+      await page.waitForTimeout(200);
+      const escondido = await page.evaluate(() => document.getElementById('avisoBackupTexto').style.display);
+      assertEqual(escondido, 'none', 'depois do backup, o texto longo do aviso some (fica só o título e a data)');
+      const ultimo = await page.evaluate(() => document.getElementById('avisoBackupUltimo').textContent);
+      assert(/Último backup/.test(ultimo), `deveria mostrar quando foi o último backup. Veio: ${ultimo}`);
+      assertEqual(erros.length, 0, 'erros de JS: ' + erros.join(' | '));
+      await page.close();
+    }
+  },
+
+  {
+    name: 'Aviso de backup (apaga não contratados em 60 dias) aparece pra Admin e Gerência, não pro Operador',
+    async run({ browser, baseUrl }) {
+      for (const [perfil, deve] of [['admin', true], ['gerencia', true], ['avaliador', false], ['viewer', false]]) {
+        const { page } = await abrirDashboard(browser, baseUrl, { perfil });
+        const vis = await page.evaluate(() => document.getElementById('avisoBackup').style.display !== 'none');
+        assertEqual(vis, deve, `aviso de backup pro perfil ${perfil}`);
+        if (deve) {
+          const txt = await page.evaluate(() => document.getElementById('avisoBackup').innerText);
+          assert(/60 dias/.test(txt) && /Baixar backup/i.test(txt), `texto do aviso. Veio: ${txt}`);
+        }
+        await page.close();
+      }
+    }
+  },
 
   {
     name: 'Entrevista fica fora do resumo (vai pro cliente), aparece no relatório completo e no botão "Resultado da entrevista"',
@@ -511,17 +771,17 @@ export const tests = [
   },
 
   {
-    name: 'Menu de Ações: Excluir some pro viewer (Operador), aparece pro coordenador e admin',
+    name: 'Menu de Ações: Excluir some pro viewer (Operador), aparece pro coordenador e gerência',
     async run({ browser, baseUrl }) {
       // Coordenador tem o MESMO nível de acesso que avaliador/admin/gerência
       // sobre candidatos — só o viewer (Operador) é só-leitura de verdade.
       const resultados = [{ id: '1', tipo: 'quiz', nome: 'Maria Teste', modulo: 'Atendimento', pct: 80, acertos: 8, total: 10, data_conclusao: hoje() }];
 
-      for (const perfil of ['admin', 'coordenador']) {
+      for (const perfil of ['gerencia', 'coordenador']) {
         const { page } = await abrirDashboard(browser, baseUrl, { perfil, resultados });
         await page.evaluate(() => switchView('pipeline'));
         await page.waitForTimeout(300);
-        await page.click('button:has-text("Ações")');
+        await page.click('#pipelineTableBody [data-acao="acoesCandidato"]');
         await page.waitForTimeout(200);
         const temExcluir = await page.evaluate(() => document.getElementById('acoesCandLista').innerText.includes('Excluir'));
         assert(temExcluir, `perfil ${perfil} deveria ter o botão Excluir no menu de ações`);
@@ -533,14 +793,14 @@ export const tests = [
       const { page: pageViewer } = await abrirDashboard(browser, baseUrl, { perfil: 'viewer', resultados });
       await pageViewer.evaluate(() => switchView('pipeline'));
       await pageViewer.waitForTimeout(300);
-      const existeBotao = await pageViewer.evaluate(() => [...document.querySelectorAll('button')].some(b => b.textContent.includes('Ações')));
+      const existeBotao = await pageViewer.evaluate(() => !!document.querySelector('#pipelineTableBody [data-acao="acoesCandidato"]'));
       assert(!existeBotao, 'viewer (Operador) não deveria ter nenhum botão "Ações" na tabela de candidatos');
       await pageViewer.close();
     }
   },
 
   {
-    name: 'Aprovados usa a data em que foi MARCADO para entrevista, não a data do teste',
+    name: 'Entrevista mostra quem foi enviado pra entrevista (mesmo com teste de dias atrás), sem esconder por data',
     async run({ browser, baseUrl }) {
       const resultados = [{ id: '1', tipo: 'quiz', nome: 'Testou Faz Tempo', modulo: 'Atendimento', pct: 80, acertos: 8, total: 10, data_conclusao: diasAtras(15) }];
       const pipeline = { 'nome:testou faz tempo': { aprovado: true, aprovado_em: hoje() } };
@@ -552,7 +812,7 @@ export const tests = [
       // LIMPAR o filtro (ver "tudo"), então zera o campo de propósito.
       // O que queremos confirmar é o valor DEFAULT ao abrir a aba.
       const dataIni = await page.evaluate(() => document.getElementById('bancoDataIni').value);
-      assert(dataIni.length > 0, 'campo De da aba Aprovados deveria vir preenchido com hoje por padrão');
+      assertEqual(dataIni, '', 'a aba Entrevista abre sem filtro de data (mostra todo mundo em entrevista)');
 
       const linhas = await page.evaluate(() => document.getElementById('bancoTableBody').innerText);
       assert(linhas.includes('Testou Faz Tempo'), `candidato marcado hoje devia aparecer em Aprovados mesmo com teste de 15 dias atrás. Conteúdo: ${linhas}`);
@@ -563,12 +823,8 @@ export const tests = [
   },
 
   {
-    name: 'Aprovados/Contratados: sem ninguém HOJE, cai automaticamente pro dia mais recente com gente (não fica vazio)',
+    name: 'Entrevista e Efetivos não escondem ninguém de dias anteriores (sem filtro de "hoje" escondendo gente)',
     async run({ browser, baseUrl }) {
-      // Cenário do usuário: sexta-feira aprovou candidatos, mas o RH fecha
-      // sábado/domingo — quem checar depois não pode ver a aba vazia só
-      // porque não teve NADA hoje. Também confere que "Resetar" continua
-      // mostrando tudo (não fica preso no auto-ajuste).
       const resultados = [
         { id: '1', tipo: 'quiz', nome: 'Aprovado Sexta', modulo: 'Atendimento', pct: 80, acertos: 8, total: 10, data_conclusao: diasAtras(2) },
         { id: '2', tipo: 'quiz', nome: 'Contratado Sexta', modulo: 'Atendimento', pct: 85, acertos: 8, total: 10, data_conclusao: diasAtras(3) }
@@ -578,59 +834,46 @@ export const tests = [
         'nome:contratado sexta': { decisao_final: 'contratado', decisao_final_em: diasAtras(2) }
       };
       const { page, erros } = await abrirDashboard(browser, baseUrl, { perfil: 'admin', resultados, pipeline });
-
       await page.evaluate(() => switchView('banco'));
       await page.waitForTimeout(300);
-      const dataIniBanco = await page.evaluate(() => document.getElementById('bancoDataIni').value);
-      assert(dataIniBanco !== new Date().toISOString().slice(0, 10), 'campo De deveria ter avançado pro dia do candidato, não continuar em hoje (vazio)');
       const linhasBanco = await page.evaluate(() => document.getElementById('bancoTableBody').innerText);
-      assert(linhasBanco.includes('Aprovado Sexta'), `deveria mostrar o candidato do dia mais recente com gente. Conteúdo: ${linhasBanco}`);
-
+      assert(linhasBanco.includes('Aprovado Sexta'), `Entrevista deveria mostrar quem foi enviado dias atrás. Conteúdo: ${linhasBanco}`);
       await page.evaluate(() => switchView('contratados'));
       await page.waitForTimeout(300);
       const linhasContratados = await page.evaluate(() => document.getElementById('contratadosTableBody').innerText);
-      assert(linhasContratados.includes('Contratado Sexta'), `deveria mostrar o contratado do dia mais recente com gente. Conteúdo: ${linhasContratados}`);
-
-      // "Resetar" continua mostrando TUDO — não fica preso no auto-ajuste.
-      await page.evaluate(() => limparFiltrosContratados());
-      await page.waitForTimeout(200);
-      const dataIniContratadosAposReset = await page.evaluate(() => document.getElementById('contratadosDataIni').value);
-      assertEqual(dataIniContratadosAposReset, '', 'Resetar deveria limpar o campo De, mostrando todos os dias');
-
+      assert(linhasContratados.includes('Contratado Sexta'), `Efetivos deveria mostrar o contratado de dias atrás. Conteúdo: ${linhasContratados}`);
       assertEqual(erros.length, 0, 'erros de JS: ' + erros.join(' | '));
       await page.close();
     }
   },
 
   {
-    name: 'Decidir Contratado/Recusado remove de Aprovados e aparece em Contratados na hora',
+    name: 'Não aprovado na aba Entrevista sai da lista na hora e só volta em Candidatos com "Exibir recusados"',
     async run({ browser, baseUrl }) {
       const resultados = [{ id: '1', tipo: 'quiz', nome: 'Joana Decisao', modulo: 'Atendimento', pct: 85, acertos: 8, total: 10, data_conclusao: hoje() }];
       const pipeline = { 'nome:joana decisao': { aprovado: true, aprovado_em: hoje() } };
-      const { page, erros } = await abrirDashboard(browser, baseUrl, { perfil: 'admin', resultados, pipeline });
+      const { page, erros } = await abrirDashboard(browser, baseUrl, { perfil: 'gerencia', resultados, pipeline });
 
       await page.evaluate(() => switchView('banco'));
-      await page.evaluate(() => limparFiltrosBanco());
       await page.waitForTimeout(300);
       let linhas = await page.evaluate(() => document.getElementById('bancoTableBody').innerText);
-      assert(linhas.includes('Joana Decisao'), 'candidata devia estar pendente em Aprovados antes da decisão');
+      assert(linhas.includes('Joana Decisao'), 'candidata devia estar na aba Entrevista antes da decisão');
 
-      // decidirEntrevista abre o modal de confirmação e aguarda o clique —
-      // não damos await na chamada em si (ela só resolve depois do clique).
-      page.evaluate(() => { decidirEntrevista('nome:joana decisao', 'Joana Decisao', 'contratado'); });
+      page.evaluate(() => { decidirEntrevista('nome:joana decisao', 'Joana Decisao', 'recusado'); });
       await page.waitForTimeout(200);
       await page.click('#confirmBtnOk');
       await page.waitForTimeout(300);
 
       linhas = await page.evaluate(() => document.getElementById('bancoTableBody').innerText);
-      assert(!linhas.includes('Joana Decisao'), `candidata deveria ter sumido de Aprovados após contratada. Conteúdo: ${linhas}`);
+      assert(!linhas.includes('Joana Decisao'), `candidata deveria ter sumido da aba Entrevista. Conteúdo: ${linhas}`);
 
-      await page.evaluate(() => switchView('contratados'));
-      await page.evaluate(() => limparFiltrosContratados());
-      await page.waitForTimeout(300);
-      const contratados = await page.evaluate(() => document.getElementById('contratadosTableBody').innerText);
-      assert(contratados.includes('Joana Decisao') && contratados.includes('Contratado'),
-        `candidata deveria aparecer em Contratados como Contratado. Conteúdo: ${contratados}`);
+      await page.evaluate(() => switchView('pipeline'));
+      await page.waitForTimeout(200);
+      let cand = await page.evaluate(() => document.getElementById('pipelineTableBody').innerText);
+      assert(!cand.includes('Joana Decisao'), `recusada não deveria aparecer em Candidatos por padrão. Conteúdo: ${cand}`);
+      await page.evaluate(() => { document.getElementById('pipelineMostrarRecusados').checked = true; renderPipeline(); });
+      cand = await page.evaluate(() => document.getElementById('pipelineTableBody').innerText);
+      assert(cand.includes('Joana Decisao') && cand.includes('Recusado'), `com "Exibir recusados" ela deveria aparecer como Recusado. Conteúdo: ${cand}`);
 
       assertEqual(erros.length, 0, 'erros de JS: ' + erros.join(' | '));
       await page.close();
@@ -644,7 +887,7 @@ export const tests = [
       // e deixava Aprovados/Contratados/gráfico do Dashboard desatualizados
       // até a próxima mudança em `resultados`.
       const resultados = [{ id: '1', tipo: 'quiz', nome: 'Pedro Sync', modulo: 'Atendimento', pct: 88, acertos: 8, total: 9, data_conclusao: hoje() }];
-      const { page, erros } = await abrirDashboard(browser, baseUrl, { perfil: 'admin', resultados });
+      const { page, erros } = await abrirDashboard(browser, baseUrl, { perfil: 'gerencia', resultados });
 
       page.evaluate(() => { alternarAprovadoParaEntrevista('nome:pedro sync', 'Pedro Sync', true); });
       await page.waitForTimeout(300);
@@ -689,7 +932,7 @@ export const tests = [
     async run({ browser, baseUrl }) {
       const resultados = [{ id: '1', tipo: 'quiz', nome: 'Rafael Aviso', modulo: 'Atendimento', pct: 80, acertos: 8, total: 10, data_conclusao: hoje() }];
       const pipeline = { 'nome:rafael aviso': { aprovado: true, aprovado_por: 'colega_x', aprovado_por_perfil: 'coordenador' } };
-      const { page, erros } = await abrirDashboard(browser, baseUrl, { perfil: 'admin', usuario: 'eu_mesmo', resultados, pipeline });
+      const { page, erros } = await abrirDashboard(browser, baseUrl, { perfil: 'gerencia', usuario: 'eu_mesmo', resultados, pipeline });
 
       page.evaluate(() => { alternarAprovadoParaEntrevista('nome:rafael aviso', 'Rafael Aviso', false); });
       await page.waitForTimeout(300);
@@ -717,9 +960,9 @@ export const tests = [
       const abriu = await page.evaluate(() => document.getElementById('whatsappCandModal').classList.contains('show'));
       assert(abriu, 'modal de WhatsApp deveria abrir pra candidato com telefone');
 
-      await page.click('button:has-text("Interesse na vaga")');
+      await page.click('button:has-text("Convite para entrevista")');
       const texto = await page.evaluate(() => document.getElementById('whatsappCandTextarea').value);
-      assert(texto.includes('Fernanda Fone'), `mensagem deveria conter o nome. Texto: ${texto}`);
+      assert(texto.includes('Fernanda') && !texto.includes('[Nome]'), `mensagem deveria conter o primeiro nome. Texto: ${texto}`);
       assert(texto.includes('Recepcionista'), `mensagem deveria conter o cargo. Texto: ${texto}`);
 
       assertEqual(erros.length, 0, 'erros de JS: ' + erros.join(' | '));
@@ -868,7 +1111,7 @@ export const tests = [
 ,
 
   {
-    name: 'Aprovar para entrevista quem já teve decisão final volta a mostrar em Aprovados',
+    name: 'Enviar pra entrevista quem já teve decisão final volta a mostrar na aba Entrevista',
     async run({ browser, baseUrl }) {
       // Cenário real relatado: a mesma pessoa é reavaliada numa rodada nova.
       // Ela já tinha decisão final de antes (recusado), e ao ser aprovada pra
@@ -876,7 +1119,7 @@ export const tests = [
       // tem decisao_final, e aprovar não limpava esse campo.
       const resultados = [{ id: '1', tipo: 'quiz', nome: 'Revisitado', modulo: 'Atendimento', pct: 80, acertos: 8, total: 10, data_conclusao: hoje() }];
       const pipeline = { 'nome:revisitado': { nome: 'Revisitado', aprovado: false, decisao_final: 'recusado', decisao_final_em: hoje() } };
-      const { page, erros } = await abrirDashboard(browser, baseUrl, { perfil: 'admin', resultados, pipeline });
+      const { page, erros } = await abrirDashboard(browser, baseUrl, { perfil: 'gerencia', resultados, pipeline });
 
       await page.evaluate(() => window.alternarAprovadoParaEntrevista('nome:revisitado', 'Revisitado', true));
       await page.waitForTimeout(400);
@@ -1250,7 +1493,7 @@ export const tests = [
       // mesmo tempo. Isso mudou: agora "etapa" é sempre uma coisa só —
       // entrar num estado tira o candidato do outro.
       const resultados = [{ id: '1', tipo: 'quiz', nome: 'Etapa Unica', modulo: 'Atendimento', pct: 80, acertos: 8, total: 10, data_conclusao: hoje() }];
-      const { page, erros } = await abrirDashboard(browser, baseUrl, { perfil: 'admin', resultados });
+      const { page, erros } = await abrirDashboard(browser, baseUrl, { perfil: 'gerencia', resultados });
 
       // Aprova pra entrevista primeiro.
       await page.evaluate(() => window.alternarAprovadoParaEntrevista('nome:etapa unica', 'Etapa Unica', true));
@@ -1294,25 +1537,26 @@ export const tests = [
     name: 'Linha do tempo registra cada mudança de etapa e aparece na ficha do candidato',
     async run({ browser, baseUrl }) {
       const resultados = [{ id: '1', tipo: 'quiz', nome: 'Com Historico', modulo: 'Atendimento', pct: 80, acertos: 8, total: 10, data_conclusao: hoje() }];
-      const { page, erros } = await abrirDashboard(browser, baseUrl, { perfil: 'admin', resultados });
+      const { page, erros } = await abrirDashboard(browser, baseUrl, { perfil: 'gerencia', resultados });
 
       await page.evaluate(() => window.alternarAprovadoParaEntrevista('nome:com historico', 'Com Historico', true));
       await page.waitForTimeout(200);
-      page.evaluate(() => { decidirEntrevista('nome:com historico', 'Com Historico', 'contratado'); });
+      await page.evaluate(() => { window.open = () => {}; abrirContratar('nome:com historico', 'Com Historico'); });
       await page.waitForTimeout(200);
-      await page.click('#confirmBtnOk');
+      await page.evaluate(() => confirmarContratar());
       await page.waitForTimeout(300);
+      await page.evaluate(() => fecharWhatsappCandidato());
 
       await page.evaluate(() => abrirCandidato('nome:com historico'));
       // A linha do tempo é buscada sob demanda (não é instantânea como o
       // resto do modal) — dá um tempo pra terminar de carregar.
       await page.waitForTimeout(400);
       const timeline = await page.evaluate(() => document.getElementById('cmTimeline').innerText);
-      assert(timeline.includes('Aguardando entrevista'), `deveria ter a entrada de quando foi aprovado. Conteúdo: ${timeline}`);
-      assert(timeline.includes('Contratado'), `deveria ter a entrada da decisão final. Conteúdo: ${timeline}`);
+      assert(timeline.includes('Em entrevista'), `deveria ter a entrada de quando foi aprovado. Conteúdo: ${timeline}`);
+      assert(/contratado/i.test(timeline), `deveria ter a entrada da decisão final. Conteúdo: ${timeline}`);
 
       const status = await page.evaluate(() => document.getElementById('cmConteudo').innerText);
-      assert(status.includes('STATUS ATUAL') && status.includes('Contratado'), `deveria mostrar o status atual como Contratado. Conteúdo: ${status}`);
+      assert(status.includes('STATUS ATUAL') && /contratado/i.test(status), `deveria mostrar o status atual como Contratado. Conteúdo: ${status}`);
 
       assertEqual(erros.length, 0, 'erros de JS: ' + erros.join(' | '));
       await page.close();
@@ -1329,11 +1573,11 @@ export const tests = [
       const pipeline = { 'nome:ja aprovado': { aprovado: true, etapa: 'aguardando_entrevista' } };
       const { page, erros } = await abrirDashboard(browser, baseUrl, { perfil: 'admin', resultados, pipeline });
 
-      await page.evaluate(() => switchView('pipeline'));
+      await page.evaluate(() => { switchView('pipeline'); document.getElementById('pipelineMostrarAvancados').checked = true; renderPipeline(); });
       await page.waitForTimeout(300);
       const texto = await page.evaluate(() => document.getElementById('pipelineTableBody').innerText);
       assert(texto.includes('Testes concluídos'), `candidato sem ação da equipe deveria mostrar "Testes concluídos". Conteúdo: ${texto}`);
-      assert(texto.includes('Aguardando entrevista'), `candidato já aprovado deveria mostrar "Aguardando entrevista". Conteúdo: ${texto}`);
+      assert(texto.includes('Em entrevista'), `candidato já enviado deveria mostrar "Em entrevista". Conteúdo: ${texto}`);
 
       assertEqual(erros.length, 0, 'erros de JS: ' + erros.join(' | '));
       await page.close();
@@ -1408,7 +1652,7 @@ export const tests = [
         { id: '2', tipo: 'quiz', nome: 'Apto Entrevista', modulo: 'Atendimento', pct: 80, acertos: 8, total: 10, data_conclusao: hoje() }
       ];
       const pipeline = { 'nome:apto entrevista': { aprovado: true, etapa: 'aguardando_entrevista' } };
-      const { page, erros } = await abrirDashboard(browser, baseUrl, { perfil: 'admin', resultados, pipeline });
+      const { page, erros } = await abrirDashboard(browser, baseUrl, { perfil: 'gerencia', resultados, pipeline });
 
       // 2 pendências no total (1 aguardando avaliação + 1 aguardando entrevista),
       // 1 apto para entrevista especificamente.
@@ -1440,7 +1684,7 @@ export const tests = [
 
       // Resolvendo a pendência de entrevista (decide contratado), a conta
       // cai de verdade — não é um "dispensar" manual, é a conta real.
-      page.evaluate(() => decidirEntrevista('nome:apto entrevista', 'Apto Entrevista', 'contratado'));
+      page.evaluate(() => decidirEntrevista('nome:apto entrevista', 'Apto Entrevista', 'recusado'));
       await page.waitForTimeout(200);
       await page.click('#confirmBtnOk');
       await page.waitForTimeout(300);
@@ -1468,7 +1712,7 @@ export const tests = [
         { id: '3', tipo: 'typing', nome: 'Ficha Completa', dispositivo: 'desktop', wpm: 45, pct: 88, data_conclusao: hoje() }
       ];
       const violacoes = [{ id: 'v1', nome: 'Ficha Completa', tipo: 'perda_foco', modulo: 'Atendimento', data: '2026-09-13', hora_recebimento: '09:00' }];
-      const { page, erros } = await abrirDashboard(browser, baseUrl, { perfil: 'admin', resultados, violacoes });
+      const { page, erros } = await abrirDashboard(browser, baseUrl, { perfil: 'gerencia', resultados, violacoes });
 
       await page.evaluate(() => abrirCandidato('nome:ficha completa'));
       await page.waitForTimeout(300);
@@ -1514,7 +1758,7 @@ export const tests = [
       // Decisão: botões de ação aparecem direto na ficha (sem precisar abrir
       // outro menu), pro perfil admin.
       assert(texto.includes('Decisão'), `deveria ter a seção Decisão. Conteúdo: ${texto}`);
-      assert(/aprovar para entrevista/i.test(texto), `deveria ter o botão de aprovar direto na ficha. Conteúdo: ${texto}`);
+      assert(/enviar para entrevista/i.test(texto), `deveria ter o botão de enviar pra entrevista direto na ficha. Conteúdo: ${texto}`);
 
       assertEqual(erros.length, 0, 'erros de JS: ' + erros.join(' | '));
       await page.close();
@@ -1525,23 +1769,29 @@ export const tests = [
     name: 'Ficha 360°: decidir direto na ficha atualiza o status ali mesmo, sem fechar o modal',
     async run({ browser, baseUrl }) {
       const resultados = [{ id: '1', tipo: 'quiz', nome: 'Decide Na Ficha', modulo: 'Atendimento', pct: 85, acertos: 8, total: 10, data_conclusao: hoje() }];
-      const { page, erros } = await abrirDashboard(browser, baseUrl, { perfil: 'admin', resultados });
+      const { page, erros } = await abrirDashboard(browser, baseUrl, { perfil: 'gerencia', resultados });
 
       await page.evaluate(() => abrirCandidato('nome:decide na ficha'));
       await page.waitForTimeout(300);
       let status = await page.evaluate(() => document.getElementById('cmConteudo').innerText);
       assert(status.includes('Testes concluídos'), `status inicial deveria ser "Testes concluídos". Conteúdo: ${status}`);
 
-      await page.click('[data-acao="toggleAprovado"]');
+      await page.click('#cmConteudo [data-acao="enviarEntrevista"]');
+      await page.waitForTimeout(200);
+      // Pergunta da digitação no teclado físico antes de enviar
+      const pergunta = await page.evaluate(() => document.getElementById('digitacaoCheckModal').innerText);
+      assert(/já realizou o teste de digitação no teclado físico/i.test(pergunta), `deveria perguntar sobre a digitação no teclado físico. Veio: ${pergunta}`);
+      await page.click('#digitacaoCheckOk');
       await page.waitForTimeout(300);
+      await page.evaluate(() => fecharWhatsappCandidato());
 
       status = await page.evaluate(() => document.getElementById('cmConteudo').innerText);
-      assert(status.includes('Aguardando entrevista'), `depois de aprovar direto na ficha, o status deveria atualizar ali mesmo. Conteúdo: ${status}`);
+      assert(status.includes('Em entrevista'), `depois de enviar direto na ficha, o status deveria atualizar ali mesmo. Conteúdo: ${status}`);
       // O próprio botão precisa ter virado o de "desmarcar" — prova que a
       // ficha foi re-renderizada com o pipeline atualizado, não travada.
       // Botão é .btn-act (CSS text-transform:uppercase) — busca sem
       // diferenciar maiúsculas de minúsculas.
-      assert(/marcado para entrevista/i.test(status), `o botão deveria refletir o novo estado. Conteúdo: ${status}`);
+      assert(/realizar 1ª entrevista/i.test(status), `os botões deveriam refletir o novo estado. Conteúdo: ${status}`);
 
       const aindaAberto = await page.evaluate(() => document.getElementById('candModal').classList.contains('show'));
       assert(aindaAberto, 'o modal não deveria fechar sozinho ao decidir');
@@ -1867,11 +2117,11 @@ export const tests = [
   },
 
   {
-    name: 'Entrevista: aprovar registra o resumo na Ficha 360°, mas não decide contratação sozinho',
+    name: 'Entrevista: aprovar registra no histórico e manda pra Aprovados para contratação, sem contratar sozinho',
     async run({ browser, baseUrl }) {
       const resultados = [{ id: '1', tipo: 'quiz', nome: 'Entrevista Aprovada', candidato: { cpf: '40404040404', cargo_pretendido: 'ASG' }, modulo: 'ASG', pct: 80, acertos: 8, total: 10, data_conclusao: hoje() }];
       const pipeline = { 'cpf:40404040404': { aprovado: true, aprovado_em: hoje() } };
-      const { page, erros } = await abrirDashboard(browser, baseUrl, { perfil: 'admin', resultados, pipeline });
+      const { page, erros } = await abrirDashboard(browser, baseUrl, { perfil: 'gerencia', resultados, pipeline });
 
       await page.evaluate(() => abrirCandidato('cpf:40404040404'));
       await page.waitForTimeout(300);
@@ -1920,7 +2170,7 @@ export const tests = [
     async run({ browser, baseUrl }) {
       const resultados = [{ id: '1', tipo: 'quiz', nome: 'Entrevista Reprovada', candidato: { cpf: '50505050505', cargo_pretendido: 'ASG' }, modulo: 'ASG', pct: 80, acertos: 8, total: 10, data_conclusao: hoje() }];
       const pipeline = { 'cpf:50505050505': { aprovado: true, aprovado_em: hoje() } };
-      const { page, erros } = await abrirDashboard(browser, baseUrl, { perfil: 'admin', resultados, pipeline });
+      const { page, erros } = await abrirDashboard(browser, baseUrl, { perfil: 'gerencia', resultados, pipeline });
 
       await page.evaluate(() => abrirCandidato('cpf:50505050505'));
       await page.waitForTimeout(300);
@@ -1950,7 +2200,7 @@ export const tests = [
     async run({ browser, baseUrl }) {
       const resultados = [{ id: '1', tipo: 'quiz', nome: 'Entrevista Complementar', candidato: { cpf: '60606060606', cargo_pretendido: 'ASG' }, modulo: 'ASG', pct: 80, acertos: 8, total: 10, data_conclusao: hoje() }];
       const pipeline = { 'cpf:60606060606': { aprovado: true, aprovado_em: hoje(), etapa: 'aguardando_entrevista' } };
-      const { page, erros } = await abrirDashboard(browser, baseUrl, { perfil: 'admin', resultados, pipeline });
+      const { page, erros } = await abrirDashboard(browser, baseUrl, { perfil: 'gerencia', resultados, pipeline });
 
       await page.evaluate(() => abrirCandidato('cpf:60606060606'));
       await page.waitForTimeout(300);
@@ -1987,11 +2237,11 @@ export const tests = [
     name: 'Banco de Reserva: colocar candidato exige avaliação (motivo + critérios), registrada na Ficha 360°',
     async run({ browser, baseUrl }) {
       const resultados = [{ id: '1', tipo: 'quiz', nome: 'Vai Pro Banco', candidato: { cpf: '70707070707', cargo_pretendido: 'ASG' }, modulo: 'ASG', pct: 75, acertos: 7, total: 10, data_conclusao: hoje() }];
-      const { page, erros } = await abrirDashboard(browser, baseUrl, { perfil: 'admin', resultados });
+      const { page, erros } = await abrirDashboard(browser, baseUrl, { perfil: 'gerencia', resultados });
 
       await page.evaluate(() => abrirCandidato('cpf:70707070707'));
       await page.waitForTimeout(300);
-      await page.click('[data-acao="toggleBanco"]');
+      await page.click('#cmConteudo [data-acao="bancoReserva"]');
       await page.waitForTimeout(200);
 
       const modalAberto = await page.evaluate(() => document.getElementById('avaliacaoBancoModal').classList.contains('show'));

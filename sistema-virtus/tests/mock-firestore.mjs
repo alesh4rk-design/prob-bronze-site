@@ -52,6 +52,16 @@ export function doc(db, ...parts){ return { __doc: parts.join('/') }; }
 export function serverTimestamp(){ return new Date(); }
 export function deleteField(){ return { __deleteField: true }; }
 export function increment(n){ return { __increment: n }; }
+export function arrayUnion(...itens){ return { __arrayUnion: itens }; }
+// writeBatch: aplica as escritas na ordem, no commit (o suficiente pros testes)
+export function writeBatch(){
+  const ops = [];
+  return {
+    set(ref, data, opts){ ops.push(() => setDoc(ref, data, opts)); },
+    update(ref, data){ ops.push(() => updateDoc(ref, data)); },
+    async commit(){ for (const op of ops) await op(); }
+  };
+}
 
 window.__PESOS = ${JSON.stringify(pesosScore)};
 
@@ -99,6 +109,7 @@ export async function setDoc(ref, data){
     for (const [k, v] of Object.entries(data)) {
       if (v && typeof v === 'object' && v.__deleteField) delete atual[k];
       else if (v && typeof v === 'object' && '__increment' in v) atual[k] = (atual[k] || 0) + v.__increment;
+      else if (v && typeof v === 'object' && v.__arrayUnion) atual[k] = [...(Array.isArray(atual[k]) ? atual[k] : []), ...v.__arrayUnion];
       else atual[k] = v;
     }
     window.__PIPE[id] = atual;
@@ -123,7 +134,13 @@ export async function updateDoc(ref, data){
   }
   if (ref.__doc && ref.__doc.startsWith('vagas/')) {
     const id = ref.__doc.split('/')[1];
-    window.__VAGAS[id] = { ...(window.__VAGAS[id] || {}), ...data };
+    const atual = { ...(window.__VAGAS[id] || {}) };
+    for (const [k, v] of Object.entries(data)) {
+      if (v && typeof v === 'object' && v.__deleteField) delete atual[k];
+      else if (v && typeof v === 'object' && '__increment' in v) atual[k] = (atual[k] || 0) + v.__increment;
+      else atual[k] = v;
+    }
+    window.__VAGAS[id] = atual;
     if (window.__notifyVagas) window.__notifyVagas();
   }
 }

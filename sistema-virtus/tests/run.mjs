@@ -28,7 +28,10 @@ async function main() {
   const { chromium } = await loadPlaywright();
   const browser = await chromium.launch();
 
-  const todos = [...dashboardTests];
+  // FILTRO=texto roda só os testes cujo nome contém o texto (útil pra
+  // repetir só o que falhou).
+  const filtro = process.env.FILTRO || '';
+  const todos = [...dashboardTests].filter(t => !filtro || filtro.split('|').some(f => t.name.includes(f)));
   let passou = 0, falhou = 0;
   const falhas = [];
 

@@ -12,7 +12,8 @@
 
 import { db } from "./firebase-config.js";
 import {
-  collection, query, where, orderBy, limit, onSnapshot, getDoc, getDocs, doc, addDoc, setDoc, updateDoc, deleteDoc, serverTimestamp, deleteField, increment
+  collection, query, where, orderBy, limit, onSnapshot, getDoc, getDocs, doc, addDoc, setDoc, updateDoc, deleteDoc, serverTimestamp, deleteField, increment,
+  writeBatch, arrayUnion
 } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
 
 // Isolamento por filial: o Firestore NÃO filtra documento por documento
@@ -117,6 +118,18 @@ export function assinarFiliais(callback, onError) {
     lista.sort((a, b) => (a.nome || '').localeCompare(b.nome || ''));
     callback(lista);
   }, (err) => { console.error("assinarFiliais:", err); if (onError) onError(err); });
+}
+
+// Filial Teste: só do Admin, pra testar o sistema inteiro (entrevistar,
+// contratar, desfazer, banco, mensagens) sem mexer nas filiais de verdade.
+// Candidatos dela não aparecem pra nenhuma Gerência e as vagas dela não
+// aparecem pra candidato de outra filial (cada código/vaga leva a filial).
+export const FILIAL_TESTE_ID = "filial-teste";
+export const FILIAL_TESTE_NOME = "Filial Teste";
+export async function garantirFilialTeste() {
+  const ref = doc(db, "filiais", FILIAL_TESTE_ID);
+  const snap = await getDoc(ref);
+  if (!snap.exists()) await setDoc(ref, { nome: FILIAL_TESTE_NOME, teste: true, criado_em: serverTimestamp() });
 }
 
 // Nome -> id de documento (slug simples, sem acento/espaço), com um sufixo
@@ -365,6 +378,18 @@ export function assinarTemposTestes(callback, filial) {
   }, (err) => console.error("assinarTemposTestes:", err));
 }
 
+// Textos das mensagens prontas de WhatsApp (aba Candidatos), editáveis pela
+// Gerência — mesmo documento do número do RH, campo `mensagens`
+// ({ convite: "...", contratado: "..." }). Lido só quando a janela de
+// WhatsApp abre (getDoc), sem ficar assinado o tempo todo.
+export async function obterMensagensWhatsapp(filial) {
+  const snap = await getDoc(docWhatsapp(filial));
+  return snap.exists() ? (snap.data().mensagens || {}) : {};
+}
+export async function salvarMensagemWhatsapp(filial, chave, texto) {
+  await setDoc(docWhatsapp(filial), { mensagens: { [chave]: texto } }, { merge: true });
+}
+
 export function assinarNumeroWhatsapp(callback, onError, filial) {
   return onSnapshot(docWhatsapp(filial), (snap) => {
     callback(snap.exists() ? (snap.data().numero || "") : "");
@@ -481,9 +506,16 @@ export async function definirAprovacaoManual(chave, aprovado, nome, avaliador, p
   // (ver PIPELINE_MAP em dashboard.html) — gravada aqui na primeira vez que
   // alguém decide algo sobre ele, pra isolar o pipeline por filial.
   if (filial) { dados.filial = filial; dados.filial_nome = filialNome || null; }
+  // Uma aprovação para contratação (ou o antigo "enviar para a Etapa 4") de
+  // uma rodada anterior nunca continua valendo: marcar/desmarcar para
+  // entrevista sempre recomeça daqui. O histórico de entrevistas
+  // (`entrevistas`) NÃO é apagado — fica guardado pra sempre.
+  dados.aprovado_contratacao = deleteField();
+  dados.etapa4 = deleteField();
   if (aprovado) {
-    // Nova rodada: a entrevista de uma rodada anterior não vale mais.
-    dados.entrevista = deleteField();
+    // Nova rodada: a entrevista de uma rodada anterior deixa de valer pra
+    // etapa sozinha (aprovado_em novo — ver entrevistaDaRodada), mas NÃO é
+    // apagada: continua no histórico de entrevistas do candidato.
     // Reabre o processo: uma decisão final ou uma marcação de banco de
     // reserva de uma rodada anterior não pode continuar valendo.
     dados.decisao_final = deleteField();
@@ -522,6 +554,8 @@ export async function definirBancoReserva(chave, valor, nome, avaliador, perfilA
   };
   if (filial) { dados.filial = filial; dados.filial_nome = filialNome || null; }
   if (valor) {
+    dados.aprovado_contratacao = deleteField();
+    dados.etapa4 = deleteField();
     dados.aprovado = deleteField();
     dados.aprovado_por = deleteField();
     dados.aprovado_por_perfil = deleteField();
@@ -614,6 +648,119 @@ export async function registrarDecisaoFinal(chave, decisao, nome, quem, perfilQu
   await registrarHistorico(chave, { etapa: decisao, nome, por: quem, por_perfil: perfilQuem });
 }
 
+// Entrevista → Aprovados para contratação, sem precisar de outra entrevista
+// (ex: a entrevista já foi registrada antes e a equipe decidiu agora).
+export async function aprovarParaContratacao(chave, nome, quem, perfilQuem) {
+  const id = chave.replace(/[/]/g, "_");
+  await setDoc(doc(db, "pipeline", id), {
+    ...carimboFilial(chave),
+    aprovado: true,
+    aprovado_contratacao: true,
+    aprovado_contratacao_por: quem || null,
+    aprovado_contratacao_em: serverTimestamp(),
+    nome: nome || null,
+    etapa: "etapa_final",
+    atualizado_em: serverTimestamp()
+  }, { merge: true });
+  await registrarHistorico(chave, { etapa: "etapa_final", nome, por: quem, por_perfil: perfilQuem, motivo: "Aprovado para contratação" });
+}
+
+// Aprovados para contratação → volta para Entrevista (fazer mais uma).
+export async function voltarParaEntrevista(chave, nome, quem, perfilQuem) {
+  const id = chave.replace(/[/]/g, "_");
+  await setDoc(doc(db, "pipeline", id), {
+    ...carimboFilial(chave),
+    aprovado_contratacao: deleteField(),
+    etapa4: deleteField(),
+    // Rodada nova: a última entrevista aprovada deixa de "valer" para a
+    // etapa (ver entrevistaDaRodada), mas continua guardada no histórico.
+    aprovado_em: serverTimestamp(),
+    nome: nome || null,
+    etapa: "aguardando_entrevista",
+    atualizado_em: serverTimestamp()
+  }, { merge: true });
+  await registrarHistorico(chave, { etapa: "aguardando_entrevista", nome, por: quem, por_perfil: perfilQuem, motivo: "Voltou para entrevista (nova entrevista)" });
+}
+
+// Contratação (só a Gerência — e o Admin na Filial Teste). Grava o
+// candidato como Efetivo e tira 1 da quantidade da vaga escolhida, tudo de
+// uma vez (writeBatch). Quando a vaga chega a 0 ela fecha sozinha e some da
+// lista que o candidato vê na hora de se candidatar.
+export async function registrarContratacao(chave, nome, quem, perfilQuem, vaga) {
+  const id = chave.replace(/[/]/g, "_");
+  const batch = writeBatch(db);
+  batch.set(doc(db, "pipeline", id), {
+    ...carimboFilial(chave),
+    decisao_final: "contratado",
+    decisao_final_por: quem || null,
+    decisao_final_por_perfil: perfilQuem || null,
+    decisao_final_em: serverTimestamp(),
+    contratado_vaga_id: vaga ? vaga.id : null,
+    contratado_vaga_cargo: vaga ? (vaga.cargo || null) : null,
+    contratado_vaga_local: vaga ? (vaga.local || null) : null,
+    nome: nome || null,
+    etapa: "contratado",
+    banco_reserva: deleteField(),
+    banco_reserva_por: deleteField(),
+    banco_reserva_por_perfil: deleteField(),
+    banco_reserva_em: deleteField(),
+    atualizado_em: serverTimestamp()
+  }, { merge: true });
+  if (vaga && vaga.id) {
+    const atual = Number(vaga.numero_vagas) || 0;
+    const restantes = Math.max(0, atual - 1);
+    const upd = { numero_vagas: restantes, contratados: increment(1) };
+    if (vaga.numero_vagas_inicial == null) upd.numero_vagas_inicial = atual;
+    if (restantes === 0) {
+      upd.status = "encerrada";
+      upd.encerrada_auto = true;
+      upd.encerrado_por = "Automático (vagas preenchidas)";
+      upd.encerrado_em = serverTimestamp();
+    }
+    batch.update(doc(db, "vagas", vaga.id), upd);
+  }
+  await batch.commit();
+  const vagaTxt = vaga ? `Vaga: ${vaga.cargo || ""}${vaga.local ? " — " + vaga.local : ""}` : "Sem vaga vinculada";
+  await registrarHistorico(chave, { etapa: "contratado", nome, por: quem, por_perfil: perfilQuem, motivo: vagaTxt });
+}
+
+// Desfaz uma contratação feita por engano: o candidato volta para
+// "Aprovados para contratação" e a vaga recebe a posição de volta (reabre
+// sozinha se tinha fechado por ter preenchido todas).
+export async function desfazerContratacao(chave, nome, quem, perfilQuem, vaga) {
+  const id = chave.replace(/[/]/g, "_");
+  const batch = writeBatch(db);
+  batch.set(doc(db, "pipeline", id), {
+    ...carimboFilial(chave),
+    decisao_final: deleteField(),
+    decisao_final_por: deleteField(),
+    decisao_final_por_perfil: deleteField(),
+    decisao_final_em: deleteField(),
+    contratado_vaga_id: deleteField(),
+    contratado_vaga_cargo: deleteField(),
+    contratado_vaga_local: deleteField(),
+    aprovado: true,
+    aprovado_contratacao: true,
+    contratacao_desfeita_por: quem || null,
+    contratacao_desfeita_em: serverTimestamp(),
+    nome: nome || null,
+    etapa: "etapa_final",
+    atualizado_em: serverTimestamp()
+  }, { merge: true });
+  if (vaga && vaga.id) {
+    const upd = { numero_vagas: (Number(vaga.numero_vagas) || 0) + 1, contratados: increment(-1) };
+    if (vaga.status !== "aberta" && vaga.encerrada_auto) {
+      upd.status = "aberta";
+      upd.encerrada_auto = deleteField();
+      upd.reaberto_por = "Automático (contratação desfeita)";
+      upd.reaberto_em = serverTimestamp();
+    }
+    batch.update(doc(db, "vagas", vaga.id), upd);
+  }
+  await batch.commit();
+  await registrarHistorico(chave, { etapa: "contratacao_desfeita", nome, por: quem, por_perfil: perfilQuem, motivo: vaga ? `Vaga devolvida: ${vaga.cargo || ""}` : null });
+}
+
 // Entrevista — registro estruturado de quando a entrevista (etapa
 // "aguardando_entrevista") de fato acontece: perguntas de sim/não,
 // avaliação comportamental (1-5) e observações, com uma decisão de saída
@@ -630,10 +777,42 @@ export async function registrarDecisaoFinal(chave, decisao, nome, quem, perfilQu
 // pode ir bem e a empresa decidir não contratar por outro motivo, tipo não
 // ter mais vaga); complementar só marca um sinalizador pra alguém
 // acompanhar depois, sem tirar o candidato de "Aguardando entrevista".
-export async function registrarEntrevista(chave, dados, nome, quem, perfilQuem) {
+// Várias entrevistas por candidato: cada uma é acrescentada em
+// `entrevistas` (lista que nunca é apagada nem sobrescrita) e a mais
+// recente também fica em `entrevista` (usada pelo resto do painel/PDF).
+// `anteriores`: entrevistas que já existiam antes desta lista existir
+// (campo `entrevista` antigo) — entram primeiro, pra não sumirem do histórico.
+// Aprovado na entrevista → vai direto para "Aprovados para contratação".
+export async function registrarEntrevista(chave, dados, nome, quem, perfilQuem, anteriores = []) {
   const id = chave.replace(/[/]/g, "_");
+  const registro = {
+    decisao: dados.decisao,
+    disponibilidade_escala: dados.disponibilidadeEscala,
+    escala_5x2: dados.escala5x2 ?? null,
+    escala_6x1: dados.escala6x1 ?? null,
+    experiencia_anterior: dados.experienciaAnterior,
+    versao: dados.versao || 1,
+    avaliacao: dados.avaliacao || null,
+    avaliacao_media: dados.avaliacaoMedia ?? null,
+    criterios: dados.criterios || null,
+    perguntas: dados.perguntas || null,
+    media: dados.media ?? null,
+    destaques_fortes: dados.destaquesFortes || [],
+    destaques_atencao: dados.destaquesAtencao || [],
+    observacoes: dados.observacoes || null,
+    numero: dados.numero || null,
+    por: quem || null,
+    por_perfil: perfilQuem || null,
+    // serverTimestamp() não é aceito dentro de lista no Firestore
+    em_iso: new Date().toISOString()
+  };
+  const extra = dados.decisao === "aprovado"
+    ? { aprovado_contratacao: true, aprovado_contratacao_por: quem || null, aprovado_contratacao_em: serverTimestamp(), etapa: "etapa_final" }
+    : {};
   await setDoc(doc(db, "pipeline", id), {
     ...carimboFilial(chave),
+    ...extra,
+    entrevistas: arrayUnion(...anteriores, registro),
     entrevista: {
       decisao: dados.decisao,
       disponibilidade_escala: dados.disponibilidadeEscala,
@@ -649,6 +828,7 @@ export async function registrarEntrevista(chave, dados, nome, quem, perfilQuem) 
       destaques_fortes: dados.destaquesFortes || [],
       destaques_atencao: dados.destaquesAtencao || [],
       observacoes: dados.observacoes || null,
+      numero: dados.numero || null,
       por: quem || null,
       por_perfil: perfilQuem || null,
       em: serverTimestamp()
@@ -660,7 +840,10 @@ export async function registrarEntrevista(chave, dados, nome, quem, perfilQuem) 
   const motivo = dados.decisao === "aprovado" ? "Entrevista aprovada"
     : dados.decisao === "reprovado" ? "Entrevista reprovada"
     : "Avaliação complementar solicitada na entrevista";
-  await registrarHistorico(chave, { etapa: "entrevista_realizada", nome, por: quem, por_perfil: perfilQuem, motivo });
+  await registrarHistorico(chave, { etapa: "entrevista_realizada", nome, por: quem, por_perfil: perfilQuem, motivo: (dados.numero ? dados.numero + "ª entrevista — " : "") + motivo });
+  if (dados.decisao === "aprovado") {
+    await registrarHistorico(chave, { etapa: "etapa_final", nome, por: quem, por_perfil: perfilQuem, motivo: "Aprovado para contratação" });
+  }
 
   if (dados.decisao === "reprovado") {
     await registrarDecisaoFinal(chave, "recusado", nome, quem, perfilQuem);
@@ -673,6 +856,72 @@ export function assinarPipeline(callback, onError, filial) {
     snap.forEach((d) => { mapa[d.id] = d.data(); });
     callback(mapa);
   }, (err) => { console.error("assinarPipeline:", err); if (onError) onError(err); });
+}
+
+// Testes de candidatos antigos (mais de 30 dias — o painel só assina esse
+// período pra economizar leituras): buscados sob demanda só pra quem está
+// em Entrevista, Aprovados, Efetivos ou Banco, ou quando a ficha é aberta.
+// CPF pode estar gravado com ou sem máscara em testes antigos.
+export async function buscarResultadosDeCandidatos(alvos, filial) {
+  const ref = collection(db, "resultados");
+  const filtroFilial = filial === undefined ? [] : [where("filial", "==", filial)];
+  const achados = new Map();
+  const juntar = (snap) => snap.forEach((d) => achados.set(d.id, { id: d.id, ...d.data() }));
+  const valores = [];
+  for (const a of alvos) {
+    if (!a.chave.startsWith("cpf:")) continue;
+    const cpf = a.chave.slice(4);
+    valores.push(cpf);
+    if (cpf.length === 11) valores.push(cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4"));
+  }
+  for (let i = 0; i < valores.length; i += 10) {
+    juntar(await getDocs(query(ref, ...filtroFilial, where("cpf", "in", valores.slice(i, i + 10)))));
+  }
+  for (const a of alvos) {
+    if (a.chave.startsWith("nome:") && a.nome) juntar(await getDocs(query(ref, ...filtroFilial, where("nome", "==", a.nome))));
+  }
+  return [...achados.values()];
+}
+
+// Backup completo (o que a pessoa logada pode ver: tudo pro Admin, só a
+// filial pra Gerência): testes, violações, processo seletivo com histórico
+// e comentários de cada candidato, e vagas. Devolve um objeto pronto pra
+// virar arquivo .json (datas do Firestore viram texto ISO).
+function paraJSON(v) {
+  if (v == null) return v;
+  if (typeof v.toDate === "function") { try { return v.toDate().toISOString(); } catch (_) { return null; } }
+  if (Array.isArray(v)) return v.map(paraJSON);
+  if (typeof v === "object") { const o = {}; for (const [k, x] of Object.entries(v)) o[k] = paraJSON(x); return o; }
+  return v;
+}
+export async function gerarBackup(filial, aoProgredir) {
+  const ler = async (nome) => {
+    const snap = await getDocs(consultaDaFilial(nome, filial));
+    const lista = [];
+    snap.forEach((d) => lista.push({ id: d.id, ...d.data() }));
+    return lista;
+  };
+  const [resultados, violacoes, pipeline, vagas] = await Promise.all([ler("resultados"), ler("violacoes"), ler("pipeline"), ler("vagas")]);
+  const lerSub = async (id, sub) => {
+    const snap = await getDocs(collection(db, "pipeline", id, sub));
+    const lista = [];
+    snap.forEach((d) => lista.push({ id: d.id, ...d.data() }));
+    return lista;
+  };
+  for (let i = 0; i < pipeline.length; i += 20) {
+    await Promise.all(pipeline.slice(i, i + 20).map(async (p) => {
+      p.historico = await lerSub(p.id, "historico");
+      p.comentarios = await lerSub(p.id, "comentarios");
+    }));
+    if (aoProgredir) aoProgredir(Math.min(pipeline.length, i + 20), pipeline.length);
+  }
+  return paraJSON({
+    sistema: "Virtus",
+    gerado_em: new Date(),
+    filial: filial === undefined ? "todas" : filial,
+    totais: { resultados: resultados.length, violacoes: violacoes.length, candidatos_no_processo: pipeline.length, vagas: vagas.length },
+    resultados, violacoes, pipeline, vagas
+  });
 }
 
 // ── Pesos do Score Virtus ───────────────────────────────────────────────

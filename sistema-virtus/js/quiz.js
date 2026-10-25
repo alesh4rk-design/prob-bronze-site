@@ -48,8 +48,10 @@ export async function listarVagasAbertas(filial) {
     const snap = await getDocs(q);
     const vagas = [];
     snap.forEach((d) => vagas.push({ id: d.id, ...d.data() }));
-    if (!filial) return vagas;
-    return vagas.filter(v => !v.filial || v.filial === filial);
+    // Vaga com todas as posições preenchidas (contratações) não aparece mais.
+    const comVaga = vagas.filter(v => v.numero_vagas == null || Number(v.numero_vagas) > 0);
+    if (!filial) return comVaga;
+    return comVaga.filter(v => !v.filial || v.filial === filial);
   } catch (e) {
     return [];
   }

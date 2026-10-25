@@ -227,6 +227,8 @@
       const snap = await getDocs(collection(db, "filiais"));
       const sel = $('inp_filial');
       snap.forEach(d => {
+        // Filial Teste é só do Admin (testes do sistema) — ninguém se cadastra nela.
+        if (d.id === 'filial-teste' || (d.data() || {}).teste) return;
         const op = document.createElement('option');
         op.value = d.id;
         op.textContent = (d.data() || {}).nome || d.id;
