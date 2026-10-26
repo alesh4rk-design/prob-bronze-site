@@ -57,7 +57,7 @@ export async function abrirDashboard(browser, baseUrl, mockConfig = {}, viewport
   page.on('pageerror', e => erros.push(e.message));
   page.on('console', m => { if (m.type() === 'error' && !m.text().includes('ERR_') && !m.text().includes('Failed to load resource')) erros.push('[console] ' + m.text()); });
 
-  await page.goto(`${baseUrl}/dashboard.html`, { waitUntil: 'load' });
+  await page.goto(`${baseUrl}/dashboard.html${mockConfig.modoTestes ? '' : '?completo=1'}`, { waitUntil: 'load' });
   await page.waitForTimeout(1200);
   // A janela de "Primeiros passos" abre sozinha pra Gerência e fica por cima
   // dos botões — fecha, a não ser que o teste seja justamente sobre ela.

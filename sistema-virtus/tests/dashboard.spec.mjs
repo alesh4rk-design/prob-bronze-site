@@ -704,6 +704,23 @@ export const tests = [
   },
 
   {
+    name: 'Modo só testes (padrão): só abas de teste/resultado, sem ler o processo seletivo, Candidatos com WhatsApp e Reenviar testes',
+    async run({ browser, baseUrl }) {
+      const resultados = [{ id: '1', tipo: 'quiz', nome: 'So Teste', cpf: '91000000001', modulo: 'Controle de Acesso', pct: 80, acertos: 8, total: 10, data_conclusao: new Date(Date.now() - 3 * 3600000).toISOString(), candidato: { telefone: '21900000001', cargo_pretendido: 'Porteiro' } }];
+      const { page, erros } = await abrirDashboard(browser, baseUrl, { perfil: 'gerencia', resultados, modoTestes: true });
+      const visiveis = await page.evaluate(() => [...document.querySelectorAll('.sidebar-item')].filter(i => getComputedStyle(i).display !== 'none').map(i => i.dataset.view));
+      for (const v of ['dashboard', 'banco', 'etapa3', 'contratados', 'bancoreserva', 'ranking', 'pendencias', 'pesos']) assert(!visiveis.includes(v), `aba ${v} deveria sumir. Visíveis: ${visiveis}`);
+      for (const v of ['pipeline', 'violacoes', 'codigos', 'qrcodes', 'testes', 'vagas']) assert(visiveis.includes(v), `aba ${v} deveria continuar. Visíveis: ${visiveis}`);
+      await page.evaluate(() => switchView('banco'));
+      assertEqual(await page.evaluate(() => document.querySelector('.app-view.active').id), 'view-pipeline', 'abrir aba escondida cai em Candidatos');
+      const linha = await page.evaluate(() => document.getElementById('pipelineTableBody').innerText);
+      assert(/whatsapp/i.test(linha) && /Enviar testes/i.test(linha) && !/Não segue/.test(linha), `Candidatos com WhatsApp e Enviar testes, sem decisões. Linha: ${linha}`);
+      assertEqual(erros.length, 0, 'erros de JS: ' + erros.join(' | '));
+      await page.close();
+    }
+  },
+
+  {
     name: 'Baixar backup gera um arquivo .json com testes e processo seletivo, e o aviso fica pequeno depois',
     async run({ browser, baseUrl }) {
       const resultados = [{ id: 'r1', tipo: 'quiz', nome: 'Backup Um', cpf: '85000000001', modulo: 'CFTV', pct: 80, acertos: 8, total: 10, data_conclusao: hoje() }];

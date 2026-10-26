@@ -2478,10 +2478,26 @@
   const ehAvaliadorChefe = me && me.perfil === 'avaliador';
   const ehView = me && me.perfil === 'viewer';
 
+  // ── Modo "só testes" ────────────────────────────────────────────────
+  // Foco total em aplicar testes e ver resultados (decisão da gestão):
+  // somem Dashboard, Pendências, Entrevista, Aprovados, Efetivos, Banco de
+  // Reserva, Ranking e Pesos, e o painel deixa de ler o processo seletivo
+  // (pipeline) — menos leituras no Firebase. NADA é apagado: os dados
+  // continuam guardados e tudo volta abrindo o painel com ?completo=1.
+  const MODO_SO_TESTES = !new URLSearchParams(location.search).has('completo');
+  const VIEWS_OCULTAS_MODO_TESTES = ['dashboard', 'pendencias', 'banco', 'etapa3', 'contratados', 'bancoreserva', 'ranking', 'pesos'];
+  if (MODO_SO_TESTES) {
+    const ids = { dashboard: 'sidebarItemDashboard', pendencias: 'sidebarItemPendencias', banco: 'sidebarItemBanco', etapa3: 'sidebarItemEtapa3',
+      contratados: 'sidebarItemContratados', bancoreserva: 'sidebarItemBancoReserva', ranking: 'sidebarItemRanking', pesos: 'sidebarItemPesos' };
+    for (const v of VIEWS_OCULTAS_MODO_TESTES) { const el = document.getElementById(ids[v]); if (el) el.style.setProperty('display', 'none', 'important'); }
+    const sino = document.getElementById('sinoPendencias'); if (sino) sino.style.display = 'none';
+    document.body.classList.add('modo-so-testes');
+  }
+
   if (ehGerencia) {
     document.getElementById('sidebarAdminLbl').style.display = 'block';
     document.getElementById('sidebarItemPerguntas').style.display = 'flex';
-    document.getElementById('sidebarItemPesos').style.display = 'flex';
+    if (!(typeof MODO_SO_TESTES !== 'undefined' ? MODO_SO_TESTES : !new URLSearchParams(location.search).has('completo'))) document.getElementById('sidebarItemPesos').style.display = 'flex';
     document.getElementById('sidebarItemUsuarios').style.display = 'flex';
   }
 
@@ -2550,8 +2566,9 @@
   };
 
   window.switchView = function (view) {
+    if (MODO_SO_TESTES && VIEWS_OCULTAS_MODO_TESTES.includes(view)) view = 'pipeline';
     const ehGerenciaSV = me && (me.perfil === 'admin' || me.perfil === 'gerencia');
-    if ((view === 'perguntas' || view === 'usuarios' || view === 'pesos') && !ehGerenciaSV) view = 'dashboard';
+    if ((view === 'perguntas' || view === 'usuarios' || view === 'pesos') && !ehGerenciaSV) view = MODO_SO_TESTES ? 'pipeline' : 'dashboard';
     // Viewer só tem a aba Candidatos (vê os testes realizados de todo
     // mundo, sem poder selecionar ninguém pra entrevista).
     if ((view === 'banco' || view === 'etapa3' || view === 'contratados' || view === 'dashboard' || view === 'pendencias' || view === 'ranking' || view === 'vagas') && me && me.perfil === 'viewer') view = 'pipeline';
@@ -3177,7 +3194,19 @@
     // ── Decisão — quem pode decidir sobre ESTE candidato (ver
     // podeDecidirCand) vê os botões da aba em que ele está; Operador e o
     // Admin fora da Filial Teste só enxergam tudo acima.
-    if (podeDecidirCand(CAND_ATUAL)) {
+    if (podeDecidirCand(CAND_ATUAL) && MODO_SO_TESTES) {
+      const ci = todosCandidatos().find(x => x.chave === CAND_ATUAL);
+      const falt = ci ? testesFaltando(ci) : [];
+      const dd = `data-chave="${escapeHtml(CAND_ATUAL)}" data-nome="${escapeHtml(nomeAtual)}"`;
+      html += `
+        <div class="tent-card" style="border-color:var(--ambermid);">
+          <div class="tent-head" style="background:var(--amberdim);"><div class="tent-mod" style="color:var(--amber);">💬 Ações</div></div>
+          <div class="tent-body"><div style="display:flex;gap:10px;flex-wrap:wrap;">
+            ${falt.length && PODE_ENVIAR_INFORMATICA.includes(me.perfil) ? `<button class="btn-act btn-approve-admin" data-acao="enviarTesteInformatica" ${dd}>📱 Reenviar testes que faltam</button>` : ''}
+            <button class="btn-act btn-neutral" data-acao="whatsappCandidato" ${dd}>💬 WhatsApp</button>
+          </div></div>
+        </div>`;
+    } else if (podeDecidirCand(CAND_ATUAL)) {
       const faseAtual = faseDoCandidato(pInfo);
       const dadosDecisao = `data-chave="${escapeHtml(CAND_ATUAL)}" data-nome="${escapeHtml(nomeAtual)}"`;
       const podeContratarModal = podeContratarCand(CAND_ATUAL);
@@ -4733,12 +4762,12 @@
       const faltando = testesFaltando(c);
 
       let botoes = '';
-      if (pode && c.fase === 'candidato') {
+      if (pode && c.fase === 'candidato' && !MODO_SO_TESTES) {
         botoes = `
           <button class="btn-act-mini ativo" data-acao="enviarEntrevista" ${dadosCand} title="Enviar para a aba Entrevista">🎤 Entrevista</button>
           <button class="btn-act-mini" style="color:var(--red);border-color:var(--red);" data-acao="decidirEntrevista" data-decisao="recusado" ${dadosCand} title="Não vai para entrevista">❌ Não segue</button>`;
       }
-      if (pode) botoes += `<button class="btn-act-mini whatsapp" data-acao="whatsappCandidato" ${dadosCand}>💬</button><button class="btn-act-mini" data-acao="acoesCandidato" ${dadosCand}>⚙️</button>`;
+      if (pode) botoes += `<button class="btn-act-mini whatsapp" data-acao="whatsappCandidato" ${dadosCand}>💬${MODO_SO_TESTES ? ' WhatsApp' : ''}</button>${MODO_SO_TESTES ? '' : `<button class="btn-act-mini" data-acao="acoesCandidato" ${dadosCand}>⚙️</button>`}`;
       const colunaAcoes = algumaDecisao ? `<td data-acao="ignorar"><div style="display:flex;gap:6px;flex-wrap:wrap;">${botoes || '<span style="color:var(--text4);font-size:11px;">só visualização</span>'}</div></td>` : '';
 
       html += `
@@ -5415,7 +5444,7 @@
     return [
       { id: 'whatsapp', tit: 'WhatsApp do RH', desc: 'Número que recebe o aviso quando o candidato termina o teste.', feito: !!GUIA_WHATSAPP, ir: 'codigos' },
       { id: 'vaga', tit: 'Criar a primeira vaga', desc: 'Sem vaga aberta, o candidato não consegue começar o teste.', feito: ALL_VAGAS.length > 0, ir: 'vagas' },
-      { id: 'pesos', tit: 'Revisar os pesos do Score (opcional)', desc: 'Confira se o peso de cada teste serve para os cargos da filial.', feito: !!lerLS(chaveGuia('pesos')), ir: 'pesos' },
+      ...(MODO_SO_TESTES ? [] : [{ id: 'pesos', tit: 'Revisar os pesos do Score (opcional)', desc: 'Confira se o peso de cada teste serve para os cargos da filial.', feito: !!lerLS(chaveGuia('pesos')), ir: 'pesos' }]),
       { id: 'equipe', tit: 'Aprovar a equipe', desc: 'Aprove avaliadores, coordenadores e operadores que se cadastraram na filial.', feito: outrosDaEquipe.length > 0, ir: 'usuarios' },
       { id: 'dia', tit: 'Preparar o dia do teste', desc: 'Gere o código de acesso e imprima o QR Code para os candidatos.', feito: GUIA_CODIGOS.length > 0, ir: 'codigos' }
     ];
@@ -7509,7 +7538,7 @@
       // callback chama renderAll() inteiro (não só renderPipeline()), senão
       // essas telas ficavam com dado desatualizado até a próxima atualização
       // de resultados (podendo demorar horas, ou nunca acontecer na sessão).
-      unsubs.push(assinarPipeline(
+      if (!MODO_SO_TESTES) unsubs.push(assinarPipeline(
         mapa => {
           PIPELINE_MAP = {};
           for (const [id, dados] of Object.entries(mapa)) if (mesmaFilial(dados.filial)) PIPELINE_MAP[id] = dados;
@@ -7526,7 +7555,7 @@
       ));
       // Pesos do Score Virtus: sem onSnapshot (não muda com frequência) —
       // carrega uma vez na conexão e de novo sempre que a aba Pesos é salva.
-      obterPesosScore().then(pesos => { PESOS_SCORE = pesos || {}; renderAll(); }).catch(() => {});
+      if (!MODO_SO_TESTES) obterPesosScore().then(pesos => { PESOS_SCORE = pesos || {}; renderAll(); }).catch(() => {});
       // Vagas: quem não gerencia candidatos (viewer) nem lê isso — só usa a
       // leitura pública que o próprio candidato usa na ficha, não precisa
       // assinar aqui.
