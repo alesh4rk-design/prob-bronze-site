@@ -1006,7 +1006,7 @@
 </div>
 
 <script type="module">
-  import { MODULOS_SEM_TRILHA, listarModulos, carregarPerguntasDoModulo, salvarResultadoQuiz, registrarViolacao, tempoLimiteParaModulo, montarTrilha, verificarCodigoAcesso, obterNumeroWhatsappRH, obterTemposTestes, enviarCurriculo, registrarAcessoCodigo, listarVagasAbertas, moduloDoCargoPretendido } from "./js/quiz.js?v=20261025a";
+  import { MODULOS_SEM_TRILHA, listarModulos, carregarPerguntasDoModulo, salvarResultadoQuiz, registrarViolacao, tempoLimiteParaModulo, montarTrilha, verificarCodigoAcesso, obterNumeroWhatsappRH, obterTemposTestes, enviarCurriculo, registrarAcessoCodigo, avisarSaidaDaPagina, listarVagasAbertas, moduloDoCargoPretendido } from "./js/quiz.js?v=20261026a";
 
   let globalConsentGiven = false;
   let globalLgpdAccepted = false;
@@ -1662,6 +1662,40 @@
     throw ultimoErro;
   }
 
+  // Avisa o servidor em que passo o candidato está (e por que parou, se
+  // parar) — aparece no painel, na ficha do candidato, em "Andamento do
+  // teste". Nunca atrapalha o teste se falhar.
+  function registrarProgresso(evento, detalhe) {
+    if (!globalCodigoAcesso || !S.nome) return;
+    registrarAcessoCodigo({
+      codigoAcesso: globalCodigoAcesso, nome: S.nome, cpf: (S.candidato && S.candidato.cpf) || '',
+      modulo: S.tema || '', evento, detalhe: detalhe || (S.trilha ? `Etapa ${S.trilhaIdx + 1} de ${S.trilha.length}` : '')
+    });
+  }
+
+  // Tela do celular não pode apagar sozinha no meio da prova: com a tela
+  // apagada o sistema entende que o candidato saiu, conta como violação e,
+  // na 3ª, trava o teste. O Wake Lock mantém a tela acesa enquanto a página
+  // estiver aberta (se o aparelho não suportar, segue como antes).
+  let __wakeLock = null;
+  async function manterTelaAcesa() {
+    try {
+      if (!('wakeLock' in navigator) || (__wakeLock && !__wakeLock.released)) return;
+      __wakeLock = await navigator.wakeLock.request('screen');
+    } catch (e) { /* sem suporte ou negado — segue normal */ }
+  }
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden && S.trilha && S.resultadosTrilha && S.resultadosTrilha.length < S.trilha.length) manterTelaAcesa();
+  });
+
+  // Fechou/saiu da página no meio da trilha: avisa o servidor.
+  window.addEventListener('pagehide', () => {
+    const pelaMetade = S.trilha && S.resultadosTrilha && S.resultadosTrilha.length < S.trilha.length && (S.testActive || S.resultadosTrilha.length > 0);
+    if (!pelaMetade || !globalCodigoAcesso) return;
+    avisarSaidaDaPagina({ codigoAcesso: globalCodigoAcesso, nome: S.nome, cpf: (S.candidato && S.candidato.cpf) || '', modulo: S.tema || '',
+      detalhe: `Fez ${S.resultadosTrilha.length} de ${S.trilha.length} testes` });
+  });
+
   async function iniciarModulo() {
     const modulo = S.trilha[S.trilhaIdx];
     S.tema = modulo;
@@ -1680,8 +1714,11 @@
       renderQ();
       show('s-quiz');
       toast(`✅ ${modulo} — etapa ${S.trilhaIdx + 1} de ${S.trilha.length}`, 'ok');
+      manterTelaAcesa();
+      registrarProgresso('inicio');
     } catch (err) {
       console.error(err);
+      registrarProgresso(err && err.moduloIndisponivel ? 'modulo_indisponivel' : 'falha_carregar', String((err && err.message) || err).slice(0, 190));
       if (S.trilhaIdx > 0 && S.resultadosTrilha.length && err && err.moduloIndisponivel) {
         // Módulo desligado ou sem perguntas no banco: segue pra próxima etapa
         toast(`⚠️ ${modulo} indisponível — seguindo para a próxima etapa`, 'err');
@@ -1725,8 +1762,19 @@
       if (!S.testActive) return;
       S.qLeft--;
       renderQuizTimer();
-      if (S.qLeft <= 0) { clearInterval(S.qTimer); playErr(); showFinishConfirmation(true); }
+      if (S.qLeft <= 0) { clearInterval(S.qTimer); tempoEsgotado(); }
     }, 1000);
+  }
+
+  // Acabou o tempo: envia sozinho o que foi respondido. Antes abria uma
+  // pergunta "deseja finalizar?" com botão Cancelar — quem cancelava (ou não
+  // via a pergunta) ficava parado numa prova sem tempo e não seguia a trilha.
+  function tempoEsgotado() {
+    playErr();
+    hideFinishConfirmation();
+    registrarProgresso('tempo_esgotado');
+    toast('⏰ Tempo esgotado — enviando suas respostas...', 'err');
+    endQuiz();
   }
 
   function renderQuizTimer() {
@@ -1816,6 +1864,7 @@
         mostrarTransicao(pct);
         return;
       }
+      registrarProgresso('concluiu', `Concluiu os ${S.trilha ? S.trilha.length : 1} testes`);
 
       renderResultadoFinal();
       toast('✅ Avaliação concluída!', 'ok');
@@ -1823,6 +1872,7 @@
     } catch (err) {
       console.error(err);
       toast(`❌ Falha ao enviar (${err.message}). Verifique a internet e toque em Finalizar de novo — suas respostas continuam aqui.`, 'err'); playErr();
+      registrarProgresso('falha_envio', String((err && err.message) || err).slice(0, 190));
     } finally {
       S._enviandoProva = false; // libera pra próxima prova (ou pra tentar de novo se falhou)
     }
@@ -1981,6 +2031,7 @@
 
   function finalizarTestePorViolacao() {
     if (!S.testActive) return;
+    registrarProgresso('travado_violacao', `${S.violationCount} saídas da tela/ações bloqueadas — aguardando a senha do avaliador`);
     S.testActive = false;
     clearInterval(S.qTimer);
     const violModal = document.getElementById('violationBlockModal');
@@ -1994,6 +2045,7 @@
     const senha = document.getElementById('violationPassword').value;
     const errEl = document.getElementById('violationPasswordError');
     if (senha === AVALIADOR_SENHA) {
+      registrarProgresso('liberado_avaliador');
       document.getElementById('violationBlockModal').style.display = 'none';
       document.getElementById('violationPassword').value = '';
       errEl.style.display = 'none';
@@ -2001,7 +2053,7 @@
       S.qTimer = setInterval(() => {
         if (!S.testActive) return;
         S.qLeft--; renderQuizTimer();
-        if (S.qLeft <= 0) { clearInterval(S.qTimer); playErr(); showFinishConfirmation(true); }
+        if (S.qLeft <= 0) { clearInterval(S.qTimer); tempoEsgotado(); }
       }, 1000);
       toast('✅ Teste liberado pelo avaliador.', 'ok'); playOk();
     } else {

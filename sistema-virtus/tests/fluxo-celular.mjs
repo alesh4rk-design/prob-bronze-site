@@ -22,10 +22,11 @@ async function rodar(nome, query, esperado, viewport, colorScheme = 'light', can
   await page.route('**/firebasejs/**', r => { const k = Object.keys(map).find(x => r.request().url().endsWith(x)); return k ? r.fulfill({ status: 200, contentType: 'application/javascript', body: map[k] }) : r.abort(); });
   await page.route('**/fonts.googleapis.com/**', r => r.fulfill({ status: 200, contentType: 'text/css', body: '' }));
   await page.route('**/cloudflareinsights.com/**', r => r.fulfill({ status: 200, contentType: 'application/javascript', body: '' }));
-  const carregados = [], enviados = [], nomesEnviados = [], idsPorModulo = {}, jaFalhou = new Set();
+  const carregados = [], enviados = [], nomesEnviados = [], idsPorModulo = {}, jaFalhou = new Set(), eventos = [];
   await page.route('**/virtus-api.ale-sh4rk.workers.dev/**', async r => {
     const u = r.request().url(); const body = r.request().postDataJSON ? (() => { try { return r.request().postDataJSON(); } catch { return {}; } })() : {};
     const j = o => r.fulfill({ status: 200, contentType: 'application/json', headers: { 'Access-Control-Allow-Origin': '*' }, body: JSON.stringify(o) });
+    if (u.endsWith('/registrar-acesso') && body && body.evento) { eventos.push(body.evento + ':' + body.modulo); return j({ ok: true }); }
     if (u.endsWith('/listar-modulos')) return j({ modulos: [{ nome: 'Vigilante Patrimonial', total: 30 }, { nome: 'Informática', total: 29 }], total_perguntas: 59 });
     if (u.endsWith('/verificar-codigo')) return j({ ok: true, filial: null, candidatoNome });
     if (u.endsWith('/carregar-perguntas')) { carregados.push(body.modulo); const comp = ['Linguagem Positiva', 'Atendimento ao Cliente'].includes(body.modulo); return j({ ok: true, perguntas: PERG(comp ? 10 : 15) }); }
@@ -117,6 +118,8 @@ async function rodar(nome, query, esperado, viewport, colorScheme = 'light', can
   const todosComId = Object.values(idsPorModulo).every(ids => ids.length >= 2 && ids.every(i => i && i === ids[0]));
   ok(todosComId, 'reenvio após falha usa o MESMO identificador (não duplica): ' + Object.entries(idsPorModulo).map(([m, ids]) => m + '×' + ids.length).join(', '));
   if (candidatoNome) ok(nomesEnviados.every(n => n === candidatoNome), `resultados enviados no nome do candidato original (${[...new Set(nomesEnviados)].join(', ')})`);
+  const inicios = eventos.filter(e => e.startsWith('inicio:')).map(e => e.slice(7));
+  ok(JSON.stringify(inicios) === JSON.stringify(esperado) && eventos.some(e => e.startsWith('concluiu:')), `andamento avisado ao servidor (início de cada prova + concluiu): ${eventos.join(', ')}`);
   ok(erros.length === 0, 'sem erros de JavaScript' + (erros.length ? ': ' + erros.join(' | ') : ''));
   await page.close();
 }

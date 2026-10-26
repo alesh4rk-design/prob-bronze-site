@@ -123,13 +123,25 @@ export async function verificarCodigoAcesso(codigoDigitado) {
 // Avisa o servidor QUEM entrou com o código (nome + CPF), pra aparecer em
 // "Quem usou este código" mesmo antes de o candidato concluir o teste.
 // Falha aqui nunca pode atrapalhar o teste.
-export async function registrarAcessoCodigo({ codigoAcesso, nome, cpf, modulo }) {
+// `evento`/`detalhe` (opcionais): andamento do teste — em que etapa o
+// candidato está e, se parou, por quê (ver EVENTOS_PROGRESSO no Worker).
+export async function registrarAcessoCodigo({ codigoAcesso, nome, cpf, modulo, evento, detalhe }) {
+  if (!codigoAcesso) return;
   try {
     await fetchComTempo(`${API_BASE}/registrar-acesso`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ codigoAcesso, nome, cpf, modulo })
+      body: JSON.stringify({ codigoAcesso, nome, cpf, modulo, evento: evento || null, detalhe: detalhe || null })
     });
+  } catch (e) { /* silencioso */ }
+}
+
+// Mesmo aviso, mas para quando a página está fechando (o navegador não
+// espera um fetch normal terminar nessa hora — o sendBeacon sim).
+export function avisarSaidaDaPagina({ codigoAcesso, nome, cpf, modulo, detalhe }) {
+  if (!codigoAcesso || !navigator.sendBeacon) return;
+  try {
+    navigator.sendBeacon(`${API_BASE}/registrar-acesso`, JSON.stringify({ codigoAcesso, nome, cpf, modulo, evento: "saiu_pagina", detalhe: detalhe || null }));
   } catch (e) { /* silencioso */ }
 }
 
@@ -282,7 +294,9 @@ export async function carregarPerguntasDoModulo(modulo) {
   });
   const data = await resp.json().catch(() => ({}));
   if (!resp.ok || !data.ok) {
-    const e = new Error(`Módulo "${modulo}" não encontrado ou sem perguntas cadastradas.`);
+    const e = new Error(resp.status === 404
+      ? `Módulo "${modulo}" não encontrado ou sem perguntas cadastradas.`
+      : `Servidor respondeu ${resp.status}${data.erro ? ' (' + String(data.erro).slice(0, 120) + ')' : ''} ao carregar "${modulo}".`);
     // 404 = módulo desligado/sem perguntas (não adianta tentar de novo)
     e.moduloIndisponivel = resp.status === 404;
     throw e;

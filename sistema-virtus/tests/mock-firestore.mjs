@@ -29,7 +29,8 @@ export function buildMocks({
   usuarios = [],
   pesosScore = null,
   vagas = [],
-  codigosAcesso = []
+  codigosAcesso = [],
+  acessos = {}   // { 'codigos_acesso/123/acessos/111': { ...dados } }
 } = {}) {
   const APP = `export function initializeApp(){ return { name: 'mock' }; }`;
 
@@ -74,6 +75,8 @@ export async function getDoc(ref){
       ? `return { exists: () => true, data: () => ({ numero: ${JSON.stringify(whatsappNumero)} }) };`
       : `return { exists: () => false, data: () => ({}) };`}
   }
+  const ACESSOS = ${JSON.stringify(acessos)};
+  if (ref.__doc && ACESSOS[ref.__doc]) return { exists: () => true, data: () => ACESSOS[ref.__doc] };
   if (ref.__doc === 'config_pesos/pesos') {
     return window.__PESOS
       ? { exists: () => true, data: () => window.__PESOS }

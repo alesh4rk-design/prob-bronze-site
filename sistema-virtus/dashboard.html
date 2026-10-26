@@ -2158,11 +2158,11 @@
     registrarDecisaoFinal, enviarParaEtapa4, buscarHistorico, registrarEntrevista, salvarFotoColaborador, registrarAvisoWhatsapp, listarAcessosCodigo,
     assinarVagas, criarVaga, encerrarVaga, reabrirVaga, excluirVaga,
     obterPesosScore, salvarPesosPadrao, salvarPesosCargo, removerPesosCargo,
-    excluirRegistroPipeline,
+    excluirRegistroPipeline, obterAndamentoCandidato,
     aprovarParaContratacao, voltarParaEntrevista, registrarContratacao, desfazerContratacao,
     obterMensagensWhatsapp, salvarMensagemWhatsapp, buscarResultadosDeCandidatos, gerarBackup,
     garantirFilialTeste, FILIAL_TESTE_ID, FILIAL_TESTE_NOME
-  } from "./js/dashboard.js?v=20261025a";
+  } from "./js/dashboard.js?v=20261026a";
   import { db } from "./js/firebase-config.js";
   import { doc, setDoc } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
   import { PERGUNTAS_SEED } from "./js/perguntas-seed-data.js";
@@ -2176,7 +2176,7 @@
     detalhesDigitacao, leituraDigitacao, CRITERIOS_ENTREVISTA, DESTAQUES_FORTES, DESTAQUES_ATENCAO, perguntasEntrevistaDoModulo,
     mediaEntrevista, estrelasDe10, htmlEntrevistaRelatorio, entrevistaAprovada, entrevistaDaRodada,
     faseDoCandidato, entrevistasDe
-  } from "./js/dashboard-format.js?v=20261025a";
+  } from "./js/dashboard-format.js?v=20261026a";
 
   let ALL_RESULTADOS = [];
   let ALL_VIOLACOES = [];
@@ -2984,6 +2984,15 @@
         </div>`;
     }
 
+    // ── Andamento do teste (o que a tela do candidato avisou ao servidor) ──
+    html += `
+      <div class="tent-card">
+        <div class="tent-head"><div class="tent-mod">📍 Andamento do teste</div></div>
+        <div class="tent-body" id="cmAndamento">
+          <div style="font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--text3);">Carregando…</div>
+        </div>
+      </div>`;
+
     // ── Linha do tempo (histórico de mudanças de etapa) ──
     html += `
       <div class="tent-card">
@@ -3203,6 +3212,59 @@
     document.getElementById('cmConteudo').innerHTML = html;
     ligarAcoesDelegadas('cmConteudo');
     carregarLinhaDoTempo(CAND_ATUAL);
+    carregarAndamento(CAND_ATUAL);
+  }
+
+  // Onde o candidato parou e por quê — lido do código de acesso que ele usou
+  // (1 leitura por código, só quando a ficha abre).
+  const EVENTO_TXT = {
+    inicio: ['▶️', 'Começou', 'var(--text2)'],
+    concluiu: ['✅', 'Concluiu todos os testes', 'var(--green)'],
+    falha_carregar: ['📶', 'Não conseguiu carregar o teste', 'var(--red)'],
+    modulo_indisponivel: ['⛔', 'Teste indisponível (desligado ou sem perguntas)', 'var(--red)'],
+    falha_envio: ['📶', 'Falhou ao enviar as respostas', 'var(--red)'],
+    tempo_esgotado: ['⏰', 'Tempo esgotado (respostas enviadas sozinhas)', 'var(--amber)'],
+    travado_violacao: ['🔒', 'Teste TRAVADO por saídas da tela — precisa da senha do avaliador', 'var(--red)'],
+    liberado_avaliador: ['🔓', 'Liberado pelo avaliador', 'var(--green)'],
+    saiu_pagina: ['🚪', 'Fechou/saiu da página no meio dos testes', 'var(--red)']
+  };
+  async function carregarAndamento(chave) {
+    const el = document.getElementById('cmAndamento');
+    if (!el) return;
+    const tents = tentativasDe(chave);
+    const codigos = [...new Set(tents.map(t => (t.candidato && t.candidato.codigoAcesso) || t.codigoAcesso).filter(Boolean))];
+    const cpf = String(chave).startsWith('cpf:') ? String(chave).slice(4) : '';
+    const nome = (tents[tents.length - 1] || {}).nome || '';
+    const id = cpf || ('nome_' + normNome(nome).replace(/[^a-z0-9]+/g, '-').slice(0, 60));
+    const semDados = '<div style="font-size:12px;color:var(--text3);">Sem registro de andamento (testes feitos antes desta função existir, ou o código foi excluído).</div>';
+    if (!codigos.length) { el.innerHTML = semDados; return; }
+    const eventos = [];
+    for (const cod of codigos) {
+      try {
+        const a = await obterAndamentoCandidato(cod, id);
+        if (a && a.eventos) for (const ev of Object.values(a.eventos)) eventos.push({ ...ev, codigo: cod });
+      } catch (e) { console.warn('Andamento do código ' + cod + ':', e); }
+    }
+    if (CAND_ATUAL !== chave || !document.getElementById('cmAndamento')) return;
+    if (!eventos.length) { el.innerHTML = semDados; return; }
+    eventos.sort((a, b) => String(b.em).localeCompare(String(a.em)));
+    const ult = eventos[0];
+    const [icU, txtU, corU] = EVENTO_TXT[ult.evento] || ['•', ult.evento, 'var(--text2)'];
+    const minutos = Math.round((Date.now() - new Date(ult.em).getTime()) / 60000);
+    const emAndamento = ['inicio', 'liberado_avaliador'].includes(ult.evento) && minutos < 20;
+    el.innerHTML = `
+      <div style="padding:10px 12px;border-radius:8px;border:1px solid ${emAndamento ? 'var(--amber)' : corU};margin-bottom:10px;font-size:13px;">
+        <b style="color:${emAndamento ? 'var(--amber)' : corU};">${emAndamento ? '⏳ Fazendo o teste agora' : icU + ' ' + txtU}</b>
+        <div style="font-size:12px;color:var(--text2);margin-top:3px;">Último passo: ${escapeHtml(ult.modulo || '—')} · ${fmtDataHora(ult.em)}${ult.detalhe ? ' · ' + escapeHtml(ult.detalhe) : ''}</div>
+      </div>
+      ${eventos.slice(0, 15).map(ev => {
+        const [ic, txt, cor] = EVENTO_TXT[ev.evento] || ['•', ev.evento, 'var(--text2)'];
+        return `<div style="display:flex;gap:8px;padding:5px 0;border-bottom:1px solid var(--line);font-size:12px;">
+          <span>${ic}</span>
+          <div style="flex:1;"><b style="color:${cor};">${escapeHtml(txt)}</b> — ${escapeHtml(ev.modulo || '')}
+            <div style="font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--text4);">${fmtDataHora(ev.em)}${ev.detalhe ? ' · ' + escapeHtml(ev.detalhe) : ''}</div></div>
+        </div>`;
+      }).join('')}`;
   }
 
   // Busca sob demanda (não em tempo real — ver buscarHistorico em
@@ -4498,6 +4560,13 @@
     return Math.max(0, RETENCAO_DIAS - Math.floor((Date.now() - ms) / 86400000));
   }
 
+  // Último teste terminou há menos de 20 min: o candidato provavelmente
+  // ainda está fazendo os próximos da trilha (não é "faltou" ainda).
+  function fazendoAgora(c) {
+    const ms = c && c.ultima ? new Date(c.ultima).getTime() : NaN;
+    return !isNaN(ms) && Date.now() - ms < 20 * 60 * 1000;
+  }
+
   let PERIODO_CANDIDATOS = 'todos';
   window.definirPeriodoCandidatos = function (periodo) {
     PERIODO_CANDIDATOS = periodo;
@@ -4680,7 +4749,8 @@
         <td style="max-width:280px;white-space:normal;">
           <div style="display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--text2);white-space:nowrap;">
             ${c.modulos.map(m => `<div title="${m.modulo === c.moduloEscolhido ? 'Módulo escolhido pelo candidato' : 'Módulo automático da trilha'}">${m.modulo === c.moduloEscolhido ? '★ ' : ''}${escapeHtml(m.modulo)}: <b style="color:${m.pct >= 70 ? 'var(--green)' : m.pct >= 50 ? 'var(--amber)' : 'var(--red)'}">${m.pct}%</b></div>`).join('')}
-            ${faltando.length ? `<div title="Etapas obrigatórias da trilha que o candidato não fez (parou no meio, módulo indisponível ou falha de internet)." style="color:var(--amber);white-space:normal;">⚠️ Faltou: <b>${faltando.map(escapeHtml).join(', ')}</b>${PODE_ENVIAR_INFORMATICA.includes(me.perfil) && pode ? ` <button class="btn-act-mini" data-acao="enviarTesteInformatica" ${dadosCand} title="Gera um código individual (vale 30 min depois de usado) e abre o WhatsApp do candidato com o link dos testes que faltam">📱 Enviar testes</button>` : ''}</div>` : ''}
+            ${faltando.length && fazendoAgora(c) ? `<div title="O último teste terminou há poucos minutos — o candidato provavelmente ainda está fazendo os próximos." style="color:var(--cyan);white-space:normal;">⏳ Fazendo os testes agora — faltam: <b>${faltando.map(escapeHtml).join(', ')}</b></div>` : ''}
+            ${faltando.length && !fazendoAgora(c) ? `<div title="Etapas obrigatórias da trilha que o candidato não fez (parou no meio, módulo indisponível ou falha de internet). Abra a ficha e veja 'Andamento do teste' para saber o motivo." style="color:var(--amber);white-space:normal;">⚠️ Faltou: <b>${faltando.map(escapeHtml).join(', ')}</b>${PODE_ENVIAR_INFORMATICA.includes(me.perfil) && pode ? ` <button class="btn-act-mini" data-acao="enviarTesteInformatica" ${dadosCand} title="Gera um código individual (vale 30 min depois de usado) e abre o WhatsApp do candidato com o link dos testes que faltam">📱 Enviar testes</button>` : ''}</div>` : ''}
             ${digitacaoLinhasHTML(c)}
           </div>
         </td>

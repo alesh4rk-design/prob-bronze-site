@@ -226,9 +226,9 @@ export const tests = [
     name: 'Tabela de candidatos avisa quais testes obrigatórios faltaram (e oferece Enviar testes)',
     async run({ browser, baseUrl }) {
       const resultados = [
-        { id: '1', tipo: 'quiz', nome: 'Sem Info', cpf: '32000000001', modulo: 'Controle de Acesso', pct: 100, acertos: 15, total: 15, data_conclusao: hoje(), candidato: { cargo_pretendido: 'Controle de Acesso' } },
-        { id: '2', tipo: 'quiz', nome: 'Com Info', cpf: '32000000002', modulo: 'Controle de Acesso', pct: 100, acertos: 15, total: 15, data_conclusao: hoje(), candidato: { cargo_pretendido: 'Controle de Acesso' } },
-        { id: '3', tipo: 'quiz', nome: 'Com Info', cpf: '32000000002', modulo: 'Informática', pct: 90, acertos: 14, total: 15, data_conclusao: hoje(), candidato: { cargo_pretendido: 'Controle de Acesso' } }
+        { id: '1', tipo: 'quiz', nome: 'Sem Info', cpf: '32000000001', modulo: 'Controle de Acesso', pct: 100, acertos: 15, total: 15, data_conclusao: new Date(Date.now() - 2 * 3600000).toISOString(), candidato: { cargo_pretendido: 'Controle de Acesso' } },
+        { id: '2', tipo: 'quiz', nome: 'Com Info', cpf: '32000000002', modulo: 'Controle de Acesso', pct: 100, acertos: 15, total: 15, data_conclusao: new Date(Date.now() - 2 * 3600000).toISOString(), candidato: { cargo_pretendido: 'Controle de Acesso' } },
+        { id: '3', tipo: 'quiz', nome: 'Com Info', cpf: '32000000002', modulo: 'Informática', pct: 90, acertos: 14, total: 15, data_conclusao: new Date(Date.now() - 2 * 3600000).toISOString(), candidato: { cargo_pretendido: 'Controle de Acesso' } }
       ];
       const { page } = await abrirDashboard(browser, baseUrl, { perfil: 'gerencia', resultados, pipeline: {} });
       await page.evaluate(() => switchView('pipeline'));
@@ -663,6 +663,43 @@ export const tests = [
         assertEqual(reais.length, 0, `perfil ${perfil} teve erro(s) de JS: ` + reais.join(' | '));
         await page.close();
       }
+    }
+  },
+
+  {
+    name: 'Andamento do teste: quem acabou de terminar um teste aparece como "fazendo agora" (não "Faltou"); a ficha mostra onde e por que parou',
+    async run({ browser, baseUrl }) {
+      const agora = Date.now();
+      const iso = (min) => new Date(agora - min * 60000).toISOString();
+      const base = (id, nome, cpf, mod, min) => ({ id, tipo: 'quiz', nome, cpf, modulo: mod, pct: 80, acertos: 8, total: 10, data_conclusao: iso(min), candidato: { cpf, codigoAcesso: '555111', cargo_pretendido: 'Recepcionista' } });
+      const resultados = [
+        base('1', 'Fazendo Agora', '89000000001', 'Recepcionista', 6), base('2', 'Fazendo Agora', '89000000001', 'Informática', 2),
+        base('3', 'Parou Ha Tempo', '89000000002', 'Recepcionista', 90), base('4', 'Parou Ha Tempo', '89000000002', 'Informática', 80)
+      ];
+      const acessos = {
+        'codigos_acesso/555111/acessos/89000000002': {
+          nome: 'Parou Ha Tempo', ultimo_evento: 'travado_violacao',
+          eventos: {
+            e1: { evento: 'inicio', modulo: 'Informática', detalhe: 'Etapa 2 de 4', em: iso(86) },
+            e2: { evento: 'inicio', modulo: 'Linguagem Positiva', detalhe: 'Etapa 3 de 4', em: iso(79) },
+            e3: { evento: 'travado_violacao', modulo: 'Linguagem Positiva', detalhe: '3 saídas da tela', em: iso(77) }
+          }
+        }
+      };
+      const { page, erros } = await abrirDashboard(browser, baseUrl, { perfil: 'gerencia', resultados, acessos });
+      await page.evaluate(() => switchView('pipeline'));
+      await page.waitForTimeout(300);
+      const linhas = await page.evaluate(() => [...document.querySelectorAll('#pipelineTableBody tr')].map(r => r.innerText));
+      const agoraL = linhas.find(l => l.includes('Fazendo Agora')) || '';
+      const parouL = linhas.find(l => l.includes('Parou Ha Tempo')) || '';
+      assert(/Fazendo os testes agora/.test(agoraL) && !/Faltou/.test(agoraL), `quem terminou um teste há 2 min deveria aparecer "fazendo agora". Linha: ${agoraL}`);
+      assert(/Faltou/.test(parouL), `quem parou há mais de uma hora continua como "Faltou". Linha: ${parouL}`);
+      await page.evaluate(() => abrirCandidato('cpf:89000000002'));
+      await page.waitForTimeout(500);
+      const and = await page.evaluate(() => document.getElementById('cmAndamento').innerText);
+      assert(/TRAVADO/.test(and) && /Linguagem Positiva/.test(and), `ficha deveria dizer que travou por saídas da tela na Linguagem Positiva. Veio: ${and}`);
+      assertEqual(erros.length, 0, 'erros de JS: ' + erros.join(' | '));
+      await page.close();
     }
   },
 

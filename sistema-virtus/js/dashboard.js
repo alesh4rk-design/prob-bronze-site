@@ -351,6 +351,14 @@ export async function listarAcessosCodigo(codigo) {
   return lista;
 }
 
+// Andamento do teste de UM candidato com um código (último passo e linha
+// do tempo curta gravados pela tela do teste — ver registrarProgresso em
+// quiz.html). `id` = CPF (só números) ou "nome_<nome-normalizado>".
+export async function obterAndamentoCandidato(codigo, id) {
+  const snap = await getDoc(doc(db, "codigos_acesso", String(codigo), "acessos", String(id)));
+  return snap.exists() ? snap.data() : null;
+}
+
 // Desativa um código antes da expiração natural (ex: entrevista encerrou
 // mais cedo, ou o código vazou). Admin ou viewer.
 export async function cancelarCodigoAcesso(codigo) {

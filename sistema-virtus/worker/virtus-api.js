@@ -709,6 +709,11 @@ async function handleBuscarCandidato(request, env, cors) {
 // Registra QUEM entrou com o código assim que o candidato começa o teste —
 // antes só aparecia quem chegava a concluir algum módulo. Um documento por
 // pessoa (id = CPF, ou o nome se não houver CPF), então reenvios não duplicam.
+// Passos do teste que a tela do candidato avisa (ver registrarProgresso em
+// quiz.html). Qualquer outro valor é ignorado.
+const EVENTOS_PROGRESSO = ["inicio", "falha_carregar", "modulo_indisponivel", "falha_envio", "tempo_esgotado",
+  "travado_violacao", "liberado_avaliador", "concluiu", "saiu_pagina"];
+
 async function handleRegistrarAcesso(request, env, cors) {
   const ip = request.headers.get("CF-Connecting-IP") || "desconhecido";
   // Sem contador por IP aqui: a rota já exige código de acesso válido, e no
@@ -722,8 +727,28 @@ async function handleRegistrarAcesso(request, env, cors) {
   const cpf = (identA && identA.cpf) || texto(String(a.cpf || "").replace(/\D/g, ""), 11) || null;
   if (!nome) return json({ ok: false, erro: "dados_invalidos" }, cors, 400);
   const id = cpf || "nome_" + normNome(nome).replace(/[^a-z0-9]+/g, "-").slice(0, 60);
-  const campos = { nome, cpf, em: new Date().toISOString(), modulo: texto(a.modulo, 80) || "" };
-  await firestorePatch(env, token, `codigos_acesso/${encodeURIComponent(conf.codigo)}/acessos/${encodeURIComponent(id)}`, campos, Object.keys(campos));
+  const agoraIso = new Date().toISOString();
+  const modulo = texto(a.modulo, 80) || "";
+  const evento = EVENTOS_PROGRESSO.includes(a.evento) ? a.evento : null;
+  let campos, mascara;
+  if (!evento) {
+    // Entrada com o código (como sempre foi)
+    campos = { nome, cpf, em: agoraIso, modulo };
+    mascara = Object.keys(campos);
+  } else {
+    // Andamento do teste: guarda o último passo e uma linha do tempo curta
+    // (eventos.e<ms>), pra equipe ver no painel ONDE e POR QUE o candidato
+    // parou (não carregou, travou por saídas da tela, fechou a página...).
+    const chaveEv = "e" + Date.now() + Math.floor(Math.random() * 1000);
+    const det = texto(a.detalhe, 200) || "";
+    campos = {
+      nome, cpf, modulo,
+      ultimo_evento: evento, ultimo_evento_em: agoraIso, ultimo_detalhe: det,
+      eventos: { [chaveEv]: { evento, modulo, detalhe: det, em: agoraIso } }
+    };
+    mascara = ["nome", "cpf", "modulo", "ultimo_evento", "ultimo_evento_em", "ultimo_detalhe", "eventos." + chaveEv];
+  }
+  await firestorePatch(env, token, `codigos_acesso/${encodeURIComponent(conf.codigo)}/acessos/${encodeURIComponent(id)}`, campos, mascara);
   return json({ ok: true }, cors);
 }
 
