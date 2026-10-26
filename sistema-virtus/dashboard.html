@@ -3201,6 +3201,7 @@
           <div class="tent-body">
             <div style="display:flex;gap:10px;flex-wrap:wrap;">
               ${botoes.join('')}
+              ${(() => { const ci = todosCandidatos().find(x => x.chave === CAND_ATUAL); const f = ci ? testesFaltando(ci) : []; return f.length && PODE_ENVIAR_INFORMATICA.includes(me.perfil) ? b('btn-approve-admin', 'enviarTesteInformatica', '📱 Reenviar testes que faltam') : ''; })()}
               ${b('btn-neutral', 'whatsappCandidato', '💬 WhatsApp')}
               ${b('btn-neutral', 'editarObservacao', `💬 Comentários${pInfo.comentarios_count ? ` (${pInfo.comentarios_count})` : ''}`)}
               ${podeExcluirModal ? b('btn-danger', 'excluirCandidato', '🗑 Excluir candidato') : ''}
@@ -4749,7 +4750,7 @@
         <td style="max-width:280px;white-space:normal;">
           <div style="display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--text2);white-space:nowrap;">
             ${c.modulos.map(m => `<div title="${m.modulo === c.moduloEscolhido ? 'Módulo escolhido pelo candidato' : 'Módulo automático da trilha'}">${m.modulo === c.moduloEscolhido ? '★ ' : ''}${escapeHtml(m.modulo)}: <b style="color:${m.pct >= 70 ? 'var(--green)' : m.pct >= 50 ? 'var(--amber)' : 'var(--red)'}">${m.pct}%</b></div>`).join('')}
-            ${faltando.length && fazendoAgora(c) ? `<div title="O último teste terminou há poucos minutos — o candidato provavelmente ainda está fazendo os próximos." style="color:var(--cyan);white-space:normal;">⏳ Fazendo os testes agora — faltam: <b>${faltando.map(escapeHtml).join(', ')}</b></div>` : ''}
+            ${faltando.length && fazendoAgora(c) ? `<div title="O último teste terminou há poucos minutos — o candidato provavelmente ainda está fazendo os próximos." style="color:var(--cyan);white-space:normal;">⏳ Fazendo os testes agora — faltam: <b>${faltando.map(escapeHtml).join(', ')}</b>${PODE_ENVIAR_INFORMATICA.includes(me.perfil) && pode ? ` <button class="btn-act-mini" data-acao="enviarTesteInformatica" ${dadosCand} title="Reenvia por WhatsApp o link dos testes que faltam, com código individual">📱 Reenviar testes</button>` : ''}</div>` : ''}
             ${faltando.length && !fazendoAgora(c) ? `<div title="Etapas obrigatórias da trilha que o candidato não fez (parou no meio, módulo indisponível ou falha de internet). Abra a ficha e veja 'Andamento do teste' para saber o motivo." style="color:var(--amber);white-space:normal;">⚠️ Faltou: <b>${faltando.map(escapeHtml).join(', ')}</b>${PODE_ENVIAR_INFORMATICA.includes(me.perfil) && pode ? ` <button class="btn-act-mini" data-acao="enviarTesteInformatica" ${dadosCand} title="Gera um código individual (vale 30 min depois de usado) e abre o WhatsApp do candidato com o link dos testes que faltam">📱 Enviar testes</button>` : ''}</div>` : ''}
             ${digitacaoLinhasHTML(c)}
           </div>
@@ -5030,6 +5031,9 @@
     const banco = item('🏦 Enviar para o Banco de Reserva', () => window.alternarBancoReserva(chave, nome, true));
     const naoSegue = (rot) => item(rot || '❌ Não segue (reprovado)', () => window.decidirEntrevista(chave, nome, 'recusado'), { perigo: true });
     const pdf = item('📄 Resultado da última entrevista (PDF)', () => window.gerarPDFEntrevista(chave));
+    const candInfo = todosCandidatos().find(x => x.chave === chave);
+    const faltam = candInfo ? testesFaltando(candInfo) : [];
+    const reenviar = item(`📱 Reenviar testes que faltam (${faltam.join(', ')})`, () => window.enviarTesteInformatica(chave, nome));
     let itens = [];
     if (!pode) itens = [ficha];
     else if (fase === 'candidato') itens = [paraEntrevista(), naoSegue(), banco, zap, comentar, ficha];
@@ -5052,6 +5056,7 @@
     ];
     else if (fase === 'banco') itens = [paraEntrevista('🎤 Chamar para entrevista'), item('↩ Remover do banco', () => window.alternarBancoReserva(chave, nome, false)), zap, comentar, ficha];
     else if (fase === 'recusado') itens = [paraEntrevista('🎤 Reabrir: enviar para entrevista'), zap, comentar, ficha];
+    if (pode && faltam.length && PODE_ENVIAR_INFORMATICA.includes(me.perfil)) itens.unshift(reenviar);
     if (pode && PODE_EXCLUIR_CANDIDATOS.includes(me.perfil) && fase !== 'efetivo') {
       itens.push(item('🗑 Excluir candidato', () => window.excluirCandidatoDireto(chave, nome), { perigo: true }));
     }
@@ -6360,6 +6365,7 @@
           ${escapeHtml(c.nome)}${temViolacao ? ' <span style="color:var(--red);font-weight:700;" title="Violação registrada">*</span>' : ''}${dataAprovacaoYMD(c) === hojeYMDOrd ? ' <span class="badge green" style="font-size:9px;padding:1px 6px;">HOJE</span>' : ''}
           <span class="row-hint">▸ detalhes</span>
           ${c.digitacaoTeclado == null && !c.semTestes ? '<div style="font-size:10px;color:var(--amber);">⌨️ Falta digitação no teclado físico</div>' : ''}
+          ${testesFaltando(c).length ? `<div data-acao="ignorar" style="font-size:10px;color:var(--amber);">⚠️ Faltou: ${testesFaltando(c).map(escapeHtml).join(', ')}${podeDecidir && PODE_ENVIAR_INFORMATICA.includes(me.perfil) ? ` <button class="btn-act-mini" data-acao="enviarTesteInformatica" ${dadosCand}>📱 Reenviar</button>` : ''}</div>` : ''}
           ${avisoWhatsappHTML(pipelineData, 'etapa2')}
         </td>
         <td style="text-align:right;">${notaHTML}</td>
