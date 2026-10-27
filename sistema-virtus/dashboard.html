@@ -4597,13 +4597,21 @@
     return !isNaN(ms) && Date.now() - ms < 20 * 60 * 1000;
   }
 
-  let PERIODO_CANDIDATOS = 'todos';
+  let PERIODO_CANDIDATOS = MODO_SO_TESTES ? 'hoje' : 'todos';
   window.definirPeriodoCandidatos = function (periodo) {
     PERIODO_CANDIDATOS = periodo;
+    // Precisa de testes mais antigos do que os carregados? Amplia a leitura.
+    if (periodo === 'data') {
+      const d = (document.getElementById('pipelineDateInput') || {}).value || '';
+      const seteDias = ymdLocal(new Date(Date.now() - 7 * 86400000));
+      if (d && d < seteDias && CARGA !== 'todos') window.definirCarga('todos');
+      else if (CARGA === 'hoje') window.definirCarga('7dias');
+    } else if (CARGA === 'hoje' && periodo !== 'hoje') window.definirCarga('7dias');
     if (periodo !== 'data') { const d = document.getElementById('pipelineDateInput'); if (d) d.value = ''; }
     document.querySelectorAll('#pipelinePeriodos .pill').forEach(b => b.classList.toggle('sel', b.dataset.periodo === periodo));
     renderPipeline();
   };
+  document.querySelectorAll('#pipelinePeriodos .pill').forEach(b => b.classList.toggle('sel', b.dataset.periodo === PERIODO_CANDIDATOS));
 
   // Data em que a pessoa foi marcada para entrevista (pipeline.aprovado_em),
   // usada para filtrar a aba "Aprovados para Entrevista" por dia — não
@@ -4741,7 +4749,7 @@
     const colspan = algumaDecisao ? 6 : 5;
 
     if (!candidatos.length) {
-      const dica = busca ? 'Nenhum candidato encontrado para essa busca.' : PERIODO_CANDIDATOS === 'hoje' ? 'Nenhum candidato novo hoje.' : 'Nenhum candidato aguardando decisão.';
+      const dica = busca ? ('Nenhum candidato encontrado para essa busca.' + (CARGA === 'hoje' ? ' A busca está olhando só os testes de hoje — toque em "7 dias" ou "Todos" para procurar nos anteriores.' : '')) : PERIODO_CANDIDATOS === 'hoje' ? 'Nenhum candidato novo hoje.' : 'Nenhum candidato aguardando decisão.';
       tbody.innerHTML = `<tr><td colspan="${colspan}"><div class="empty-state"><div class="empty-icon">🧭</div>${dica}</div></td></tr>`;
       return;
     }
@@ -7258,15 +7266,25 @@
     }).join('');
   }
 
+  // Código usado há pouco = pode ter candidato no meio da prova. Desativar ou
+  // excluir agora impede ele de ENVIAR as respostas — avisa antes.
+  function avisoCodigoEmUso(codigo) {
+    const c = (GUIA_CODIGOS || []).find(x => String(x.codigo) === String(codigo));
+    const ult = c && c.ultimo_uso_em ? new Date(c.ultimo_uso_em.toDate ? c.ultimo_uso_em.toDate() : c.ultimo_uso_em).getTime() : 0;
+    const min = ult ? Math.round((Date.now() - ult) / 60000) : null;
+    return min != null && min < 90
+      ? `\n\n⚠️ ATENÇÃO: este código foi usado há ${min} minuto(s). Pode ter candidato fazendo a prova AGORA — se continuar, ele não consegue enviar as respostas até receber um código novo.`
+      : '';
+  }
   window.desativarCodigo = async function (codigo) {
-    const ok = await abrirConfirmacao(`Desativar o código ${codigo}? Ele deixará de funcionar imediatamente, mesmo antes das 4 horas.`, { titulo: 'Desativar código', textoConfirmar: 'Desativar', corConfirmar: 'btn-danger', icone: '🔒' });
+    const ok = await abrirConfirmacao(`Desativar o código ${codigo}?${avisoCodigoEmUso(codigo)} Ele deixará de funcionar imediatamente, mesmo antes das 4 horas.`, { titulo: 'Desativar código', textoConfirmar: 'Desativar', corConfirmar: 'btn-danger', icone: '🔒' });
     if (!ok) return;
     try { await cancelarCodigoAcesso(codigo); toast('Código desativado', 'ok'); }
     catch (e) { console.error(e); toast('❌ Falha: ' + e.message, 'err'); }
   };
 
   window.excluirCodigo = async function (codigo) {
-    const ok = await abrirConfirmacao(`Excluir o código ${codigo} da lista? Essa ação não pode ser desfeita.`, { titulo: 'Excluir código', textoConfirmar: '🗑 Excluir', corConfirmar: 'btn-danger', icone: '🗑' });
+    const ok = await abrirConfirmacao(`Excluir o código ${codigo} da lista? Essa ação não pode ser desfeita.${avisoCodigoEmUso(codigo)}`, { titulo: 'Excluir código', textoConfirmar: '🗑 Excluir', corConfirmar: 'btn-danger', icone: '🗑' });
     if (!ok) return;
     try { await excluirCodigoAcesso(codigo); toast('Código excluído', 'ok'); }
     catch (e) { console.error(e); toast('❌ Falha: ' + e.message, 'err'); }
@@ -7466,18 +7484,29 @@
 
   // Por padrão o painel carrega só os últimos 7 dias (antes 30 — com ~20 candidatos por dia, cada abertura do painel lia milhares de testes e o limite grátis do Firebase acabava no meio do dia de prova, travando os candidatos) — ler o histórico
   // inteiro a cada abertura estourava o limite diário grátis do Firebase.
-  let CARREGAR_TUDO = false;
+  // Quanto do histórico de testes o painel lê: 'hoje' (padrão no modo só
+  // testes — o mínimo de leituras), '7dias' ou 'todos'. Tocar em Ontem/7 dias/
+  // Todos na aba Candidatos amplia sozinho.
+  let CARGA = MODO_SO_TESTES ? 'hoje' : '7dias';
+  function ymdLocal(d) { return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; }
   function desdePeriodo() {
-    if (CARREGAR_TUDO) return null;
-    const d = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
-    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    if (CARGA === 'todos') return null;
+    if (CARGA === 'hoje') return ymdLocal(new Date());
+    return ymdLocal(new Date(Date.now() - 7 * 24 * 60 * 60 * 1000));
   }
-  document.getElementById('btnPeriodo').onclick = () => {
-    CARREGAR_TUDO = !CARREGAR_TUDO;
-    document.getElementById('periodoTexto').textContent = CARREGAR_TUDO ? '📅 Mostrando TODOS os candidatos (gasta mais do limite do Firebase)' : '📅 Mostrando candidatos dos últimos 7 dias';
-    document.getElementById('btnPeriodo').textContent = CARREGAR_TUDO ? 'Voltar para os últimos 7 dias' : 'Carregar todos (mais antigos)';
+  function atualizarBarraPeriodo() {
+    const txt = { hoje: '📅 Mostrando os candidatos de HOJE', '7dias': '📅 Mostrando candidatos dos últimos 7 dias', todos: '📅 Mostrando TODOS os candidatos (gasta mais do limite do Firebase)' }[CARGA];
+    document.getElementById('periodoTexto').textContent = txt;
+    document.getElementById('btnPeriodo').textContent = CARGA === 'todos' ? 'Voltar para hoje' : 'Carregar todos (mais antigos)';
+  }
+  window.definirCarga = function (nova) {
+    if (nova === CARGA) return;
+    CARGA = nova;
+    atualizarBarraPeriodo();
     conectar();
   };
+  document.getElementById('btnPeriodo').onclick = () => window.definirCarga(CARGA === 'todos' ? (MODO_SO_TESTES ? 'hoje' : '7dias') : 'todos');
+  atualizarBarraPeriodo();
 
   function conectar() {
     unsubs.forEach(u => { try { u(); } catch (_) {} });

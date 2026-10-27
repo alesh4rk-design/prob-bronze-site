@@ -706,7 +706,7 @@ export const tests = [
   {
     name: 'Modo só testes (padrão): só abas de teste/resultado, sem ler o processo seletivo, Candidatos com WhatsApp e Reenviar testes',
     async run({ browser, baseUrl }) {
-      const resultados = [{ id: '1', tipo: 'quiz', nome: 'So Teste', cpf: '91000000001', modulo: 'Controle de Acesso', pct: 80, acertos: 8, total: 10, data_conclusao: new Date(Date.now() - 3 * 3600000).toISOString(), candidato: { telefone: '21900000001', cargo_pretendido: 'Porteiro' } }];
+      const resultados = [{ id: '1', tipo: 'quiz', nome: 'So Teste', cpf: '91000000001', modulo: 'Controle de Acesso', pct: 80, acertos: 8, total: 10, data_conclusao: new Date(Date.now() - 25 * 60000).toISOString(), candidato: { telefone: '21900000001', cargo_pretendido: 'Porteiro' } }];
       const { page, erros } = await abrirDashboard(browser, baseUrl, { perfil: 'gerencia', resultados, modoTestes: true });
       const visiveis = await page.evaluate(() => [...document.querySelectorAll('.sidebar-item')].filter(i => getComputedStyle(i).display !== 'none').map(i => i.dataset.view));
       for (const v of ['dashboard', 'banco', 'etapa3', 'contratados', 'bancoreserva', 'ranking', 'pendencias', 'pesos']) assert(!visiveis.includes(v), `aba ${v} deveria sumir. Visíveis: ${visiveis}`);
@@ -715,6 +715,29 @@ export const tests = [
       assertEqual(await page.evaluate(() => document.querySelector('.app-view.active').id), 'view-pipeline', 'abrir aba escondida cai em Candidatos');
       const linha = await page.evaluate(() => document.getElementById('pipelineTableBody').innerText);
       assert(/whatsapp/i.test(linha) && /Enviar testes/i.test(linha) && !/Não segue/.test(linha), `Candidatos com WhatsApp e Enviar testes, sem decisões. Linha: ${linha}`);
+      assertEqual(erros.length, 0, 'erros de JS: ' + erros.join(' | '));
+      await page.close();
+    }
+  },
+
+  {
+    name: 'Modo só testes abre carregando só HOJE; tocar em 7 dias amplia; desativar código usado há pouco avisa que pode ter gente fazendo a prova',
+    async run({ browser, baseUrl }) {
+      const codigosAcesso = [{ codigo: '445566', ativo: true, usos: 3, criado_em: new Date().toISOString(), ultimo_uso_em: new Date(Date.now() - 10 * 60000).toISOString() }];
+      const { page, erros } = await abrirDashboard(browser, baseUrl, { perfil: 'gerencia', modoTestes: true, codigosAcesso });
+      const txt = await page.evaluate(() => document.getElementById('periodoTexto').textContent);
+      assert(/HOJE/.test(txt), `deveria abrir carregando só hoje. Veio: ${txt}`);
+      const sel = await page.evaluate(() => document.querySelector('#pipelinePeriodos .pill.sel').dataset.periodo);
+      assertEqual(sel, 'hoje', 'filtro Hoje já vem marcado');
+      await page.evaluate(() => definirPeriodoCandidatos('7dias'));
+      const txt2 = await page.evaluate(() => document.getElementById('periodoTexto').textContent);
+      assert(/7 dias/.test(txt2), `tocar em 7 dias deveria ampliar a leitura. Veio: ${txt2}`);
+      page.evaluate(() => desativarCodigo('445566')).catch(() => {});
+      await page.waitForTimeout(200);
+      const msg = await page.evaluate(() => document.getElementById('confirmMensagem').textContent);
+      assert(/usado há 10 minuto/.test(msg) && /fazendo a prova/i.test(msg), `deveria avisar que o código está em uso. Veio: ${msg}`);
+      await page.evaluate(() => responderConfirmacao(false));
+      await page.waitForTimeout(100);
       assertEqual(erros.length, 0, 'erros de JS: ' + erros.join(' | '));
       await page.close();
     }

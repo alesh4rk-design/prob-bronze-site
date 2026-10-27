@@ -695,6 +695,7 @@
       <div class="launcher-tagline">Plataforma de Avaliação de Candidatos</div>
     </div>
     <div class="launcher-divider"></div>
+    <div id="retomarTrilha" style="display:none;margin:0 0 16px;padding:14px;border:1px solid var(--amber,#E8A000);border-radius:10px;background:rgba(232,160,0,0.08);text-align:left;font-size:14px;line-height:1.5;"></div>
     <div class="launcher-btns">
       <button class="launcher-btn-main" id="btnIniciar" onclick="requestConsentAndStart()" disabled>
         <span>▶</span>
@@ -1091,6 +1092,7 @@
       document.getElementById('serverStatusBar').className = 'server-status-bar online';
       document.getElementById('serverStatusText').textContent = 'Conectado — avaliação liberada';
       show('s-launcher');
+      mostrarRetomada();
     } catch (e) {
       console.error(e);
       document.getElementById('serverStatusBar').className = 'server-status-bar offline';
@@ -1130,6 +1132,7 @@
     S.trilha = [...MODULOS_LINK];
     S.trilhaIdx = 0;
     S.resultadosTrilha = [];
+    S.perguntasPre = {};
     const primeiro = String(CANDIDATO_DO_LINK).trim().split(/\s+/)[0];
     toast(`👋 Olá, ${primeiro}! Vamos aos testes que faltaram.`, 'ok');
     iniciarModulo();
@@ -1176,6 +1179,18 @@
     try {
       const r = await verificarCodigoAcesso(codigo);
       if (r.ok) {
+        if (S._precisaNovoCodigo) {
+          // Código novo no meio da prova (o anterior foi encerrado): envia as
+          // respostas guardadas e segue a trilha normalmente.
+          S._precisaNovoCodigo = false;
+          globalCodigoAcesso = codigo;
+          if (S.candidato) S.candidato.codigoAcesso = codigo;
+          hideCodigoModal();
+          salvarTrilha();
+          toast('✅ Código aceito — enviando suas respostas...', 'ok');
+          endQuiz();
+          return;
+        }
         globalCodigoValidado = true;
         globalCodigoAcesso = codigo;
         globalCodigoFilial = r.filial || null;
@@ -1641,6 +1656,7 @@
     S.trilha = MODULOS_LINK.length ? [...MODULOS_LINK] : montarTrilha(tema);
     S.trilhaIdx = 0;
     S.resultadosTrilha = [];
+    S.perguntasPre = {};
 
     await iniciarModulo();
   };
@@ -1656,10 +1672,90 @@
       catch (e) {
         ultimoErro = e;
         if (e && e.moduloIndisponivel) break; // desligado/sem perguntas: não adianta insistir
+        if (e && /codigo_invalido/.test(e.message || '')) break; // código encerrado: precisa de um novo
         if (i < tentativas - 1) await new Promise(r => setTimeout(r, 1500 * (i + 1)));
       }
     }
     throw ultimoErro;
+  }
+
+  // ── Continuar de onde parou ──────────────────────────────────────────
+  // No celular o navegador às vezes fecha a aba (abrir o WhatsApp, ligação,
+  // pouca memória). Antes o candidato voltava pro começo — código, ficha e
+  // tudo — e muitos desistiam depois do 1º teste. Agora o andamento fica
+  // guardado no aparelho e dá pra seguir direto pro próximo teste.
+  const CHAVE_TRILHA = 'virtus_trilha_em_andamento';
+  function salvarTrilha() {
+    if (!S.trilha || !globalCodigoAcesso) return;
+    try {
+      localStorage.setItem(CHAVE_TRILHA, JSON.stringify({
+        v: 1, salvoEm: Date.now(), codigo: globalCodigoAcesso, filial: globalCodigoFilial,
+        nome: S.nome, dataPref: S.dataPref, candidato: S.candidato,
+        trilha: S.trilha, trilhaIdx: S.trilhaIdx, resultadosTrilha: S.resultadosTrilha || [],
+        perguntasPre: S.perguntasPre || {}
+      }));
+    } catch (e) { /* armazenamento indisponível — segue sem retomada */ }
+  }
+  function limparTrilhaSalva() { try { localStorage.removeItem(CHAVE_TRILHA); } catch (e) {} }
+  function lerTrilhaSalva() {
+    try {
+      const t = JSON.parse(localStorage.getItem(CHAVE_TRILHA) || 'null');
+      if (!t || !Array.isArray(t.trilha) || !t.codigo || Date.now() - t.salvoEm > 6 * 3600000) return null;
+      if ((t.resultadosTrilha || []).length >= t.trilha.length) return null;
+      return t;
+    } catch (e) { return null; }
+  }
+  function mostrarRetomada() {
+    const t = lerTrilhaSalva();
+    const box = document.getElementById('retomarTrilha');
+    if (!t || !box) return;
+    const faltam = t.trilha.slice(t.trilhaIdx);
+    const primeiro = String(t.nome || '').trim().split(/\s+/)[0] || '';
+    box.innerHTML = `<b>👋 ${primeiro ? primeiro + ', v' : 'V'}ocê tem testes em andamento.</b><br>
+      Já fez: ${(t.resultadosTrilha || []).map(r => r.modulo).join(', ') || 'nenhum ainda'}.<br>
+      Falta: <b>${faltam.join(', ')}</b>.
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;">
+        <button class="btn btn-amber" style="flex:1;min-width:180px;" onclick="continuarTrilhaSalva()">▶ Continuar de onde parei</button>
+        <button class="btn" style="flex:0 0 auto;" onclick="descartarTrilhaSalva()">Não sou eu</button>
+      </div>`;
+    box.style.display = 'block';
+  }
+  window.descartarTrilhaSalva = function () {
+    limparTrilhaSalva();
+    const box = document.getElementById('retomarTrilha');
+    if (box) box.style.display = 'none';
+  };
+  window.continuarTrilhaSalva = function () {
+    const t = lerTrilhaSalva();
+    if (!t) { window.descartarTrilhaSalva(); return; }
+    globalCodigoAcesso = t.codigo; globalCodigoValidado = true; globalCodigoFilial = t.filial || null;
+    globalConsentGiven = true; globalLgpdAccepted = true;
+    atualizarBotaoWhatsRH(globalCodigoFilial);
+    obterTemposTestes(globalCodigoFilial).then(tt => { TEMPOS_TESTES = tt; });
+    S.nome = t.nome; S.dataPref = t.dataPref || ''; S.candidato = t.candidato || { nome: t.nome, codigoAcesso: t.codigo };
+    S.trilha = t.trilha; S.trilhaIdx = t.trilhaIdx; S.resultadosTrilha = t.resultadosTrilha || [];
+    S.perguntasPre = t.perguntasPre || {};
+    document.getElementById('retomarTrilha').style.display = 'none';
+    toast('▶ Continuando de onde você parou...', 'ok');
+    iniciarModulo();
+  };
+
+  // Carrega já as próximas provas da trilha (em segundo plano), pra que uma
+  // queda da internet ou do servidor no meio não impeça de continuar.
+  async function preCarregarTrilha() {
+    if (S._preCarregando || !S.trilha) return;
+    S._preCarregando = true;
+    S.perguntasPre = S.perguntasPre || {};
+    try {
+      // Só as PRÓXIMAS — a prova atual já está na tela (não lê duas vezes).
+      for (let i = S.trilhaIdx + 1; i < S.trilha.length; i++) {
+        const m = S.trilha[i];
+        if (S.perguntasPre[m]) continue;
+        try { S.perguntasPre[m] = await tentarVariasVezes(() => carregarPerguntasDoModulo(m), 3); }
+        catch (e) { /* tenta de novo quando chegar a vez dessa prova */ }
+      }
+      salvarTrilha();
+    } finally { S._preCarregando = false; }
   }
 
   // Avisa o servidor em que passo o candidato está (e por que parou, se
@@ -1702,7 +1798,8 @@
     toast(`🔄 Carregando ${modulo}...`, '');
     try {
       S.envioId = (window.crypto && crypto.randomUUID ? crypto.randomUUID() : (Date.now().toString(36) + Math.random().toString(36).slice(2))).replace(/[^A-Za-z0-9_-]/g, '');
-      const perguntas = await tentarVariasVezes(() => carregarPerguntasDoModulo(modulo));
+      const pre = S.perguntasPre && S.perguntasPre[modulo];
+      const perguntas = pre && pre.length ? pre : await tentarVariasVezes(() => carregarPerguntasDoModulo(modulo));
       S.perguntas = perguntas;
       S.respostas = new Array(perguntas.length).fill(null);
       S.idx = 0;
@@ -1716,6 +1813,8 @@
       toast(`✅ ${modulo} — etapa ${S.trilhaIdx + 1} de ${S.trilha.length}`, 'ok');
       manterTelaAcesa();
       registrarProgresso('inicio');
+      salvarTrilha();
+      preCarregarTrilha();
     } catch (err) {
       console.error(err);
       registrarProgresso(err && err.moduloIndisponivel ? 'modulo_indisponivel' : 'falha_carregar', String((err && err.message) || err).slice(0, 190));
@@ -1857,13 +1956,16 @@
       }));
       playDone();
       S.resultadosTrilha.push({ modulo: S.tema, acertos, total, pct });
+      if (S.perguntasPre) delete S.perguntasPre[S.tema];
 
       // Ainda há etapas na trilha? Emenda no próximo módulo.
       if (S.trilha && S.trilhaIdx < S.trilha.length - 1) {
         S.trilhaIdx++;
+        salvarTrilha();
         mostrarTransicao(pct);
         return;
       }
+      limparTrilhaSalva();
       registrarProgresso('concluiu', `Concluiu os ${S.trilha ? S.trilha.length : 1} testes`);
 
       renderResultadoFinal();
@@ -1871,6 +1973,16 @@
       show('s-result-quiz');
     } catch (err) {
       console.error(err);
+      if (/codigo_invalido/.test((err && err.message) || '')) {
+        // A equipe encerrou (ou excluiu) o código no meio da prova: as
+        // respostas continuam aqui; com um código novo, envia na hora.
+        S._precisaNovoCodigo = true;
+        playErr();
+        showCodigoModal();
+        msgCodigoAcesso.textContent = '⛔ O código de acesso foi encerrado. Suas respostas estão guardadas — peça um código novo ao avaliador e digite aqui para enviar.';
+        msgCodigoAcesso.className = 'field-msg err';
+        return;
+      }
       toast(`❌ Falha ao enviar (${err.message}). Verifique a internet e toque em Finalizar de novo — suas respostas continuam aqui.`, 'err'); playErr();
       registrarProgresso('falha_envio', String((err && err.message) || err).slice(0, 190));
     } finally {

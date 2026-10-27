@@ -14,29 +14,30 @@ const browser = await chromium.launch({ executablePath: '/opt/pw-browsers/chromi
 let falhas = 0;
 const ok = (c, m) => { console.log((c ? '  ✓ ' : '  ✗ ') + m); if (!c) falhas++; };
 
-async function abrir({ falharCarregar = null } = {}) {
+async function abrir({ falharCarregar = null, falharEnvio = null, falharVerificar = false, url = null } = {}) {
   const page = await browser.newPage({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
   await page.clock.install();
   const { APP, AUTH, FS } = buildMocks({ vagas: [{ id: 'v1', cargo: 'Recepcionista', numero_vagas: 2, status: 'aberta' }] });
   const map = { 'firebase-app.js': APP, 'firebase-auth.js': AUTH, 'firebase-firestore.js': FS };
   await page.route('**/firebasejs/**', r => { const k = Object.keys(map).find(x => r.request().url().endsWith(x)); return k ? r.fulfill({ status: 200, contentType: 'application/javascript', body: map[k] }) : r.abort(); });
   await page.route('**/fonts.googleapis.com/**', r => r.fulfill({ status: 200, contentType: 'text/css', body: '' }));
-  const st = { eventos: [], enviados: [], falharCarregar };
+  const st = { eventos: [], enviados: [], falharCarregar, falharEnvio, falharVerificar };
   await page.route('**/virtus-api.ale-sh4rk.workers.dev/**', async r => {
     const u = r.request().url(); let body = {}; try { body = r.request().postDataJSON() || {}; } catch {}
     const j = (o, status = 200) => r.fulfill({ status, contentType: 'application/json', headers: { 'Access-Control-Allow-Origin': '*' }, body: JSON.stringify(o) });
     if (u.endsWith('/registrar-acesso')) { if (body.evento) st.eventos.push({ evento: body.evento, modulo: body.modulo, detalhe: body.detalhe }); return j({ ok: true }); }
     if (u.endsWith('/listar-modulos')) return j({ modulos: [{ nome: 'Linguagem Positiva', total: 30 }], total_perguntas: 30 });
-    if (u.endsWith('/verificar-codigo')) return j({ ok: true, filial: null, candidatoNome: 'Maria Teste' });
+    if (u.endsWith('/verificar-codigo')) { if (st.falharVerificar) return j({ ok: false, erro: 'Quota exceeded' }, 500); return j({ ok: true, filial: null, candidatoNome: 'Maria Teste' }); }
     if (u.endsWith('/carregar-perguntas')) {
       if (st.falharCarregar && body.modulo === st.falharCarregar) return j({ ok: false, erro: 'Firestore GET falhou (429): Quota exceeded' }, 500);
       return j({ ok: true, perguntas: PERG(10) });
     }
+    if (u.endsWith('/submeter-quiz') && st.falharEnvio) return j(st.falharEnvio.body, st.falharEnvio.status);
     if (u.endsWith('/submeter-quiz')) { st.enviados.push({ modulo: body.modulo, respondidas: (body.respostas || []).filter(Boolean).length }); return j({ ok: true, acertos: 5, total: 10, pct: 50, id: 'r1' }); }
     return j({ ok: true });
   });
   const erros = []; page.on('pageerror', e => erros.push(e.message));
-  await page.goto('http://localhost:8996/quiz.html?modulos=Linguagem%20Positiva,Atendimento%20ao%20Cliente&codigo=777777', { waitUntil: 'load' });
+  await page.goto(url || 'http://localhost:8996/quiz.html?modulos=Linguagem%20Positiva,Atendimento%20ao%20Cliente&codigo=777777', { waitUntil: 'load' });
   const passo = async (ms = 1500) => { await page.clock.runFor(ms); await page.waitForTimeout(150); };
   await passo(1500);
   await page.click('#btnIniciar'); await passo(500);
@@ -45,6 +46,11 @@ async function abrir({ falharCarregar = null } = {}) {
   await page.click('#modalConfirmBtn'); await passo(2500);
   const tela = () => page.evaluate(() => document.querySelector('.screen.active')?.id);
   return { page, st, erros, passo, tela };
+}
+async function responderTudo(page) {
+  const total = await page.evaluate(() => Number(document.getElementById('qTotal').textContent));
+  for (let i = 0; i < total; i++) { await page.click('#opts .opt'); if (i < total - 1) await page.click('#btnNext'); }
+  await page.click('#btnFinish'); await page.click('#finishConfirmBtn');
 }
 
 console.log('\n▶ 1) Tempo esgotado');
@@ -96,6 +102,58 @@ console.log('\n▶ 3) Servidor falha ao carregar a 2ª prova');
   st.falharCarregar = null;       // servidor voltou
   await page.click('#s-transicao .btn-amber'); await passo(2000);
   ok(await tela() === 's-quiz', 'tocou em Continuar e a prova abriu');
+  ok(erros.length === 0, 'sem erros de JS ' + erros.join(' | '));
+  await page.close();
+}
+
+console.log('\n▶ 4) Código desativado/excluído pela gerência no meio da prova');
+{
+  const { page, st, erros, passo, tela } = await abrir({ falharEnvio: { status: 403, body: { ok: false, erro: 'codigo_invalido', motivo: 'desativado' } } });
+  await responderTudo(page);
+  await passo(3000);
+  const modal = await page.evaluate(() => document.getElementById('codigoModal').style.display === 'flex');
+  const msg = await page.evaluate(() => document.getElementById('msgCodigoAcesso').textContent);
+  ok(modal && /encerrado/.test(msg), `pede um código novo explicando o motivo (${msg})`);
+  st.falharEnvio = null;
+  await page.fill('#inCodigoAcesso', '888888');
+  await page.click('#codigoConfirmBtn'); await passo(2000);
+  ok(st.enviados.length === 1, 'com o código novo, as respostas guardadas são enviadas');
+  await passo(9000);
+  ok(await tela() === 's-quiz', `segue para a próxima prova (${await tela()})`);
+  ok(erros.length === 0, 'sem erros de JS ' + erros.join(' | '));
+  await page.close();
+}
+
+console.log('\n▶ 5) Servidor fora do ar no envio por vários minutos, depois volta');
+{
+  const { page, st, passo, tela } = await abrir({ falharEnvio: { status: 500, body: { ok: false, erro: 'Quota exceeded' } } });
+  await responderTudo(page);
+  for (let i = 0; i < 6; i++) await passo(5000);
+  ok(await tela() === 's-quiz', 'fica na prova com as respostas guardadas');
+  st.falharEnvio = null;
+  await page.click('#btnFinish'); await page.click('#finishConfirmBtn'); await passo(2000);
+  ok(st.enviados.length === 1, 'tocando Finalizar de novo, envia');
+  await page.close();
+}
+
+console.log('\n▶ 6) Página recarrega no meio da trilha e o servidor cai logo depois');
+{
+  const { page, st, erros, passo, tela } = await abrir();
+  await passo(3000); // dá tempo de carregar as próximas provas em segundo plano
+  await responderTudo(page); await passo(2000);
+  ok(st.enviados.length === 1, '1º teste enviado');
+  st.falharCarregar = 'Atendimento ao Cliente'; // servidor fora do ar a partir daqui
+  await page.reload({ waitUntil: 'load' }); await passo(2500);
+  const caixa = await page.evaluate(() => { const b = document.getElementById('retomarTrilha'); return b && b.style.display !== 'none' ? b.innerText : ''; });
+  ok(/Continuar de onde parei/i.test(caixa) && /Atendimento ao Cliente/.test(caixa), `depois de recarregar oferece continuar: ${caixa.replace(/\s+/g, ' ')}`);
+  await page.click('#retomarTrilha .btn-amber'); await passo(2000);
+  const tema = await page.evaluate(() => document.getElementById('qThemeTag').textContent);
+  ok(await tela() === 's-quiz' && /ATENDIMENTO/.test(tema), `continuou direto no 2º teste, mesmo com o servidor fora (já estava carregado) (${tema})`);
+  st.falharCarregar = null;
+  await responderTudo(page); await passo(3000);
+  ok(st.enviados.length === 2 && await tela() === 's-result-quiz', `terminou a trilha (${st.enviados.map(e => e.modulo).join(', ')})`);
+  const sobrou = await page.evaluate(() => localStorage.getItem('virtus_trilha_em_andamento'));
+  ok(!sobrou, 'ao terminar, apaga o andamento guardado');
   ok(erros.length === 0, 'sem erros de JS ' + erros.join(' | '));
   await page.close();
 }
