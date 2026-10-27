@@ -1820,7 +1820,7 @@
             <th style="width:44px;text-align:center;">#</th>
             <th>Candidato</th>
             <th>Testes realizados</th>
-            <th>Nota<br><span style="font-weight:400;text-transform:none;font-size:10px;opacity:0.75;">(módulo escolhido)</span></th>
+            <th>Nota geral<br><span style="font-weight:400;text-transform:none;font-size:10px;opacity:0.75;">(média de todos os testes)</span></th>
           </tr>
         </thead>
         <tbody id="pipelineTableBody">
@@ -4464,6 +4464,17 @@
         if (!porModulo[m] || pct > porModulo[m]) porModulo[m] = pct;
       }
       const modulos = Object.entries(porModulo).map(([modulo, pct]) => ({ modulo, pct }));
+      // Nota geral: acertos somados ÷ questões somadas de todos os testes
+      // feitos (melhor tentativa de cada módulo) — a mesma conta que o
+      // candidato vê no fim da avaliação.
+      const melhorPorModulo = {};
+      for (const t of tents) {
+        const m = t.modulo || '—';
+        if (!melhorPorModulo[m] || (t.pct || 0) > (melhorPorModulo[m].pct || 0)) melhorPorModulo[m] = t;
+      }
+      const somaAc = Object.values(melhorPorModulo).reduce((a, t) => a + (Number(t.acertos) || 0), 0);
+      const somaTot = Object.values(melhorPorModulo).reduce((a, t) => a + (Number(t.total) || 0), 0);
+      const mediaGeral = somaTot ? Math.round((somaAc / somaTot) * 100) : Math.round(modulos.reduce((a, m) => a + m.pct, 0) / (modulos.length || 1));
       // Teste de digitação (se já fez) — nota mais alta obtida. Guarda
       // também de QUAL dispositivo veio essa nota: celular e computador têm
       // régua de WPM diferente (ver FAIXAS_DIGITACAO/classificarDigitacao),
@@ -4478,7 +4489,7 @@
       const ultima = tents.reduce((a, t) => (t.data_conclusao || '') > (a || '') ? t.data_conclusao : a, tents[0].data_conclusao);
       const nome = tents[tents.length - 1].nome || '—';
       return {
-        chave, nome, media, moduloEscolhido, modulos, digitacao, digitacaoDispositivo, digitacaoCelular, digitacaoTeclado, ultima,
+        chave, nome, media, mediaGeral, moduloEscolhido, modulos, digitacao, digitacaoDispositivo, digitacaoCelular, digitacaoTeclado, ultima,
         acertosEscolhido: melhorEscolhido.acertos,
         totalEscolhido: melhorEscolhido.total
       };
@@ -4742,7 +4753,7 @@
       <th style="width:44px;text-align:center;">#</th>
       <th>Candidato</th>
       <th>Testes realizados</th>
-      <th>Nota<br><span style="font-weight:400;text-transform:none;font-size:10px;opacity:0.75;">(módulo escolhido)</span></th>
+      <th>Nota geral<br><span style="font-weight:400;text-transform:none;font-size:10px;opacity:0.75;">(média de todos os testes)</span></th>
       <th>Status</th>
       ${algumaDecisao ? '<th>Ações</th>' : ''}
     `;
@@ -4792,7 +4803,7 @@
             ${digitacaoLinhasHTML(c)}
           </div>
         </td>
-        <td>${c.media == null ? '<span style="color:var(--text4);font-size:12px;">— sem quiz</span>' : `<span class="td-pct" style="color:${c.media >= 70 ? 'var(--green)' : c.media >= 50 ? 'var(--amber)' : 'var(--red)'}">${c.media >= 70 ? '✅' : '❌'} ${c.media}%</span>`}</td>
+        <td>${c.mediaGeral == null ? '<span style="color:var(--text4);font-size:12px;">— sem quiz</span>' : `<span class="td-pct" style="color:${c.mediaGeral >= 70 ? 'var(--green)' : c.mediaGeral >= 50 ? 'var(--amber)' : 'var(--red)'}">${c.mediaGeral >= 70 ? '✅' : '❌'} ${c.mediaGeral}%</span>${c.modulos.length > 1 ? `<div style="font-size:10px;color:var(--text3);margin-top:2px;">principal: ${c.media}%</div>` : ''}`}</td>
         <td><span style="font-size:12px;font-weight:700;color:${etapaCand.cor};white-space:nowrap;">${etapaCand.icone} ${etapaCand.txt}</span>${avisoWhatsappHTML(pipelineInfo, etapaWhatsappDe(pipelineInfo))}</td>
         ${colunaAcoes}
       </tr>`;
